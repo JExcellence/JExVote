@@ -47,12 +47,12 @@ public class VoteOverviewView extends BaseView {
     @Override
     protected String[] layout() {
         return new String[]{
-                "XXXXXXXXX",
-                "X  HPS  X",
-                "XXXXXXXXX",
-                "XSSSSSSSX",
-                "XXXXXXXXX",
-                "XXLXXXKXX"
+                "         ",
+                "   HPS   ",
+                "         ",
+                " SSSSSSS ",
+                "         ",
+                "  L   K  "
         };
     }
 
@@ -69,19 +69,23 @@ public class VoteOverviewView extends BaseView {
     @Override
     protected void onRender(@NotNull RenderContext render, @NotNull Player player) {
 
-        // ── Top border accent (green glass) ─────────────────────────
-        for (int col : new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8}) {
-            render.slot(0, col, ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE)
-                    .name(Component.empty())
-                    .build());
-        }
-        // Green accents at the top corners and center
+        // ── Top row accents ─────────────────────────────────────────
         render.slot(0, 0, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
         render.slot(0, 8, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
-        render.slot(0, 4, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
+
+        // ── Header (row 0, center) ─────────────────────────────────
+        render.slot(0, 4, ItemBuilder.of(Material.EMERALD)
+                .name(MM.deserialize("<gradient:#86efac:#16a34a><bold>✦ Vote Overview</bold></gradient>")
+                        .decoration(TextDecoration.ITALIC, false))
+                .glow(true)
+                .lore(List.of(
+                        Component.empty(),
+                        MM.deserialize("  <gray>Vote for us to earn rewards!</gray>"),
+                        MM.deserialize("  <gray>Click a site below to get started.</gray>"),
+                        Component.empty()))
+                .build());
 
         // ── Player head (row 1, col 3) ──────────────────────────────
         render.slot(1, 3, HeadBuilder.fromPlayer(player)
@@ -205,14 +209,7 @@ public class VoteOverviewView extends BaseView {
                     .name(Component.empty()).build());
         }
 
-        // ── Separator row (row 2 + 4) ───────────────────────────────
-        for (int col = 0; col < 9; col++) {
-            render.slot(2, col, ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE)
-                    .name(Component.empty()).build());
-            render.slot(4, col, ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE)
-                    .name(Component.empty()).build());
-        }
-        // Green accent on site row edges
+        // ── Green accents on site row edges ────────────────────────
         render.slot(3, 0, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
         render.slot(3, 8, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)

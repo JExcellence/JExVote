@@ -45,12 +45,12 @@ public class VoteStreakView extends BaseView {
     @Override
     protected String[] layout() {
         return new String[]{
-                "XXXXXXXXX",
-                "XHXXXXXPX",
-                "XXXXXXXXX",
-                "XMMMMMMMX",
-                "XMMMMMMMX",
-                " XXXXXXXX"
+                "         ",
+                " A B C D ",
+                "         ",
+                " MMMMMMM ",
+                " MMMMMMM ",
+                "         "
         };
     }
 
@@ -67,13 +67,23 @@ public class VoteStreakView extends BaseView {
     @Override
     protected void onRender(@NotNull RenderContext render, @NotNull Player player) {
 
-        // ── Top accents ─────────────────────────────────────────────
+        // ── Top row accents ─────────────────────────────────────────
         render.slot(0, 0, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
         render.slot(0, 8, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
-        render.slot(0, 4, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
+
+        // ── Header (row 0, center) ─────────────────────────────────
+        render.slot(0, 4, ItemBuilder.of(Material.MAGMA_CREAM)
+                .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>🔥 Streak Rewards</bold></gradient>")
+                        .decoration(TextDecoration.ITALIC, false))
+                .glow(true)
+                .lore(List.of(
+                        Component.empty(),
+                        MM.deserialize("  <gray>Vote daily to build your streak!</gray>"),
+                        MM.deserialize("  <gray>Reach milestones for bonus rewards.</gray>"),
+                        Component.empty()))
+                .build());
 
         // ── Loading state ───────────────────────────────────────────
         render.slot(1, 1, ItemBuilder.of(Material.BLAZE_POWDER)
@@ -88,11 +98,7 @@ public class VoteStreakView extends BaseView {
                 .lore(List.of(Component.empty(), MM.deserialize("  <gray>Loading...</gray>"), Component.empty()))
                 .build());
 
-        // ── Middle row separator ────────────────────────────────────
-        for (int col = 0; col < 9; col++) {
-            render.slot(2, col, ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE)
-                    .name(Component.empty()).build());
-        }
+        // ── Separator accent ────────────────────────────────────────
         render.slot(2, 4, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
 
