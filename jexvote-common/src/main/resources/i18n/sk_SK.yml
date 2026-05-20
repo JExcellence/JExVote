@@ -1,0 +1,79 @@
+# JExVote — Slovenský preklad
+
+prefix: '<dark_gray>[<gradient:#86efac:#16a34a>Vote</gradient><dark_gray>] '
+
+_defaults:
+  title: '<gray>Menu'
+  back: '<gray>Späť'
+
+vote:
+  broadcast: '<dark_gray>[<gradient:#86efac:#16a34a>Vote</gradient><dark_gray>]</dark_gray> <gradient:#86efac:#16a34a>{player}</gradient> <gray>hlasoval na</gray> <gradient:#a5f3fc:#06b6d4>{service}</gradient><gray>!</gray>'
+  received: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Ďakujeme za hlasovanie na</gray> <gradient:#a5f3fc:#06b6d4>{service}</gradient><gray>!</gray> <gray>Séria:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient>'
+  pending_rewards: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Čaká na teba</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>odmien za hlasovanie! Už sú na ceste...</gray>'
+  no_permission: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Na toto nemáš oprávnenie.</red>'
+  player_not_found: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Hráč nenájdený:</red> <white>{player}</white>'
+  stats:
+    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Štatistiky hlasovania</bold></gradient> <dark_gray>━━━━'
+    total: '<dark_gray>▸</dark_gray> <gray>Hlasy celkom:</gray> <white>{total}</white>'
+    monthly: '<dark_gray>▸</dark_gray> <gray>Hlasy za mesiac:</gray> <white>{monthly}</white>'
+    streak: '<dark_gray>▸</dark_gray> <gray>Aktuálna séria:</gray> <gradient:#86efac:#16a34a>{streak}</gradient>'
+    highest: '<dark_gray>▸</dark_gray> <gray>Najvyššia séria:</gray> <gradient:#fde047:#f59e0b>{highest}</gradient>'
+    points: '<dark_gray>▸</dark_gray> <gray>Body za hlasovanie:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient>'
+  leaderboard:
+    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Najlepší hlasujúci</bold></gradient> <dark_gray>━━━━'
+    entry: '<dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>{rank}.</gradient> <white>{player}</white> <dark_gray>—</dark_gray> <gradient:#86efac:#16a34a>{votes} hlasov</gradient>'
+    empty: '<dark_gray>▸</dark_gray> <gray>Zatiaľ žiadne hlasy.</gray>'
+  reload: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Konfigurácia JExVote opätovne načítaná.</gray>'
+  reset:
+    success: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Štatistiky hlasovania hráča</gray> <white>{player}</white> <gray>vynulované.</gray>'
+    all_success: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Hlasy všetkých hráčov za posledný mesiac vynulované.</gray>'
+  sites:
+    header: '<dark_gray>━━━━ <gradient:#a5f3fc:#06b6d4><bold>Hlasovacie stránky</bold></gradient> <dark_gray>━━━━'
+    entry: '<dark_gray>▸</dark_gray> <gradient:#86efac:#16a34a>{name}</gradient> <dark_gray>—</dark_gray> <gradient:#a5f3fc:#06b6d4>Klikni pre hlasovanie</gradient>'
+    no_sites: '<dark_gray>▸</dark_gray> <gray>Žiadne stránky neboli definované.</gray>'
+
+vote_overview:
+  title: '<dark_gray>Prehľad hlasovania'
+
+vote_leaderboard:
+  title: '<dark_gray>Rebríček hlasovania'
+
+vote_streak:
+  title: '<dark_gray>Série hlasovania'
+
+vote_shop:
+  title: '<dark_gray>Hlasovací obchod'
+
+# ── Built-in JExCommand keys ──────────────────────────────────────────────────
+
+jexcommand:
+  error:
+    no-permission:        "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Chýbajúce oprávnenie <white>{permission}</white>."
+    player-only:          "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Tento príkaz je len pre hráčov."
+    console-only:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Tento príkaz je len pre konzolu."
+    invalid-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Neplatný argument <white>{value}</white> pre <white>{name}</white>."
+    missing-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Chýbajúci argument <white>{name}</white>."
+    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Príliš veľa argumentov — <white>{value}</white> nebolo očakávané."
+    invalid-long:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> nie je celé číslo."
+    invalid-double:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> nie je číslo."
+    not-positive-long:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> musí byť kladné."
+    not-positive-double:  "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> musí byť kladné."
+    invalid-uuid:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> nie je platné UUID."
+    invalid-enum:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> nie je jedno z: <gray>{options}</gray>."
+    expected-single-word: "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Očakávalo sa jedno slovo, zadané bolo <white>{value}</white>."
+    player-not-online:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Hráč <white>{value}</white> nie je online."
+    player-unknown:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Neznámy hráč <white>{value}</white>."
+    internal:             "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Interná chyba: <white>{message}</white></red>"
+  usage: "<gradient:#a5f3fc:#06b6d4>▸</gradient> <gray>Použitie: <white>{usage}</white>"
+
+command:
+  vote:
+    description: 'Otvoriť hlasovacie menu alebo zobraziť hlasovacie stránky'
+  votes:
+    description: 'Zobraziť tvoje štatistiky o hlasovaní'
+  votetop:
+    description: 'Zobraziť rebríček hlasovania'
+  votereload:
+    description: 'Opätovne načítať konfiguráciu JExVote'
+  votereset:
+    description: 'Vynulovať štatistiky o hlasovaní hráča'

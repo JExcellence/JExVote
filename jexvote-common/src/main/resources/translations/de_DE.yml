@@ -1,0 +1,79 @@
+# JExVote — Deutsche Übersetzungen
+
+prefix: '<dark_gray>[<green>Vote<dark_gray>] '
+
+_defaults:
+  title: '<gray>Menü'
+  back: '<gray>Zurück'
+
+vote:
+  broadcast: '<dark_gray>[<green>Vote<dark_gray>] <green>{player} <gray>hat auf <aqua>{service} <gray>gevotet!'
+  received: '<green>Danke für deine Stimme auf <aqua>{service}<green>! Streak: <yellow>{streak}'
+  pending_rewards: '<green>Du hast <yellow>{count} <green>ausstehende Vote-Belohnung(en)! Wird jetzt zugestellt...'
+  no_permission: '<red>Dazu hast du keine Berechtigung.'
+  player_not_found: '<red>Spieler nicht gefunden: <yellow>{player}'
+  stats:
+    header: '<gray>━━━━━━━━ <green>Vote-Statistiken <gray>━━━━━━━━'
+    total: '<gray>Gesamt-Votes: <white>{total}'
+    monthly: '<gray>Monatliche Votes: <white>{monthly}'
+    streak: '<gray>Aktueller Streak: <green>{streak}'
+    highest: '<gray>Höchster Streak: <yellow>{highest}'
+    points: '<gray>Vote-Punkte: <aqua>{points}'
+  leaderboard:
+    header: '<gray>━━━━━━━━ <gold>Top-Voter <gray>━━━━━━━━'
+    entry: '<gray>{rank}. <white>{player} <gray>— <green>{votes} Votes'
+    empty: '<gray>Noch keine Votes aufgezeichnet.'
+  reload: '<green>JExVote-Konfiguration neu geladen.'
+  reset:
+    success: '<green>Vote-Statistiken für <yellow>{player} <green>zurückgesetzt.'
+    all_success: '<green>Monatliche Votes für alle Spieler zurückgesetzt.'
+  sites:
+    header: '<gray>━━━━━━ <green>Vote-Seiten <gray>━━━━━━'
+    entry: '<green>{name} <gray>— <aqua>Klicke zum Voten'
+    no_sites: '<gray>Keine Vote-Seiten konfiguriert.'
+
+vote_overview:
+  title: '<dark_gray>Vote-Übersicht'
+
+vote_leaderboard:
+  title: '<dark_gray>Vote-Rangliste'
+
+vote_streak:
+  title: '<dark_gray>Vote-Streaks'
+
+vote_shop:
+  title: '<dark_gray>Vote-Shop'
+
+# ── Built-in JExCommand keys ──────────────────────────────────────────────────
+
+jexcommand:
+  error:
+    no-permission:        "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Fehlende Berechtigung: <white>{permission}</white>."
+    player-only:          "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Dieser Befehl ist nur für Spieler."
+    console-only:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Dieser Befehl ist nur für die Konsole."
+    invalid-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Ungültiges Argument <white>{value}</white> für <white>{name}</white>."
+    missing-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Fehlendes Argument: <white>{name}</white>."
+    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Zu viele Argumente — unerwartet: <white>{value}</white>."
+    invalid-long:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> ist keine ganze Zahl."
+    invalid-double:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> ist keine Zahl."
+    not-positive-long:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> muss positiv sein."
+    not-positive-double:  "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> muss positiv sein."
+    invalid-uuid:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> ist keine gültige UUID."
+    invalid-enum:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> ist nicht eines von: <gray>{options}</gray>."
+    expected-single-word: "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Ein einzelnes Wort erwartet, erhalten: <white>{value}</white>."
+    player-not-online:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Spieler <white>{value}</white> ist nicht online."
+    player-unknown:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Unbekannter Spieler: <white>{value}</white>."
+    internal:             "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Interner Fehler: <white>{message}</white></red>"
+  usage: "<gradient:#a5f3fc:#06b6d4>▸</gradient> <gray>Verwendung: <white>{usage}</white>"
+
+command:
+  vote:
+    description: 'Öffne das Vote-Menü oder zeige Vote-Seiten'
+  votes:
+    description: 'Zeige deine Vote-Statistiken'
+  votetop:
+    description: 'Zeige die Vote-Rangliste'
+  votereload:
+    description: 'JExVote-Konfiguration neu laden'
+  votereset:
+    description: 'Vote-Statistiken eines Spielers zurücksetzen'

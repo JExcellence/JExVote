@@ -1,0 +1,62 @@
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║                   JExVote — Vote Sites                       ║
+# ╠═══════════════════════════════════════════════════════════════╣
+# ║  Define your vote listing sites here. The 'service-name'     ║
+# ║  must match what the site sends in its Votifier payload.     ║
+# ║                                                               ║
+# ║  IMPORTANT: The service-name is NOT the website URL!          ║
+# ║  Many sites use abbreviations (e.g. minecraft-server-list.com ║
+# ║  sends "MCSL", not "Minecraft-server-list.com").              ║
+# ║  Check your vote site's documentation for the exact name.     ║
+# ║                                                               ║
+# ║  Cooldown modes (pick one per site):                          ║
+# ║    • cooldown-minutes — rolling window (e.g. 1440 = 24h)     ║
+# ║    • daily-reset      — fixed time of day (e.g. "00:00")     ║
+# ║      with optional timezone (default: UTC)                    ║
+# ╚═══════════════════════════════════════════════════════════════╝
+
+sites:
+  # ── Example: minecraft-server-list.com ────────────────────────
+  # This site sends "MCSL" as service-name, NOT the full URL.
+  # It resets votes daily at 00:00 UTC.
+  minecraft-server-list:
+    display-name: 'Minecraft Server List'
+    service-name: 'MCSL'
+    vote-url: 'https://minecraft-server-list.com/server/520312/vote/'
+    # This site resets at midnight UTC
+    daily-reset: '00:00'
+    timezone: 'UTC'
+    points-per-vote: 1
+
+  # ── Example: rolling cooldown site ────────────────────────────
+  # Some sites use a 24h rolling window from your last vote.
+  # topg:
+  #   display-name: 'TopG'
+  #   service-name: 'TopG.org'
+  #   vote-url: 'https://topg.org/minecraft-servers/server-YOUR_ID'
+  #   cooldown-minutes: 1440
+  #   points-per-vote: 1
+
+  # planet-minecraft:
+  #   display-name: 'Planet Minecraft'
+  #   service-name: 'PlanetMinecraft'
+  #   vote-url: 'https://www.planetminecraft.com/server/YOUR_SERVER/vote/'
+  #   cooldown-minutes: 1440
+  #   points-per-vote: 1
+
+  # ── Czech/Slovak vote sites ───────────────────────────────────
+  # mcservery:
+  #   display-name: 'MC Servery'
+  #   service-name: 'mcservery.one'
+  #   vote-url: 'https://mcservery.one/vote/your-server'
+  #   daily-reset: '00:00'
+  #   timezone: 'Europe/Prague'
+  #   points-per-vote: 1
+
+  # minecraft-list:
+  #   display-name: 'Minecraft List'
+  #   service-name: 'minecraft-list.cz'
+  #   vote-url: 'https://minecraft-list.cz/server/your-server/vote'
+  #   daily-reset: '00:00'
+  #   timezone: 'Europe/Prague'
+  #   points-per-vote: 1

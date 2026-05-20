@@ -1,0 +1,182 @@
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║                  JExVote — Reward Configuration              ║
+# ╠═══════════════════════════════════════════════════════════════╣
+# ║  Each reward needs a unique key and a 'type' field.          ║
+# ║  Uses JExPlatform's universal reward system.                  ║
+# ║                                                               ║
+# ║  Available reward types:                                      ║
+# ║    command, xp, currency, item, permission, sound, particle,  ║
+# ║    teleport, title, composite, choice, custom                 ║
+# ╚═══════════════════════════════════════════════════════════════╝
+
+# ── Default Rewards ─────────────────────────────────────────────
+# Granted every time a player votes, regardless of site or streak.
+default-rewards:
+  vote-xp:
+    type: xp
+    amount: 50
+  vote-command:
+    type: command
+    command: 'give {player} diamond 1'
+    as-console: true
+
+# ── Streak Rewards ──────────────────────────────────────────────
+# Bonus rewards when a player reaches a specific streak day.
+# These are IN ADDITION to the default rewards.
+streak-rewards:
+  7:
+    streak-7-bonus:
+      type: command
+      command: 'give {player} diamond 3'
+      as-console: true
+  14:
+    streak-14-bonus:
+      type: command
+      command: 'give {player} diamond 5'
+      as-console: true
+  30:
+    streak-30-bonus:
+      type: command
+      command: 'give {player} diamond_block 1'
+      as-console: true
+    streak-30-title:
+      type: title
+      title: '<gold><bold>30 Day Streak!'
+      subtitle: '<gray>You are a dedicated voter!'
+      fade-in: 10
+      stay: 60
+      fade-out: 10
+
+# ── Site-Specific Rewards ───────────────────────────────────────
+# Extra rewards for voting on specific sites.
+# Use the site ID (from sites.yml) as the key.
+site-rewards: {}
+#  minecraft-server-list:
+#    mcsl-bonus:
+#      type: xp
+#      amount: 25
+
+# ═════════════════════════════════════════════════════════════════
+# REWARD TYPE REFERENCE
+# ═════════════════════════════════════════════════════════════════
+# Below are commented examples of every available reward type.
+# Copy and paste into default-rewards, streak-rewards, or
+# site-rewards sections as needed.
+#
+# ── command ─────────────────────────────────────────────────────
+# Executes a server command. Use {player} for the player's name.
+#   my-command-reward:
+#     type: command
+#     command: 'give {player} emerald 5'
+#     as-console: true          # true = run as console, false = as player
+#
+# ── xp ──────────────────────────────────────────────────────────
+# Grants vanilla XP points (not levels).
+#   my-xp-reward:
+#     type: xp
+#     amount: 100
+#
+# ── currency ────────────────────────────────────────────────────
+# Deposits money via JExEconomy (requires JExEconomy).
+#   my-currency-reward:
+#     type: currency
+#     currency: 'coins'         # currency identifier from JExEconomy
+#     amount: 500.0
+#
+# ── item ────────────────────────────────────────────────────────
+# Gives an item stack to the player's inventory.
+#   my-item-reward:
+#     type: item
+#     material: DIAMOND_SWORD
+#     amount: 1
+#     name: '<gradient:#fde047:#f59e0b>Vote Sword'
+#     lore:
+#       - '<gray>A reward for voting!'
+#     enchantments:
+#       sharpness: 3
+#       unbreaking: 2
+#
+# ── permission ──────────────────────────────────────────────────
+# Grants a permission node (requires a permission plugin like LuckPerms).
+#   my-permission-reward:
+#     type: permission
+#     permission: 'vote.vip'
+#     duration: '7d'            # optional duration (e.g. 7d, 24h, 30m)
+#     server: 'global'          # optional, LuckPerms server context
+#
+# ── sound ───────────────────────────────────────────────────────
+# Plays a sound effect for the player.
+#   my-sound-reward:
+#     type: sound
+#     sound: 'ENTITY_PLAYER_LEVELUP'
+#     volume: 1.0
+#     pitch: 1.0
+#
+# ── particle ────────────────────────────────────────────────────
+# Spawns particles at the player's location.
+#   my-particle-reward:
+#     type: particle
+#     particle: 'FIREWORK'
+#     count: 30
+#     offset-x: 0.5
+#     offset-y: 1.0
+#     offset-z: 0.5
+#
+# ── title ───────────────────────────────────────────────────────
+# Displays a title and subtitle on the player's screen.
+#   my-title-reward:
+#     type: title
+#     title: '<gold><bold>Thank You!'
+#     subtitle: '<gray>Your vote was counted!'
+#     fade-in: 10               # ticks
+#     stay: 60                  # ticks
+#     fade-out: 10              # ticks
+#
+# ── teleport ────────────────────────────────────────────────────
+# Teleports the player to specific coordinates.
+#   my-teleport-reward:
+#     type: teleport
+#     world: 'world'
+#     x: 0.0
+#     y: 100.0
+#     z: 0.0
+#     yaw: 0.0
+#     pitch: 0.0
+#
+# ── composite ───────────────────────────────────────────────────
+# Bundles multiple rewards into one. All are granted together.
+#   my-composite-reward:
+#     type: composite
+#     rewards:
+#       - type: xp
+#         amount: 100
+#       - type: command
+#         command: 'give {player} diamond 1'
+#         as-console: true
+#       - type: sound
+#         sound: 'ENTITY_PLAYER_LEVELUP'
+#         volume: 1.0
+#         pitch: 1.0
+#
+# ── choice ──────────────────────────────────────────────────────
+# Lets the player pick one reward from a set (opens a GUI).
+#   my-choice-reward:
+#     type: choice
+#     options:
+#       - type: xp
+#         amount: 200
+#       - type: currency
+#         currency: 'coins'
+#         amount: 1000.0
+#       - type: item
+#         material: DIAMOND
+#         amount: 5
+#
+# ── custom ──────────────────────────────────────────────────────
+# Executes a custom reward handler registered by another plugin.
+#   my-custom-reward:
+#     type: custom
+#     handler: 'my_plugin:special_reward'
+#     data:
+#       key1: 'value1'
+#       key2: 42

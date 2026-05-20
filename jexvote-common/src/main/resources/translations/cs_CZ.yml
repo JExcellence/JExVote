@@ -1,0 +1,79 @@
+# JExVote — České překlady
+
+prefix: '<dark_gray>[<green>Vote<dark_gray>] '
+
+_defaults:
+  title: '<gray>Menu'
+  back: '<gray>Zpět'
+
+vote:
+  broadcast: '<dark_gray>[<green>Vote<dark_gray>] <green>{player} <gray>hlasoval na <aqua>{service}<gray>!'
+  received: '<green>Děkujeme za hlasování na <aqua>{service}<green>! Série: <yellow>{streak}'
+  pending_rewards: '<green>Máte <yellow>{count} <green>čekající odměnu/y za hlasování! Doručuji...'
+  no_permission: '<red>Na toto nemáte oprávnění.'
+  player_not_found: '<red>Hráč nenalezen: <yellow>{player}'
+  stats:
+    header: '<gray>━━━━━━━━ <green>Statistiky hlasování <gray>━━━━━━━━'
+    total: '<gray>Celkem hlasů: <white>{total}'
+    monthly: '<gray>Měsíční hlasy: <white>{monthly}'
+    streak: '<gray>Aktuální série: <green>{streak}'
+    highest: '<gray>Nejvyšší série: <yellow>{highest}'
+    points: '<gray>Body za hlasování: <aqua>{points}'
+  leaderboard:
+    header: '<gray>━━━━━━━━ <gold>Top hlasující <gray>━━━━━━━━'
+    entry: '<gray>{rank}. <white>{player} <gray>— <green>{votes} hlasů'
+    empty: '<gray>Zatím žádné hlasy.'
+  reload: '<green>Konfigurace JExVote znovu načtena.'
+  reset:
+    success: '<green>Statistiky hlasování pro <yellow>{player} <green>resetovány.'
+    all_success: '<green>Měsíční hlasy pro všechny hráče resetovány.'
+  sites:
+    header: '<gray>━━━━━━ <green>Hlasovací stránky <gray>━━━━━━'
+    entry: '<green>{name} <gray>— <aqua>Klikni pro hlasování'
+    no_sites: '<gray>Žádné hlasovací stránky nakonfigurovány.'
+
+vote_overview:
+  title: '<dark_gray>Přehled hlasování'
+
+vote_leaderboard:
+  title: '<dark_gray>Žebříček hlasování'
+
+vote_streak:
+  title: '<dark_gray>Série hlasování'
+
+vote_shop:
+  title: '<dark_gray>Obchod za hlasy'
+
+# ── Built-in JExCommand keys ──────────────────────────────────────────────────
+
+jexcommand:
+  error:
+    no-permission:        "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Chybějící oprávnění: <white>{permission}</white>."
+    player-only:          "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Tento příkaz je pouze pro hráče."
+    console-only:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Tento příkaz je pouze pro konzoli."
+    invalid-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Neplatný argument <white>{value}</white> pro <white>{name}</white>."
+    missing-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Chybějící argument: <white>{name}</white>."
+    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Příliš mnoho argumentů — neočekávaný: <white>{value}</white>."
+    invalid-long:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> není celé číslo."
+    invalid-double:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> není číslo."
+    not-positive-long:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> musí být kladné."
+    not-positive-double:  "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> musí být kladné."
+    invalid-uuid:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> není platné UUID."
+    invalid-enum:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> není jedním z: <gray>{options}</gray>."
+    expected-single-word: "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Očekáváno jedno slovo, obdrženo: <white>{value}</white>."
+    player-not-online:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Hráč <white>{value}</white> není online."
+    player-unknown:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Neznámý hráč: <white>{value}</white>."
+    internal:             "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Interní chyba: <white>{message}</white></red>"
+  usage: "<gradient:#a5f3fc:#06b6d4>▸</gradient> <gray>Použití: <white>{usage}</white>"
+
+command:
+  vote:
+    description: 'Otevřít menu hlasování nebo zobrazit hlasovací stránky'
+  votes:
+    description: 'Zobrazit statistiky hlasování'
+  votetop:
+    description: 'Zobrazit žebříček hlasování'
+  votereload:
+    description: 'Znovu načíst konfiguraci JExVote'
+  votereset:
+    description: 'Resetovat statistiky hlasování hráče'

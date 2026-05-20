@@ -1,0 +1,75 @@
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║                    JExVote Configuration                     ║
+# ╠═══════════════════════════════════════════════════════════════╣
+# ║  All-in-one vote listener with built-in Votifier protocol    ║
+# ║  support (v1 RSA + v2 HMAC). No NuVotifier needed.          ║
+# ╚═══════════════════════════════════════════════════════════════╝
+
+# ── Votifier Server ─────────────────────────────────────────────
+# The built-in vote receiver. Compatible with all vote sites
+# that support the Votifier or NuVotifier protocol.
+votifier:
+  # Leave empty to bind on all interfaces (0.0.0.0)
+  host: ''
+  # Port the Votifier server listens on (default: 8192)
+  # Must match the port configured on vote listing sites.
+  port: 8192
+  # Shared secret for Votifier v2 protocol (HMAC-SHA256).
+  # Leave empty on first run — a token will be auto-generated.
+  # Copy this token to your vote site configuration.
+  token: ''
+
+# ── Broadcast ───────────────────────────────────────────────────
+# Public chat announcement when someone votes.
+broadcast:
+  # Who receives the broadcast:
+  #   all    — all online players including the voter
+  #   others — all online players EXCEPT the voter
+  #   none   — disable broadcasts entirely
+  mode: 'all'
+  # Minimum seconds between broadcasts (anti-spam).
+  # If a vote arrives within this window, the broadcast is silently skipped.
+  # Set to 0 to broadcast every vote. (1800 = 30 minutes)
+  cooldown: 0
+
+# ── Private Message ─────────────────────────────────────────────
+# Personal "thank you" message sent only to the voter.
+private-message:
+  # Whether the voter receives a private thank-you message
+  enabled: true
+
+# ── Offline Vote Queue ──────────────────────────────────────────
+# When a player votes while offline, queue their rewards
+# and deliver them on next login.
+offline-vote-queue: true
+
+# ── Vote Streak ─────────────────────────────────────────────────
+streak:
+  # Hours before a streak is considered broken.
+  # Default 36h gives a generous buffer for daily voting.
+  timeout-hours: 36
+
+  # Bonus commands executed at specific streak milestones.
+  # Placeholders: {player}, {service}, {streak}
+  bonus-commands:
+    7:
+      - 'give {player} diamond 3'
+      - 'say {player} reached a 7-day vote streak!'
+    14:
+      - 'give {player} diamond 5'
+    30:
+      - 'give {player} diamond_block 1'
+      - 'say {player} reached a 30-day vote streak!'
+
+# ── Commands on Vote ────────────────────────────────────────────
+# Commands executed every time a vote is received.
+# Placeholders: {player}, {service}, {streak}
+commands-on-vote: []
+#  - 'give {player} diamond 1'
+#  - 'eco give {player} 100'
+
+# ── Vote Records ────────────────────────────────────────────────
+records:
+  # How long to keep individual vote records (days).
+  # Set to 0 to keep forever.
+  retention-days: 90

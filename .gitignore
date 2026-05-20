@@ -1,0 +1,30 @@
+# Build output
+build/
+*/build/
+
+# Gradle
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+.settings/
+.classpath
+.project
+.factorypath
+out/
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Runtime / data folder output (not part of source)
+run/
+logs/

@@ -1,0 +1,35 @@
+# JExCommand 2.0 tree for /jexvote — admin surface
+name: jexvote
+description: "JExVote administration"
+aliases:
+  - jv
+permission: "jexvote.command.admin"
+senders: [player, console]
+
+subcommands:
+  - name: help
+    description: "Show admin command help"
+
+  - name: info
+    description: "Show edition and version"
+
+  - name: reload
+    description: "Reload configuration"
+    permission: "jexvote.command.admin.reload"
+
+  - name: reset
+    description: "Reset a player's vote stats"
+    permission: "jexvote.command.admin.reset"
+    argumentSchema:
+      - { name: player, type: offline_player, required: true, description: "Player to reset" }
+
+  - name: resetmonthly
+    description: "Reset monthly votes for all players"
+    permission: "jexvote.command.admin.reset"
+
+  - name: fakevote
+    description: "Simulate a vote for testing"
+    permission: "jexvote.command.admin.fakevote"
+    argumentSchema:
+      - { name: player, type: online_player, required: true, description: "Player name" }
+      - { name: service, type: vote_service, required: false, defaultValue: "TestService", description: "Vote service name" }

@@ -1,0 +1,79 @@
+# JExVote — English translations
+
+prefix: '<dark_gray>[<green>Vote<dark_gray>] '
+
+_defaults:
+  title: '<gray>Menu'
+  back: '<gray>Back'
+
+vote:
+  broadcast: '<dark_gray>[<green>Vote<dark_gray>] <green>{player} <gray>voted on <aqua>{service}<gray>!'
+  received: '<green>Thank you for voting on <aqua>{service}<green>! Streak: <yellow>{streak}'
+  pending_rewards: '<green>You have <yellow>{count} <green>pending vote reward(s)! Delivering now...'
+  no_permission: '<red>You do not have permission to do this.'
+  player_not_found: '<red>Player not found: <yellow>{player}'
+  stats:
+    header: '<gray>━━━━━━━━ <green>Vote Stats <gray>━━━━━━━━'
+    total: '<gray>Total Votes: <white>{total}'
+    monthly: '<gray>Monthly Votes: <white>{monthly}'
+    streak: '<gray>Current Streak: <green>{streak}'
+    highest: '<gray>Highest Streak: <yellow>{highest}'
+    points: '<gray>Vote Points: <aqua>{points}'
+  leaderboard:
+    header: '<gray>━━━━━━━━ <gold>Top Voters <gray>━━━━━━━━'
+    entry: '<gray>{rank}. <white>{player} <gray>— <green>{votes} votes'
+    empty: '<gray>No votes recorded yet.'
+  reload: '<green>JExVote configuration reloaded.'
+  reset:
+    success: '<green>Reset vote stats for <yellow>{player}<green>.'
+    all_success: '<green>Reset monthly votes for all players.'
+  sites:
+    header: '<gray>━━━━━━ <green>Vote Sites <gray>━━━━━━'
+    entry: '<green>{name} <gray>— <aqua>Click to vote'
+    no_sites: '<gray>No vote sites configured.'
+
+vote_overview:
+  title: '<dark_gray>Vote Overview'
+
+vote_leaderboard:
+  title: '<dark_gray>Vote Leaderboard'
+
+vote_streak:
+  title: '<dark_gray>Vote Streaks'
+
+vote_shop:
+  title: '<dark_gray>Vote Shop'
+
+# ── Built-in JExCommand keys ──────────────────────────────────────────────────
+
+jexcommand:
+  error:
+    no-permission:        "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Missing permission <white>{permission}</white>."
+    player-only:          "<gradient:#fca5a5:#dc2626>✘</gradient> <red>This command is player-only."
+    console-only:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>This command is console-only."
+    invalid-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Invalid argument <white>{value}</white> for <white>{name}</white>."
+    missing-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Missing argument <white>{name}</white>."
+    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Too many arguments — unexpected <white>{value}</white>."
+    invalid-long:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> is not a whole number."
+    invalid-double:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> is not a number."
+    not-positive-long:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> must be positive."
+    not-positive-double:  "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> must be positive."
+    invalid-uuid:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> is not a valid UUID."
+    invalid-enum:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> is not one of: <gray>{options}</gray>."
+    expected-single-word: "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Expected a single word, got <white>{value}</white>."
+    player-not-online:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Player <white>{value}</white> is not online."
+    player-unknown:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Unknown player <white>{value}</white>."
+    internal:             "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Internal error: <white>{message}</white></red>"
+  usage: "<gradient:#a5f3fc:#06b6d4>▸</gradient> <gray>Usage: <white>{usage}</white>"
+
+command:
+  vote:
+    description: 'Open the vote menu or view vote sites'
+  votes:
+    description: 'View your vote statistics'
+  votetop:
+    description: 'View the vote leaderboard'
+  votereload:
+    description: 'Reload JExVote configuration'
+  votereset:
+    description: 'Reset a player''s vote statistics'

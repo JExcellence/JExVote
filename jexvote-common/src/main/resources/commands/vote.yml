@@ -1,0 +1,33 @@
+# JExCommand 2.0 tree for /vote (JExVote)
+name: vote
+description: "Open the vote menu or view vote sites"
+aliases:
+  - v
+permission: "jexvote.command.vote"
+senders: [player]
+
+subcommands:
+  - name: help
+    description: "Show vote command help"
+    senders: [player, console]
+
+  - name: sites
+    description: "List all vote sites"
+    senders: [player, console]
+
+  - name: stats
+    description: "View your vote statistics"
+    aliases:
+      - info
+    senders: [player, console]
+    argumentSchema:
+      - { name: player, type: offline_player, required: false, description: "Player to inspect" }
+
+  - name: top
+    description: "View the vote leaderboard"
+    aliases:
+      - leaderboard
+      - lb
+    senders: [player, console]
+    argumentSchema:
+      - { name: count, type: positive_long, required: false, defaultValue: "10", description: "Number of entries" }
