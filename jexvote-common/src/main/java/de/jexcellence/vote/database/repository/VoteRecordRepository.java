@@ -5,6 +5,7 @@ import de.jexcellence.vote.database.entity.VoteRecordEntity;
 import jakarta.persistence.EntityManagerFactory;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,5 +34,18 @@ public class VoteRecordRepository extends AbstractCrudRepository<VoteRecordEntit
 
     public @NotNull CompletableFuture<List<VoteRecordEntity>> findAllAsync() {
         return query().listAsync();
+    }
+
+    /**
+     * Deletes all vote records older than the given cutoff.
+     *
+     * @return the number of deleted records
+     */
+    public @NotNull CompletableFuture<Integer> deleteOlderThan(@NotNull Instant cutoff) {
+        return CompletableFuture.supplyAsync(() ->
+                withSession(ctx -> ctx.getEntityManager()
+                        .createQuery("DELETE FROM VoteRecordEntity vr WHERE vr.votedAt < :cutoff")
+                        .setParameter("cutoff", cutoff)
+                        .executeUpdate()));
     }
 }

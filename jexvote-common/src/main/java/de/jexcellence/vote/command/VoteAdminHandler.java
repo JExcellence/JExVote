@@ -118,14 +118,26 @@ public final class VoteAdminHandler {
     private void onReload(@NotNull CommandContext ctx) {
         voteConfig.load();
         rewardConfig.load();
+        voteService.reload(
+                voteConfig.getVoteSites(),
+                voteConfig.getStreakTimeoutHours(),
+                voteConfig.getStreakCommands(),
+                voteConfig.getRecordRetentionDays());
         r18n().msg("vote.reload").prefix().send(ctx.sender());
     }
 
     private void onReset(@NotNull CommandContext ctx) {
         OfflinePlayer target = ctx.require("player", OfflinePlayer.class);
         String name = target.getName() != null ? target.getName() : target.getUniqueId().toString();
-        // TODO: implement full reset via repository
-        r18n().msg("vote.reset.success").prefix().with("player", name).send(ctx.sender());
+        voteService.resetPlayer(target.getUniqueId()).thenAccept(success -> {
+            if (success) {
+                r18n().msg("vote.reset.success").prefix().with("player", name).send(ctx.sender());
+            } else {
+                ctx.sender().sendMessage(MM.deserialize(
+                        "<gradient:#fca5a5:#dc2626>✘</gradient> <red>No vote data found for</red> <white>"
+                                + name + "</white>"));
+            }
+        });
     }
 
     private void onResetMonthly(@NotNull CommandContext ctx) {

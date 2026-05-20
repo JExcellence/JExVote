@@ -1,7 +1,22 @@
 # JExVote
 
 All-in-one vote listener, reward and leaderboard system for Minecraft servers.
-JExVote has a **built-in Votifier server** (v1 RSA + v2 HMAC) so you do **not** need NuVotifier or any other vote receiver plugin.
+
+JExVote **replaces NuVotifier** entirely. It has a built-in Votifier server that speaks both the legacy v1 (RSA) and modern v2 (HMAC-SHA256) protocols, so you do **not** need NuVotifier, Votifier, or any other vote receiver plugin. Just drop in JExVote, point your vote listing sites at it, and you're done.
+
+---
+
+## Migrating from NuVotifier
+
+Already running NuVotifier? Switching is straightforward:
+
+1. **Remove NuVotifier** — delete `NuVotifier.jar` (or `Votifier.jar`) from your `plugins/` folder.
+2. **Install JExVote** — drop the JExVote JAR into `plugins/` and start the server once to generate config files.
+3. **Port settings** — open `plugins/JExVote/config.yml` and set the same `host` and `port` you had in NuVotifier (default `8192`).
+4. **Token / Key** — JExVote auto-generates a new RSA key pair and token on first run. Copy the new **public key** (`plugins/JExVote/rsa/public.key`) and **token** (printed in console) to your vote listing sites. If a site only supports v1, use the public key. If it supports v2, use the token.
+5. **Restart** — no other plugins need to change. Any plugin that listens for `VotifierEvent` can switch to JExVote's `VoteReceivedEvent` (or use the API).
+
+> **Note:** JExVote's Votifier server is wire-compatible with all major vote listing sites. If a site works with NuVotifier, it works with JExVote — the only thing that changes is the key/token.
 
 ---
 

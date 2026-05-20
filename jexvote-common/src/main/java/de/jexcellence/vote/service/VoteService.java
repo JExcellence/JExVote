@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -31,8 +32,6 @@ import java.util.logging.Logger;
 
 public class VoteService {
 
-    private static final Duration STREAK_TIMEOUT = Duration.ofHours(36);
-
     private final JavaPlugin plugin;
     private final Logger logger;
     private final PlatformScheduler scheduler;
@@ -40,14 +39,23 @@ public class VoteService {
     private final VoteRecordRepository recordRepository;
     private final PendingVoteRewardRepository pendingRewardRepository;
     private final VoteRewardService rewardService;
-    private final Map<String, VoteSite> voteSites;
+    private final VoteBroadcastService broadcastService;
+
+    private volatile Map<String, VoteSite> voteSites;
+    private volatile Duration streakTimeout;
+    private volatile Map<Integer, List<String>> streakCommands;
+    private volatile int recordRetentionDays;
 
     public VoteService(@NotNull JavaPlugin plugin,
                        @NotNull VotePlayerRepository playerRepository,
                        @NotNull VoteRecordRepository recordRepository,
                        @NotNull PendingVoteRewardRepository pendingRewardRepository,
                        @NotNull VoteRewardService rewardService,
-                       @NotNull Map<String, VoteSite> voteSites) {
+                       @NotNull VoteBroadcastService broadcastService,
+                       @NotNull Map<String, VoteSite> voteSites,
+                       int streakTimeoutHours,
+                       @NotNull Map<Integer, List<String>> streakCommands,
+                       int recordRetentionDays) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
         this.scheduler = PlatformScheduler.of(plugin);
@@ -55,7 +63,24 @@ public class VoteService {
         this.recordRepository = recordRepository;
         this.pendingRewardRepository = pendingRewardRepository;
         this.rewardService = rewardService;
+        this.broadcastService = broadcastService;
         this.voteSites = voteSites;
+        this.streakTimeout = Duration.ofHours(streakTimeoutHours);
+        this.streakCommands = streakCommands;
+        this.recordRetentionDays = recordRetentionDays;
+    }
+
+    /**
+     * Called by {@code /jexvote reload} to refresh mutable config state.
+     */
+    public void reload(@NotNull Map<String, VoteSite> voteSites,
+                       int streakTimeoutHours,
+                       @NotNull Map<Integer, List<String>> streakCommands,
+                       int recordRetentionDays) {
+        this.voteSites = voteSites;
+        this.streakTimeout = Duration.ofHours(streakTimeoutHours);
+        this.streakCommands = streakCommands;
+        this.recordRetentionDays = recordRetentionDays;
     }
 
     public @NotNull CompletableFuture<Boolean> processVote(@NotNull Vote vote) {
@@ -125,24 +150,27 @@ public class VoteService {
 
                 Player onlinePlayer = Bukkit.getPlayer(uuid);
                 VoteSnapshot snapshot = toSnapshot(player);
+                int streak = player.getCurrentStreak();
 
                 if (onlinePlayer != null && onlinePlayer.isOnline()) {
                     scheduler.runAtEntity(onlinePlayer, () -> {
-                        rewardService.grantRewards(onlinePlayer, vote.serviceName(), player.getCurrentStreak());
+                        rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
+                        executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
+                        broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
                         Bukkit.getPluginManager().callEvent(
                                 new VoteRewardClaimedEvent(uuid, vote.serviceName(), snapshot));
                     });
                     logger.info("Vote processed for " + vote.username()
-                            + " (online) — streak: " + player.getCurrentStreak()
+                            + " (online) — streak: " + streak
                             + ", total: " + player.getTotalVotes());
                 } else {
-                    String rewardData = rewardService.serializeRewards(vote.serviceName(), player.getCurrentStreak());
+                    String rewardData = rewardService.serializeRewards(vote.serviceName(), streak);
                     if (rewardData != null) {
                         pendingRewardRepository.create(
                                 new PendingVoteRewardEntity(uuid, vote.serviceName(), rewardData));
                     }
                     logger.info("Vote processed for " + vote.username()
-                            + " (offline) — rewards queued, streak: " + player.getCurrentStreak()
+                            + " (offline) — rewards queued, streak: " + streak
                             + ", total: " + player.getTotalVotes());
                 }
 
@@ -160,14 +188,23 @@ public class VoteService {
 
             scheduler.runAtEntity(player, () -> {
                 for (PendingVoteRewardEntity reward : pending) {
-                    rewardService.grantSerializedRewards(player, reward.getRewardData());
+                    try {
+                        rewardService.grantSerializedRewards(player, reward.getRewardData());
+                    } catch (Exception e) {
+                        logger.log(Level.WARNING,
+                                "Failed to deliver pending reward to " + player.getName(), e);
+                    }
                 }
-            });
 
-            for (PendingVoteRewardEntity reward : pending) {
-                pendingRewardRepository.delete(reward.getId());
-            }
-            logger.info("Delivered " + pending.size() + " pending vote reward(s) to " + player.getName());
+                // Delete only after successful delivery
+                for (PendingVoteRewardEntity reward : pending) {
+                    pendingRewardRepository.delete(reward.getId());
+                }
+
+                broadcastService.notifyPendingRewards(player, pending.size());
+                logger.info("Delivered " + pending.size()
+                        + " pending vote reward(s) to " + player.getName());
+            });
         });
     }
 
@@ -193,20 +230,63 @@ public class VoteService {
         return null;
     }
 
+    /**
+     * Resets all vote data for a specific player.
+     */
+    public @NotNull CompletableFuture<Boolean> resetPlayer(@NotNull UUID uuid) {
+        return playerRepository.findByUuidAsync(uuid).thenApply(opt -> {
+            if (opt.isEmpty()) return false;
+
+            VotePlayerEntity player = opt.get();
+            player.setTotalVotes(0);
+            player.setMonthlyVotes(0);
+            player.setCurrentStreak(0);
+            player.setHighestStreak(0);
+            player.setVotePoints(0);
+            player.setLastVoteAt(null);
+            player.setMonthlyResetMonth(null);
+            playerRepository.update(player);
+            return true;
+        });
+    }
+
     public void resetAllMonthlyVotes() {
         playerRepository.findAllAsync().thenAccept(players -> {
+            String currentMonth = YearMonth.now(ZoneId.systemDefault()).toString();
             for (VotePlayerEntity player : players) {
                 player.setMonthlyVotes(0);
-                player.setMonthlyResetMonth(YearMonth.now(ZoneId.systemDefault()).toString());
+                player.setMonthlyResetMonth(currentMonth);
                 playerRepository.update(player);
             }
+            logger.info("Reset monthly vote counts for " + players.size() + " player(s)");
+        }).exceptionally(ex -> {
+            logger.log(Level.SEVERE, "Failed to reset monthly votes", ex);
+            return null;
         });
-        logger.info("Reset monthly vote counts for all players");
+    }
+
+    /**
+     * Deletes vote records older than the configured retention period.
+     * Should be called periodically (e.g. on server start or via scheduler).
+     */
+    public void purgeOldRecords() {
+        if (recordRetentionDays <= 0) return;
+
+        Instant cutoff = Instant.now().minus(Duration.ofDays(recordRetentionDays));
+        recordRepository.deleteOlderThan(cutoff).thenAccept(count -> {
+            if (count > 0) {
+                logger.info("Purged " + count + " vote record(s) older than "
+                        + recordRetentionDays + " days");
+            }
+        }).exceptionally(ex -> {
+            logger.log(Level.WARNING, "Failed to purge old vote records", ex);
+            return null;
+        });
     }
 
     private void updateStreak(@NotNull VotePlayerEntity player) {
         Instant lastVote = player.getLastVoteAt();
-        if (lastVote == null || Duration.between(lastVote, Instant.now()).compareTo(STREAK_TIMEOUT) > 0) {
+        if (lastVote == null || Duration.between(lastVote, Instant.now()).compareTo(streakTimeout) > 0) {
             player.setCurrentStreak(1);
         } else {
             player.setCurrentStreak(player.getCurrentStreak() + 1);
@@ -214,6 +294,19 @@ public class VoteService {
 
         if (player.getCurrentStreak() > player.getHighestStreak()) {
             player.setHighestStreak(player.getCurrentStreak());
+        }
+    }
+
+    private void executeStreakCommands(@NotNull Player player, @NotNull String serviceName, int streak) {
+        List<String> commands = streakCommands.get(streak);
+        if (commands == null || commands.isEmpty()) return;
+
+        for (String command : commands) {
+            String resolved = command
+                    .replace("{player}", player.getName())
+                    .replace("{service}", serviceName)
+                    .replace("{streak}", String.valueOf(streak));
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), resolved);
         }
     }
 

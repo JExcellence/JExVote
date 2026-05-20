@@ -9,7 +9,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.KeyPair;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -24,8 +26,11 @@ public class VotifierServer {
     private final String token;
     private final Consumer<VoteResult> voteCallback;
 
-    private ServerSocket serverSocket;
-    private ExecutorService executor;
+    /** Max concurrent vote connections. Protects against connection floods. */
+    private static final int MAX_CONNECTIONS = 16;
+
+    private volatile ServerSocket serverSocket;
+    private volatile ExecutorService executor;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     public VotifierServer(@NotNull Logger logger, @NotNull String host, int port,
@@ -47,11 +52,15 @@ public class VotifierServer {
         serverSocket = new ServerSocket();
         serverSocket.bind(address);
 
-        executor = Executors.newCachedThreadPool(r -> {
-            Thread t = new Thread(r, "JExVote-Votifier");
-            t.setDaemon(true);
-            return t;
-        });
+        executor = new ThreadPoolExecutor(
+                1, MAX_CONNECTIONS, 60L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(64),
+                r -> {
+                    Thread t = new Thread(r, "JExVote-Votifier");
+                    t.setDaemon(true);
+                    return t;
+                },
+                new ThreadPoolExecutor.CallerRunsPolicy());
 
         running.set(true);
 

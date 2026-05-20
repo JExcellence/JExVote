@@ -26,6 +26,7 @@ import de.jexcellence.vote.service.VoteBroadcastService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteRewardService;
 import de.jexcellence.vote.service.VoteService;
+import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.view.VoteLeaderboardView;
 import de.jexcellence.vote.view.VoteOverviewView;
 import de.jexcellence.vote.view.VoteStreakView;
@@ -35,7 +36,10 @@ import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
 import java.security.KeyPair;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -142,11 +146,22 @@ public abstract class JExVote {
     }
 
     private void saveDefaultResource(@NotNull String resourcePath) {
-        var target = new java.io.File(plugin.getDataFolder(),
-                resourcePath.replace('/', java.io.File.separatorChar));
+        var target = new File(plugin.getDataFolder(),
+                resourcePath.replace('/', File.separatorChar));
         if (!target.exists()) {
             target.getParentFile().mkdirs();
             plugin.saveResource(resourcePath, false);
+        }
+    }
+
+    private void persistTokenToConfig(@NotNull String token) {
+        try {
+            File configFile = new File(plugin.getDataFolder(), "config.yml");
+            var config = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(configFile);
+            config.set("votifier.token", token);
+            config.save(configFile);
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Could not save generated token to config.yml", e);
         }
     }
 
@@ -177,10 +192,30 @@ public abstract class JExVote {
                 voteConfig.isPrivateMessageEnabled());
         leaderboardService = new VoteLeaderboardService(playerRepository);
 
+        // Enforce edition site limit
+        Map<String, VoteSite> sites = voteConfig.getVoteSites();
+        int maxSites = edition().maxVoteSites();
+        if (maxSites > 0 && sites.size() > maxSites) {
+            logger.warning("Free edition supports up to " + maxSites + " vote sites, but "
+                    + sites.size() + " are configured. Only the first " + maxSites + " will be loaded.");
+            var limited = new java.util.LinkedHashMap<String, VoteSite>();
+            int count = 0;
+            for (var entry : sites.entrySet()) {
+                if (count++ >= maxSites) break;
+                limited.put(entry.getKey(), entry.getValue());
+            }
+            sites = java.util.Collections.unmodifiableMap(limited);
+        }
+
         voteService = new VoteService(
                 plugin, playerRepository, recordRepository,
-                pendingRewardRepository, rewardService,
-                voteConfig.getVoteSites());
+                pendingRewardRepository, rewardService, broadcastService,
+                sites, voteConfig.getStreakTimeoutHours(),
+                voteConfig.getStreakCommands(),
+                voteConfig.getRecordRetentionDays());
+
+        // Purge old vote records on startup
+        voteService.purgeOldRecords();
     }
 
     private void initializeVotifierServer() {
@@ -191,7 +226,8 @@ public abstract class JExVote {
             String token = voteConfig.getServerToken();
             if (token.isEmpty()) {
                 token = VotifierKeyManager.generateToken();
-                logger.info("Generated Votifier token. Add this to your vote site config.");
+                persistTokenToConfig(token);
+                logger.info("Generated and saved Votifier token to config.yml.");
                 logger.info("Token: " + token);
                 logger.info("Public key: " + VotifierKeyManager.encodePublicKey(keyPair.getPublic()));
             }

@@ -36,15 +36,16 @@ public class VoteBroadcastService {
                               @Nullable UUID voterUuid) {
         if (broadcastMode == VoteConfig.BroadcastMode.NONE) return;
 
-        // Check cooldown
+        // Check cooldown (atomic compare-and-set to avoid race conditions)
         if (broadcastCooldownSeconds > 0) {
             long now = System.currentTimeMillis();
-            long last = lastBroadcastTime.get();
-            long elapsed = (now - last) / 1000;
-            if (elapsed < broadcastCooldownSeconds) {
+            long threshold = now - (broadcastCooldownSeconds * 1000L);
+            // Only proceed if we successfully claim the broadcast slot
+            long result = lastBroadcastTime.accumulateAndGet(now,
+                    (prev, next) -> prev < threshold ? next : prev);
+            if (result != now) {
                 return; // silently skip — within cooldown window
             }
-            lastBroadcastTime.set(now);
         }
 
         for (Player online : Bukkit.getOnlinePlayers()) {

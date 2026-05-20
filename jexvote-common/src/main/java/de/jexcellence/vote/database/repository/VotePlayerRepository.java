@@ -30,4 +30,18 @@ public class VotePlayerRepository extends AbstractCrudRepository<VotePlayerEntit
     public @NotNull CompletableFuture<List<VotePlayerEntity>> findAllAsync() {
         return query().listAsync();
     }
+
+    public @NotNull CompletableFuture<List<VotePlayerEntity>> findTopByTotalVotesAsync(int limit) {
+        return query()
+                .orderByDesc("totalVotes")
+                .limit(limit)
+                .listAsync();
+    }
+
+    public @NotNull CompletableFuture<List<VotePlayerEntity>> findTopByMonthlyVotesAsync(int limit) {
+        return query()
+                .orderByDesc("monthlyVotes")
+                .limit(limit)
+                .listAsync();
+    }
 }
