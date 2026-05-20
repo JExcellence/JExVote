@@ -69,13 +69,13 @@ public class VoteOverviewView extends BaseView {
     @Override
     protected void onRender(@NotNull RenderContext render, @NotNull Player player) {
 
-        // ── Top row accents ─────────────────────────────────────────
+        // ── Row 0: Header bar ───────────────────────────────────────
         render.slot(0, 0, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
-        render.slot(0, 8, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+        render.slot(0, 1, ItemBuilder.of(Material.GREEN_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
-
-        // ── Header (row 0, center) ─────────────────────────────────
+        render.slot(0, 2, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
         render.slot(0, 4, ItemBuilder.of(Material.EMERALD)
                 .name(MM.deserialize("<gradient:#86efac:#16a34a><bold>✦ Vote Overview</bold></gradient>")
                         .decoration(TextDecoration.ITALIC, false))
@@ -86,8 +86,20 @@ public class VoteOverviewView extends BaseView {
                         MM.deserialize("  <gray>Click a site below to get started.</gray>"),
                         Component.empty()))
                 .build());
+        render.slot(0, 6, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(0, 7, ItemBuilder.of(Material.GREEN_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(0, 8, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
 
-        // ── Player head (row 1, col 3) ──────────────────────────────
+        // ── Row 1: Player stats ─────────────────────────────────────
+        render.slot(1, 0, ItemBuilder.of(Material.GREEN_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(1, 8, ItemBuilder.of(Material.GREEN_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+
+        // Player head placeholder
         render.slot(1, 3, HeadBuilder.fromPlayer(player)
                 .name(MM.deserialize("<gradient:#86efac:#16a34a><bold>" + player.getName() + "</bold></gradient>"))
                 .lore(List.of(
@@ -96,10 +108,22 @@ public class VoteOverviewView extends BaseView {
                         Component.empty()))
                 .build());
 
-        // Load stats async and update head + stat items
+        // Placeholder stat items
+        render.slot(1, 4, ItemBuilder.of(Material.NETHER_STAR)
+                .name(MM.deserialize("<gradient:#d8b4fe:#9333ea><bold>Vote Points</bold></gradient>")
+                        .decoration(TextDecoration.ITALIC, false))
+                .lore(List.of(Component.empty(), MM.deserialize("  <gray>Loading...</gray>"), Component.empty()))
+                .build());
+
+        render.slot(1, 5, ItemBuilder.of(Material.BLAZE_POWDER)
+                .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>Vote Streak</bold></gradient>")
+                        .decoration(TextDecoration.ITALIC, false))
+                .lore(List.of(Component.empty(), MM.deserialize("  <gray>Loading...</gray>"), Component.empty()))
+                .build());
+
+        // Load stats async and update
         voteService.getPlayerStats(player.getUniqueId()).thenAccept(stats ->
                 scheduler.runAtEntity(player, () -> {
-                    // Progress bar for streak
                     int streak = stats.currentStreak();
                     int nextMilestone = nextMilestone(streak);
                     String progressBar = buildProgressBar(streak, nextMilestone, 10);
@@ -118,7 +142,6 @@ public class VoteOverviewView extends BaseView {
                                     Component.empty()))
                             .build());
 
-                    // Points item (nether star)
                     render.slot(1, 4, ItemBuilder.of(Material.NETHER_STAR)
                             .name(MM.deserialize("<gradient:#d8b4fe:#9333ea><bold>Vote Points</bold></gradient>")
                                     .decoration(TextDecoration.ITALIC, false))
@@ -131,7 +154,6 @@ public class VoteOverviewView extends BaseView {
                                     Component.empty()))
                             .build());
 
-                    // Streak item (blaze powder)
                     render.slot(1, 5, ItemBuilder.of(Material.BLAZE_POWDER)
                             .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>Vote Streak</bold></gradient>")
                                     .decoration(TextDecoration.ITALIC, false))
@@ -147,20 +169,20 @@ public class VoteOverviewView extends BaseView {
                             .build());
                 }));
 
-        // ── Placeholder stat items (before async loads) ─────────────
-        render.slot(1, 4, ItemBuilder.of(Material.NETHER_STAR)
-                .name(MM.deserialize("<gradient:#d8b4fe:#9333ea><bold>Vote Points</bold></gradient>")
-                        .decoration(TextDecoration.ITALIC, false))
-                .lore(List.of(Component.empty(), MM.deserialize("  <gray>Loading...</gray>"), Component.empty()))
-                .build());
+        // ── Row 2: Separator with accents ───────────────────────────
+        render.slot(2, 0, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(2, 4, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(2, 8, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
 
-        render.slot(1, 5, ItemBuilder.of(Material.BLAZE_POWDER)
-                .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>Vote Streak</bold></gradient>")
-                        .decoration(TextDecoration.ITALIC, false))
-                .lore(List.of(Component.empty(), MM.deserialize("  <gray>Loading...</gray>"), Component.empty()))
-                .build());
+        // ── Row 3: Vote sites ───────────────────────────────────────
+        render.slot(3, 0, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(3, 8, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
 
-        // ── Vote site items (row 3) ─────────────────────────────────
         List<VoteSite> sites = new ArrayList<>(voteService.getVoteSites().values());
         int[] siteCols = {1, 2, 3, 4, 5, 6, 7};
         Material[] siteMaterials = {
@@ -203,20 +225,26 @@ public class VoteOverviewView extends BaseView {
                     });
         }
 
-        // Fill remaining site slots with dark glass
+        // Fill remaining site slots with gray glass
         for (int i = sites.size(); i < siteCols.length; i++) {
             render.slot(3, siteCols[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
                     .name(Component.empty()).build());
         }
 
-        // ── Green accents on site row edges ────────────────────────
-        render.slot(3, 0, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+        // ── Row 4: Separator with accents ───────────────────────────
+        render.slot(4, 0, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
-        render.slot(3, 8, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+        render.slot(4, 4, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(4, 8, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
 
-        // ── Bottom buttons (row 5) ──────────────────────────────────
-        // Leaderboard button (col 2)
+        // ── Row 5: Navigation buttons ───────────────────────────────
+        render.slot(5, 0, ItemBuilder.of(Material.GREEN_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(5, 8, ItemBuilder.of(Material.GREEN_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+
         render.slot(5, 2, ItemBuilder.of(Material.GOLD_BLOCK)
                 .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>⭐ Leaderboard</bold></gradient>")
                         .decoration(TextDecoration.ITALIC, false))
@@ -230,7 +258,6 @@ public class VoteOverviewView extends BaseView {
                 .build())
                 .onClick(click -> click.openForPlayer(VoteLeaderboardView.class));
 
-        // Streak button (col 6)
         render.slot(5, 6, ItemBuilder.of(Material.MAGMA_CREAM)
                 .name(MM.deserialize("<gradient:#fca5a5:#dc2626><bold>🔥 Streak Rewards</bold></gradient>")
                         .decoration(TextDecoration.ITALIC, false))

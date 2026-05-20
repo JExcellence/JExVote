@@ -67,13 +67,13 @@ public class VoteStreakView extends BaseView {
     @Override
     protected void onRender(@NotNull RenderContext render, @NotNull Player player) {
 
-        // ── Top row accents ─────────────────────────────────────────
+        // ── Row 0: Header bar ───────────────────────────────────────
         render.slot(0, 0, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
-        render.slot(0, 8, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
+        render.slot(0, 1, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
-
-        // ── Header (row 0, center) ─────────────────────────────────
+        render.slot(0, 2, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
         render.slot(0, 4, ItemBuilder.of(Material.MAGMA_CREAM)
                 .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>🔥 Streak Rewards</bold></gradient>")
                         .decoration(TextDecoration.ITALIC, false))
@@ -84,8 +84,20 @@ public class VoteStreakView extends BaseView {
                         MM.deserialize("  <gray>Reach milestones for bonus rewards.</gray>"),
                         Component.empty()))
                 .build());
+        render.slot(0, 6, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(0, 7, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(0, 8, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
 
-        // ── Loading state ───────────────────────────────────────────
+        // ── Row 1: Info items ───────────────────────────────────────
+        render.slot(1, 0, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(1, 8, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+
+        // Loading placeholders
         render.slot(1, 1, ItemBuilder.of(Material.BLAZE_POWDER)
                 .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>🔥 Your Streak</bold></gradient>")
                         .decoration(TextDecoration.ITALIC, false))
@@ -98,8 +110,30 @@ public class VoteStreakView extends BaseView {
                 .lore(List.of(Component.empty(), MM.deserialize("  <gray>Loading...</gray>"), Component.empty()))
                 .build());
 
-        // ── Separator accent ────────────────────────────────────────
+        // ── Row 2: Separator with accents ───────────────────────────
+        render.slot(2, 0, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
         render.slot(2, 4, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(2, 8, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+
+        // ── Row 3-4: Milestone grid edges ───────────────────────────
+        render.slot(3, 0, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(3, 8, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(4, 0, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(4, 8, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+
+        // ── Row 5: Bottom bar ───────────────────────────────────────
+        render.slot(5, 1, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(5, 7, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(5, 8, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
 
         // ── Load data and render ────────────────────────────────────
