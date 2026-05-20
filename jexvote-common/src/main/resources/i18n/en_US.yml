@@ -5,6 +5,13 @@ prefix: '<dark_gray>[<gradient:#86efac:#16a34a>Vote</gradient><dark_gray>] '
 _defaults:
   title: '<gray>Menu'
   back: '<gray>Back'
+  previous: '<gray>Previous Page'
+  next: '<gray>Next Page'
+  loading: '<gray>Loading...'
+  page:
+    name: '<gray>Page <white>{page}</white> / <white>{total_pages}</white>'
+    lore:
+      - ''
 
 vote:
   broadcast: '<dark_gray>[<gradient:#86efac:#16a34a>Vote</gradient><dark_gray>]</dark_gray> <gradient:#86efac:#16a34a>{player}</gradient> <gray>voted on</gray> <gradient:#a5f3fc:#06b6d4>{service}</gradient><gray>!'

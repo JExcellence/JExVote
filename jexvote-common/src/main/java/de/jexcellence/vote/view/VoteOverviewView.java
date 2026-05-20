@@ -1,6 +1,7 @@
 package de.jexcellence.vote.view;
 
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
+import de.jexcellence.jexplatform.utility.item.HeadBuilder;
 import de.jexcellence.jexplatform.utility.item.ItemBuilder;
 import de.jexcellence.jexplatform.view.BaseView;
 import de.jexcellence.vote.model.VoteSite;
@@ -46,67 +47,138 @@ public class VoteOverviewView extends BaseView {
     @Override
     protected String[] layout() {
         return new String[]{
-                "         ",
-                "  SSSSS  ",
-                "         ",
-                "  L   K  ",
-                "         "
+                "XXXXXXXXX",
+                "X  HPS  X",
+                "XXXXXXXXX",
+                "XSSSSSSSX",
+                "XXXXXXXXX",
+                "XXLXXXKXX"
         };
     }
 
     @Override
     protected int size() {
-        return 5;
+        return 6;
+    }
+
+    @Override
+    protected Material fillerMaterial() {
+        return Material.BLACK_STAINED_GLASS_PANE;
     }
 
     @Override
     protected void onRender(@NotNull RenderContext render, @NotNull Player player) {
-        List<VoteSite> sites = new ArrayList<>(voteService.getVoteSites().values());
 
-        // ── Stats item (center top) ─────────────────────────────────
+        // ── Top border accent (green glass) ─────────────────────────
+        for (int col : new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8}) {
+            render.slot(0, col, ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE)
+                    .name(Component.empty())
+                    .build());
+        }
+        // Green accents at the top corners and center
+        render.slot(0, 0, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(0, 8, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(0, 4, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
 
-        render.slot(0, 4, ItemBuilder.of(Material.DIAMOND)
-                .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>Your Vote Stats</bold></gradient>")
-                        .decoration(TextDecoration.ITALIC, false))
+        // ── Player head (row 1, col 3) ──────────────────────────────
+        render.slot(1, 3, HeadBuilder.fromPlayer(player)
+                .name(MM.deserialize("<gradient:#86efac:#16a34a><bold>" + player.getName() + "</bold></gradient>"))
                 .lore(List.of(
-                        MM.deserialize("<gray>Loading...</gray>")))
+                        Component.empty(),
+                        MM.deserialize("  <gray>Loading your stats...</gray>"),
+                        Component.empty()))
                 .build());
 
-        // Load stats async, update slot on main thread
+        // Load stats async and update head + stat items
         voteService.getPlayerStats(player.getUniqueId()).thenAccept(stats ->
-                scheduler.runAtEntity(player, () ->
-                        render.slot(0, 4, ItemBuilder.of(Material.DIAMOND)
-                                .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>Your Vote Stats</bold></gradient>")
-                                        .decoration(TextDecoration.ITALIC, false))
-                                .lore(List.of(
-                                        Component.empty(),
-                                        MM.deserialize("  <gray>Total Votes:</gray> <white>" + stats.totalVotes() + "</white>"),
-                                        MM.deserialize("  <gray>Monthly Votes:</gray> <white>" + stats.monthlyVotes() + "</white>"),
-                                        MM.deserialize("  <gray>Current Streak:</gray> <gradient:#86efac:#16a34a>" + stats.currentStreak() + "</gradient>"),
-                                        MM.deserialize("  <gray>Highest Streak:</gray> <gradient:#fde047:#f59e0b>" + stats.highestStreak() + "</gradient>"),
-                                        MM.deserialize("  <gray>Vote Points:</gray> <gradient:#d8b4fe:#9333ea>" + stats.votePoints() + "</gradient>"),
-                                        Component.empty()
-                                ))
-                                .build())));
+                scheduler.runAtEntity(player, () -> {
+                    // Progress bar for streak
+                    int streak = stats.currentStreak();
+                    int nextMilestone = nextMilestone(streak);
+                    String progressBar = buildProgressBar(streak, nextMilestone, 10);
 
-        // ── Vote site items (row 1, layout 'S' slots) ──────────────
-        // Layout row 1: "  SSSSS  " = columns 2-6 = slots 11-15
-        int[] siteSlots = {11, 12, 13, 14, 15};
-        for (int i = 0; i < sites.size() && i < siteSlots.length; i++) {
+                    render.slot(1, 3, HeadBuilder.fromPlayer(player)
+                            .name(MM.deserialize("<gradient:#86efac:#16a34a><bold>" + player.getName() + "</bold></gradient>"))
+                            .lore(List.of(
+                                    Component.empty(),
+                                    MM.deserialize("  <dark_gray>▸</dark_gray> <gray>Total Votes:</gray> <white>" + stats.totalVotes() + "</white>"),
+                                    MM.deserialize("  <dark_gray>▸</dark_gray> <gray>Monthly:</gray> <white>" + stats.monthlyVotes() + "</white>"),
+                                    MM.deserialize("  <dark_gray>▸</dark_gray> <gray>Vote Points:</gray> <gradient:#d8b4fe:#9333ea>" + stats.votePoints() + "</gradient>"),
+                                    Component.empty(),
+                                    MM.deserialize("  <gradient:#fde047:#f59e0b>Streak:</gradient> <white>" + streak + "</white> <dark_gray>/</dark_gray> <gray>" + nextMilestone + "</gray>"),
+                                    MM.deserialize("  " + progressBar),
+                                    MM.deserialize("  <gray>Highest:</gray> <gradient:#fde047:#f59e0b>" + stats.highestStreak() + "</gradient>"),
+                                    Component.empty()))
+                            .build());
+
+                    // Points item (nether star)
+                    render.slot(1, 4, ItemBuilder.of(Material.NETHER_STAR)
+                            .name(MM.deserialize("<gradient:#d8b4fe:#9333ea><bold>Vote Points</bold></gradient>")
+                                    .decoration(TextDecoration.ITALIC, false))
+                            .glow(true)
+                            .lore(List.of(
+                                    Component.empty(),
+                                    MM.deserialize("  <gray>Balance:</gray> <gradient:#d8b4fe:#9333ea>" + stats.votePoints() + "</gradient>"),
+                                    Component.empty(),
+                                    MM.deserialize("  <dark_gray>Earn points by voting daily!</dark_gray>"),
+                                    Component.empty()))
+                            .build());
+
+                    // Streak item (blaze powder)
+                    render.slot(1, 5, ItemBuilder.of(Material.BLAZE_POWDER)
+                            .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>Vote Streak</bold></gradient>")
+                                    .decoration(TextDecoration.ITALIC, false))
+                            .glow(streak >= 7)
+                            .lore(List.of(
+                                    Component.empty(),
+                                    MM.deserialize("  <gray>Current:</gray> <gradient:#86efac:#16a34a>" + streak + " day" + (streak != 1 ? "s" : "") + "</gradient>"),
+                                    MM.deserialize("  <gray>Highest:</gray> <gradient:#fde047:#f59e0b>" + stats.highestStreak() + " day" + (stats.highestStreak() != 1 ? "s" : "") + "</gradient>"),
+                                    Component.empty(),
+                                    MM.deserialize("  " + progressBar),
+                                    MM.deserialize("  <dark_gray>Next milestone: Day " + nextMilestone + "</dark_gray>"),
+                                    Component.empty()))
+                            .build());
+                }));
+
+        // ── Placeholder stat items (before async loads) ─────────────
+        render.slot(1, 4, ItemBuilder.of(Material.NETHER_STAR)
+                .name(MM.deserialize("<gradient:#d8b4fe:#9333ea><bold>Vote Points</bold></gradient>")
+                        .decoration(TextDecoration.ITALIC, false))
+                .lore(List.of(Component.empty(), MM.deserialize("  <gray>Loading...</gray>"), Component.empty()))
+                .build());
+
+        render.slot(1, 5, ItemBuilder.of(Material.BLAZE_POWDER)
+                .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>Vote Streak</bold></gradient>")
+                        .decoration(TextDecoration.ITALIC, false))
+                .lore(List.of(Component.empty(), MM.deserialize("  <gray>Loading...</gray>"), Component.empty()))
+                .build());
+
+        // ── Vote site items (row 3) ─────────────────────────────────
+        List<VoteSite> sites = new ArrayList<>(voteService.getVoteSites().values());
+        int[] siteCols = {1, 2, 3, 4, 5, 6, 7};
+        Material[] siteMaterials = {
+                Material.EMERALD, Material.DIAMOND, Material.GOLD_INGOT,
+                Material.AMETHYST_SHARD, Material.LAPIS_LAZULI, Material.REDSTONE, Material.COPPER_INGOT
+        };
+
+        for (int i = 0; i < sites.size() && i < siteCols.length; i++) {
             VoteSite site = sites.get(i);
-            int slot = siteSlots[i];
+            Material mat = siteMaterials[i % siteMaterials.length];
 
             List<Component> lore = new ArrayList<>();
             lore.add(Component.empty());
-            lore.add(MM.deserialize("  <gray>Service:</gray> <white>" + site.serviceName() + "</white>"));
-            lore.add(MM.deserialize("  <gray>Points:</gray> <gradient:#86efac:#16a34a>+" + site.pointsPerVote() + "</gradient>"));
+            lore.add(MM.deserialize("  <dark_gray>▸</dark_gray> <gray>Service:</gray> <white>" + site.serviceName() + "</white>"));
+            lore.add(MM.deserialize("  <dark_gray>▸</dark_gray> <gray>Points:</gray> <gradient:#86efac:#16a34a>+" + site.pointsPerVote() + "</gradient>"));
             if (site.voteUrl() != null) {
                 lore.add(Component.empty());
-                lore.add(MM.deserialize("  <gradient:#fde047:#f59e0b>Click to get the vote link!</gradient>"));
+                lore.add(MM.deserialize("  <gradient:#fde047:#f59e0b>▶ Click to get vote link</gradient>"));
             }
 
-            render.slot(slot, ItemBuilder.of(Material.PAPER)
-                    .name(MM.deserialize("<gradient:#a5f3fc:#06b6d4>" + site.displayName() + "</gradient>")
+            render.slot(3, siteCols[i], ItemBuilder.of(mat)
+                    .name(MM.deserialize("<gradient:#a5f3fc:#06b6d4><bold>" + site.displayName() + "</bold></gradient>")
                             .decoration(TextDecoration.ITALIC, false))
                     .lore(lore)
                     .build())
@@ -115,9 +187,9 @@ public class VoteOverviewView extends BaseView {
                         if (site.voteUrl() != null) {
                             clicker.closeInventory();
                             Component message = MM.deserialize(
-                                    "<gradient:#86efac:#16a34a>✔</gradient> <gray>Vote for us on</gray> "
-                                            + "<gradient:#a5f3fc:#06b6d4>" + site.displayName() + "</gradient>"
-                                            + "<gray>:</gray> ")
+                                            "<gradient:#86efac:#16a34a>✔</gradient> <gray>Vote for us on</gray> "
+                                                    + "<gradient:#a5f3fc:#06b6d4>" + site.displayName() + "</gradient>"
+                                                    + "<gray>:</gray> ")
                                     .append(Component.text(site.voteUrl(), NamedTextColor.AQUA)
                                             .clickEvent(ClickEvent.openUrl(site.voteUrl()))
                                             .hoverEvent(HoverEvent.showText(
@@ -127,28 +199,76 @@ public class VoteOverviewView extends BaseView {
                     });
         }
 
-        // ── Leaderboard button (row 3 left) ────────────────────────
-        render.slot(3, 2, ItemBuilder.of(Material.GOLD_BLOCK)
-                .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>Leaderboard</bold></gradient>")
+        // Fill remaining site slots with dark glass
+        for (int i = sites.size(); i < siteCols.length; i++) {
+            render.slot(3, siteCols[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
+                    .name(Component.empty()).build());
+        }
+
+        // ── Separator row (row 2 + 4) ───────────────────────────────
+        for (int col = 0; col < 9; col++) {
+            render.slot(2, col, ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE)
+                    .name(Component.empty()).build());
+            render.slot(4, col, ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE)
+                    .name(Component.empty()).build());
+        }
+        // Green accent on site row edges
+        render.slot(3, 0, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+        render.slot(3, 8, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                .name(Component.empty()).build());
+
+        // ── Bottom buttons (row 5) ──────────────────────────────────
+        // Leaderboard button (col 2)
+        render.slot(5, 2, ItemBuilder.of(Material.GOLD_BLOCK)
+                .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>⭐ Leaderboard</bold></gradient>")
                         .decoration(TextDecoration.ITALIC, false))
+                .glow(true)
                 .lore(List.of(
                         Component.empty(),
-                        MM.deserialize("  <gray>View the top voters</gray>"),
+                        MM.deserialize("  <gray>See who voted the most!</gray>"),
                         Component.empty(),
-                        MM.deserialize("  <gradient:#fde047:#f59e0b>Click to view!</gradient>")))
+                        MM.deserialize("  <gradient:#fde047:#f59e0b>▶ Click to view</gradient>"),
+                        Component.empty()))
                 .build())
                 .onClick(click -> click.openForPlayer(VoteLeaderboardView.class));
 
-        // ── Streak button (row 3 right) ─────────────────────────────
-        render.slot(3, 6, ItemBuilder.of(Material.BLAZE_POWDER)
-                .name(MM.deserialize("<gradient:#fca5a5:#dc2626><bold>Vote Streaks</bold></gradient>")
+        // Streak button (col 6)
+        render.slot(5, 6, ItemBuilder.of(Material.MAGMA_CREAM)
+                .name(MM.deserialize("<gradient:#fca5a5:#dc2626><bold>🔥 Streak Rewards</bold></gradient>")
                         .decoration(TextDecoration.ITALIC, false))
+                .glow(true)
                 .lore(List.of(
                         Component.empty(),
-                        MM.deserialize("  <gray>View streak rewards</gray>"),
+                        MM.deserialize("  <gray>View milestone rewards!</gray>"),
                         Component.empty(),
-                        MM.deserialize("  <gradient:#fca5a5:#dc2626>Click to view!</gradient>")))
+                        MM.deserialize("  <gradient:#fca5a5:#dc2626>▶ Click to view</gradient>"),
+                        Component.empty()))
                 .build())
                 .onClick(click -> click.openForPlayer(VoteStreakView.class));
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────
+
+    private static String buildProgressBar(int current, int target, int bars) {
+        int filled = target > 0 ? Math.min(bars, (int) ((double) current / target * bars)) : 0;
+        StringBuilder sb = new StringBuilder("<dark_gray>[</dark_gray>");
+        for (int i = 0; i < bars; i++) {
+            if (i < filled) {
+                sb.append("<gradient:#86efac:#16a34a>|</gradient>");
+            } else {
+                sb.append("<dark_gray>|</dark_gray>");
+            }
+        }
+        sb.append("<dark_gray>]</dark_gray>");
+        return sb.toString();
+    }
+
+    private int nextMilestone(int currentStreak) {
+        int[] milestones = {7, 14, 30, 60, 90, 120, 180, 365};
+        for (int m : milestones) {
+            if (currentStreak < m) return m;
+        }
+        return milestones[milestones.length - 1];
     }
 }
