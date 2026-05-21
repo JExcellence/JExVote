@@ -5,13 +5,6 @@
 # ║  support (v1 RSA + v2 HMAC). No NuVotifier needed.          ║
 # ╚═══════════════════════════════════════════════════════════════╝
 
-# ── Language ─────────────────────────────────────────────────────
-# Force all players to see a specific language, ignoring their
-# Minecraft client locale. Leave empty to use each player's
-# client language (auto-detect).
-# Supported: en_US, de_DE, cs_CZ, sk_SK
-locale: ''
-
 # ── Votifier Server ─────────────────────────────────────────────
 # The built-in vote receiver. Compatible with all vote sites
 # that support the Votifier or NuVotifier protocol.
