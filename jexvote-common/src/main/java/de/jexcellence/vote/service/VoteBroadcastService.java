@@ -70,6 +70,7 @@ public class VoteBroadcastService {
         if (!privateMessageEnabled) return;
 
         r18n().msg("vote.received")
+                .with("player", player.getName())
                 .with("service", serviceName)
                 .with("streak", String.valueOf(streak))
                 .send(player);

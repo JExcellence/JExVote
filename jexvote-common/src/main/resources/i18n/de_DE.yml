@@ -15,7 +15,7 @@ _defaults:
 
 vote:
   broadcast: '<dark_gray>[<gradient:#86efac:#16a34a>Vote</gradient><dark_gray>]</dark_gray> <gradient:#86efac:#16a34a>{player}</gradient> <gray>hat auf</gray> <gradient:#a5f3fc:#06b6d4>{service}</gradient> <gray>gevotet!</gray>'
-  received: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Danke für deine Stimme auf</gray> <gradient:#a5f3fc:#06b6d4>{service}</gradient><gray>!</gray> <gray>Streak:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient>'
+  received: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Danke,</gray> <gradient:#86efac:#16a34a>{player}</gradient><gray>, für deine Stimme auf</gray> <gradient:#a5f3fc:#06b6d4>{service}</gradient><gray>!</gray> <gray>Streak:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient>'
   pending_rewards: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Du hast</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>ausstehende Vote-Belohnung(en)! Wird jetzt zugestellt...</gray>'
   no_permission: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Dazu hast du keine Berechtigung.</red>'
   player_not_found: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Spieler nicht gefunden:</red> <white>{player}</white>'
