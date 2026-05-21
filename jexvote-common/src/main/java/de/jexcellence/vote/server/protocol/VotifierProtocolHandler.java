@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -67,19 +68,20 @@ public class VotifierProtocolHandler implements Runnable {
                     handleV2Binary(in, out, challenge);
                 } else {
                     // Not v2 magic — treat first two bytes as start of v1 block
-                    handleV1(in, firstByte, secondByte);
+                    handleV1(in, out, challenge, firstByte, secondByte);
                 }
             } else if (firstByte == 0x00 || firstByte == '{') {
                 handleV2(in, out, challenge, firstByte);
             } else {
-                handleV1(in, firstByte, -1);
+                handleV1(in, out, challenge, firstByte, -1);
             }
         } catch (Exception e) {
             logger.log(Level.WARNING, "Error handling vote connection", e);
         }
     }
 
-    private void handleV1(@NotNull BufferedInputStream in, int firstByte, int secondByte) throws Exception {
+    private void handleV1(@NotNull BufferedInputStream in, @NotNull OutputStream out,
+                          @NotNull String challenge, int firstByte, int secondByte) throws Exception {
         byte[] block = new byte[V1_BLOCK_SIZE];
         block[0] = (byte) firstByte;
 
@@ -91,32 +93,91 @@ public class VotifierProtocolHandler implements Runnable {
 
         while (read < V1_BLOCK_SIZE) {
             int n = in.read(block, read, V1_BLOCK_SIZE - read);
-            if (n == -1) {
-                logger.warning("Incomplete v1 vote block (got " + read + " bytes)");
-                return;
-            }
+            if (n == -1) break;
             read += n;
         }
 
-        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
-        byte[] decrypted = cipher.doFinal(block);
+        if (read == V1_BLOCK_SIZE) {
+            // Full 256-byte RSA block — standard v1
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+            byte[] decrypted = cipher.doFinal(block);
 
-        String payload = new String(decrypted, StandardCharsets.UTF_8);
-        String[] lines = payload.split("\n");
+            String payload = new String(decrypted, StandardCharsets.UTF_8);
+            String[] lines = payload.split("\n");
 
-        if (lines.length < 4 || !"VOTE".equals(lines[0])) {
-            logger.warning("Invalid v1 vote payload");
-            return;
+            if (lines.length < 4 || !"VOTE".equals(lines[0])) {
+                logger.warning("Invalid v1 vote payload");
+                return;
+            }
+
+            String serviceName = lines[1].trim();
+            String username = lines[2].trim();
+            String address = lines[3].trim();
+
+            Vote vote = new Vote(username, serviceName, address, Instant.now());
+            voteCallback.accept(new VoteResult(vote, VoteResult.Protocol.V1));
+            logger.info("Received v1 vote from " + serviceName + " for " + username);
+        } else {
+            // Not 256 bytes — likely a v2 message with unrecognized framing.
+            // Try to recover it as v2 JSON.
+            logger.info("Got " + read + " bytes (v1 expects 256), attempting v2 fallback. "
+                    + "First bytes: " + hexDump(block, Math.min(read, 16)));
+            byte[] data = Arrays.copyOf(block, read);
+            if (!tryV2Fallback(data, out, challenge)) {
+                logger.warning("Vote block (" + read + " bytes) — neither valid v1 nor v2");
+            }
+        }
+    }
+
+    /**
+     * Attempts to interpret raw bytes as a v2 vote message.
+     * Tries multiple framing variants: 2-byte length prefix, raw JSON, or
+     * scanning for the first '{' to find embedded JSON.
+     */
+    private boolean tryV2Fallback(byte[] data, @NotNull OutputStream out,
+                                   @NotNull String challenge) {
+        // Strategy 1: first 2 bytes are a big-endian length prefix, rest is JSON
+        if (data.length > 4) {
+            int length = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
+            if (length > 0 && length <= data.length - 2) {
+                String json = new String(data, 2, length, StandardCharsets.UTF_8);
+                if (json.trim().startsWith("{")) {
+                    try {
+                        processV2Json(json, out, challenge);
+                        logger.info("v2 fallback succeeded (length-prefix framing)");
+                        return true;
+                    } catch (Exception e) {
+                        logger.log(Level.FINE, "v2 fallback (length-prefix) failed", e);
+                    }
+                }
+            }
         }
 
-        String serviceName = lines[1].trim();
-        String username = lines[2].trim();
-        String address = lines[3].trim();
+        // Strategy 2: scan for first '{' and treat everything from there as JSON
+        String raw = new String(data, StandardCharsets.UTF_8);
+        int jsonStart = raw.indexOf('{');
+        if (jsonStart >= 0) {
+            String json = raw.substring(jsonStart);
+            try {
+                processV2Json(json, out, challenge);
+                logger.info("v2 fallback succeeded (raw JSON at offset " + jsonStart + ")");
+                return true;
+            } catch (Exception e) {
+                logger.log(Level.FINE, "v2 fallback (raw JSON) failed", e);
+            }
+        }
 
-        Vote vote = new Vote(username, serviceName, address, Instant.now());
-        voteCallback.accept(new VoteResult(vote, VoteResult.Protocol.V1));
-        logger.info("Received v1 vote from " + serviceName + " for " + username);
+        return false;
+    }
+
+    private static String hexDump(byte[] data, int length) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            if (i > 0) sb.append(' ');
+            sb.append(String.format("%02X", data[i] & 0xFF));
+        }
+        return sb.toString();
     }
 
     /**
