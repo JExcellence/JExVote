@@ -20,9 +20,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Streak milestone view showing current streak progress and
+ * unlockable rewards at each milestone day.
+ *
+ * <p>Uses absolute slot indices exclusively (no layout override) so that
+ * BaseView's auto-fill handles all unset slots with {@link #fillerMaterial()}.
+ */
 public class VoteStreakView extends BaseView {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
+
+    /*
+     * Slot grid reference (6 rows × 9 cols):
+     *   0  1  2  3  4  5  6  7  8
+     *   9 10 11 12 13 14 15 16 17
+     *  18 19 20 21 22 23 24 25 26
+     *  27 28 29 30 31 32 33 34 35
+     *  36 37 38 39 40 41 42 43 44
+     *  45 46 47 48 49 50 51 52 53
+     */
 
     private final VoteService voteService;
     private final VoteRewardService rewardService;
@@ -55,208 +72,173 @@ public class VoteStreakView extends BaseView {
     @Override
     protected void onRender(@NotNull RenderContext render, @NotNull Player player) {
 
-        // ── Row 0: Header bar ───────────────────────────────────────
-        render.slot(0, 0, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(0, 1, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(0, 2, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(0, 4, ItemBuilder.of(Material.MAGMA_CREAM)
-                .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>🔥 Streak Rewards</bold></gradient>")
-                        .decoration(TextDecoration.ITALIC, false))
+        // ── Row 0: Header ───────────────────────────────────────────
+        glass(render, Material.ORANGE_STAINED_GLASS_PANE, 0, 2, 6, 8);
+        glass(render, Material.YELLOW_STAINED_GLASS_PANE, 1, 7);
+        render.slot(4, ItemBuilder.of(Material.MAGMA_CREAM)
+                .name(name("<gradient:#fca5a5:#dc2626><bold>🔥 Streak Rewards</bold></gradient>"))
                 .glow(true)
                 .lore(List.of(
                         Component.empty(),
-                        MM.deserialize("  <gray>Vote daily to build your streak!</gray>"),
-                        MM.deserialize("  <gray>Reach milestones for bonus rewards.</gray>"),
+                        lore("  <gray>Vote daily to build your streak!"),
+                        lore("  <gray>Reach milestones for bonus rewards."),
                         Component.empty()))
                 .build());
-        render.slot(0, 6, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(0, 7, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(0, 8, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
 
         // ── Row 1: Info items ───────────────────────────────────────
-        render.slot(1, 0, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(1, 8, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
+        glass(render, Material.YELLOW_STAINED_GLASS_PANE, 9, 17);
 
-        // Loading placeholders
-        render.slot(1, 1, ItemBuilder.of(Material.BLAZE_POWDER)
-                .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>🔥 Your Streak</bold></gradient>")
-                        .decoration(TextDecoration.ITALIC, false))
-                .lore(List.of(Component.empty(), MM.deserialize("  <gray>Loading...</gray>"), Component.empty()))
+        // Placeholder items while async data loads
+        render.slot(11, ItemBuilder.of(Material.BLAZE_POWDER)
+                .name(name("<gradient:#fde047:#f59e0b><bold>🔥 Your Streak</bold></gradient>"))
+                .lore(List.of(Component.empty(), lore("  <gray>Loading..."), Component.empty()))
                 .build());
 
-        render.slot(1, 7, ItemBuilder.of(Material.CLOCK)
-                .name(MM.deserialize("<gradient:#a5f3fc:#06b6d4><bold>Progress</bold></gradient>")
-                        .decoration(TextDecoration.ITALIC, false))
-                .lore(List.of(Component.empty(), MM.deserialize("  <gray>Loading...</gray>"), Component.empty()))
+        render.slot(13, ItemBuilder.of(Material.BOOK)
+                .name(name("<gradient:#86efac:#16a34a><bold>How It Works</bold></gradient>"))
+                .lore(List.of(
+                        Component.empty(),
+                        lore("  <gray>Vote every day to build"),
+                        lore("  <gray>your streak. Reach milestones"),
+                        lore("  <gray>to earn bonus rewards!"),
+                        Component.empty(),
+                        lore("  <gradient:#fca5a5:#dc2626>Missing a day resets"),
+                        lore("  <gradient:#fca5a5:#dc2626>your streak!"),
+                        Component.empty()))
                 .build());
 
-        // ── Row 2: Separator with accents ───────────────────────────
-        render.slot(2, 0, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(2, 4, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(2, 8, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
+        render.slot(15, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
+                .name(name("<gradient:#a5f3fc:#06b6d4><bold>Progress</bold></gradient>"))
+                .lore(List.of(Component.empty(), lore("  <gray>Loading..."), Component.empty()))
+                .build());
 
-        // ── Row 3-4: Milestone grid edges ───────────────────────────
-        render.slot(3, 0, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(3, 8, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(4, 0, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(4, 8, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
+        // ── Row 2: Separator ────────────────────────────────────────
+        glass(render, Material.ORANGE_STAINED_GLASS_PANE, 18, 22, 26);
+
+        // ── Row 3–4: Milestone grid edges ───────────────────────────
+        glass(render, Material.ORANGE_STAINED_GLASS_PANE, 27, 35, 36, 44);
 
         // ── Row 5: Bottom bar ───────────────────────────────────────
-        render.slot(5, 1, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(5, 7, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(5, 8, ItemBuilder.of(Material.ORANGE_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
+        glass(render, Material.YELLOW_STAINED_GLASS_PANE, 46, 52);
+        glass(render, Material.ORANGE_STAINED_GLASS_PANE, 47, 53);
 
-        // ── Load data and render ────────────────────────────────────
+        // ── Async: load stats & milestone data ──────────────────────
         voteService.getPlayerStats(player.getUniqueId()).thenAccept(stats ->
                 scheduler.runAtEntity(player, () -> {
-                    int currentStreak = stats.currentStreak();
-                    int highestStreak = stats.highestStreak();
+                    int streak = stats.currentStreak();
+                    int highest = stats.highestStreak();
 
-                    Map<Integer, List<AbstractReward>> sortedStreaks = new TreeMap<>(rewardService.getStreakRewards());
-                    int nextMilestone = findNextMilestone(currentStreak, sortedStreaks);
-                    String progressBar = buildProgressBar(currentStreak, nextMilestone, 20);
+                    Map<Integer, List<AbstractReward>> milestones =
+                            new TreeMap<>(rewardService.getStreakRewards());
+                    int nextMs = findNextMilestone(streak, milestones);
+                    String bar = progressBar(streak, nextMs, 20);
 
-                    // ── Streak info (row 1, left) ───────────────────
-                    render.slot(1, 1, ItemBuilder.of(Material.BLAZE_POWDER)
-                            .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>🔥 Your Streak</bold></gradient>")
-                                    .decoration(TextDecoration.ITALIC, false))
-                            .glow(currentStreak >= 7)
+                    // ── Update: streak info (slot 11) ───────────────
+                    render.slot(11, ItemBuilder.of(Material.BLAZE_POWDER)
+                            .name(name("<gradient:#fde047:#f59e0b><bold>🔥 Your Streak</bold></gradient>"))
+                            .glow(streak >= 7)
                             .lore(List.of(
                                     Component.empty(),
-                                    MM.deserialize("  <dark_gray>▸</dark_gray> <gray>Current:</gray> <gradient:#86efac:#16a34a><bold>" + currentStreak + "</bold></gradient> <gray>day" + (currentStreak != 1 ? "s" : "") + "</gray>"),
-                                    MM.deserialize("  <dark_gray>▸</dark_gray> <gray>Highest:</gray> <gradient:#fde047:#f59e0b><bold>" + highestStreak + "</bold></gradient> <gray>day" + (highestStreak != 1 ? "s" : "") + "</gray>"),
+                                    lore("  <dark_gray>▸</dark_gray> <gray>Current:</gray> <gradient:#86efac:#16a34a><bold>" + streak + "</bold></gradient> <gray>day" + plural(streak)),
+                                    lore("  <dark_gray>▸</dark_gray> <gray>Highest:</gray> <gradient:#fde047:#f59e0b><bold>" + highest + "</bold></gradient> <gray>day" + plural(highest)),
                                     Component.empty(),
-                                    MM.deserialize("  <gray>Vote daily to keep it going!</gray>"),
+                                    lore("  <gray>Vote daily to keep it going!"),
                                     Component.empty()))
                             .build());
 
-                    // ── Progress display (row 1, right) ─────────────
-                    render.slot(1, 7, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
-                            .name(MM.deserialize("<gradient:#a5f3fc:#06b6d4><bold>Progress</bold></gradient>")
-                                    .decoration(TextDecoration.ITALIC, false))
+                    // ── Update: rewards summary (slot 13) ───────────
+                    int unlocked = countMatching(streak, milestones, true);
+                    int locked = countMatching(streak, milestones, false);
+
+                    render.slot(13, ItemBuilder.of(Material.CHEST)
+                            .name(name("<gradient:#fde047:#f59e0b><bold>Rewards</bold></gradient>"))
                             .lore(List.of(
                                     Component.empty(),
-                                    MM.deserialize("  <gray>Next milestone:</gray> <white>Day " + nextMilestone + "</white>"),
-                                    Component.empty(),
-                                    MM.deserialize("  " + progressBar),
-                                    MM.deserialize("  <gradient:#86efac:#16a34a>" + currentStreak + "</gradient> <dark_gray>/</dark_gray> <white>" + nextMilestone + "</white>"),
+                                    lore("  <gray>Milestones:</gray> <white>" + milestones.size()),
+                                    lore("  <gray>Unlocked:</gray> <gradient:#86efac:#16a34a>" + unlocked),
+                                    lore("  <gray>Remaining:</gray> <gradient:#fca5a5:#dc2626>" + locked),
                                     Component.empty()))
                             .build());
 
-                    // ── Info items in header row ────────────────────
-                    render.slot(1, 3, ItemBuilder.of(Material.BOOK)
-                            .name(MM.deserialize("<gradient:#86efac:#16a34a><bold>How It Works</bold></gradient>")
-                                    .decoration(TextDecoration.ITALIC, false))
+                    // ── Update: progress (slot 15) ──────────────────
+                    render.slot(15, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
+                            .name(name("<gradient:#a5f3fc:#06b6d4><bold>Progress</bold></gradient>"))
                             .lore(List.of(
                                     Component.empty(),
-                                    MM.deserialize("  <gray>Vote every day to build</gray>"),
-                                    MM.deserialize("  <gray>your streak. Reach milestones</gray>"),
-                                    MM.deserialize("  <gray>to earn bonus rewards!</gray>"),
+                                    lore("  <gray>Next milestone:</gray> <white>Day " + nextMs),
                                     Component.empty(),
-                                    MM.deserialize("  <gradient:#fca5a5:#dc2626>Missing a day resets</gradient>"),
-                                    MM.deserialize("  <gradient:#fca5a5:#dc2626>your streak!</gradient>"),
+                                    lore("  " + bar),
+                                    lore("  <gradient:#86efac:#16a34a>" + streak + "</gradient> <dark_gray>/</dark_gray> <white>" + nextMs),
                                     Component.empty()))
                             .build());
 
-                    render.slot(1, 5, ItemBuilder.of(Material.CHEST)
-                            .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>Rewards</bold></gradient>")
-                                    .decoration(TextDecoration.ITALIC, false))
-                            .lore(List.of(
-                                    Component.empty(),
-                                    MM.deserialize("  <gray>Milestones:</gray> <white>" + sortedStreaks.size() + "</white>"),
-                                    MM.deserialize("  <gray>Unlocked:</gray> <gradient:#86efac:#16a34a>" + countUnlocked(currentStreak, sortedStreaks) + "</gradient>"),
-                                    MM.deserialize("  <gray>Remaining:</gray> <gradient:#fca5a5:#dc2626>" + countLocked(currentStreak, sortedStreaks) + "</gradient>"),
-                                    Component.empty()))
-                            .build());
-
-                    // ── Milestone grid (rows 3-4, cols 1-7 = 14 slots) ──
-                    int[] milestoneSlots = {
-                            28, 29, 30, 31, 32, 33, 34,  // row 3: cols 1-7
-                            37, 38, 39, 40, 41, 42, 43   // row 4: cols 1-7
+                    // ── Milestone grid (rows 3–4, cols 1–7) ─────────
+                    int[] grid = {
+                            28, 29, 30, 31, 32, 33, 34,   // row 3
+                            37, 38, 39, 40, 41, 42, 43    // row 4
                     };
 
-                    int slotIndex = 0;
-                    for (var entry : sortedStreaks.entrySet()) {
-                        if (slotIndex >= milestoneSlots.length) break;
+                    int idx = 0;
+                    for (var entry : milestones.entrySet()) {
+                        if (idx >= grid.length) break;
 
                         int day = entry.getKey();
                         List<AbstractReward> rewards = entry.getValue();
-                        boolean achieved = currentStreak >= day;
-                        boolean isNext = !achieved && (slotIndex == 0 ||
-                                currentStreak >= getPreviousMilestone(day, sortedStreaks));
+                        boolean achieved = streak >= day;
+                        boolean isNext = !achieved && day == nextMs;
 
-                        Material material;
+                        Material mat;
                         String gradient;
-                        String statusIcon;
-                        String statusText;
+                        String icon;
+                        String status;
 
                         if (achieved) {
-                            material = Material.LIME_STAINED_GLASS_PANE;
+                            mat = Material.LIME_STAINED_GLASS_PANE;
                             gradient = "<gradient:#86efac:#16a34a>";
-                            statusIcon = "✔";
-                            statusText = "Unlocked!";
+                            icon = "✔";
+                            status = "Unlocked!";
                         } else if (isNext) {
-                            material = Material.YELLOW_STAINED_GLASS_PANE;
+                            mat = Material.YELLOW_STAINED_GLASS_PANE;
                             gradient = "<gradient:#fde047:#f59e0b>";
-                            statusIcon = "▶";
-                            statusText = "Next milestone!";
+                            icon = "▶";
+                            status = "Next milestone!";
                         } else {
-                            material = Material.RED_STAINED_GLASS_PANE;
+                            mat = Material.RED_STAINED_GLASS_PANE;
                             gradient = "<gradient:#fca5a5:#dc2626>";
-                            statusIcon = "✘";
-                            statusText = "Locked";
+                            icon = "✘";
+                            status = "Locked";
                         }
 
-                        List<Component> lore = new ArrayList<>();
-                        lore.add(Component.empty());
-                        lore.add(MM.deserialize("  " + gradient + statusIcon + " " + statusText + "</gradient>"));
+                        List<Component> itemLore = new ArrayList<>();
+                        itemLore.add(Component.empty());
+                        itemLore.add(lore("  " + gradient + icon + " " + status + "</gradient>"));
 
                         if (!achieved) {
-                            int remaining = day - currentStreak;
-                            lore.add(MM.deserialize("  <dark_gray>" + remaining + " day" + (remaining != 1 ? "s" : "") + " to go</dark_gray>"));
+                            int remaining = day - streak;
+                            itemLore.add(lore("  <dark_gray>" + remaining + " day" + plural(remaining) + " to go"));
                         }
 
-                        lore.add(Component.empty());
-                        lore.add(MM.deserialize("  <gradient:#d8b4fe:#9333ea>Rewards:</gradient>"));
+                        itemLore.add(Component.empty());
+                        itemLore.add(lore("  <gradient:#d8b4fe:#9333ea>Rewards:"));
 
                         for (AbstractReward reward : rewards) {
-                            String rewardName = formatRewardName(reward);
-                            lore.add(MM.deserialize("  <dark_gray>▸</dark_gray> <gray>" + rewardName + "</gray>"));
+                            itemLore.add(lore("  <dark_gray>▸</dark_gray> <gray>" + formatReward(reward)));
                         }
-                        lore.add(Component.empty());
+                        itemLore.add(Component.empty());
 
-                        render.slot(milestoneSlots[slotIndex], ItemBuilder.of(material)
-                                .name(MM.deserialize(gradient + "<bold>Day " + day + "</bold></gradient>")
-                                        .decoration(TextDecoration.ITALIC, false))
+                        render.slot(grid[idx], ItemBuilder.of(mat)
+                                .name(name(gradient + "<bold>Day " + day + "</bold></gradient>"))
                                 .glow(isNext)
-                                .lore(lore)
+                                .lore(itemLore)
                                 .amount(Math.min(day, 64))
                                 .build());
 
-                        slotIndex++;
+                        idx++;
                     }
 
-                    // Fill empty milestone slots with dark panes
-                    for (int i = slotIndex; i < milestoneSlots.length; i++) {
-                        render.slot(milestoneSlots[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
+                    // Fill remaining milestone slots
+                    for (int i = idx; i < grid.length; i++) {
+                        render.slot(grid[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
                                 .name(Component.empty()).build());
                     }
                 }));
@@ -264,15 +246,28 @@ public class VoteStreakView extends BaseView {
 
     // ── Helpers ─────────────────────────────────────────────────────
 
-    private static String buildProgressBar(int current, int target, int bars) {
+    private static Component name(String mini) {
+        return MM.deserialize(mini).decoration(TextDecoration.ITALIC, false);
+    }
+
+    private static Component lore(String mini) {
+        return MM.deserialize(mini).decoration(TextDecoration.ITALIC, false);
+    }
+
+    private static void glass(@NotNull RenderContext render, @NotNull Material mat, int... slots) {
+        var item = ItemBuilder.of(mat).name(Component.empty()).build();
+        for (int s : slots) render.slot(s, item);
+    }
+
+    private static String plural(int n) {
+        return n != 1 ? "s" : "";
+    }
+
+    private static String progressBar(int current, int target, int bars) {
         int filled = target > 0 ? Math.min(bars, (int) ((double) current / target * bars)) : 0;
-        StringBuilder sb = new StringBuilder("<dark_gray>[</dark_gray>");
+        var sb = new StringBuilder("<dark_gray>[</dark_gray>");
         for (int i = 0; i < bars; i++) {
-            if (i < filled) {
-                sb.append("<gradient:#fde047:#f59e0b>|</gradient>");
-            } else {
-                sb.append("<dark_gray>|</dark_gray>");
-            }
+            sb.append(i < filled ? "<gradient:#fde047:#f59e0b>|</gradient>" : "<dark_gray>|</dark_gray>");
         }
         sb.append("<dark_gray>]</dark_gray>");
         return sb.toString();
@@ -282,46 +277,33 @@ public class VoteStreakView extends BaseView {
         for (int day : milestones.keySet()) {
             if (day > current) return day;
         }
-        // All milestones achieved — return last one
         if (!milestones.isEmpty()) {
             return milestones.keySet().stream().mapToInt(Integer::intValue).max().orElse(current);
         }
-        return 7; // fallback
+        return 7;
     }
 
-    private static int getPreviousMilestone(int currentDay, Map<Integer, ?> milestones) {
-        int prev = 0;
-        for (int day : milestones.keySet()) {
-            if (day >= currentDay) break;
-            prev = day;
-        }
-        return prev;
+    private static int countMatching(int streak, Map<Integer, ?> milestones, boolean unlocked) {
+        return (int) milestones.keySet().stream()
+                .filter(d -> unlocked ? streak >= d : streak < d)
+                .count();
     }
 
-    private static int countUnlocked(int streak, Map<Integer, ?> milestones) {
-        return (int) milestones.keySet().stream().filter(d -> streak >= d).count();
-    }
-
-    private static int countLocked(int streak, Map<Integer, ?> milestones) {
-        return (int) milestones.keySet().stream().filter(d -> streak < d).count();
-    }
-
-    private static String formatRewardName(@NotNull AbstractReward reward) {
+    private static String formatReward(@NotNull AbstractReward reward) {
         String typeId = reward.typeId();
-        // Convert type_id to a readable name: "command_reward" -> "Command Reward"
         if (typeId == null || typeId.isEmpty()) return "Reward";
 
-        StringBuilder result = new StringBuilder();
-        boolean capitalizeNext = true;
+        var sb = new StringBuilder();
+        boolean cap = true;
         for (char c : typeId.toCharArray()) {
             if (c == '_' || c == '-') {
-                result.append(' ');
-                capitalizeNext = true;
+                sb.append(' ');
+                cap = true;
             } else {
-                result.append(capitalizeNext ? Character.toUpperCase(c) : c);
-                capitalizeNext = false;
+                sb.append(cap ? Character.toUpperCase(c) : c);
+                cap = false;
             }
         }
-        return result.toString();
+        return sb.toString();
     }
 }

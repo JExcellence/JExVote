@@ -68,21 +68,20 @@ public class VoteLeaderboardView extends PaginatedView<VoteSnapshot> {
         String rankGradient = rankGradient(rank);
         String rankSymbol = rankSymbol(rank);
 
-        Component displayName = MM.deserialize(
-                        rankGradient + "<bold>" + rankSymbol + " #" + rank + "</bold></gradient> <white>" + name + "</white>")
-                .decoration(TextDecoration.ITALIC, false);
+        Component displayName = name(
+                rankGradient + "<bold>" + rankSymbol + " #" + rank + "</bold></gradient> <white>" + name + "</white>");
 
         // Build progress bar showing this player's votes relative to the #1 spot
         String progressBar = buildVoteBar(entry.totalVotes());
 
-        List<Component> lore = List.of(
+        List<Component> itemLore = List.of(
                 Component.empty(),
-                MM.deserialize("  <dark_gray>▸</dark_gray> <gray>Total Votes:</gray> <gradient:#86efac:#16a34a>" + entry.totalVotes() + "</gradient>"),
-                MM.deserialize("  <dark_gray>▸</dark_gray> <gray>Monthly:</gray> <gradient:#a5f3fc:#06b6d4>" + entry.monthlyVotes() + "</gradient>"),
-                MM.deserialize("  <dark_gray>▸</dark_gray> <gray>Streak:</gray> <gradient:#fde047:#f59e0b>" + entry.currentStreak() + "</gradient>"),
-                MM.deserialize("  <dark_gray>▸</dark_gray> <gray>Points:</gray> <gradient:#d8b4fe:#9333ea>" + entry.votePoints() + "</gradient>"),
+                lore("  <dark_gray>▸</dark_gray> <gray>Total Votes:</gray> <gradient:#86efac:#16a34a>" + entry.totalVotes()),
+                lore("  <dark_gray>▸</dark_gray> <gray>Monthly:</gray> <gradient:#a5f3fc:#06b6d4>" + entry.monthlyVotes()),
+                lore("  <dark_gray>▸</dark_gray> <gray>Streak:</gray> <gradient:#fde047:#f59e0b>" + entry.currentStreak()),
+                lore("  <dark_gray>▸</dark_gray> <gray>Points:</gray> <gradient:#d8b4fe:#9333ea>" + entry.votePoints()),
                 Component.empty(),
-                MM.deserialize("  " + progressBar),
+                lore("  " + progressBar),
                 Component.empty()
         );
 
@@ -90,58 +89,63 @@ public class VoteLeaderboardView extends PaginatedView<VoteSnapshot> {
         if (rank <= 3) {
             ItemStack head = HeadBuilder.fromPlayer(Bukkit.getOfflinePlayer(entry.playerUuid()))
                     .name(displayName)
-                    .lore(lore)
+                    .lore(itemLore)
                     .build();
             builder.withItem(head);
         } else {
             builder.withItem(ItemBuilder.of(rankMaterial(rank))
                     .name(displayName)
-                    .lore(lore)
+                    .lore(itemLore)
                     .build());
         }
     }
 
     @Override
     protected void onPaginatedRender(@NotNull RenderContext render, @NotNull Player player) {
-        // ── Top row accents ────────────────────────────────────
-        render.slot(0, 0, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
+        // ── Top row accents (absolute slots) ───────────────────
+        render.slot(0, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
-        render.slot(0, 8, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
+        render.slot(8, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
 
-        // ── Header trophy ──────────────────────────────────────
-        render.slot(0, 4, ItemBuilder.of(Material.GOLDEN_APPLE)
-                .name(MM.deserialize("<gradient:#fde047:#f59e0b><bold>⭐ Top Voters</bold></gradient>")
-                        .decoration(TextDecoration.ITALIC, false))
+        // ── Header trophy (slot 4) ─────────────────────────────
+        render.slot(4, ItemBuilder.of(Material.GOLDEN_APPLE)
+                .name(name("<gradient:#fde047:#f59e0b><bold>⭐ Top Voters</bold></gradient>"))
                 .glow(true)
                 .lore(List.of(
                         Component.empty(),
-                        MM.deserialize("  <gray>All-time vote leaderboard</gray>"),
-                        MM.deserialize("  <gray>Vote daily to climb!</gray>"),
+                        lore("  <gray>All-time vote leaderboard"),
+                        lore("  <gray>Vote daily to climb!"),
                         Component.empty()))
                 .build());
 
         // ── Legend items ───────────────────────────────────────
-        render.slot(0, 2, ItemBuilder.of(Material.DIAMOND)
-                .name(MM.deserialize("<gradient:#FFD700:#FFA500><bold>1st Place</bold></gradient>")
-                        .decoration(TextDecoration.ITALIC, false))
-                .lore(List.of(MM.deserialize("<gray>Diamond rank</gray>")))
+        render.slot(2, ItemBuilder.of(Material.DIAMOND)
+                .name(name("<gradient:#FFD700:#FFA500><bold>1st Place</bold></gradient>"))
+                .lore(List.of(lore("<gray>Diamond rank")))
                 .build());
 
-        render.slot(0, 6, ItemBuilder.of(Material.GOLD_INGOT)
-                .name(MM.deserialize("<gradient:#C0C0C0:#A8A8A8><bold>2nd Place</bold></gradient>")
-                        .decoration(TextDecoration.ITALIC, false))
-                .lore(List.of(MM.deserialize("<gray>Gold rank</gray>")))
+        render.slot(6, ItemBuilder.of(Material.GOLD_INGOT)
+                .name(name("<gradient:#C0C0C0:#A8A8A8><bold>2nd Place</bold></gradient>"))
+                .lore(List.of(lore("<gray>Gold rank")))
                 .build());
 
-        // ── Bottom row accents ─────────────────────────────────
-        render.slot(4, 0, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
+        // ── Bottom row accents (row 4 = slots 36, 44) ──────────
+        render.slot(36, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
-        render.slot(4, 8, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
+        render.slot(44, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
                 .name(Component.empty()).build());
     }
 
     // ── Helpers ─────────────────────────────────────────────────────
+
+    private static Component name(String mini) {
+        return MM.deserialize(mini).decoration(TextDecoration.ITALIC, false);
+    }
+
+    private static Component lore(String mini) {
+        return MM.deserialize(mini).decoration(TextDecoration.ITALIC, false);
+    }
 
     private static Material rankMaterial(int rank) {
         return switch (rank) {
