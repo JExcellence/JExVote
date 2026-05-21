@@ -30,6 +30,7 @@ public class VotifierServer {
     private static final int MAX_CONNECTIONS = 16;
 
     private volatile ServerSocket serverSocket;
+    private volatile Thread acceptThread;
     private volatile ExecutorService executor;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
@@ -52,11 +53,12 @@ public class VotifierServer {
         serverSocket = new ServerSocket();
         serverSocket.bind(address);
 
+        // Handler pool for processing accepted connections — separate from the accept loop.
         executor = new ThreadPoolExecutor(
-                1, MAX_CONNECTIONS, 60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(64),
+                2, MAX_CONNECTIONS, 60L, TimeUnit.SECONDS,
+                new java.util.concurrent.SynchronousQueue<>(),
                 r -> {
-                    Thread t = new Thread(r, "JExVote-Votifier");
+                    Thread t = new Thread(r, "JExVote-Votifier-Handler");
                     t.setDaemon(true);
                     return t;
                 },
@@ -64,7 +66,8 @@ public class VotifierServer {
 
         running.set(true);
 
-        executor.submit(() -> {
+        // Accept loop runs on its own dedicated thread — never competes with handlers.
+        acceptThread = new Thread(() -> {
             while (running.get()) {
                 try {
                     Socket client = serverSocket.accept();
@@ -77,7 +80,9 @@ public class VotifierServer {
                     }
                 }
             }
-        });
+        }, "JExVote-Votifier-Accept");
+        acceptThread.setDaemon(true);
+        acceptThread.start();
 
         logger.info("Votifier server listening on " + address);
     }
@@ -88,6 +93,9 @@ public class VotifierServer {
             try {
                 serverSocket.close();
             } catch (IOException ignored) {}
+        }
+        if (acceptThread != null) {
+            acceptThread.interrupt();
         }
         if (executor != null) {
             executor.shutdownNow();
