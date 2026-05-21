@@ -9,7 +9,6 @@ import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.view.VoteOverviewView;
-import me.devnatan.inventoryframework.ViewFrame;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -29,16 +28,16 @@ public final class VoteCommandHandler {
     private final VoteService voteService;
     private final VoteLeaderboardService leaderboardService;
     private final VoteConfig voteConfig;
-    private final ViewFrame viewFrame;
+    private final VoteOverviewView overviewView;
 
     public VoteCommandHandler(@NotNull VoteService voteService,
                               @NotNull VoteLeaderboardService leaderboardService,
                               @NotNull VoteConfig voteConfig,
-                              @NotNull ViewFrame viewFrame) {
+                              @NotNull VoteOverviewView overviewView) {
         this.voteService = voteService;
         this.leaderboardService = leaderboardService;
         this.voteConfig = voteConfig;
-        this.viewFrame = viewFrame;
+        this.overviewView = overviewView;
     }
 
     public @NotNull Map<String, CommandHandler> handlerMap() {
@@ -53,7 +52,7 @@ public final class VoteCommandHandler {
 
     private void onVote(@NotNull CommandContext ctx) {
         Player player = ctx.asPlayer().orElseThrow();
-        viewFrame.open(VoteOverviewView.class, player);
+        overviewView.open(player);
     }
 
     private void onHelp(@NotNull CommandContext ctx) {

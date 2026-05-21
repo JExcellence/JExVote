@@ -30,7 +30,6 @@ import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.view.VoteLeaderboardView;
 import de.jexcellence.vote.view.VoteOverviewView;
 import de.jexcellence.vote.view.VoteStreakView;
-import me.devnatan.inventoryframework.ViewFrame;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -67,7 +66,7 @@ public abstract class JExVote {
     private VotifierServer votifierServer;
     private VotePlaceholderExpansion placeholders;
     private VoteProviderImpl voteProvider;
-    private ViewFrame viewFrame;
+    private VoteOverviewView overviewView;
 
     protected JExVote(@NotNull JavaPlugin plugin, @NotNull String edition) {
         this.plugin = plugin;
@@ -124,7 +123,6 @@ public abstract class JExVote {
                 Bukkit.getServicesManager().unregister(JExVoteAPI.class, voteProvider);
             } catch (Throwable ignored) {}
         }
-        // ViewFrame is cleaned up by the plugin lifecycle
         if (jeHibernate != null) {
             jeHibernate.close();
         }
@@ -297,7 +295,7 @@ public abstract class JExVote {
         saveDefaultResource("commands/jexvote.yml");
 
         factory.registerTree(new java.io.File(plugin.getDataFolder(), "commands/vote.yml"),
-                new VoteCommandHandler(voteService, leaderboardService, voteConfig, viewFrame).handlerMap(),
+                new VoteCommandHandler(voteService, leaderboardService, voteConfig, overviewView).handlerMap(),
                 messages, registry);
         factory.registerTree(new java.io.File(plugin.getDataFolder(), "commands/jexvote.yml"),
                 new VoteAdminHandler(plugin, edition(), voteService, voteConfig, rewardConfig).handlerMap(),
@@ -308,13 +306,22 @@ public abstract class JExVote {
     }
 
     private void registerViews() {
-        viewFrame = ViewFrame.create(plugin)
-                .with(
-                        new VoteOverviewView(plugin, voteService, broadcastService),
-                        new VoteLeaderboardView(leaderboardService),
-                        new VoteStreakView(plugin, voteService, rewardService)
-                )
-                .register();
+        var pm = Bukkit.getPluginManager();
+
+        overviewView = new VoteOverviewView(plugin, voteService);
+        var leaderboardView = new VoteLeaderboardView(plugin, leaderboardService);
+        var streakView = new VoteStreakView(plugin, voteService, rewardService);
+
+        // Wire cross-navigation references
+        overviewView.setLeaderboardView(leaderboardView);
+        overviewView.setStreakView(streakView);
+        leaderboardView.setOverviewView(overviewView);
+        streakView.setOverviewView(overviewView);
+
+        // Register as Bukkit listeners (raw inventory click handling)
+        pm.registerEvents(overviewView, plugin);
+        pm.registerEvents(leaderboardView, plugin);
+        pm.registerEvents(streakView, plugin);
     }
 
     private void registerPlaceholders() {
@@ -336,5 +343,5 @@ public abstract class JExVote {
     public @NotNull VoteService getVoteService() { return voteService; }
     public @NotNull VoteLeaderboardService getLeaderboardService() { return leaderboardService; }
     public @NotNull VoteConfig getVoteConfig() { return voteConfig; }
-    public @NotNull ViewFrame getViewFrame() { return viewFrame; }
+    public @NotNull VoteOverviewView getOverviewView() { return overviewView; }
 }

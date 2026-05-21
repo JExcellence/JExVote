@@ -1,115 +1,65 @@
 package de.jexcellence.vote.view;
 
+import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jexplatform.utility.item.HeadBuilder;
 import de.jexcellence.jexplatform.utility.item.ItemBuilder;
-import de.jexcellence.jexplatform.view.PaginatedView;
 import de.jexcellence.vote.api.model.VoteSnapshot;
 import de.jexcellence.vote.service.VoteLeaderboardService;
-import me.devnatan.inventoryframework.component.BukkitItemComponentBuilder;
-import me.devnatan.inventoryframework.context.Context;
-import me.devnatan.inventoryframework.context.RenderContext;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.UUID;
+import java.util.WeakHashMap;
 
-public class VoteLeaderboardView extends PaginatedView<VoteSnapshot> {
+/**
+ * Paginated all-time vote leaderboard with manual pagination
+ * (raw Bukkit inventory, same pattern as JExOneblock's BiomeView).
+ */
+public class VoteLeaderboardView extends VoteBaseView {
 
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final int PAGE_SIZE = 21; // 3 rows × 7 cols
 
+    private final Holder holder = new Holder();
     private final VoteLeaderboardService leaderboardService;
+    private final PlatformScheduler scheduler;
+    private final WeakHashMap<UUID, Integer> pageByViewer = new WeakHashMap<>();
+    private final WeakHashMap<UUID, List<VoteSnapshot>> dataByViewer = new WeakHashMap<>();
 
-    public VoteLeaderboardView(@NotNull VoteLeaderboardService leaderboardService) {
-        super(VoteOverviewView.class);
+    private VoteOverviewView overviewView;
+
+    public VoteLeaderboardView(@NotNull JavaPlugin plugin,
+                               @NotNull VoteLeaderboardService leaderboardService) {
         this.leaderboardService = leaderboardService;
+        this.scheduler = PlatformScheduler.of(plugin);
     }
 
-    @Override
-    protected String translationKey() {
-        return "vote_leaderboard";
-    }
+    public void setOverviewView(@NotNull VoteOverviewView view) { this.overviewView = view; }
+
+    @Override protected @NotNull String title()           { return "vote_leaderboard.title"; }
+    @Override protected int rows()                         { return 6; }
+    @Override protected @NotNull InventoryHolder holder()  { return holder; }
 
     @Override
-    protected String[] layout() {
-        return new String[]{
-                "XXXXXXXXX",
-                "XOOOOOOOX",
-                "XOOOOOOOX",
-                "XOOOOOOOX",
-                "XXXXXXXXX",
-                "   <p>   "
-        };
-    }
+    protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
 
-    @Override
-    protected Material fillerMaterial() {
-        return Material.BLACK_STAINED_GLASS_PANE;
-    }
+        // ── Row 0: Header ───────────────────────────────────────
+        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 0, 8);
+        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 1, 3, 5, 7);
 
-    @Override
-    protected @NotNull CompletableFuture<List<VoteSnapshot>> loadData(@NotNull Context ctx) {
-        return leaderboardService.getAllTimeTop(50);
-    }
+        inv.setItem(2, ItemBuilder.of(Material.DIAMOND)
+                .name(name("<gradient:#FFD700:#FFA500><bold>1st Place</bold></gradient>"))
+                .lore(List.of(lore("<gray>Diamond rank")))
+                .build());
 
-    @Override
-    protected void renderItem(@NotNull Context context,
-                              @NotNull BukkitItemComponentBuilder builder,
-                              int index,
-                              @NotNull VoteSnapshot entry) {
-        int rank = index + 1;
-        String name = entry.playerName() != null ? entry.playerName() : "Unknown";
-        String rankGradient = rankGradient(rank);
-        String rankSymbol = rankSymbol(rank);
-
-        Component displayName = name(
-                rankGradient + "<bold>" + rankSymbol + " #" + rank + "</bold></gradient> <white>" + name + "</white>");
-
-        // Build progress bar showing this player's votes relative to the #1 spot
-        String progressBar = buildVoteBar(entry.totalVotes());
-
-        List<Component> itemLore = List.of(
-                Component.empty(),
-                lore("  <dark_gray>▸</dark_gray> <gray>Total Votes:</gray> <gradient:#86efac:#16a34a>" + entry.totalVotes()),
-                lore("  <dark_gray>▸</dark_gray> <gray>Monthly:</gray> <gradient:#a5f3fc:#06b6d4>" + entry.monthlyVotes()),
-                lore("  <dark_gray>▸</dark_gray> <gray>Streak:</gray> <gradient:#fde047:#f59e0b>" + entry.currentStreak()),
-                lore("  <dark_gray>▸</dark_gray> <gray>Points:</gray> <gradient:#d8b4fe:#9333ea>" + entry.votePoints()),
-                Component.empty(),
-                lore("  " + progressBar),
-                Component.empty()
-        );
-
-        // Top 3 get player heads, rest get ranked materials
-        if (rank <= 3) {
-            ItemStack head = HeadBuilder.fromPlayer(Bukkit.getOfflinePlayer(entry.playerUuid()))
-                    .name(displayName)
-                    .lore(itemLore)
-                    .build();
-            builder.withItem(head);
-        } else {
-            builder.withItem(ItemBuilder.of(rankMaterial(rank))
-                    .name(displayName)
-                    .lore(itemLore)
-                    .build());
-        }
-    }
-
-    @Override
-    protected void onPaginatedRender(@NotNull RenderContext render, @NotNull Player player) {
-        // ── Top row accents (absolute slots) ───────────────────
-        render.slot(0, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(8, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-
-        // ── Header trophy (slot 4) ─────────────────────────────
-        render.slot(4, ItemBuilder.of(Material.GOLDEN_APPLE)
+        inv.setItem(4, ItemBuilder.of(Material.GOLDEN_APPLE)
                 .name(name("<gradient:#fde047:#f59e0b><bold>⭐ Top Voters</bold></gradient>"))
                 .glow(true)
                 .lore(List.of(
@@ -119,33 +69,160 @@ public class VoteLeaderboardView extends PaginatedView<VoteSnapshot> {
                         Component.empty()))
                 .build());
 
-        // ── Legend items ───────────────────────────────────────
-        render.slot(2, ItemBuilder.of(Material.DIAMOND)
-                .name(name("<gradient:#FFD700:#FFA500><bold>1st Place</bold></gradient>"))
-                .lore(List.of(lore("<gray>Diamond rank")))
-                .build());
-
-        render.slot(6, ItemBuilder.of(Material.GOLD_INGOT)
+        inv.setItem(6, ItemBuilder.of(Material.GOLD_INGOT)
                 .name(name("<gradient:#C0C0C0:#A8A8A8><bold>2nd Place</bold></gradient>"))
                 .lore(List.of(lore("<gray>Gold rank")))
                 .build());
 
-        // ── Bottom row accents (row 4 = slots 36, 44) ──────────
-        render.slot(36, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
-        render.slot(44, ItemBuilder.of(Material.YELLOW_STAINED_GLASS_PANE)
-                .name(Component.empty()).build());
+        // ── Row 1–3: Content area edges ─────────────────────────
+        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 9, 17, 18, 26, 27, 35);
+
+        // ── Row 4: Bottom border ────────────────────────────────
+        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 36, 37, 38, 39, 40, 41, 42, 43, 44);
+
+        // ── Row 5: Navigation ───────────────────────────────────
+        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 46, 52);
+        inv.setItem(45, backButton());
+
+        // ── Loading indicator ───────────────────────────────────
+        inv.setItem(22, ItemBuilder.of(Material.CLOCK)
+                .name(name("<gray>Loading leaderboard..."))
+                .build());
+
+        // ── Async: load data and populate ───────────────────────
+        leaderboardService.getAllTimeTop(50).thenAccept(data ->
+                scheduler.runAtEntity(viewer, () -> {
+                    Inventory top = viewer.getOpenInventory().getTopInventory();
+                    if (top.getHolder() != holder) return;
+
+                    dataByViewer.put(viewer.getUniqueId(), data);
+                    pageByViewer.putIfAbsent(viewer.getUniqueId(), 0);
+                    renderPage(top, viewer);
+                }));
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────
+    private void renderPage(@NotNull Inventory inv, @NotNull Player viewer) {
+        List<VoteSnapshot> data = dataByViewer.get(viewer.getUniqueId());
+        if (data == null) return;
 
-    private static Component name(String mini) {
-        return MM.deserialize(mini).decoration(TextDecoration.ITALIC, false);
+        int page = pageByViewer.getOrDefault(viewer.getUniqueId(), 0);
+        int totalPages = Math.max(1, (int) Math.ceil((double) data.size() / PAGE_SIZE));
+        page = Math.max(0, Math.min(page, totalPages - 1));
+        pageByViewer.put(viewer.getUniqueId(), page);
+
+        int from = page * PAGE_SIZE;
+        int to = Math.min(data.size(), from + PAGE_SIZE);
+
+        // Content slots: rows 1–3, cols 1–7
+        int[] grid = {
+                10, 11, 12, 13, 14, 15, 16,
+                19, 20, 21, 22, 23, 24, 25,
+                28, 29, 30, 31, 32, 33, 34
+        };
+
+        // Fill content
+        for (int i = 0; i < grid.length; i++) {
+            int dataIdx = from + i;
+            if (dataIdx < to) {
+                inv.setItem(grid[i], renderEntry(dataIdx, data.get(dataIdx)));
+            } else {
+                inv.setItem(grid[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
+                        .name(Component.empty()).build());
+            }
+        }
+
+        // Pagination
+        if (page > 0) {
+            ItemStack prev = ItemBuilder.of(Material.ARROW)
+                    .name(name("<gradient:#fde047:#f59e0b>← Previous Page</gradient>"))
+                    .lore(List.of(lore("<gray>Page " + page + " / " + totalPages)))
+                    .build();
+            tag(prev, "page-prev");
+            inv.setItem(48, prev);
+        } else {
+            inv.setItem(48, filler());
+        }
+
+        inv.setItem(49, ItemBuilder.of(Material.PAPER)
+                .name(name("<gradient:#a5f3fc:#06b6d4><bold>Page " + (page + 1) + " / " + totalPages + "</bold></gradient>"))
+                .lore(List.of(
+                        Component.empty(),
+                        lore("  <gray>Showing " + (from + 1) + "–" + to + " of " + data.size()),
+                        Component.empty()))
+                .build());
+
+        if (page + 1 < totalPages) {
+            ItemStack next = ItemBuilder.of(Material.ARROW)
+                    .name(name("<gradient:#fde047:#f59e0b>Next Page →</gradient>"))
+                    .lore(List.of(lore("<gray>Page " + (page + 2) + " / " + totalPages)))
+                    .build();
+            tag(next, "page-next");
+            inv.setItem(50, next);
+        } else {
+            inv.setItem(50, filler());
+        }
     }
 
-    private static Component lore(String mini) {
-        return MM.deserialize(mini).decoration(TextDecoration.ITALIC, false);
+    private @NotNull ItemStack renderEntry(int index, @NotNull VoteSnapshot entry) {
+        int rank = index + 1;
+        String playerName = entry.playerName() != null ? entry.playerName() : "Unknown";
+        String rankGrad = rankGradient(rank);
+        String rankSym = rankSymbol(rank);
+
+        Component displayName = name(
+                rankGrad + "<bold>" + rankSym + " #" + rank + "</bold></gradient> <white>" + playerName);
+
+        String voteBar = buildVoteBar(entry.totalVotes());
+
+        List<Component> itemLore = List.of(
+                Component.empty(),
+                lore("  <dark_gray>▸</dark_gray> <gray>Total Votes:</gray> <gradient:#86efac:#16a34a>" + entry.totalVotes()),
+                lore("  <dark_gray>▸</dark_gray> <gray>Monthly:</gray> <gradient:#a5f3fc:#06b6d4>" + entry.monthlyVotes()),
+                lore("  <dark_gray>▸</dark_gray> <gray>Streak:</gray> <gradient:#fde047:#f59e0b>" + entry.currentStreak()),
+                lore("  <dark_gray>▸</dark_gray> <gray>Points:</gray> <gradient:#d8b4fe:#9333ea>" + entry.votePoints()),
+                Component.empty(),
+                lore("  " + voteBar),
+                Component.empty()
+        );
+
+        if (rank <= 3) {
+            return HeadBuilder.fromPlayer(Bukkit.getOfflinePlayer(entry.playerUuid()))
+                    .name(displayName)
+                    .lore(itemLore)
+                    .build();
+        }
+        return ItemBuilder.of(rankMaterial(rank))
+                .name(displayName)
+                .lore(itemLore)
+                .build();
     }
+
+    @Override
+    protected void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked) {
+        String id = tagOf(clicked);
+
+        if ("back".equals(id) && overviewView != null) {
+            pageByViewer.remove(viewer.getUniqueId());
+            dataByViewer.remove(viewer.getUniqueId());
+            overviewView.open(viewer);
+            return;
+        }
+
+        if ("page-prev".equals(id)) {
+            pageByViewer.merge(viewer.getUniqueId(), -1, Integer::sum);
+            Inventory top = viewer.getOpenInventory().getTopInventory();
+            if (top.getHolder() == holder) renderPage(top, viewer);
+            return;
+        }
+
+        if ("page-next".equals(id)) {
+            pageByViewer.merge(viewer.getUniqueId(), 1, Integer::sum);
+            Inventory top = viewer.getOpenInventory().getTopInventory();
+            if (top.getHolder() == holder) renderPage(top, viewer);
+        }
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────
 
     private static Material rankMaterial(int rank) {
         return switch (rank) {
@@ -177,17 +254,18 @@ public class VoteLeaderboardView extends PaginatedView<VoteSnapshot> {
 
     private static String buildVoteBar(int votes) {
         int bars = 10;
-        // Log-scale bar: 1 bar per order of magnitude, then linear within
         int filled = votes <= 0 ? 0 : Math.min(bars, Math.max(1, (int) (Math.log10(votes + 1) * 3)));
-        StringBuilder sb = new StringBuilder("<dark_gray>[</dark_gray>");
+        var sb = new StringBuilder("<dark_gray>[</dark_gray>");
         for (int i = 0; i < bars; i++) {
-            if (i < filled) {
-                sb.append("<gradient:#fde047:#f59e0b>|</gradient>");
-            } else {
-                sb.append("<dark_gray>|</dark_gray>");
-            }
+            sb.append(i < filled ? "<gradient:#fde047:#f59e0b>|</gradient>" : "<dark_gray>|</dark_gray>");
         }
         sb.append("<dark_gray>]</dark_gray> <gray>").append(votes).append(" votes</gray>");
         return sb.toString();
+    }
+
+    private static final class Holder implements InventoryHolder {
+        @Override public @NotNull Inventory getInventory() {
+            throw new UnsupportedOperationException();
+        }
     }
 }

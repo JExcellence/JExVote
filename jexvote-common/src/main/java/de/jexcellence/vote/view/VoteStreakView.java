@@ -3,16 +3,14 @@ package de.jexcellence.vote.view;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jexplatform.utility.item.ItemBuilder;
-import de.jexcellence.jexplatform.view.BaseView;
 import de.jexcellence.vote.service.VoteRewardService;
 import de.jexcellence.vote.service.VoteService;
-import me.devnatan.inventoryframework.context.RenderContext;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,61 +22,37 @@ import java.util.TreeMap;
 /**
  * Streak milestone view showing current streak progress and
  * unlockable rewards at each milestone day.
- *
- * <p>Uses absolute slot indices exclusively (no layout override) so that
- * BaseView's auto-fill handles all unset slots with {@link #fillerMaterial()}.
- * Async stat updates use raw Bukkit inventory to bypass the framework's
- * single-render-phase limitation.
  */
-public class VoteStreakView extends BaseView {
+public class VoteStreakView extends VoteBaseView {
 
-    private static final MiniMessage MM = MiniMessage.miniMessage();
-
-    /*
-     * Slot grid reference (6 rows × 9 cols):
-     *   0  1  2  3  4  5  6  7  8
-     *   9 10 11 12 13 14 15 16 17
-     *  18 19 20 21 22 23 24 25 26
-     *  27 28 29 30 31 32 33 34 35
-     *  36 37 38 39 40 41 42 43 44
-     *  45 46 47 48 49 50 51 52 53
-     */
-
+    private final Holder holder = new Holder();
     private final VoteService voteService;
     private final VoteRewardService rewardService;
     private final PlatformScheduler scheduler;
 
+    private VoteOverviewView overviewView;
+
     public VoteStreakView(@NotNull JavaPlugin plugin,
                           @NotNull VoteService voteService,
                           @NotNull VoteRewardService rewardService) {
-        super(VoteOverviewView.class);
         this.voteService = voteService;
         this.rewardService = rewardService;
         this.scheduler = PlatformScheduler.of(plugin);
     }
 
-    @Override
-    protected String translationKey() {
-        return "vote_streak";
-    }
+    public void setOverviewView(@NotNull VoteOverviewView view) { this.overviewView = view; }
+
+    @Override protected @NotNull String title()           { return "vote_streak.title"; }
+    @Override protected int rows()                         { return 6; }
+    @Override protected @NotNull InventoryHolder holder()  { return holder; }
 
     @Override
-    protected int size() {
-        return 6;
-    }
+    protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
 
-    @Override
-    protected Material fillerMaterial() {
-        return Material.BLACK_STAINED_GLASS_PANE;
-    }
-
-    @Override
-    protected void onRender(@NotNull RenderContext render, @NotNull Player player) {
-
-        // ── Row 0: Header ───────────────────────────────────────────
-        glass(render, Material.ORANGE_STAINED_GLASS_PANE, 0, 2, 6, 8);
-        glass(render, Material.YELLOW_STAINED_GLASS_PANE, 1, 7);
-        render.slot(4, ItemBuilder.of(Material.MAGMA_CREAM)
+        // ── Row 0: Header ───────────────────────────────────────
+        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 0, 2, 6, 8);
+        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 1, 7);
+        inv.setItem(4, ItemBuilder.of(Material.MAGMA_CREAM)
                 .name(name("<gradient:#fca5a5:#dc2626><bold>🔥 Streak Rewards</bold></gradient>"))
                 .glow(true)
                 .lore(List.of(
@@ -88,15 +62,15 @@ public class VoteStreakView extends BaseView {
                         Component.empty()))
                 .build());
 
-        // ── Row 1: Info items (placeholders) ────────────────────────
-        glass(render, Material.YELLOW_STAINED_GLASS_PANE, 9, 17);
+        // ── Row 1: Info items (placeholders) ────────────────────
+        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 9, 17);
 
-        render.slot(11, ItemBuilder.of(Material.BLAZE_POWDER)
+        inv.setItem(11, ItemBuilder.of(Material.BLAZE_POWDER)
                 .name(name("<gradient:#fde047:#f59e0b><bold>🔥 Your Streak</bold></gradient>"))
                 .lore(List.of(Component.empty(), lore("  <gray>Loading..."), Component.empty()))
                 .build());
 
-        render.slot(13, ItemBuilder.of(Material.BOOK)
+        inv.setItem(13, ItemBuilder.of(Material.BOOK)
                 .name(name("<gradient:#86efac:#16a34a><bold>How It Works</bold></gradient>"))
                 .lore(List.of(
                         Component.empty(),
@@ -109,25 +83,27 @@ public class VoteStreakView extends BaseView {
                         Component.empty()))
                 .build());
 
-        render.slot(15, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
+        inv.setItem(15, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
                 .name(name("<gradient:#a5f3fc:#06b6d4><bold>Progress</bold></gradient>"))
                 .lore(List.of(Component.empty(), lore("  <gray>Loading..."), Component.empty()))
                 .build());
 
-        // ── Row 2: Separator ────────────────────────────────────────
-        glass(render, Material.ORANGE_STAINED_GLASS_PANE, 18, 22, 26);
+        // ── Row 2: Separator ────────────────────────────────────
+        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 18, 22, 26);
 
-        // ── Row 3–4: Milestone grid edges ───────────────────────────
-        glass(render, Material.ORANGE_STAINED_GLASS_PANE, 27, 35, 36, 44);
+        // ── Row 3–4: Milestone grid edges ───────────────────────
+        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 27, 35, 36, 44);
 
-        // ── Row 5: Bottom bar ───────────────────────────────────────
-        glass(render, Material.YELLOW_STAINED_GLASS_PANE, 46, 52);
-        glass(render, Material.ORANGE_STAINED_GLASS_PANE, 47, 53);
+        // ── Row 5: Bottom bar + back button ─────────────────────
+        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 46, 52);
+        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 47, 53);
+        inv.setItem(45, backButton());
 
-        // ── Async: load stats & milestones, update via raw inventory ─
-        voteService.getPlayerStats(player.getUniqueId()).thenAccept(stats ->
-                scheduler.runAtEntity(player, () -> {
-                    Inventory inv = player.getOpenInventory().getTopInventory();
+        // ── Async: load stats & milestones ──────────────────────
+        voteService.getPlayerStats(viewer.getUniqueId()).thenAccept(stats ->
+                scheduler.runAtEntity(viewer, () -> {
+                    Inventory top = viewer.getOpenInventory().getTopInventory();
+                    if (top.getHolder() != holder) return;
 
                     int streak = stats.currentStreak();
                     int highest = stats.highestStreak();
@@ -137,8 +113,8 @@ public class VoteStreakView extends BaseView {
                     int nextMs = findNextMilestone(streak, milestones);
                     String bar = progressBar(streak, nextMs, 20);
 
-                    // ── Update: streak info (slot 11) ───────────────
-                    inv.setItem(11, ItemBuilder.of(Material.BLAZE_POWDER)
+                    // ── Update: streak info (slot 11) ───────────
+                    top.setItem(11, ItemBuilder.of(Material.BLAZE_POWDER)
                             .name(name("<gradient:#fde047:#f59e0b><bold>🔥 Your Streak</bold></gradient>"))
                             .glow(streak >= 7)
                             .lore(List.of(
@@ -150,11 +126,11 @@ public class VoteStreakView extends BaseView {
                                     Component.empty()))
                             .build());
 
-                    // ── Update: rewards summary (slot 13) ───────────
+                    // ── Update: rewards summary (slot 13) ───────
                     int unlocked = countMatching(streak, milestones, true);
                     int locked = countMatching(streak, milestones, false);
 
-                    inv.setItem(13, ItemBuilder.of(Material.CHEST)
+                    top.setItem(13, ItemBuilder.of(Material.CHEST)
                             .name(name("<gradient:#fde047:#f59e0b><bold>Rewards</bold></gradient>"))
                             .lore(List.of(
                                     Component.empty(),
@@ -164,8 +140,8 @@ public class VoteStreakView extends BaseView {
                                     Component.empty()))
                             .build());
 
-                    // ── Update: progress (slot 15) ──────────────────
-                    inv.setItem(15, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
+                    // ── Update: progress (slot 15) ──────────────
+                    top.setItem(15, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
                             .name(name("<gradient:#a5f3fc:#06b6d4><bold>Progress</bold></gradient>"))
                             .lore(List.of(
                                     Component.empty(),
@@ -176,10 +152,10 @@ public class VoteStreakView extends BaseView {
                                     Component.empty()))
                             .build());
 
-                    // ── Milestone grid (rows 3–4, cols 1–7) ─────────
+                    // ── Milestone grid (rows 3–4, cols 1–7) ─────
                     int[] grid = {
-                            28, 29, 30, 31, 32, 33, 34,   // row 3
-                            37, 38, 39, 40, 41, 42, 43    // row 4
+                            28, 29, 30, 31, 32, 33, 34,
+                            37, 38, 39, 40, 41, 42, 43
                     };
 
                     int idx = 0;
@@ -230,7 +206,7 @@ public class VoteStreakView extends BaseView {
                         }
                         itemLore.add(Component.empty());
 
-                        inv.setItem(grid[idx], ItemBuilder.of(mat)
+                        top.setItem(grid[idx], ItemBuilder.of(mat)
                                 .name(name(gradient + "<bold>Day " + day + "</bold></gradient>"))
                                 .glow(isNext)
                                 .lore(itemLore)
@@ -240,42 +216,22 @@ public class VoteStreakView extends BaseView {
                         idx++;
                     }
 
-                    // Fill remaining milestone slots
                     for (int i = idx; i < grid.length; i++) {
-                        inv.setItem(grid[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
+                        top.setItem(grid[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
                                 .name(Component.empty()).build());
                     }
                 }));
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────
-
-    private static Component name(String mini) {
-        return MM.deserialize(mini).decoration(TextDecoration.ITALIC, false);
-    }
-
-    private static Component lore(String mini) {
-        return MM.deserialize(mini).decoration(TextDecoration.ITALIC, false);
-    }
-
-    private static void glass(@NotNull RenderContext render, @NotNull Material mat, int... slots) {
-        var item = ItemBuilder.of(mat).name(Component.empty()).build();
-        for (int s : slots) render.slot(s, item);
-    }
-
-    private static String plural(int n) {
-        return n != 1 ? "s" : "";
-    }
-
-    private static String progressBar(int current, int target, int bars) {
-        int filled = target > 0 ? Math.min(bars, (int) ((double) current / target * bars)) : 0;
-        var sb = new StringBuilder("<dark_gray>[</dark_gray>");
-        for (int i = 0; i < bars; i++) {
-            sb.append(i < filled ? "<gradient:#fde047:#f59e0b>|</gradient>" : "<dark_gray>|</dark_gray>");
+    @Override
+    protected void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked) {
+        String id = tagOf(clicked);
+        if ("back".equals(id) && overviewView != null) {
+            overviewView.open(viewer);
         }
-        sb.append("<dark_gray>]</dark_gray>");
-        return sb.toString();
     }
+
+    // ── Helpers ─────────────────────────────────────────────────
 
     private static int findNextMilestone(int current, Map<Integer, ?> milestones) {
         for (int day : milestones.keySet()) {
@@ -296,18 +252,18 @@ public class VoteStreakView extends BaseView {
     private static String formatReward(@NotNull AbstractReward reward) {
         String typeId = reward.typeId();
         if (typeId == null || typeId.isEmpty()) return "Reward";
-
         var sb = new StringBuilder();
         boolean cap = true;
         for (char c : typeId.toCharArray()) {
-            if (c == '_' || c == '-') {
-                sb.append(' ');
-                cap = true;
-            } else {
-                sb.append(cap ? Character.toUpperCase(c) : c);
-                cap = false;
-            }
+            if (c == '_' || c == '-') { sb.append(' '); cap = true; }
+            else { sb.append(cap ? Character.toUpperCase(c) : c); cap = false; }
         }
         return sb.toString();
+    }
+
+    private static final class Holder implements InventoryHolder {
+        @Override public @NotNull Inventory getInventory() {
+            throw new UnsupportedOperationException();
+        }
     }
 }
