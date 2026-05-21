@@ -113,113 +113,10 @@ public class VoteStreakView extends VoteBaseView {
                     int nextMs = findNextMilestone(streak, milestones);
                     String bar = progressBar(streak, nextMs, 20);
 
-                    // ── Update: streak info (slot 11) ───────────
-                    top.setItem(11, ItemBuilder.of(Material.BLAZE_POWDER)
-                            .name(name("<gradient:#fde047:#f59e0b><bold>🔥 Your Streak</bold></gradient>"))
-                            .glow(streak >= 7)
-                            .lore(List.of(
-                                    Component.empty(),
-                                    lore("  <dark_gray>▸</dark_gray> <gray>Current:</gray> <gradient:#86efac:#16a34a><bold>" + streak + "</bold></gradient> <gray>day" + plural(streak)),
-                                    lore("  <dark_gray>▸</dark_gray> <gray>Highest:</gray> <gradient:#fde047:#f59e0b><bold>" + highest + "</bold></gradient> <gray>day" + plural(highest)),
-                                    Component.empty(),
-                                    lore("  <gray>Vote daily to keep it going!"),
-                                    Component.empty()))
-                            .build());
-
-                    // ── Update: rewards summary (slot 13) ───────
-                    int unlocked = countMatching(streak, milestones, true);
-                    int locked = countMatching(streak, milestones, false);
-
-                    top.setItem(13, ItemBuilder.of(Material.CHEST)
-                            .name(name("<gradient:#fde047:#f59e0b><bold>Rewards</bold></gradient>"))
-                            .lore(List.of(
-                                    Component.empty(),
-                                    lore("  <gray>Milestones:</gray> <white>" + milestones.size()),
-                                    lore("  <gray>Unlocked:</gray> <gradient:#86efac:#16a34a>" + unlocked),
-                                    lore("  <gray>Remaining:</gray> <gradient:#fca5a5:#dc2626>" + locked),
-                                    Component.empty()))
-                            .build());
-
-                    // ── Update: progress (slot 15) ──────────────
-                    top.setItem(15, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
-                            .name(name("<gradient:#a5f3fc:#06b6d4><bold>Progress</bold></gradient>"))
-                            .lore(List.of(
-                                    Component.empty(),
-                                    lore("  <gray>Next milestone:</gray> <white>Day " + nextMs),
-                                    Component.empty(),
-                                    lore("  " + bar),
-                                    lore("  <gradient:#86efac:#16a34a>" + streak + "</gradient> <dark_gray>/</dark_gray> <white>" + nextMs),
-                                    Component.empty()))
-                            .build());
-
-                    // ── Milestone grid (rows 3–4, cols 1–7) ─────
-                    int[] grid = {
-                            28, 29, 30, 31, 32, 33, 34,
-                            37, 38, 39, 40, 41, 42, 43
-                    };
-
-                    int idx = 0;
-                    for (var entry : milestones.entrySet()) {
-                        if (idx >= grid.length) break;
-
-                        int day = entry.getKey();
-                        List<AbstractReward> rewards = entry.getValue();
-                        boolean achieved = streak >= day;
-                        boolean isNext = !achieved && day == nextMs;
-
-                        Material mat;
-                        String gradient;
-                        String icon;
-                        String status;
-
-                        if (achieved) {
-                            mat = Material.LIME_STAINED_GLASS_PANE;
-                            gradient = "<gradient:#86efac:#16a34a>";
-                            icon = "✔";
-                            status = "Unlocked!";
-                        } else if (isNext) {
-                            mat = Material.YELLOW_STAINED_GLASS_PANE;
-                            gradient = "<gradient:#fde047:#f59e0b>";
-                            icon = "▶";
-                            status = "Next milestone!";
-                        } else {
-                            mat = Material.RED_STAINED_GLASS_PANE;
-                            gradient = "<gradient:#fca5a5:#dc2626>";
-                            icon = "✘";
-                            status = "Locked";
-                        }
-
-                        List<Component> itemLore = new ArrayList<>();
-                        itemLore.add(Component.empty());
-                        itemLore.add(lore("  " + gradient + icon + " " + status + "</gradient>"));
-
-                        if (!achieved) {
-                            int remaining = day - streak;
-                            itemLore.add(lore("  <dark_gray>" + remaining + " day" + plural(remaining) + " to go"));
-                        }
-
-                        itemLore.add(Component.empty());
-                        itemLore.add(lore("  <gradient:#d8b4fe:#9333ea>Rewards:"));
-
-                        for (AbstractReward reward : rewards) {
-                            itemLore.add(lore("  <dark_gray>▸</dark_gray> <gray>" + formatReward(reward)));
-                        }
-                        itemLore.add(Component.empty());
-
-                        top.setItem(grid[idx], ItemBuilder.of(mat)
-                                .name(name(gradient + "<bold>Day " + day + "</bold></gradient>"))
-                                .glow(isNext)
-                                .lore(itemLore)
-                                .amount(Math.min(day, 64))
-                                .build());
-
-                        idx++;
-                    }
-
-                    for (int i = idx; i < grid.length; i++) {
-                        top.setItem(grid[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
-                                .name(Component.empty()).build());
-                    }
+                    renderStreakInfo(top, streak, highest);
+                    renderRewardsSummary(top, streak, milestones);
+                    renderProgress(top, streak, nextMs, bar);
+                    renderMilestoneGrid(top, streak, nextMs, milestones);
                 }));
     }
 
@@ -229,6 +126,124 @@ public class VoteStreakView extends VoteBaseView {
         if ("back".equals(id) && overviewView != null) {
             overviewView.open(viewer);
         }
+    }
+
+    // ── Render helpers ──────────────────────────────────────────
+
+    private void renderStreakInfo(@NotNull Inventory inv, int streak, int highest) {
+        inv.setItem(11, ItemBuilder.of(Material.BLAZE_POWDER)
+                .name(name("<gradient:#fde047:#f59e0b><bold>🔥 Your Streak</bold></gradient>"))
+                .glow(streak >= 7)
+                .lore(List.of(
+                        Component.empty(),
+                        lore("  <dark_gray>▸</dark_gray> <gray>Current:</gray> <gradient:#86efac:#16a34a><bold>" + streak + "</bold></gradient> <gray>day" + plural(streak)),
+                        lore("  <dark_gray>▸</dark_gray> <gray>Highest:</gray> <gradient:#fde047:#f59e0b><bold>" + highest + "</bold></gradient> <gray>day" + plural(highest)),
+                        Component.empty(),
+                        lore("  <gray>Vote daily to keep it going!"),
+                        Component.empty()))
+                .build());
+    }
+
+    private void renderRewardsSummary(@NotNull Inventory inv, int streak,
+                                       @NotNull Map<Integer, List<AbstractReward>> milestones) {
+        int unlocked = countMatching(streak, milestones, true);
+        int locked = countMatching(streak, milestones, false);
+
+        inv.setItem(13, ItemBuilder.of(Material.CHEST)
+                .name(name("<gradient:#fde047:#f59e0b><bold>Rewards</bold></gradient>"))
+                .lore(List.of(
+                        Component.empty(),
+                        lore("  <gray>Milestones:</gray> <white>" + milestones.size()),
+                        lore("  <gray>Unlocked:</gray> <gradient:#86efac:#16a34a>" + unlocked),
+                        lore("  <gray>Remaining:</gray> <gradient:#fca5a5:#dc2626>" + locked),
+                        Component.empty()))
+                .build());
+    }
+
+    private void renderProgress(@NotNull Inventory inv, int streak, int nextMs,
+                                 @NotNull String bar) {
+        inv.setItem(15, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
+                .name(name("<gradient:#a5f3fc:#06b6d4><bold>Progress</bold></gradient>"))
+                .lore(List.of(
+                        Component.empty(),
+                        lore("  <gray>Next milestone:</gray> <white>Day " + nextMs),
+                        Component.empty(),
+                        lore("  " + bar),
+                        lore("  <gradient:#86efac:#16a34a>" + streak + "</gradient> <dark_gray>/</dark_gray> <white>" + nextMs),
+                        Component.empty()))
+                .build());
+    }
+
+    private void renderMilestoneGrid(@NotNull Inventory inv, int streak, int nextMs,
+                                      @NotNull Map<Integer, List<AbstractReward>> milestones) {
+        int[] grid = {
+                28, 29, 30, 31, 32, 33, 34,
+                37, 38, 39, 40, 41, 42, 43
+        };
+
+        int idx = 0;
+        for (var entry : milestones.entrySet()) {
+            if (idx >= grid.length) break;
+            inv.setItem(grid[idx], buildMilestoneItem(entry.getKey(), entry.getValue(), streak, nextMs));
+            idx++;
+        }
+
+        for (int i = idx; i < grid.length; i++) {
+            inv.setItem(grid[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
+                    .name(Component.empty()).build());
+        }
+    }
+
+    private @NotNull ItemStack buildMilestoneItem(int day, @NotNull List<AbstractReward> rewards,
+                                                    int streak, int nextMs) {
+        boolean achieved = streak >= day;
+        boolean isNext = !achieved && day == nextMs;
+
+        Material mat;
+        String gradient;
+        String icon;
+        String status;
+
+        if (achieved) {
+            mat = Material.LIME_STAINED_GLASS_PANE;
+            gradient = "<gradient:#86efac:#16a34a>";
+            icon = "✔";
+            status = "Unlocked!";
+        } else if (isNext) {
+            mat = Material.YELLOW_STAINED_GLASS_PANE;
+            gradient = "<gradient:#fde047:#f59e0b>";
+            icon = "▶";
+            status = "Next milestone!";
+        } else {
+            mat = Material.RED_STAINED_GLASS_PANE;
+            gradient = "<gradient:#fca5a5:#dc2626>";
+            icon = "✘";
+            status = "Locked";
+        }
+
+        List<Component> itemLore = new ArrayList<>();
+        itemLore.add(Component.empty());
+        itemLore.add(lore("  " + gradient + icon + " " + status + "</gradient>"));
+
+        if (!achieved) {
+            int remaining = day - streak;
+            itemLore.add(lore("  <dark_gray>" + remaining + " day" + plural(remaining) + " to go"));
+        }
+
+        itemLore.add(Component.empty());
+        itemLore.add(lore("  <gradient:#d8b4fe:#9333ea>Rewards:"));
+
+        for (AbstractReward reward : rewards) {
+            itemLore.add(lore("  <dark_gray>▸</dark_gray> <gray>" + formatReward(reward)));
+        }
+        itemLore.add(Component.empty());
+
+        return ItemBuilder.of(mat)
+                .name(name(gradient + "<bold>Day " + day + "</bold></gradient>"))
+                .glow(isNext)
+                .lore(itemLore)
+                .amount(Math.min(day, 64))
+                .build();
     }
 
     // ── Helpers ─────────────────────────────────────────────────

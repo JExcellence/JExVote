@@ -41,11 +41,17 @@ public class VoteService {
     private final VoteRewardService rewardService;
     private final VoteBroadcastService broadcastService;
 
+    // volatile is sufficient: single-write / multi-read
     private volatile Map<String, VoteSite> voteSites;
+    // volatile is sufficient: single-write / multi-read
     private volatile Duration streakTimeout;
+    // volatile is sufficient: single-write / multi-read
     private volatile Map<Integer, List<String>> streakCommands;
+    // volatile is sufficient: single-write / multi-read
     private volatile int recordRetentionDays;
 
+    // Configuration group — suppressed (S107)
+    @SuppressWarnings("java:S107")
     public VoteService(@NotNull JavaPlugin plugin,
                        @NotNull VotePlayerRepository playerRepository,
                        @NotNull VoteRecordRepository recordRepository,
@@ -86,100 +92,110 @@ public class VoteService {
     public @NotNull CompletableFuture<Boolean> processVote(@NotNull Vote vote) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                logger.info("Processing vote: " + vote.username() + " / " + vote.serviceName());
+                logger.info(String.format("Processing vote: %s / %s", vote.username(), vote.serviceName()));
 
                 UUID uuid = resolveUuid(vote.username());
                 if (uuid == null) {
-                    logger.warning("Could not resolve UUID for voter: " + vote.username()
-                            + " — player has never joined this server");
+                    logger.warning(String.format("Could not resolve UUID for voter: %s — player has never joined this server", vote.username()));
                     return false;
                 }
 
-                logger.fine("Resolved UUID for " + vote.username() + ": " + uuid);
+                logger.fine(String.format("Resolved UUID for %s: %s", vote.username(), uuid));
 
-                // Fire event on main thread and wait for result
-                CompletableFuture<Boolean> eventResult = new CompletableFuture<>();
-                scheduler.runSync(() -> {
-                    try {
-                        VoteReceivedEvent event = new VoteReceivedEvent(
-                                vote.username(), uuid, vote.serviceName(), vote.address());
-                        Bukkit.getPluginManager().callEvent(event);
-                        eventResult.complete(!event.isCancelled());
-                    } catch (Exception e) {
-                        eventResult.completeExceptionally(e);
-                    }
-                });
-
-                Boolean allowed = eventResult.join();
-                if (!allowed) {
-                    logger.info("Vote for " + vote.username() + " was cancelled by event listener");
+                if (!fireVoteReceivedEvent(vote, uuid)) {
+                    logger.info(String.format("Vote for %s was cancelled by event listener", vote.username()));
                     return false;
                 }
 
-                VotePlayerEntity player = playerRepository.findByUuid(uuid)
-                        .orElseGet(() -> {
-                            logger.info("Creating new vote profile for " + vote.username() + " (" + uuid + ")");
-                            VotePlayerEntity newPlayer = new VotePlayerEntity(uuid, vote.username());
-                            playerRepository.create(newPlayer);
-                            return newPlayer;
-                        });
+                VotePlayerEntity player = findOrCreatePlayer(vote, uuid);
+                int points = resolvePointsForSite(vote.serviceName());
+                applyVoteToPlayer(player, vote, points);
 
-                player.setPlayerName(vote.username());
-                resetMonthlyIfNeeded(player);
-                updateStreak(player);
-
-                VoteSite site = findSiteByServiceName(vote.serviceName());
-                int points = site != null ? site.pointsPerVote() : 1;
-
-                if (site == null) {
-                    logger.warning("No vote site configured for service '" + vote.serviceName()
-                            + "' — using default 1 point. Check sites.yml service-name mappings.");
-                }
-
-                player.setTotalVotes(player.getTotalVotes() + 1);
-                player.setMonthlyVotes(player.getMonthlyVotes() + 1);
-                player.setVotePoints(player.getVotePoints() + points);
-                player.setLastVoteAt(vote.timestamp());
-
-                playerRepository.update(player);
-
-                VoteRecordEntity record = new VoteRecordEntity(
+                recordRepository.create(new VoteRecordEntity(
                         uuid, vote.username(), vote.serviceName(),
-                        vote.address(), vote.timestamp());
-                recordRepository.create(record);
+                        vote.address(), vote.timestamp()));
 
-                Player onlinePlayer = Bukkit.getPlayer(uuid);
-                VoteSnapshot snapshot = toSnapshot(player);
-                int streak = player.getCurrentStreak();
-
-                if (onlinePlayer != null && onlinePlayer.isOnline()) {
-                    scheduler.runAtEntity(onlinePlayer, () -> {
-                        rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
-                        executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
-                        broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
-                        Bukkit.getPluginManager().callEvent(
-                                new VoteRewardClaimedEvent(uuid, vote.serviceName(), snapshot));
-                    });
-                    logger.info("Vote processed for " + vote.username()
-                            + " (online) — streak: " + streak
-                            + ", total: " + player.getTotalVotes());
-                } else {
-                    String rewardData = rewardService.serializeRewards(vote.serviceName(), streak);
-                    if (rewardData != null) {
-                        pendingRewardRepository.create(
-                                new PendingVoteRewardEntity(uuid, vote.serviceName(), rewardData));
-                    }
-                    logger.info("Vote processed for " + vote.username()
-                            + " (offline) — rewards queued, streak: " + streak
-                            + ", total: " + player.getTotalVotes());
-                }
-
+                deliverOrQueueRewards(vote, uuid, player);
                 return true;
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Failed to process vote for " + vote.username(), e);
+                logger.log(Level.SEVERE, e, () -> String.format("Failed to process vote for %s", vote.username()));
                 return false;
             }
         });
+    }
+
+    private boolean fireVoteReceivedEvent(@NotNull Vote vote, @NotNull UUID uuid) {
+        CompletableFuture<Boolean> eventResult = new CompletableFuture<>();
+        scheduler.runSync(() -> {
+            try {
+                VoteReceivedEvent event = new VoteReceivedEvent(
+                        vote.username(), uuid, vote.serviceName(), vote.address());
+                Bukkit.getPluginManager().callEvent(event);
+                eventResult.complete(!event.isCancelled());
+            } catch (Exception e) {
+                eventResult.completeExceptionally(e);
+            }
+        });
+        return Boolean.TRUE.equals(eventResult.join());
+    }
+
+    private @NotNull VotePlayerEntity findOrCreatePlayer(@NotNull Vote vote, @NotNull UUID uuid) {
+        VotePlayerEntity player = playerRepository.findByUuid(uuid)
+                .orElseGet(() -> {
+                    logger.info(String.format("Creating new vote profile for %s (%s)", vote.username(), uuid));
+                    VotePlayerEntity newPlayer = new VotePlayerEntity(uuid, vote.username());
+                    playerRepository.create(newPlayer);
+                    return newPlayer;
+                });
+        player.setPlayerName(vote.username());
+        resetMonthlyIfNeeded(player);
+        updateStreak(player);
+        return player;
+    }
+
+    private int resolvePointsForSite(@NotNull String serviceName) {
+        VoteSite site = findSiteByServiceName(serviceName);
+        if (site == null) {
+            logger.warning(String.format(
+                    "No vote site configured for service '%s' — using default 1 point. Check sites.yml service-name mappings.",
+                    serviceName));
+            return 1;
+        }
+        return site.pointsPerVote();
+    }
+
+    private void applyVoteToPlayer(@NotNull VotePlayerEntity player, @NotNull Vote vote, int points) {
+        player.setTotalVotes(player.getTotalVotes() + 1);
+        player.setMonthlyVotes(player.getMonthlyVotes() + 1);
+        player.setVotePoints(player.getVotePoints() + points);
+        player.setLastVoteAt(vote.timestamp());
+        playerRepository.update(player);
+    }
+
+    private void deliverOrQueueRewards(@NotNull Vote vote, @NotNull UUID uuid, @NotNull VotePlayerEntity player) {
+        Player onlinePlayer = Bukkit.getPlayer(uuid);
+        VoteSnapshot snapshot = toSnapshot(player);
+        int streak = player.getCurrentStreak();
+
+        if (onlinePlayer != null && onlinePlayer.isOnline()) {
+            scheduler.runAtEntity(onlinePlayer, () -> {
+                rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
+                executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
+                broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
+                Bukkit.getPluginManager().callEvent(
+                        new VoteRewardClaimedEvent(uuid, vote.serviceName(), snapshot));
+            });
+            logger.info(String.format("Vote processed for %s (online) — streak: %d, total: %d",
+                    vote.username(), streak, player.getTotalVotes()));
+        } else {
+            String rewardData = rewardService.serializeRewards(vote.serviceName(), streak);
+            if (rewardData != null) {
+                pendingRewardRepository.create(
+                        new PendingVoteRewardEntity(uuid, vote.serviceName(), rewardData));
+            }
+            logger.info(String.format("Vote processed for %s (offline) — rewards queued, streak: %d, total: %d",
+                    vote.username(), streak, player.getTotalVotes()));
+        }
     }
 
     public void deliverPendingRewards(@NotNull Player player) {

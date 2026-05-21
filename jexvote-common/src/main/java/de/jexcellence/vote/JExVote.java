@@ -31,6 +31,7 @@ import de.jexcellence.vote.view.VoteLeaderboardView;
 import de.jexcellence.vote.view.VoteOverviewView;
 import de.jexcellence.vote.view.VoteStreakView;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.security.KeyPair;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -104,7 +108,7 @@ public abstract class JExVote {
             registerPlaceholders();
             registerApiProvider();
 
-            logger.info("JExVote " + edition + " enabled — Votifier on port " + voteConfig.getServerPort());
+            logger.info(String.format("JExVote %s enabled — Votifier on port %d", edition, voteConfig.getServerPort()));
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to enable JExVote", e);
             Bukkit.getPluginManager().disablePlugin(plugin);
@@ -116,12 +120,12 @@ public abstract class JExVote {
             votifierServer.shutdown();
         }
         if (placeholders != null) {
-            try { placeholders.unregister(); } catch (Throwable ignored) {}
+            try { placeholders.unregister(); } catch (Throwable ignored) { /* Best-effort unregistration */ }
         }
         if (voteProvider != null) {
             try {
                 Bukkit.getServicesManager().unregister(JExVoteAPI.class, voteProvider);
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) { /* Best-effort unregistration */ }
         }
         if (jeHibernate != null) {
             jeHibernate.close();
@@ -155,7 +159,7 @@ public abstract class JExVote {
     private void persistTokenToConfig(@NotNull String token) {
         try {
             File configFile = new File(plugin.getDataFolder(), "config.yml");
-            var config = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(configFile);
+            var config = YamlConfiguration.loadConfiguration(configFile);
             config.set("votifier.token", token);
             config.save(configFile);
         } catch (IOException e) {
@@ -191,15 +195,14 @@ public abstract class JExVote {
         Map<String, VoteSite> sites = voteConfig.getVoteSites();
         int maxSites = edition().maxVoteSites();
         if (maxSites > 0 && sites.size() > maxSites) {
-            logger.warning("Free edition supports up to " + maxSites + " vote sites, but "
-                    + sites.size() + " are configured. Only the first " + maxSites + " will be loaded.");
-            var limited = new java.util.LinkedHashMap<String, VoteSite>();
+            logger.warning(String.format("Free edition supports up to %d vote sites, but %d are configured. Only the first %d will be loaded.", maxSites, sites.size(), maxSites));
+            var limited = new LinkedHashMap<String, VoteSite>();
             int count = 0;
             for (var entry : sites.entrySet()) {
                 if (count++ >= maxSites) break;
                 limited.put(entry.getKey(), entry.getValue());
             }
-            sites = java.util.Collections.unmodifiableMap(limited);
+            sites = Collections.unmodifiableMap(limited);
         }
 
         voteService = new VoteService(
@@ -223,8 +226,8 @@ public abstract class JExVote {
                 token = VotifierKeyManager.generateToken();
                 persistTokenToConfig(token);
                 logger.info("Generated and saved Votifier token to config.yml.");
-                logger.info("Token: " + token);
-                logger.info("Public key: " + VotifierKeyManager.encodePublicKey(keyPair.getPublic()));
+                logger.info(String.format("Token: %s", token));
+                logger.info(String.format("Public key: %s", VotifierKeyManager.encodePublicKey(keyPair.getPublic())));
             }
 
             votifierServer = new VotifierServer(
@@ -239,8 +242,7 @@ public abstract class JExVote {
                                 + " on " + result.vote().serviceName());
                         voteService.processVote(result.vote()).whenComplete((success, error) -> {
                             if (error != null) {
-                                logger.log(Level.SEVERE, "Error processing vote for "
-                                        + result.vote().username(), error);
+                                logger.log(Level.SEVERE, error, () -> String.format("Error processing vote for %s", result.vote().username()));
                                 return;
                             }
                             if (success) {
@@ -279,10 +281,10 @@ public abstract class JExVote {
         registry.register(ArgumentType.custom("vote_service", String.class,
                 (sender, raw) -> ArgumentType.ParseResult.ok(raw),
                 (sender, partial) -> {
-                    var lower = partial.toLowerCase(java.util.Locale.ROOT);
+                    var lower = partial.toLowerCase(Locale.ROOT);
                     return voteService.getVoteSites().values().stream()
-                            .map(de.jexcellence.vote.model.VoteSite::serviceName)
-                            .filter(name -> name.toLowerCase(java.util.Locale.ROOT).startsWith(lower))
+                            .map(VoteSite::serviceName)
+                            .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(lower))
                             .toList();
                 }));
 
@@ -291,10 +293,10 @@ public abstract class JExVote {
         saveDefaultResource("commands/vote.yml");
         saveDefaultResource("commands/jexvote.yml");
 
-        factory.registerTree(new java.io.File(plugin.getDataFolder(), "commands/vote.yml"),
+        factory.registerTree(new File(plugin.getDataFolder(), "commands/vote.yml"),
                 new VoteCommandHandler(voteService, leaderboardService, voteConfig, overviewView).handlerMap(),
                 messages, registry);
-        factory.registerTree(new java.io.File(plugin.getDataFolder(), "commands/jexvote.yml"),
+        factory.registerTree(new File(plugin.getDataFolder(), "commands/jexvote.yml"),
                 new VoteAdminHandler(plugin, edition(), voteService, voteConfig, rewardConfig).handlerMap(),
                 messages, registry);
 

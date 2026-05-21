@@ -254,7 +254,7 @@ public class VoteLeaderboardView extends VoteBaseView {
 
     private static String buildVoteBar(int votes) {
         int bars = 10;
-        int filled = votes <= 0 ? 0 : Math.min(bars, Math.max(1, (int) (Math.log10(votes + 1) * 3)));
+        int filled = votes <= 0 ? 0 : Math.min(bars, Math.max(1, (int) (Math.log10((double) votes + 1) * 3)));
         var sb = new StringBuilder("<dark_gray>[</dark_gray>");
         for (int i = 0; i < bars; i++) {
             sb.append(i < filled ? "<gradient:#fde047:#f59e0b>|</gradient>" : "<dark_gray>|</dark_gray>");

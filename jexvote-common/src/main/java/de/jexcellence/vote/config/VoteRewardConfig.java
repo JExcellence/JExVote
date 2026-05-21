@@ -23,6 +23,8 @@ import java.util.logging.Logger;
 
 public final class VoteRewardConfig {
 
+    private static final String REWARDS_FILE = "rewards.yml";
+
     private final JavaPlugin plugin;
     private final Logger logger;
     private final RewardRegistry rewardRegistry;
@@ -48,14 +50,14 @@ public final class VoteRewardConfig {
     }
 
     public void load() {
-        File rewardsFile = new File(plugin.getDataFolder(), "rewards.yml");
+        File rewardsFile = new File(plugin.getDataFolder(), REWARDS_FILE);
         if (!rewardsFile.exists()) {
-            plugin.saveResource("rewards.yml", false);
+            plugin.saveResource(REWARDS_FILE, false);
         }
 
         YamlConfiguration config = YamlConfiguration.loadConfiguration(rewardsFile);
 
-        var defaults = plugin.getResource("rewards.yml");
+        var defaults = plugin.getResource(REWARDS_FILE);
         if (defaults != null) {
             config.setDefaults(YamlConfiguration.loadConfiguration(
                     new InputStreamReader(defaults, StandardCharsets.UTF_8)));
@@ -65,9 +67,8 @@ public final class VoteRewardConfig {
         streakRewards = loadStreakRewards(config.getConfigurationSection("streak-rewards"));
         siteRewards = loadSiteRewards(config.getConfigurationSection("site-rewards"));
 
-        logger.info("Loaded " + defaultRewards.size() + " default reward(s), " +
-                streakRewards.size() + " streak tier(s), " +
-                siteRewards.size() + " site-specific reward set(s)");
+        logger.info(String.format("Loaded %d default reward(s), %d streak tier(s), %d site-specific reward set(s)",
+                defaultRewards.size(), streakRewards.size(), siteRewards.size()));
     }
 
     private @NotNull List<AbstractReward> loadRewardList(ConfigurationSection section) {
@@ -81,12 +82,12 @@ public final class VoteRewardConfig {
             try {
                 String type = rewardSection.getString("type");
                 if (type == null) {
-                    logger.warning("Reward '" + key + "' missing 'type' field");
+                    logger.warning(String.format("Reward '%s' missing 'type' field", key));
                     continue;
                 }
 
                 if (rewardRegistry.find(type).isEmpty()) {
-                    logger.warning("Unknown reward type: " + type);
+                    logger.warning(String.format("Unknown reward type: %s", type));
                     continue;
                 }
 
@@ -95,7 +96,7 @@ public final class VoteRewardConfig {
                 AbstractReward reward = rewardMapper.readValue(json, AbstractReward.class);
                 rewards.add(reward);
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Failed to load reward '" + key + "'", e);
+                logger.log(Level.WARNING, String.format("Failed to load reward '%s'", key), e);
             }
         }
         return Collections.unmodifiableList(rewards);
@@ -116,7 +117,7 @@ public final class VoteRewardConfig {
                     }
                 }
             } catch (NumberFormatException e) {
-                logger.warning("Invalid streak day: " + key);
+                logger.warning(String.format("Invalid streak day: %s", key));
             }
         }
         return Collections.unmodifiableMap(map);

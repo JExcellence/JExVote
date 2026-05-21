@@ -3,11 +3,8 @@ package de.jexcellence.vote;
 import de.jexcellence.dependency.delegate.AbstractPluginDelegate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.logging.Logger;
-
 public final class JExVotePremiumImpl extends AbstractPluginDelegate<JExVotePremium> {
 
-    private static final Logger LOGGER = Logger.getLogger(JExVotePremiumImpl.class.getName());
     private static final int METRICS_ID = 0;
 
     private JExVote vote;

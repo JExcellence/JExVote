@@ -36,6 +36,8 @@ public class VoteOverviewView extends VoteBaseView {
      *  45 46 47 48 49 50 51 52 53
      */
 
+    private static final String GRADIENT_END = "</bold></gradient>";
+
     private final Holder holder = new Holder();
     private final VoteService voteService;
     private final PlatformScheduler scheduler;
@@ -63,7 +65,7 @@ public class VoteOverviewView extends VoteBaseView {
         glass(inv, Material.LIME_STAINED_GLASS_PANE, 0, 2, 6, 8);
         glass(inv, Material.GREEN_STAINED_GLASS_PANE, 1, 7);
         inv.setItem(4, ItemBuilder.of(Material.EMERALD)
-                .name(name("<gradient:#86efac:#16a34a><bold>✦ Vote Overview</bold></gradient>"))
+                .name(name("<gradient:#86efac:#16a34a><bold>✦ Vote Overview" + GRADIENT_END))
                 .glow(true)
                 .lore(List.of(
                         Component.empty(),
@@ -76,7 +78,7 @@ public class VoteOverviewView extends VoteBaseView {
         glass(inv, Material.GREEN_STAINED_GLASS_PANE, 9, 17);
 
         inv.setItem(12, HeadBuilder.fromPlayer(viewer)
-                .name(name("<gradient:#86efac:#16a34a><bold>" + viewer.getName() + "</bold></gradient>"))
+                .name(name("<gradient:#86efac:#16a34a><bold>" + viewer.getName() + GRADIENT_END))
                 .lore(List.of(
                         Component.empty(),
                         lore("  <gray>Loading stats..."),
@@ -84,12 +86,12 @@ public class VoteOverviewView extends VoteBaseView {
                 .build());
 
         inv.setItem(13, ItemBuilder.of(Material.NETHER_STAR)
-                .name(name("<gradient:#d8b4fe:#9333ea><bold>Vote Points</bold></gradient>"))
+                .name(name("<gradient:#d8b4fe:#9333ea><bold>Vote Points" + GRADIENT_END))
                 .lore(List.of(Component.empty(), lore("  <gray>Loading..."), Component.empty()))
                 .build());
 
         inv.setItem(14, ItemBuilder.of(Material.BLAZE_POWDER)
-                .name(name("<gradient:#fde047:#f59e0b><bold>Vote Streak</bold></gradient>"))
+                .name(name("<gradient:#fde047:#f59e0b><bold>Vote Streak" + GRADIENT_END))
                 .lore(List.of(Component.empty(), lore("  <gray>Loading..."), Component.empty()))
                 .build());
 
@@ -104,7 +106,7 @@ public class VoteOverviewView extends VoteBaseView {
                     String bar = progressBar(streak, nextMs, 10);
 
                     top.setItem(12, HeadBuilder.fromPlayer(viewer)
-                            .name(name("<gradient:#86efac:#16a34a><bold>" + viewer.getName() + "</bold></gradient>"))
+                            .name(name("<gradient:#86efac:#16a34a><bold>" + viewer.getName() + GRADIENT_END))
                             .lore(List.of(
                                     Component.empty(),
                                     lore("  <dark_gray>▸</dark_gray> <gray>Total Votes:</gray> <white>" + stats.totalVotes()),
@@ -118,7 +120,7 @@ public class VoteOverviewView extends VoteBaseView {
                             .build());
 
                     top.setItem(13, ItemBuilder.of(Material.NETHER_STAR)
-                            .name(name("<gradient:#d8b4fe:#9333ea><bold>Vote Points</bold></gradient>"))
+                            .name(name("<gradient:#d8b4fe:#9333ea><bold>Vote Points" + GRADIENT_END))
                             .glow(true)
                             .lore(List.of(
                                     Component.empty(),
@@ -129,7 +131,7 @@ public class VoteOverviewView extends VoteBaseView {
                             .build());
 
                     top.setItem(14, ItemBuilder.of(Material.BLAZE_POWDER)
-                            .name(name("<gradient:#fde047:#f59e0b><bold>Vote Streak</bold></gradient>"))
+                            .name(name("<gradient:#fde047:#f59e0b><bold>Vote Streak" + GRADIENT_END))
                             .glow(streak >= 7)
                             .lore(List.of(
                                     Component.empty(),
@@ -167,7 +169,7 @@ public class VoteOverviewView extends VoteBaseView {
                     siteLore.add(lore("  <gradient:#fde047:#f59e0b>▶ Click to get vote link"));
                 }
                 ItemStack siteItem = ItemBuilder.of(siteMats[i % siteMats.length])
-                        .name(name("<gradient:#a5f3fc:#06b6d4><bold>" + site.displayName() + "</bold></gradient>"))
+                        .name(name("<gradient:#a5f3fc:#06b6d4><bold>" + site.displayName() + GRADIENT_END))
                         .lore(siteLore)
                         .build();
                 tag(siteItem, "site:" + site.serviceName());
@@ -185,7 +187,7 @@ public class VoteOverviewView extends VoteBaseView {
         glass(inv, Material.GREEN_STAINED_GLASS_PANE, 46, 52);
 
         ItemStack lbItem = ItemBuilder.of(Material.GOLD_BLOCK)
-                .name(name("<gradient:#fde047:#f59e0b><bold>⭐ Leaderboard</bold></gradient>"))
+                .name(name("<gradient:#fde047:#f59e0b><bold>⭐ Leaderboard" + GRADIENT_END))
                 .glow(true)
                 .lore(List.of(
                         Component.empty(),
@@ -198,7 +200,7 @@ public class VoteOverviewView extends VoteBaseView {
         inv.setItem(47, lbItem);
 
         ItemStack streakItem = ItemBuilder.of(Material.MAGMA_CREAM)
-                .name(name("<gradient:#fca5a5:#dc2626><bold>🔥 Streak Rewards</bold></gradient>"))
+                .name(name("<gradient:#fca5a5:#dc2626><bold>🔥 Streak Rewards" + GRADIENT_END))
                 .glow(true)
                 .lore(List.of(
                         Component.empty(),

@@ -41,7 +41,7 @@ public final class VotifierKeyManager {
         writeKey(publicKeyFile, pair.getPublic().getEncoded());
         writeKey(privateKeyFile, pair.getPrivate().getEncoded());
 
-        logger.info("RSA keypair saved to " + dataFolder.resolve("rsa"));
+        logger.info(String.format("RSA keypair saved to %s", dataFolder.resolve("rsa")));
         return pair;
     }
 

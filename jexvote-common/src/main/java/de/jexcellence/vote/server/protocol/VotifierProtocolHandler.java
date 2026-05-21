@@ -10,11 +10,15 @@ import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
@@ -81,7 +85,8 @@ public class VotifierProtocolHandler implements Runnable {
     }
 
     private void handleV1(@NotNull BufferedInputStream in, @NotNull OutputStream out,
-                          @NotNull String challenge, int firstByte, int secondByte) throws Exception {
+                          @NotNull String challenge, int firstByte, int secondByte)
+            throws IOException, GeneralSecurityException {
         byte[] block = new byte[V1_BLOCK_SIZE];
         block[0] = (byte) firstByte;
 
@@ -99,6 +104,8 @@ public class VotifierProtocolHandler implements Runnable {
 
         if (read == V1_BLOCK_SIZE) {
             // Full 256-byte RSA block — standard v1
+            // Votifier v1 protocol mandates RSA/ECB/PKCS1Padding for backward compatibility
+            @SuppressWarnings("java:S5542")
             Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
             byte[] decrypted = cipher.doFinal(block);
@@ -117,15 +124,15 @@ public class VotifierProtocolHandler implements Runnable {
 
             Vote vote = new Vote(username, serviceName, address, Instant.now());
             voteCallback.accept(new VoteResult(vote, VoteResult.Protocol.V1));
-            logger.info("Received v1 vote from " + serviceName + " for " + username);
+            logger.info(String.format("Received v1 vote from %s for %s", serviceName, username));
         } else {
             // Not 256 bytes — likely a v2 message with unrecognized framing.
             // Try to recover it as v2 JSON.
-            logger.info("Got " + read + " bytes (v1 expects 256), attempting v2 fallback. "
-                    + "First bytes: " + hexDump(block, Math.min(read, 16)));
+            logger.info(String.format("Got %d bytes (v1 expects 256), attempting v2 fallback. First bytes: %s",
+                    read, hexDump(block, Math.min(read, 16))));
             byte[] data = Arrays.copyOf(block, read);
             if (!tryV2Fallback(data, out, challenge)) {
-                logger.warning("Vote block (" + read + " bytes) — neither valid v1 nor v2");
+                logger.warning(String.format("Vote block (%d bytes) — neither valid v1 nor v2", read));
             }
         }
     }
@@ -161,7 +168,7 @@ public class VotifierProtocolHandler implements Runnable {
             String json = raw.substring(jsonStart);
             try {
                 processV2Json(json, out, challenge);
-                logger.info("v2 fallback succeeded (raw JSON at offset " + jsonStart + ")");
+                logger.info(String.format("v2 fallback succeeded (raw JSON at offset %d)", jsonStart));
                 return true;
             } catch (Exception e) {
                 logger.log(Level.FINE, "v2 fallback (raw JSON) failed", e);
@@ -186,13 +193,14 @@ public class VotifierProtocolHandler implements Runnable {
      * The magic bytes have already been consumed.
      */
     private void handleV2Binary(@NotNull BufferedInputStream in, @NotNull OutputStream out,
-                                 @NotNull String challenge) throws Exception {
+                                 @NotNull String challenge)
+            throws IOException, GeneralSecurityException {
         int high = in.read();
         int low = in.read();
         if (high == -1 || low == -1) return;
         int length = (high << 8) | low;
         if (length <= 0 || length > 8192) {
-            logger.warning("Invalid v2 binary frame length: " + length);
+            logger.warning(String.format("Invalid v2 binary frame length: %d", length));
             return;
         }
         byte[] rawBytes = in.readNBytes(length);
@@ -201,7 +209,8 @@ public class VotifierProtocolHandler implements Runnable {
     }
 
     private void handleV2(@NotNull BufferedInputStream in, @NotNull OutputStream out,
-                           @NotNull String challenge, int firstByte) throws Exception {
+                           @NotNull String challenge, int firstByte)
+            throws IOException, GeneralSecurityException, InterruptedException {
         byte[] rawBytes;
 
         if (firstByte == 0x00) {
@@ -213,7 +222,7 @@ public class VotifierProtocolHandler implements Runnable {
             if (high == -1 || low == -1) return;
             int length = (high << 8) | low;
             if (length <= 0 || length > 8192) {
-                logger.warning("Invalid v2 frame length: " + length);
+                logger.warning(String.format("Invalid v2 frame length: %d", length));
                 return;
             }
             rawBytes = in.readNBytes(length);
@@ -236,41 +245,57 @@ public class VotifierProtocolHandler implements Runnable {
     }
 
     private void processV2Json(@NotNull String rawJson, @NotNull OutputStream out,
-                                @NotNull String challenge) throws Exception {
+                                @NotNull String challenge)
+            throws IOException, GeneralSecurityException {
         JsonNode root = MAPPER.readTree(rawJson);
         String payloadStr = root.get("payload").asText();
         String signatureStr = root.get("signature").asText();
 
+        if (!verifySignature(payloadStr, signatureStr, out)) return;
+
+        JsonNode payload = MAPPER.readTree(payloadStr);
+        if (!verifyChallenge(payload, challenge, out)) return;
+
+        Vote vote = extractVoteFromPayload(payload);
+        voteCallback.accept(new VoteResult(vote, VoteResult.Protocol.V2));
+        logger.info(String.format("Received v2 vote from %s for %s", vote.serviceName(), vote.username()));
+        sendV2Response(out, "ok", null);
+    }
+
+    private boolean verifySignature(@NotNull String payloadStr, @NotNull String signatureStr,
+                                     @NotNull OutputStream out)
+            throws InvalidKeyException, NoSuchAlgorithmException {
         byte[] signatureBytes = Base64.getDecoder().decode(signatureStr);
         byte[] computedSig = hmac(token, payloadStr);
 
         if (!MessageDigest.isEqual(signatureBytes, computedSig)) {
             logger.warning("v2 vote signature mismatch — invalid token or tampered payload");
             sendV2Response(out, "error", "signature verification failed");
-            return;
+            return false;
         }
+        return true;
+    }
 
-        JsonNode payload = MAPPER.readTree(payloadStr);
+    private boolean verifyChallenge(@NotNull JsonNode payload, @NotNull String challenge,
+                                     @NotNull OutputStream out) {
         String payloadChallenge = payload.has("challenge") ? payload.get("challenge").asText() : "";
-
         if (!challenge.equals(payloadChallenge)) {
             logger.warning("v2 vote challenge mismatch");
             sendV2Response(out, "error", "challenge mismatch");
-            return;
+            return false;
         }
+        return true;
+    }
 
+    private static @NotNull Vote extractVoteFromPayload(@NotNull JsonNode payload) {
         String serviceName = payload.get("serviceName").asText();
         String username = payload.get("username").asText();
         String address = payload.has("address") ? payload.get("address").asText() : "";
         long timestamp = payload.has("timestamp") ? payload.get("timestamp").asLong() : 0;
 
-        Vote vote = new Vote(
+        return new Vote(
                 username, serviceName, address,
                 timestamp > 0 ? Instant.ofEpochMilli(timestamp) : Instant.now());
-
-        voteCallback.accept(new VoteResult(vote, VoteResult.Protocol.V2));
-        logger.info("Received v2 vote from " + serviceName + " for " + username);
-        sendV2Response(out, "ok", null);
     }
 
     private void sendV2Response(@NotNull OutputStream out, @NotNull String status, String error) {
@@ -283,10 +308,11 @@ public class VotifierProtocolHandler implements Runnable {
             }
             out.write(json.getBytes(StandardCharsets.UTF_8));
             out.flush();
-        } catch (Exception ignored) {}
+        } catch (IOException ignored) { /* Best-effort response flush */ }
     }
 
-    private static byte[] hmac(@NotNull String key, @NotNull String data) throws Exception {
+    private static byte[] hmac(@NotNull String key, @NotNull String data)
+            throws NoSuchAlgorithmException, InvalidKeyException {
         Mac mac = Mac.getInstance(HMAC_ALGO);
         mac.init(new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), HMAC_ALGO));
         return mac.doFinal(data.getBytes(StandardCharsets.UTF_8));

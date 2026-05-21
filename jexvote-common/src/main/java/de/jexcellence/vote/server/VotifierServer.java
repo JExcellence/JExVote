@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.security.KeyPair;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,8 +30,11 @@ public class VotifierServer {
     /** Max concurrent vote connections. Protects against connection floods. */
     private static final int MAX_CONNECTIONS = 16;
 
+    // volatile is sufficient: single-write / multi-read
     private volatile ServerSocket serverSocket;
+    // volatile is sufficient: single-write / multi-read
     private volatile Thread acceptThread;
+    // volatile is sufficient: single-write / multi-read
     private volatile ExecutorService executor;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
@@ -56,7 +60,7 @@ public class VotifierServer {
         // Handler pool for processing accepted connections — separate from the accept loop.
         executor = new ThreadPoolExecutor(
                 2, MAX_CONNECTIONS, 60L, TimeUnit.SECONDS,
-                new java.util.concurrent.SynchronousQueue<>(),
+                new SynchronousQueue<>(),
                 r -> {
                     Thread t = new Thread(r, "JExVote-Votifier-Handler");
                     t.setDaemon(true);
@@ -84,7 +88,7 @@ public class VotifierServer {
         acceptThread.setDaemon(true);
         acceptThread.start();
 
-        logger.info("Votifier server listening on " + address);
+        logger.info(String.format("Votifier server listening on %s", address));
     }
 
     public void shutdown() {
@@ -92,7 +96,7 @@ public class VotifierServer {
         if (serverSocket != null) {
             try {
                 serverSocket.close();
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) { /* Best-effort close */ }
         }
         if (acceptThread != null) {
             acceptThread.interrupt();

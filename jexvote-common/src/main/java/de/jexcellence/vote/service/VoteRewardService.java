@@ -130,14 +130,7 @@ public class VoteRewardService {
 
             if (rewards != null) {
                 for (Map<String, Object> rewardMap : rewards) {
-                    try {
-                        String json = objectMapper.writeValueAsString(rewardMap);
-                        AbstractReward reward = objectMapper.readValue(json, AbstractReward.class);
-                        reward.grant(player);
-                    } catch (Exception ex) {
-                        String typeId = (String) rewardMap.get("type");
-                        logger.log(Level.WARNING, "Failed to deserialize reward type: " + typeId, ex);
-                    }
+                    grantSingleReward(player, rewardMap);
                 }
             }
 
@@ -148,7 +141,18 @@ public class VoteRewardService {
                 }
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to grant serialized rewards to " + player.getName(), e);
+            logger.log(Level.WARNING, e, () -> String.format("Failed to grant serialized rewards to %s", player.getName()));
+        }
+    }
+
+    private void grantSingleReward(@NotNull Player player, @NotNull Map<String, Object> rewardMap) {
+        try {
+            String json = objectMapper.writeValueAsString(rewardMap);
+            AbstractReward reward = objectMapper.readValue(json, AbstractReward.class);
+            reward.grant(player);
+        } catch (Exception ex) {
+            String typeId = (String) rewardMap.get("type");
+            logger.log(Level.WARNING, ex, () -> String.format("Failed to deserialize reward type: %s", typeId));
         }
     }
 

@@ -27,16 +27,15 @@ public final class VoteCommandHandler {
 
     private final VoteService voteService;
     private final VoteLeaderboardService leaderboardService;
-    private final VoteConfig voteConfig;
     private final VoteOverviewView overviewView;
 
+    @SuppressWarnings("unused") // voteConfig kept for caller compatibility; handled separately in JExVote
     public VoteCommandHandler(@NotNull VoteService voteService,
                               @NotNull VoteLeaderboardService leaderboardService,
                               @NotNull VoteConfig voteConfig,
                               @NotNull VoteOverviewView overviewView) {
         this.voteService = voteService;
         this.leaderboardService = leaderboardService;
-        this.voteConfig = voteConfig;
         this.overviewView = overviewView;
     }
 

@@ -22,6 +22,8 @@ import java.util.logging.Logger;
 
 public final class VoteConfig {
 
+    private static final String CONFIG_FILE = "config.yml";
+
     /**
      * Controls who receives vote broadcast messages.
      */
@@ -59,14 +61,14 @@ public final class VoteConfig {
     }
 
     public void load() {
-        File configFile = new File(plugin.getDataFolder(), "config.yml");
+        File configFile = new File(plugin.getDataFolder(), CONFIG_FILE);
         if (!configFile.exists()) {
-            plugin.saveResource("config.yml", false);
+            plugin.saveResource(CONFIG_FILE, false);
         }
 
         YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
 
-        var defaults = plugin.getResource("config.yml");
+        var defaults = plugin.getResource(CONFIG_FILE);
         if (defaults != null) {
             config.setDefaults(YamlConfiguration.loadConfiguration(
                     new InputStreamReader(defaults, StandardCharsets.UTF_8)));
@@ -84,7 +86,7 @@ public final class VoteConfig {
         try {
             broadcastMode = BroadcastMode.valueOf(modeStr);
         } catch (IllegalArgumentException e) {
-            logger.warning("Invalid broadcast.mode '" + modeStr + "', using ALL");
+            logger.warning(String.format("Invalid broadcast.mode '%s', using ALL", modeStr));
             broadcastMode = BroadcastMode.ALL;
         }
         broadcastCooldownSeconds = config.getInt("broadcast.cooldown", 0);
@@ -118,7 +120,7 @@ public final class VoteConfig {
                     map.put(day, commands);
                 }
             } catch (NumberFormatException e) {
-                logger.warning("Invalid streak day number in config: " + key);
+                logger.warning(String.format("Invalid streak day number in config: %s", key));
             }
         }
         streakCommands = Collections.unmodifiableMap(map);
@@ -154,7 +156,7 @@ public final class VoteConfig {
             try {
                 timezone = ZoneId.of(timezoneStr);
             } catch (Exception e) {
-                logger.warning("Invalid timezone '" + timezoneStr + "' for site " + id + ", using UTC");
+                logger.warning(String.format("Invalid timezone '%s' for site %s, using UTC", timezoneStr, id));
                 timezone = ZoneId.of("UTC");
             }
 
@@ -165,8 +167,8 @@ public final class VoteConfig {
                 try {
                     dailyResetTime = LocalTime.parse(resetTimeStr);
                 } catch (DateTimeParseException e) {
-                    logger.warning("Invalid daily-reset time '" + resetTimeStr
-                            + "' for site " + id + ", falling back to cooldown-minutes");
+                    logger.warning(String.format("Invalid daily-reset time '%s' for site %s, falling back to cooldown-minutes",
+                            resetTimeStr, id));
                 }
             }
 
@@ -179,7 +181,7 @@ public final class VoteConfig {
                     cooldown, dailyResetTime, timezone, points));
         }
         voteSites = Collections.unmodifiableMap(sites);
-        logger.info("Loaded " + sites.size() + " vote site(s)");
+        logger.info(String.format("Loaded %d vote site(s)", sites.size()));
     }
 
     public String getServerHost() { return serverHost; }
