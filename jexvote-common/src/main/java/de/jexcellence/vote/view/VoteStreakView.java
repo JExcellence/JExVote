@@ -43,18 +43,6 @@ public class VoteStreakView extends BaseView {
     }
 
     @Override
-    protected String[] layout() {
-        return new String[]{
-                "         ",
-                " A B C D ",
-                "         ",
-                " MMMMMMM ",
-                " MMMMMMM ",
-                "         "
-        };
-    }
-
-    @Override
     protected int size() {
         return 6;
     }

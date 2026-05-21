@@ -45,18 +45,6 @@ public class VoteOverviewView extends BaseView {
     }
 
     @Override
-    protected String[] layout() {
-        return new String[]{
-                "         ",
-                "   HPS   ",
-                "         ",
-                " SSSSSSS ",
-                "         ",
-                "  L   K  "
-        };
-    }
-
-    @Override
     protected int size() {
         return 6;
     }
