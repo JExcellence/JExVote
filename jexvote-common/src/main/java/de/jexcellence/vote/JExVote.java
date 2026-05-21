@@ -184,10 +184,7 @@ public abstract class JExVote {
                 rewardConfig.getSiteRewards(),
                 voteConfig.getCommandsOnVote());
 
-        broadcastService = new VoteBroadcastService(
-                voteConfig.getBroadcastMode(),
-                voteConfig.getBroadcastCooldownSeconds(),
-                voteConfig.isPrivateMessageEnabled());
+        broadcastService = new VoteBroadcastService(voteConfig);
         leaderboardService = new VoteLeaderboardService(playerRepository);
 
         // Enforce edition site limit

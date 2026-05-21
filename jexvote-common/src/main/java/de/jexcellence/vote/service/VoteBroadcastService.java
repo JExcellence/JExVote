@@ -12,17 +12,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class VoteBroadcastService {
 
-    private final VoteConfig.BroadcastMode broadcastMode;
-    private final int broadcastCooldownSeconds;
-    private final boolean privateMessageEnabled;
+    private final VoteConfig config;
     private final AtomicLong lastBroadcastTime = new AtomicLong(0);
 
-    public VoteBroadcastService(@NotNull VoteConfig.BroadcastMode broadcastMode,
-                                int broadcastCooldownSeconds,
-                                boolean privateMessageEnabled) {
-        this.broadcastMode = broadcastMode;
-        this.broadcastCooldownSeconds = broadcastCooldownSeconds;
-        this.privateMessageEnabled = privateMessageEnabled;
+    public VoteBroadcastService(@NotNull VoteConfig config) {
+        this.config = config;
     }
 
     /**
@@ -34,12 +28,14 @@ public class VoteBroadcastService {
      */
     public void broadcastVote(@NotNull String playerName, @NotNull String serviceName,
                               @Nullable UUID voterUuid) {
-        if (broadcastMode == VoteConfig.BroadcastMode.NONE) return;
+        VoteConfig.BroadcastMode mode = config.getBroadcastMode();
+        if (mode == VoteConfig.BroadcastMode.NONE) return;
 
         // Check cooldown (atomic compare-and-set to avoid race conditions)
-        if (broadcastCooldownSeconds > 0) {
+        int cooldown = config.getBroadcastCooldownSeconds();
+        if (cooldown > 0) {
             long now = System.currentTimeMillis();
-            long threshold = now - (broadcastCooldownSeconds * 1000L);
+            long threshold = now - (cooldown * 1000L);
             // Only proceed if we successfully claim the broadcast slot
             long result = lastBroadcastTime.accumulateAndGet(now,
                     (prev, next) -> prev < threshold ? next : prev);
@@ -50,7 +46,7 @@ public class VoteBroadcastService {
 
         for (Player online : Bukkit.getOnlinePlayers()) {
             // In "others" mode, skip the voter
-            if (broadcastMode == VoteConfig.BroadcastMode.OTHERS
+            if (mode == VoteConfig.BroadcastMode.OTHERS
                     && voterUuid != null
                     && online.getUniqueId().equals(voterUuid)) {
                 continue;
@@ -67,7 +63,7 @@ public class VoteBroadcastService {
      * Sends the private "thank you" message to the voter.
      */
     public void notifyPlayer(@NotNull Player player, @NotNull String serviceName, int streak) {
-        if (!privateMessageEnabled) return;
+        if (!config.isPrivateMessageEnabled()) return;
 
         r18n().msg("vote.received")
                 .with("player", player.getName())
