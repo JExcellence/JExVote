@@ -80,15 +80,22 @@ public abstract class JExVote {
     public void onLoad() {
         logger.info("Loading JExVote " + edition + " Edition v" + plugin.getDescription().getVersion());
 
-        platform = JExPlatform.builder(plugin)
+        voteConfig = new VoteConfig(plugin);
+        voteConfig.load();
+
+        var platformBuilder = JExPlatform.builder(plugin)
                 .withLogLevel(LogLevel.INFO)
                 .enableTranslations("en_US", "de_DE", "cs_CZ", "sk_SK")
                 .enableMetrics(metricsId())
-                .enableRewards()
-                .build();
+                .enableRewards();
 
-        voteConfig = new VoteConfig(plugin);
-        voteConfig.load();
+        String locale = voteConfig.getLocale();
+        if (!locale.isBlank()) {
+            platformBuilder.forceLocale(locale);
+            logger.info("Forced locale: " + locale);
+        }
+
+        platform = platformBuilder.build();
     }
 
     public void onEnable() {

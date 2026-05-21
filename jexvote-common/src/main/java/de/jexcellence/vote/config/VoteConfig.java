@@ -37,6 +37,8 @@ public final class VoteConfig {
     private final JavaPlugin plugin;
     private final Logger logger;
 
+    private String locale = "";
+
     private String serverHost = "";
     private int serverPort = 8192;
     private String serverToken = "";
@@ -71,6 +73,8 @@ public final class VoteConfig {
             config.setDefaults(YamlConfiguration.loadConfiguration(
                     new InputStreamReader(defaults, StandardCharsets.UTF_8)));
         }
+
+        locale = config.getString("locale", "");
 
         ConfigurationSection server = config.getConfigurationSection("votifier");
         if (server != null) {
@@ -182,6 +186,7 @@ public final class VoteConfig {
         logger.info("Loaded " + sites.size() + " vote site(s)");
     }
 
+    public @NotNull String getLocale() { return locale; }
     public String getServerHost() { return serverHost; }
     public int getServerPort() { return serverPort; }
     public String getServerToken() { return serverToken; }
