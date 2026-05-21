@@ -25,6 +25,8 @@ import java.util.logging.Logger;
 public class VotifierProtocolHandler implements Runnable {
 
     private static final int V1_BLOCK_SIZE = 256;
+    /** NuVotifier v2 binary frame magic: 0x733A ("s:") */
+    private static final short V2_MAGIC = 0x733A;
     private static final String HMAC_ALGO = "HmacSHA256";
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -58,21 +60,35 @@ public class VotifierProtocolHandler implements Runnable {
             int firstByte = in.read();
             if (firstByte == -1) return;
 
-            if (firstByte == 0x00 || firstByte == '{') {
+            if (firstByte == (V2_MAGIC >> 8 & 0xFF)) {
+                // Possible NuVotifier v2 binary frame (magic 0x733A)
+                int secondByte = in.read();
+                if (secondByte == (V2_MAGIC & 0xFF)) {
+                    handleV2Binary(in, out, challenge);
+                } else {
+                    // Not v2 magic — treat first two bytes as start of v1 block
+                    handleV1(in, firstByte, secondByte);
+                }
+            } else if (firstByte == 0x00 || firstByte == '{') {
                 handleV2(in, out, challenge, firstByte);
             } else {
-                handleV1(in, firstByte);
+                handleV1(in, firstByte, -1);
             }
         } catch (Exception e) {
             logger.log(Level.WARNING, "Error handling vote connection", e);
         }
     }
 
-    private void handleV1(@NotNull BufferedInputStream in, int firstByte) throws Exception {
+    private void handleV1(@NotNull BufferedInputStream in, int firstByte, int secondByte) throws Exception {
         byte[] block = new byte[V1_BLOCK_SIZE];
         block[0] = (byte) firstByte;
 
         int read = 1;
+        if (secondByte != -1) {
+            block[1] = (byte) secondByte;
+            read = 2;
+        }
+
         while (read < V1_BLOCK_SIZE) {
             int n = in.read(block, read, V1_BLOCK_SIZE - read);
             if (n == -1) {
@@ -101,6 +117,26 @@ public class VotifierProtocolHandler implements Runnable {
         Vote vote = new Vote(username, serviceName, address, Instant.now());
         voteCallback.accept(new VoteResult(vote, VoteResult.Protocol.V1));
         logger.info("Received v1 vote from " + serviceName + " for " + username);
+    }
+
+    /**
+     * Handles the NuVotifier v2 binary frame format:
+     * [2-byte magic 0x733A] [2-byte length] [JSON payload]
+     * The magic bytes have already been consumed.
+     */
+    private void handleV2Binary(@NotNull BufferedInputStream in, @NotNull OutputStream out,
+                                 @NotNull String challenge) throws Exception {
+        int high = in.read();
+        int low = in.read();
+        if (high == -1 || low == -1) return;
+        int length = (high << 8) | low;
+        if (length <= 0 || length > 8192) {
+            logger.warning("Invalid v2 binary frame length: " + length);
+            return;
+        }
+        byte[] rawBytes = in.readNBytes(length);
+        String rawJson = new String(rawBytes, StandardCharsets.UTF_8);
+        processV2Json(rawJson, out, challenge);
     }
 
     private void handleV2(@NotNull BufferedInputStream in, @NotNull OutputStream out,
@@ -135,6 +171,11 @@ public class VotifierProtocolHandler implements Runnable {
         }
 
         String rawJson = new String(rawBytes, StandardCharsets.UTF_8);
+        processV2Json(rawJson, out, challenge);
+    }
+
+    private void processV2Json(@NotNull String rawJson, @NotNull OutputStream out,
+                                @NotNull String challenge) throws Exception {
         JsonNode root = MAPPER.readTree(rawJson);
         String payloadStr = root.get("payload").asText();
         String signatureStr = root.get("signature").asText();
