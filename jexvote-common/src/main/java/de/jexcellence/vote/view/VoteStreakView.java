@@ -12,6 +12,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +27,8 @@ import java.util.TreeMap;
  *
  * <p>Uses absolute slot indices exclusively (no layout override) so that
  * BaseView's auto-fill handles all unset slots with {@link #fillerMaterial()}.
+ * Async stat updates use raw Bukkit inventory to bypass the framework's
+ * single-render-phase limitation.
  */
 public class VoteStreakView extends BaseView {
 
@@ -85,10 +88,9 @@ public class VoteStreakView extends BaseView {
                         Component.empty()))
                 .build());
 
-        // ── Row 1: Info items ───────────────────────────────────────
+        // ── Row 1: Info items (placeholders) ────────────────────────
         glass(render, Material.YELLOW_STAINED_GLASS_PANE, 9, 17);
 
-        // Placeholder items while async data loads
         render.slot(11, ItemBuilder.of(Material.BLAZE_POWDER)
                 .name(name("<gradient:#fde047:#f59e0b><bold>🔥 Your Streak</bold></gradient>"))
                 .lore(List.of(Component.empty(), lore("  <gray>Loading..."), Component.empty()))
@@ -122,9 +124,11 @@ public class VoteStreakView extends BaseView {
         glass(render, Material.YELLOW_STAINED_GLASS_PANE, 46, 52);
         glass(render, Material.ORANGE_STAINED_GLASS_PANE, 47, 53);
 
-        // ── Async: load stats & milestone data ──────────────────────
+        // ── Async: load stats & milestones, update via raw inventory ─
         voteService.getPlayerStats(player.getUniqueId()).thenAccept(stats ->
                 scheduler.runAtEntity(player, () -> {
+                    Inventory inv = player.getOpenInventory().getTopInventory();
+
                     int streak = stats.currentStreak();
                     int highest = stats.highestStreak();
 
@@ -134,7 +138,7 @@ public class VoteStreakView extends BaseView {
                     String bar = progressBar(streak, nextMs, 20);
 
                     // ── Update: streak info (slot 11) ───────────────
-                    render.slot(11, ItemBuilder.of(Material.BLAZE_POWDER)
+                    inv.setItem(11, ItemBuilder.of(Material.BLAZE_POWDER)
                             .name(name("<gradient:#fde047:#f59e0b><bold>🔥 Your Streak</bold></gradient>"))
                             .glow(streak >= 7)
                             .lore(List.of(
@@ -150,7 +154,7 @@ public class VoteStreakView extends BaseView {
                     int unlocked = countMatching(streak, milestones, true);
                     int locked = countMatching(streak, milestones, false);
 
-                    render.slot(13, ItemBuilder.of(Material.CHEST)
+                    inv.setItem(13, ItemBuilder.of(Material.CHEST)
                             .name(name("<gradient:#fde047:#f59e0b><bold>Rewards</bold></gradient>"))
                             .lore(List.of(
                                     Component.empty(),
@@ -161,7 +165,7 @@ public class VoteStreakView extends BaseView {
                             .build());
 
                     // ── Update: progress (slot 15) ──────────────────
-                    render.slot(15, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
+                    inv.setItem(15, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
                             .name(name("<gradient:#a5f3fc:#06b6d4><bold>Progress</bold></gradient>"))
                             .lore(List.of(
                                     Component.empty(),
@@ -226,7 +230,7 @@ public class VoteStreakView extends BaseView {
                         }
                         itemLore.add(Component.empty());
 
-                        render.slot(grid[idx], ItemBuilder.of(mat)
+                        inv.setItem(grid[idx], ItemBuilder.of(mat)
                                 .name(name(gradient + "<bold>Day " + day + "</bold></gradient>"))
                                 .glow(isNext)
                                 .lore(itemLore)
@@ -238,7 +242,7 @@ public class VoteStreakView extends BaseView {
 
                     // Fill remaining milestone slots
                     for (int i = idx; i < grid.length; i++) {
-                        render.slot(grid[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
+                        inv.setItem(grid[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
                                 .name(Component.empty()).build());
                     }
                 }));

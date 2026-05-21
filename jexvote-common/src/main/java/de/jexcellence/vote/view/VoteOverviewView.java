@@ -16,6 +16,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +29,8 @@ import java.util.List;
  *
  * <p>Uses absolute slot indices exclusively (no layout override) so that
  * BaseView's auto-fill handles all unset slots with {@link #fillerMaterial()}.
+ * Async stat updates use raw Bukkit inventory to bypass the framework's
+ * single-render-phase limitation.
  */
 public class VoteOverviewView extends BaseView {
 
@@ -87,7 +90,7 @@ public class VoteOverviewView extends BaseView {
                         Component.empty()))
                 .build());
 
-        // ── Row 1: Player info ──────────────────────────────────────
+        // ── Row 1: Player info (initial placeholders) ──────────────
         glass(render, Material.GREEN_STAINED_GLASS_PANE, 9, 17);
 
         render.slot(12, HeadBuilder.fromPlayer(player)
@@ -108,14 +111,16 @@ public class VoteOverviewView extends BaseView {
                 .lore(List.of(Component.empty(), lore("  <gray>Loading..."), Component.empty()))
                 .build());
 
-        // Async stats — updates slots once data arrives
+        // ── Async: update stat slots via raw Bukkit inventory ───────
         voteService.getPlayerStats(player.getUniqueId()).thenAccept(stats ->
                 scheduler.runAtEntity(player, () -> {
+                    Inventory inv = player.getOpenInventory().getTopInventory();
+
                     int streak = stats.currentStreak();
                     int nextMs = nextMilestone(streak);
                     String bar = progressBar(streak, nextMs, 10);
 
-                    render.slot(12, HeadBuilder.fromPlayer(player)
+                    inv.setItem(12, HeadBuilder.fromPlayer(player)
                             .name(name("<gradient:#86efac:#16a34a><bold>" + player.getName() + "</bold></gradient>"))
                             .lore(List.of(
                                     Component.empty(),
@@ -129,7 +134,7 @@ public class VoteOverviewView extends BaseView {
                                     Component.empty()))
                             .build());
 
-                    render.slot(13, ItemBuilder.of(Material.NETHER_STAR)
+                    inv.setItem(13, ItemBuilder.of(Material.NETHER_STAR)
                             .name(name("<gradient:#d8b4fe:#9333ea><bold>Vote Points</bold></gradient>"))
                             .glow(true)
                             .lore(List.of(
@@ -140,7 +145,7 @@ public class VoteOverviewView extends BaseView {
                                     Component.empty()))
                             .build());
 
-                    render.slot(14, ItemBuilder.of(Material.BLAZE_POWDER)
+                    inv.setItem(14, ItemBuilder.of(Material.BLAZE_POWDER)
                             .name(name("<gradient:#fde047:#f59e0b><bold>Vote Streak</bold></gradient>"))
                             .glow(streak >= 7)
                             .lore(List.of(
@@ -204,7 +209,7 @@ public class VoteOverviewView extends BaseView {
         glass(render, Material.LIME_STAINED_GLASS_PANE, 36, 40, 44);
 
         // ── Row 5: Navigation ───────────────────────────────────────
-        glass(render, Material.GREEN_STAINED_GLASS_PANE, 45, 53);
+        glass(render, Material.GREEN_STAINED_GLASS_PANE, 46, 52);
 
         render.slot(47, ItemBuilder.of(Material.GOLD_BLOCK)
                 .name(name("<gradient:#fde047:#f59e0b><bold>⭐ Leaderboard</bold></gradient>"))
