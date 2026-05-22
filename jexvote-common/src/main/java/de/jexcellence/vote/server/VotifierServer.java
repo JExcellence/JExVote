@@ -14,6 +14,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,12 +31,9 @@ public class VotifierServer {
     /** Max concurrent vote connections. Protects against connection floods. */
     private static final int MAX_CONNECTIONS = 16;
 
-    // volatile is sufficient: single-write / multi-read
-    private volatile ServerSocket serverSocket;
-    // volatile is sufficient: single-write / multi-read
-    private volatile Thread acceptThread;
-    // volatile is sufficient: single-write / multi-read
-    private volatile ExecutorService executor;
+    private final AtomicReference<ServerSocket> serverSocket = new AtomicReference<>();
+    private final AtomicReference<Thread> acceptThread = new AtomicReference<>();
+    private final AtomicReference<ExecutorService> executor = new AtomicReference<>();
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     public VotifierServer(@NotNull Logger logger, @NotNull String host, int port,
@@ -54,11 +52,12 @@ public class VotifierServer {
                 ? new InetSocketAddress(port)
                 : new InetSocketAddress(host, port);
 
-        serverSocket = new ServerSocket();
-        serverSocket.bind(address);
+        ServerSocket ss = new ServerSocket();
+        ss.bind(address);
+        serverSocket.set(ss);
 
         // Handler pool for processing accepted connections — separate from the accept loop.
-        executor = new ThreadPoolExecutor(
+        executor.set(new ThreadPoolExecutor(
                 2, MAX_CONNECTIONS, 60L, TimeUnit.SECONDS,
                 new SynchronousQueue<>(),
                 r -> {
@@ -66,17 +65,17 @@ public class VotifierServer {
                     t.setDaemon(true);
                     return t;
                 },
-                new ThreadPoolExecutor.CallerRunsPolicy());
+                new ThreadPoolExecutor.CallerRunsPolicy()));
 
         running.set(true);
 
         // Accept loop runs on its own dedicated thread — never competes with handlers.
-        acceptThread = new Thread(() -> {
+        Thread at = new Thread(() -> {
             while (running.get()) {
                 try {
-                    Socket client = serverSocket.accept();
+                    Socket client = serverSocket.get().accept();
                     client.setSoTimeout(15_000);
-                    executor.submit(new VotifierProtocolHandler(
+                    executor.get().submit(new VotifierProtocolHandler(
                             logger, client, keyPair, token, voteCallback));
                 } catch (IOException e) {
                     if (running.get()) {
@@ -85,24 +84,28 @@ public class VotifierServer {
                 }
             }
         }, "JExVote-Votifier-Accept");
-        acceptThread.setDaemon(true);
-        acceptThread.start();
+        at.setDaemon(true);
+        at.start();
+        acceptThread.set(at);
 
-        logger.info(String.format("Votifier server listening on %s", address));
+        logger.log(Level.INFO, () -> String.format("Votifier server listening on %s", address));
     }
 
     public void shutdown() {
         running.set(false);
-        if (serverSocket != null) {
+        ServerSocket ss = serverSocket.get();
+        if (ss != null) {
             try {
-                serverSocket.close();
+                ss.close();
             } catch (IOException ignored) { /* Best-effort close */ }
         }
-        if (acceptThread != null) {
-            acceptThread.interrupt();
+        Thread at = acceptThread.get();
+        if (at != null) {
+            at.interrupt();
         }
-        if (executor != null) {
-            executor.shutdownNow();
+        ExecutorService ex = executor.get();
+        if (ex != null) {
+            ex.shutdownNow();
         }
         logger.info("Votifier server shut down");
     }

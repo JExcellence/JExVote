@@ -64,7 +64,6 @@ public abstract class JExVote {
 
     private VoteService voteService;
     private VoteRewardService rewardService;
-    private VoteBroadcastService broadcastService;
     private VoteLeaderboardService leaderboardService;
 
     private VotifierServer votifierServer;
@@ -108,7 +107,7 @@ public abstract class JExVote {
             registerPlaceholders();
             registerApiProvider();
 
-            logger.info(String.format("JExVote %s enabled — Votifier on port %d", edition, voteConfig.getServerPort()));
+            logger.log(Level.INFO, () -> String.format("JExVote %s enabled — Votifier on port %d", edition, voteConfig.getServerPort()));
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to enable JExVote", e);
             Bukkit.getPluginManager().disablePlugin(plugin);
@@ -188,14 +187,15 @@ public abstract class JExVote {
                 rewardConfig.getSiteRewards(),
                 voteConfig.getCommandsOnVote());
 
-        broadcastService = new VoteBroadcastService(voteConfig);
+        VoteBroadcastService broadcastService = new VoteBroadcastService(voteConfig);
         leaderboardService = new VoteLeaderboardService(playerRepository);
 
         // Enforce edition site limit
         Map<String, VoteSite> sites = voteConfig.getVoteSites();
         int maxSites = edition().maxVoteSites();
         if (maxSites > 0 && sites.size() > maxSites) {
-            logger.warning(String.format("Free edition supports up to %d vote sites, but %d are configured. Only the first %d will be loaded.", maxSites, sites.size(), maxSites));
+            int configuredCount = sites.size();
+            logger.log(Level.WARNING, () -> String.format("Free edition supports up to %d vote sites, but %d are configured. Only the first %d will be loaded.", maxSites, configuredCount, maxSites));
             var limited = new LinkedHashMap<String, VoteSite>();
             int count = 0;
             for (var entry : sites.entrySet()) {
@@ -226,8 +226,9 @@ public abstract class JExVote {
                 token = VotifierKeyManager.generateToken();
                 persistTokenToConfig(token);
                 logger.info("Generated and saved Votifier token to config.yml.");
-                logger.info(String.format("Token: %s", token));
-                logger.info(String.format("Public key: %s", VotifierKeyManager.encodePublicKey(keyPair.getPublic())));
+                String savedToken = token;
+                logger.log(Level.INFO, () -> String.format("Token: %s", savedToken));
+                logger.log(Level.INFO, () -> String.format("Public key: %s", VotifierKeyManager.encodePublicKey(keyPair.getPublic())));
             }
 
             votifierServer = new VotifierServer(
@@ -245,10 +246,10 @@ public abstract class JExVote {
                                 logger.log(Level.SEVERE, error, () -> String.format("Error processing vote for %s", result.vote().username()));
                                 return;
                             }
-                            if (success) {
+                            if (Boolean.TRUE.equals(success)) {
                                 PlatformScheduler.of(plugin).runSync(() -> {
                                     var voter = Bukkit.getPlayerExact(result.vote().username());
-                                    broadcastService.broadcastVote(
+                                    voteService.getBroadcastService().broadcastVote(
                                             result.vote().username(),
                                             result.vote().serviceName(),
                                             voter != null ? voter.getUniqueId() : null);

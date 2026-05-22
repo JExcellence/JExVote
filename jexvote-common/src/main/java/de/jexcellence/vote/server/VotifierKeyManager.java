@@ -16,6 +16,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class VotifierKeyManager {
@@ -41,7 +42,7 @@ public final class VotifierKeyManager {
         writeKey(publicKeyFile, pair.getPublic().getEncoded());
         writeKey(privateKeyFile, pair.getPrivate().getEncoded());
 
-        logger.info(String.format("RSA keypair saved to %s", dataFolder.resolve("rsa")));
+        logger.log(Level.INFO, () -> String.format("RSA keypair saved to %s", dataFolder.resolve("rsa")));
         return pair;
     }
 

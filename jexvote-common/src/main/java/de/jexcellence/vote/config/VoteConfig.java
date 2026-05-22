@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class VoteConfig {
@@ -181,7 +182,8 @@ public final class VoteConfig {
                     cooldown, dailyResetTime, timezone, points));
         }
         voteSites = Collections.unmodifiableMap(sites);
-        logger.info(String.format("Loaded %d vote site(s)", sites.size()));
+        int siteCount = sites.size();
+        logger.log(Level.INFO, () -> String.format("Loaded %d vote site(s)", siteCount));
     }
 
     public String getServerHost() { return serverHost; }

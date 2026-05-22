@@ -18,46 +18,50 @@ tasks.processResources {
 }
 
 dependencies {
+    // ── Implementation ──
     implementation(project(":JExVote:jexvote-api"))
 
+    // ── Compile-only: Project ──
     compileOnly(project(":JExEconomy:jexeconomy-api"))
 
-    // Paper
+    // ── Compile-only: Paper & Server API ──
     compileOnly(libs.paper.api)
     compileOnly(libs.bundles.adventure)
-
     compileOnly(libs.folialib)
     compileOnly(libs.placeholderapi)
     compileOnly(libs.vault.api) { isTransitive = false }
     compileOnly(libs.luckperms.api)
 
-    // Logging & utils
+    // ── Compile-only: Logging ──
     compileOnly(libs.slf4j.api)
     compileOnly(libs.slf4j.jdk14)
     compileOnly(libs.jboss.logging)
 
-    // DB & platform (compileOnly)
+    // ── Compile-only: Database ──
     compileOnly(platform(libs.hibernate.platform))
     compileOnly(libs.bundles.hibernate)
     compileOnly(libs.jehibernate)
 
-    // Misc (compileOnly)
-    compileOnly(libs.caffeine)
+    // ── Compile-only: Serialization ──
     compileOnly(libs.jackson.core)
     compileOnly(libs.jackson.databind)
     compileOnly(libs.jackson.annotations)
     compileOnly(libs.jackson.jsr310)
-    compileOnly(libs.java.uuid)
-    compileOnly(libs.xseries)
 
+    // ── Compile-only: JExcellence Platform ──
     compileOnly(libs.bundles.jexcellence) {
         exclude(group = "de.jexcellence.hibernate")
         isTransitive = false
     }
     compileOnly(libs.bundles.jeconfig) { isTransitive = false }
+
+    // ── Compile-only: Utilities ──
+    compileOnly(libs.caffeine)
+    compileOnly(libs.java.uuid)
+    compileOnly(libs.xseries)
     compileOnly(libs.bundles.inventory)
 
-    // Test dependencies
+    // ── Test ──
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)

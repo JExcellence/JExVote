@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,12 +42,10 @@ public class VoteService {
     private final VoteRewardService rewardService;
     private final VoteBroadcastService broadcastService;
 
-    // volatile is sufficient: single-write / multi-read
-    private volatile Map<String, VoteSite> voteSites;
+    private final AtomicReference<Map<String, VoteSite>> voteSites;
     // volatile is sufficient: single-write / multi-read
     private volatile Duration streakTimeout;
-    // volatile is sufficient: single-write / multi-read
-    private volatile Map<Integer, List<String>> streakCommands;
+    private final AtomicReference<Map<Integer, List<String>>> streakCommands;
     // volatile is sufficient: single-write / multi-read
     private volatile int recordRetentionDays;
 
@@ -70,9 +69,9 @@ public class VoteService {
         this.pendingRewardRepository = pendingRewardRepository;
         this.rewardService = rewardService;
         this.broadcastService = broadcastService;
-        this.voteSites = voteSites;
+        this.voteSites = new AtomicReference<>(voteSites);
         this.streakTimeout = Duration.ofHours(streakTimeoutHours);
-        this.streakCommands = streakCommands;
+        this.streakCommands = new AtomicReference<>(streakCommands);
         this.recordRetentionDays = recordRetentionDays;
     }
 
@@ -83,9 +82,9 @@ public class VoteService {
                        int streakTimeoutHours,
                        @NotNull Map<Integer, List<String>> streakCommands,
                        int recordRetentionDays) {
-        this.voteSites = voteSites;
+        this.voteSites.set(voteSites);
         this.streakTimeout = Duration.ofHours(streakTimeoutHours);
-        this.streakCommands = streakCommands;
+        this.streakCommands.set(streakCommands);
         this.recordRetentionDays = recordRetentionDays;
     }
 
@@ -156,7 +155,7 @@ public class VoteService {
     private int resolvePointsForSite(@NotNull String serviceName) {
         VoteSite site = findSiteByServiceName(serviceName);
         if (site == null) {
-            logger.warning(String.format(
+            logger.log(Level.WARNING, () -> String.format(
                     "No vote site configured for service '%s' — using default 1 point. Check sites.yml service-name mappings.",
                     serviceName));
             return 1;
@@ -185,7 +184,7 @@ public class VoteService {
                 Bukkit.getPluginManager().callEvent(
                         new VoteRewardClaimedEvent(uuid, vote.serviceName(), snapshot));
             });
-            logger.info(String.format("Vote processed for %s (online) — streak: %d, total: %d",
+            logger.log(Level.INFO, () -> String.format("Vote processed for %s (online) — streak: %d, total: %d",
                     vote.username(), streak, player.getTotalVotes()));
         } else {
             String rewardData = rewardService.serializeRewards(vote.serviceName(), streak);
@@ -193,7 +192,7 @@ public class VoteService {
                 pendingRewardRepository.create(
                         new PendingVoteRewardEntity(uuid, vote.serviceName(), rewardData));
             }
-            logger.info(String.format("Vote processed for %s (offline) — rewards queued, streak: %d, total: %d",
+            logger.log(Level.INFO, () -> String.format("Vote processed for %s (offline) — rewards queued, streak: %d, total: %d",
                     vote.username(), streak, player.getTotalVotes()));
         }
     }
@@ -232,12 +231,16 @@ public class VoteService {
     }
 
     public @NotNull Map<String, VoteSite> getVoteSites() {
-        return voteSites;
+        return voteSites.get();
+    }
+
+    public @NotNull VoteBroadcastService getBroadcastService() {
+        return broadcastService;
     }
 
     public @Nullable VoteSite findSiteByServiceName(@NotNull String serviceName) {
         String lower = serviceName.toLowerCase();
-        for (VoteSite site : voteSites.values()) {
+        for (VoteSite site : voteSites.get().values()) {
             if (site.serviceName().toLowerCase().equals(lower) ||
                     site.id().toLowerCase().equals(lower)) {
                 return site;
@@ -314,7 +317,7 @@ public class VoteService {
     }
 
     private void executeStreakCommands(@NotNull Player player, @NotNull String serviceName, int streak) {
-        List<String> commands = streakCommands.get(streak);
+        List<String> commands = streakCommands.get().get(streak);
         if (commands == null || commands.isEmpty()) return;
 
         for (String command : commands) {

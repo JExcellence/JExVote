@@ -24,6 +24,8 @@ import java.util.Map;
 public final class VoteAdminHandler {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final String C_WHITE = "</white>";
+    private static final String PARAM_PLAYER = "player";
 
     private final JavaPlugin plugin;
     private final VoteEdition edition;
@@ -76,7 +78,7 @@ public final class VoteAdminHandler {
             String full = e.command() + (e.args().isEmpty() ? "" : " " + e.args());
             Component line = MM.deserialize(
                     "  <dark_gray>▸</dark_gray> <gradient:#fca5a5:#dc2626>" + e.command() + "</gradient>"
-                            + (e.args().isEmpty() ? "" : " <dark_gray>⟨</dark_gray><white>" + e.args() + "</white><dark_gray>⟩</dark_gray>")
+                            + (e.args().isEmpty() ? "" : " <dark_gray>⟨</dark_gray><white>" + e.args() + C_WHITE + "<dark_gray>⟩</dark_gray>")
                             + " <dark_gray>—</dark_gray> <gray>" + e.description() + "</gray>");
 
             if (e.suggest()) {
@@ -108,11 +110,11 @@ public final class VoteAdminHandler {
         sender.sendMessage(MM.deserialize(
                 "  <gray>Edition:</gray> <gradient:#86efac:#16a34a>" + editionName + "</gradient>"));
         sender.sendMessage(MM.deserialize(
-                "  <gray>Version:</gray> <white>" + version + "</white>"));
+                "  <gray>Version:</gray> <white>" + version + C_WHITE));
         sender.sendMessage(MM.deserialize(
-                "  <gray>Vote sites:</gray> <white>" + voteService.getVoteSites().size() + "</white>"));
+                "  <gray>Vote sites:</gray> <white>" + voteService.getVoteSites().size() + C_WHITE));
         sender.sendMessage(MM.deserialize(
-                "  <gray>Votifier port:</gray> <white>" + voteConfig.getServerPort() + "</white>"));
+                "  <gray>Votifier port:</gray> <white>" + voteConfig.getServerPort() + C_WHITE));
     }
 
     private void onReload(@NotNull CommandContext ctx) {
@@ -127,15 +129,15 @@ public final class VoteAdminHandler {
     }
 
     private void onReset(@NotNull CommandContext ctx) {
-        OfflinePlayer target = ctx.require("player", OfflinePlayer.class);
+        OfflinePlayer target = ctx.require(PARAM_PLAYER, OfflinePlayer.class);
         String name = target.getName() != null ? target.getName() : target.getUniqueId().toString();
         voteService.resetPlayer(target.getUniqueId()).thenAccept(success -> {
-            if (success) {
-                r18n().msg("vote.reset.success").prefix().with("player", name).send(ctx.sender());
+            if (Boolean.TRUE.equals(success)) {
+                r18n().msg("vote.reset.success").prefix().with(PARAM_PLAYER, name).send(ctx.sender());
             } else {
                 ctx.sender().sendMessage(MM.deserialize(
                         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>No vote data found for</red> <white>"
-                                + name + "</white>"));
+                                + name + C_WHITE));
             }
         });
     }
@@ -146,16 +148,16 @@ public final class VoteAdminHandler {
     }
 
     private void onFakeVote(@NotNull CommandContext ctx) {
-        Player target = ctx.require("player", Player.class);
+        Player target = ctx.require(PARAM_PLAYER, Player.class);
         String playerName = target.getName();
         String service = ctx.get("service", String.class).orElse("TestService");
 
         Vote vote = new Vote(playerName, service, "127.0.0.1", Instant.now());
         voteService.processVote(vote).thenAccept(success -> {
-            if (success) {
+            if (Boolean.TRUE.equals(success)) {
                 ctx.sender().sendMessage(MM.deserialize(
                         "<gradient:#86efac:#16a34a>✔</gradient> <gray>Fake vote submitted for</gray> <white>"
-                                + playerName + "</white> <gray>on</gray> <white>" + service + "</white>"));
+                                + playerName + C_WHITE + " <gray>on</gray> <white>" + service + C_WHITE));
             } else {
                 ctx.sender().sendMessage(MM.deserialize(
                         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Failed to submit fake vote</red>"));

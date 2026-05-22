@@ -80,6 +80,9 @@ public class VotifierProtocolHandler implements Runnable {
                 handleV1(in, out, challenge, firstByte, -1);
             }
         } catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             logger.log(Level.WARNING, "Error handling vote connection", e);
         }
     }
@@ -124,15 +127,16 @@ public class VotifierProtocolHandler implements Runnable {
 
             Vote vote = new Vote(username, serviceName, address, Instant.now());
             voteCallback.accept(new VoteResult(vote, VoteResult.Protocol.V1));
-            logger.info(String.format("Received v1 vote from %s for %s", serviceName, username));
+            logger.log(Level.INFO, () -> String.format("Received v1 vote from %s for %s", serviceName, username));
         } else {
             // Not 256 bytes — likely a v2 message with unrecognized framing.
             // Try to recover it as v2 JSON.
-            logger.info(String.format("Got %d bytes (v1 expects 256), attempting v2 fallback. First bytes: %s",
-                    read, hexDump(block, Math.min(read, 16))));
-            byte[] data = Arrays.copyOf(block, read);
+            final int bytesRead = read;
+            logger.log(Level.INFO, () -> String.format("Got %d bytes (v1 expects 256), attempting v2 fallback. First bytes: %s",
+                    bytesRead, hexDump(block, Math.min(bytesRead, 16))));
+            byte[] data = Arrays.copyOf(block, bytesRead);
             if (!tryV2Fallback(data, out, challenge)) {
-                logger.warning(String.format("Vote block (%d bytes) — neither valid v1 nor v2", read));
+                logger.log(Level.WARNING, () -> String.format("Vote block (%d bytes) — neither valid v1 nor v2", bytesRead));
             }
         }
     }
@@ -168,7 +172,7 @@ public class VotifierProtocolHandler implements Runnable {
             String json = raw.substring(jsonStart);
             try {
                 processV2Json(json, out, challenge);
-                logger.info(String.format("v2 fallback succeeded (raw JSON at offset %d)", jsonStart));
+                logger.log(Level.INFO, () -> String.format("v2 fallback succeeded (raw JSON at offset %d)", jsonStart));
                 return true;
             } catch (Exception e) {
                 logger.log(Level.FINE, "v2 fallback (raw JSON) failed", e);
@@ -200,7 +204,7 @@ public class VotifierProtocolHandler implements Runnable {
         if (high == -1 || low == -1) return;
         int length = (high << 8) | low;
         if (length <= 0 || length > 8192) {
-            logger.warning(String.format("Invalid v2 binary frame length: %d", length));
+            logger.log(Level.WARNING, () -> String.format("Invalid v2 binary frame length: %d", length));
             return;
         }
         byte[] rawBytes = in.readNBytes(length);
@@ -211,37 +215,43 @@ public class VotifierProtocolHandler implements Runnable {
     private void handleV2(@NotNull BufferedInputStream in, @NotNull OutputStream out,
                            @NotNull String challenge, int firstByte)
             throws IOException, GeneralSecurityException, InterruptedException {
-        byte[] rawBytes;
-
-        if (firstByte == 0x00) {
-            if (in.available() < 2) {
-                Thread.sleep(100);
-            }
-            int high = in.read();
-            int low = in.read();
-            if (high == -1 || low == -1) return;
-            int length = (high << 8) | low;
-            if (length <= 0 || length > 8192) {
-                logger.warning(String.format("Invalid v2 frame length: %d", length));
-                return;
-            }
-            rawBytes = in.readNBytes(length);
-        } else {
-            StringBuilder sb = new StringBuilder();
-            sb.append((char) firstByte);
-            int braces = firstByte == '{' ? 1 : 0;
-            while (braces > 0) {
-                int b = in.read();
-                if (b == -1) break;
-                sb.append((char) b);
-                if (b == '{') braces++;
-                else if (b == '}') braces--;
-            }
-            rawBytes = sb.toString().getBytes(StandardCharsets.UTF_8);
-        }
+        byte[] rawBytes = (firstByte == 0x00)
+                ? readV2LengthPrefixed(in)
+                : readV2BraceMatched(in, firstByte);
+        if (rawBytes == null) return;
 
         String rawJson = new String(rawBytes, StandardCharsets.UTF_8);
         processV2Json(rawJson, out, challenge);
+    }
+
+    private byte[] readV2LengthPrefixed(@NotNull BufferedInputStream in)
+            throws IOException, InterruptedException {
+        if (in.available() < 2) {
+            Thread.sleep(100);
+        }
+        int high = in.read();
+        int low = in.read();
+        if (high == -1 || low == -1) return null;
+        int length = (high << 8) | low;
+        if (length <= 0 || length > 8192) {
+            logger.log(Level.WARNING, () -> String.format("Invalid v2 frame length: %d", length));
+            return null;
+        }
+        return in.readNBytes(length);
+    }
+
+    private byte[] readV2BraceMatched(@NotNull BufferedInputStream in, int firstByte) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append((char) firstByte);
+        int braces = firstByte == '{' ? 1 : 0;
+        while (braces > 0) {
+            int b = in.read();
+            if (b == -1) break;
+            sb.append((char) b);
+            if (b == '{') braces++;
+            else if (b == '}') braces--;
+        }
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     private void processV2Json(@NotNull String rawJson, @NotNull OutputStream out,
@@ -258,7 +268,7 @@ public class VotifierProtocolHandler implements Runnable {
 
         Vote vote = extractVoteFromPayload(payload);
         voteCallback.accept(new VoteResult(vote, VoteResult.Protocol.V2));
-        logger.info(String.format("Received v2 vote from %s for %s", vote.serviceName(), vote.username()));
+        logger.log(Level.INFO, () -> String.format("Received v2 vote from %s for %s", vote.serviceName(), vote.username()));
         sendV2Response(out, "ok", null);
     }
 

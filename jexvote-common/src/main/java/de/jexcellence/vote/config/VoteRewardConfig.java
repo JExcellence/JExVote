@@ -67,7 +67,7 @@ public final class VoteRewardConfig {
         streakRewards = loadStreakRewards(config.getConfigurationSection("streak-rewards"));
         siteRewards = loadSiteRewards(config.getConfigurationSection("site-rewards"));
 
-        logger.info(String.format("Loaded %d default reward(s), %d streak tier(s), %d site-specific reward set(s)",
+        logger.log(Level.INFO, () -> String.format("Loaded %d default reward(s), %d streak tier(s), %d site-specific reward set(s)",
                 defaultRewards.size(), streakRewards.size(), siteRewards.size()));
     }
 
@@ -82,19 +82,15 @@ public final class VoteRewardConfig {
             try {
                 String type = rewardSection.getString("type");
                 if (type == null) {
-                    logger.warning(String.format("Reward '%s' missing 'type' field", key));
-                    continue;
+                    logger.log(Level.WARNING, () -> String.format("Reward '%s' missing 'type' field", key));
+                } else if (rewardRegistry.find(type).isEmpty()) {
+                    logger.log(Level.WARNING, () -> String.format("Unknown reward type: %s", type));
+                } else {
+                    Map<String, Object> data = new LinkedHashMap<>(rewardSection.getValues(false));
+                    String json = rewardMapper.writeValueAsString(data);
+                    AbstractReward reward = rewardMapper.readValue(json, AbstractReward.class);
+                    rewards.add(reward);
                 }
-
-                if (rewardRegistry.find(type).isEmpty()) {
-                    logger.warning(String.format("Unknown reward type: %s", type));
-                    continue;
-                }
-
-                Map<String, Object> data = new LinkedHashMap<>(rewardSection.getValues(false));
-                String json = rewardMapper.writeValueAsString(data);
-                AbstractReward reward = rewardMapper.readValue(json, AbstractReward.class);
-                rewards.add(reward);
             } catch (Exception e) {
                 logger.log(Level.WARNING, String.format("Failed to load reward '%s'", key), e);
             }
