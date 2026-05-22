@@ -15,6 +15,7 @@ import de.jexcellence.vote.command.VoteAdminHandler;
 import de.jexcellence.vote.command.VoteCommandHandler;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
+import de.jexcellence.vote.database.repository.ClaimedStreakRewardRepository;
 import de.jexcellence.vote.database.repository.PendingVoteRewardRepository;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
 import de.jexcellence.vote.database.repository.VoteRecordRepository;
@@ -22,6 +23,7 @@ import de.jexcellence.vote.listener.PlayerJoinListener;
 import de.jexcellence.vote.placeholder.VotePlaceholderExpansion;
 import de.jexcellence.vote.server.VotifierKeyManager;
 import de.jexcellence.vote.server.VotifierServer;
+import de.jexcellence.vote.service.StreakClaimService;
 import de.jexcellence.vote.service.VoteBroadcastService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteRewardService;
@@ -61,10 +63,12 @@ public abstract class JExVote {
     private VotePlayerRepository playerRepository;
     private VoteRecordRepository recordRepository;
     private PendingVoteRewardRepository pendingRewardRepository;
+    private ClaimedStreakRewardRepository claimedStreakRepository;
 
     private VoteService voteService;
     private VoteRewardService rewardService;
     private VoteLeaderboardService leaderboardService;
+    private StreakClaimService streakClaimService;
 
     private VotifierServer votifierServer;
     private VotePlaceholderExpansion placeholders;
@@ -171,6 +175,7 @@ public abstract class JExVote {
         playerRepository = repos.get(VotePlayerRepository.class);
         recordRepository = repos.get(VoteRecordRepository.class);
         pendingRewardRepository = repos.get(PendingVoteRewardRepository.class);
+        claimedStreakRepository = repos.get(ClaimedStreakRewardRepository.class);
     }
 
     private void initializeServices() {
@@ -186,6 +191,16 @@ public abstract class JExVote {
                 rewardConfig.getStreakRewards(),
                 rewardConfig.getSiteRewards(),
                 voteConfig.getCommandsOnVote());
+
+        boolean manualClaim = voteConfig.getStreakClaimMode() == VoteConfig.StreakClaimMode.MANUAL;
+        rewardService.setManualStreakClaim(manualClaim);
+
+        streakClaimService = new StreakClaimService(
+                plugin, claimedStreakRepository, playerRepository, rewardService);
+
+        if (manualClaim) {
+            streakClaimService.runMigration();
+        }
 
         VoteBroadcastService broadcastService = new VoteBroadcastService(voteConfig);
         leaderboardService = new VoteLeaderboardService(playerRepository);
@@ -310,7 +325,7 @@ public abstract class JExVote {
 
         overviewView = new VoteOverviewView(plugin, voteService);
         var leaderboardView = new VoteLeaderboardView(plugin, leaderboardService);
-        var streakView = new VoteStreakView(plugin, voteService, rewardService);
+        var streakView = new VoteStreakView(plugin, voteService, rewardService, streakClaimService);
 
         // Wire cross-navigation references
         overviewView.setLeaderboardView(leaderboardView);

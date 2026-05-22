@@ -124,7 +124,8 @@ public final class VoteAdminHandler {
                 voteConfig.getVoteSites(),
                 voteConfig.getStreakTimeoutHours(),
                 voteConfig.getStreakCommands(),
-                voteConfig.getRecordRetentionDays());
+                voteConfig.getRecordRetentionDays(),
+                voteConfig.getStreakClaimMode() == VoteConfig.StreakClaimMode.MANUAL);
         r18n().msg("vote.reload").prefix().send(ctx.sender());
     }
 

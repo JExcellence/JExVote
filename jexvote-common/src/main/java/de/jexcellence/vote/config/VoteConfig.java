@@ -37,6 +37,16 @@ public final class VoteConfig {
         NONE
     }
 
+    /**
+     * Controls how streak milestone rewards are delivered.
+     */
+    public enum StreakClaimMode {
+        /** Granted immediately when the milestone is reached (legacy). */
+        AUTO,
+        /** Player must claim from the streak GUI. */
+        MANUAL
+    }
+
     private final JavaPlugin plugin;
     private final Logger logger;
 
@@ -50,6 +60,7 @@ public final class VoteConfig {
 
     private boolean offlineVoteQueue = true;
     private int streakTimeoutHours = 36;
+    private StreakClaimMode streakClaimMode = StreakClaimMode.AUTO;
     private int recordRetentionDays = 90;
 
     private List<String> commandsOnVote = Collections.emptyList();
@@ -97,6 +108,15 @@ public final class VoteConfig {
 
         offlineVoteQueue = config.getBoolean("offline-vote-queue", true);
         streakTimeoutHours = config.getInt("streak.timeout-hours", 36);
+
+        String claimModeStr = config.getString("streak.claim-mode", "auto").trim().toUpperCase(Locale.ROOT);
+        try {
+            streakClaimMode = StreakClaimMode.valueOf(claimModeStr);
+        } catch (IllegalArgumentException e) {
+            logger.warning(String.format("Invalid streak.claim-mode '%s', using AUTO", claimModeStr));
+            streakClaimMode = StreakClaimMode.AUTO;
+        }
+
         recordRetentionDays = config.getInt("records.retention-days", 90);
 
         commandsOnVote = config.getStringList("commands-on-vote");
@@ -194,6 +214,7 @@ public final class VoteConfig {
     public boolean isPrivateMessageEnabled() { return privateMessageEnabled; }
     public boolean isOfflineVoteQueue() { return offlineVoteQueue; }
     public int getStreakTimeoutHours() { return streakTimeoutHours; }
+    public @NotNull StreakClaimMode getStreakClaimMode() { return streakClaimMode; }
     public int getRecordRetentionDays() { return recordRetentionDays; }
     public @NotNull List<String> getCommandsOnVote() { return commandsOnVote; }
     public @NotNull Map<String, VoteSite> getVoteSites() { return voteSites; }

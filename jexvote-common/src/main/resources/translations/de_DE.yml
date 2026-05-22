@@ -41,6 +41,108 @@ vote_leaderboard:
 vote_streak:
   title: '<dark_gray>Vote-Streaks'
 
+  # ── Track-Ansicht ──
+  header:
+    name: '<gradient:#fca5a5:#dc2626><bold>🔥 Streak-Belohnungen</bold></gradient>'
+    lore:
+      - ''
+      - '  <gray>Vote täglich, um deinen Streak aufzubauen!'
+      - '  <gray>Erreiche Meilensteine für Bonusbelohnungen.'
+      - ''
+
+  your_streak:
+    name: '<gradient:#fde047:#f59e0b><bold>🔥 Dein Streak</bold></gradient>'
+    lore:
+      - ''
+      - '  <dark_gray>▸</dark_gray> <gray>Aktuell:</gray> <gradient:#86efac:#16a34a><bold>{current}</bold></gradient> <gray>{current_label}'
+      - '  <dark_gray>▸</dark_gray> <gray>Höchster:</gray> <gradient:#fde047:#f59e0b><bold>{highest}</bold></gradient> <gray>{highest_label}'
+      - ''
+      - '  <gray>Vote täglich, um ihn zu halten!'
+      - ''
+
+  how_it_works:
+    name: '<gradient:#86efac:#16a34a><bold>So funktioniert''s</bold></gradient>'
+    lore:
+      - ''
+      - '  <gray>Vote jeden Tag, um deinen'
+      - '  <gray>Streak aufzubauen. Erreiche'
+      - '  <gray>Meilensteine für Bonusbelohnungen!'
+      - ''
+      - '  <gradient:#fca5a5:#dc2626>Ein verpasster Tag setzt'
+      - '  <gradient:#fca5a5:#dc2626>deinen Streak zurück!'
+      - ''
+
+  progress:
+    name: '<gradient:#a5f3fc:#06b6d4><bold>Fortschritt</bold></gradient>'
+    lore:
+      - ''
+      - '  <gray>Nächster Meilenstein:</gray> <white>Tag {next}'
+      - ''
+      - '  {bar}'
+      - '  <gradient:#86efac:#16a34a>{current}</gradient> <dark_gray>/</dark_gray> <white>{next}'
+      - ''
+
+  rewards_summary:
+    name: '<gradient:#fde047:#f59e0b><bold>Belohnungen</bold></gradient>'
+
+  loading: '  <gray>Laden...'
+  day_label: 'Tag'
+  days_label: 'Tage'
+  rewards_header: '  <gradient:#d8b4fe:#9333ea>Belohnungen:'
+  milestones_label: '  <gray>Meilensteine:</gray> <white>{count}'
+  unlocked_label: '  <gray>Freigeschaltet:</gray> <gradient:#86efac:#16a34a>{count}'
+  claimable_label: '  <gray>Abholbar:</gray> <gradient:#fde047:#f59e0b>{count}'
+  remaining_label: '  <gray>Verbleibend:</gray> <gradient:#fca5a5:#dc2626>{count}'
+  days_to_go: '  <dark_gray>Noch {remaining} {label}'
+
+  # ── Meilenstein-Status ──
+  milestone:
+    name: '<bold>Tag {day}</bold>'
+    claimed:
+      status: '  <gradient:#86efac:#16a34a>✔ Abgeholt!</gradient>'
+    claimable:
+      status: '  <gradient:#fde047:#f59e0b>▶ Klicke zum Abholen!</gradient>'
+    unlocked:
+      status: '  <gradient:#86efac:#16a34a>✔ Freigeschaltet!</gradient>'
+    next:
+      status: '  <gradient:#fde047:#f59e0b>▶ Nächster Meilenstein!</gradient>'
+    locked:
+      status: '  <gradient:#fca5a5:#dc2626>✘ Gesperrt</gradient>'
+
+  # ── Detail-Ansicht ──
+  detail:
+    header: '<bold>{status_gradient}Tag {day} — {status}</bold>'
+    subtitle: '  <gray>Streak-Meilenstein-Belohnungen für Tag <white>{day}'
+    reward_type: '  <gray>Typ: <white>{type}'
+    back_button: '<gray>← Zurück zu Streaks'
+    claim_button:
+      name: '<gradient:#86efac:#16a34a><bold>✔ Belohnungen abholen</bold></gradient>'
+      lore:
+        - ''
+        - '  <gray>Klicke, um deine'
+        - '  <gray>Tag-{day}-Meilenstein-Belohnungen abzuholen!'
+        - ''
+    already_claimed:
+      name: '<gradient:#86efac:#16a34a><bold>✔ Bereits abgeholt</bold></gradient>'
+      lore:
+        - ''
+        - '  <gray>Du hast diese Belohnungen bereits abgeholt.'
+        - ''
+    locked_status:
+      name: '<gradient:#fca5a5:#dc2626><bold>✘ Gesperrt</bold></gradient>'
+      lore:
+        - ''
+        - '  <gray>Erreiche einen {day}-Tage-Streak zum Freischalten.'
+        - '  <dark_gray>Noch {remaining} {label}'
+        - ''
+
+  # ── Abhol-Nachrichten ──
+  claim:
+    success: '<gradient:#86efac:#16a34a>✔</gradient> <green>Tag-{day}-Streak-Belohnungen abgeholt!'
+    already_claimed: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Bereits abgeholt.'
+    not_reached: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Du hast diesen Meilenstein noch nicht erreicht.'
+    failed: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Abholen fehlgeschlagen. Bitte versuche es erneut.'
+
 vote_shop:
   title: '<dark_gray>Vote-Shop'
 

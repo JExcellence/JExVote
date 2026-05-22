@@ -49,6 +49,11 @@ streak:
   # Default 36h gives a generous buffer for daily voting.
   timeout-hours: 36
 
+  # How streak milestone rewards are delivered:
+  #   auto   — granted immediately when the streak milestone is reached (legacy)
+  #   manual — player must claim rewards from the /vote streak GUI
+  claim-mode: 'auto'
+
   # Bonus commands executed at specific streak milestones.
   # Placeholders: {player}, {service}, {streak}
   bonus-commands:

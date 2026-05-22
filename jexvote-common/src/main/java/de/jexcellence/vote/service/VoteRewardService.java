@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,6 +29,7 @@ public class VoteRewardService {
     private final Map<Integer, List<AbstractReward>> streakRewards;
     private final Map<String, List<AbstractReward>> siteRewards;
     private final List<String> commandsOnVote;
+    private volatile boolean manualStreakClaim;
 
     public VoteRewardService(@NotNull Logger logger,
                              @NotNull RewardRegistry rewardRegistry,
@@ -69,13 +71,15 @@ public class VoteRewardService {
             }
         }
 
-        List<AbstractReward> streakBonus = streakRewards.get(currentStreak);
-        if (streakBonus != null) {
-            for (AbstractReward reward : streakBonus) {
-                reward.grant(player).exceptionally(ex -> {
-                    logger.log(Level.WARNING, "Failed to grant streak reward to " + player.getName(), ex);
-                    return false;
-                });
+        if (!manualStreakClaim) {
+            List<AbstractReward> streakBonus = streakRewards.get(currentStreak);
+            if (streakBonus != null) {
+                for (AbstractReward reward : streakBonus) {
+                    reward.grant(player).exceptionally(ex -> {
+                        logger.log(Level.WARNING, "Failed to grant streak reward to " + player.getName(), ex);
+                        return false;
+                    });
+                }
             }
         }
 
@@ -103,10 +107,12 @@ public class VoteRewardService {
                 }
             }
 
-            List<AbstractReward> streakBonus = streakRewards.get(currentStreak);
-            if (streakBonus != null) {
-                for (AbstractReward reward : streakBonus) {
-                    rewardList.add(serializeReward(reward));
+            if (!manualStreakClaim) {
+                List<AbstractReward> streakBonus = streakRewards.get(currentStreak);
+                if (streakBonus != null) {
+                    for (AbstractReward reward : streakBonus) {
+                        rewardList.add(serializeReward(reward));
+                    }
                 }
             }
 
@@ -187,5 +193,38 @@ public class VoteRewardService {
 
     public @NotNull Map<Integer, List<AbstractReward>> getStreakRewards() {
         return streakRewards;
+    }
+
+    public boolean isManualStreakClaim() {
+        return manualStreakClaim;
+    }
+
+    public void setManualStreakClaim(boolean manualStreakClaim) {
+        this.manualStreakClaim = manualStreakClaim;
+    }
+
+    /**
+     * Grants streak rewards for a specific milestone day. Used by the claim GUI
+     * when {@code manualStreakClaim} is enabled.
+     *
+     * @return a future that completes with {@code true} if all rewards were granted
+     */
+    public @NotNull CompletableFuture<Boolean> grantStreakReward(@NotNull Player player, int milestoneDay) {
+        List<AbstractReward> rewards = streakRewards.get(milestoneDay);
+        if (rewards == null || rewards.isEmpty()) {
+            return CompletableFuture.completedFuture(false);
+        }
+
+        List<CompletableFuture<Boolean>> futures = new ArrayList<>();
+        for (AbstractReward reward : rewards) {
+            futures.add(reward.grant(player).exceptionally(ex -> {
+                logger.log(Level.WARNING, ex, () -> String.format(
+                        "Failed to grant streak reward (day %d) to %s", milestoneDay, player.getName()));
+                return false;
+            }));
+        }
+
+        return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+                .thenApply(v -> futures.stream().allMatch(f -> Boolean.TRUE.equals(f.join())));
     }
 }

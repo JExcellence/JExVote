@@ -81,11 +81,13 @@ public class VoteService {
     public void reload(@NotNull Map<String, VoteSite> voteSites,
                        int streakTimeoutHours,
                        @NotNull Map<Integer, List<String>> streakCommands,
-                       int recordRetentionDays) {
+                       int recordRetentionDays,
+                       boolean manualStreakClaim) {
         this.voteSites.set(voteSites);
         this.streakTimeout = Duration.ofHours(streakTimeoutHours);
         this.streakCommands.set(streakCommands);
         this.recordRetentionDays = recordRetentionDays;
+        this.rewardService.setManualStreakClaim(manualStreakClaim);
     }
 
     public @NotNull CompletableFuture<Boolean> processVote(@NotNull Vote vote) {
