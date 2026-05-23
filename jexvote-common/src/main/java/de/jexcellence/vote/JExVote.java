@@ -87,19 +87,19 @@ public abstract class JExVote {
     public void onLoad() {
         logger.info("Loading JExVote " + edition + " Edition v" + plugin.getDescription().getVersion());
 
-        platform = JExPlatform.builder(plugin)
-                .withLogLevel(LogLevel.INFO)
-                .enableTranslations("en_US", "de_DE", "cs_CZ", "sk_SK")
-                .enableMetrics(metricsId())
-                .enableRewards()
-                .build();
-
         voteConfig = new VoteConfig(plugin);
         voteConfig.load();
     }
 
     public void onEnable() {
         try {
+            platform = JExPlatform.builder(plugin)
+                    .withLogLevel(LogLevel.INFO)
+                    .enableTranslations("en_US", "de_DE", "cs_CZ", "sk_SK")
+                    .enableMetrics(metricsId())
+                    .enableRewards()
+                    .build();
+
             platform.initialize();
             initializeDatabase();
             initializeRepositories();
