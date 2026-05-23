@@ -1,0 +1,46 @@
+name: JExVote
+version: '3.0.0'
+main: de.jexcellence.vote.JExVotePremium
+description: All-in-one vote listener, reward & leaderboard system (Premium Edition)
+api-version: '1.21'
+author: JExcellence
+website: https://jexcellence.de
+folia-supported: true
+
+softdepend:
+  - JExEconomy
+  - Vault
+  - PlaceholderAPI
+
+commands:
+  vote:
+    description: Open the vote menu or view vote sites
+    usage: /<command> [subcommand]
+    aliases:
+      - v
+  jexvote:
+    description: JExVote administration
+    usage: /<command> [subcommand]
+    aliases:
+      - jv
+
+permissions:
+  jexvote.command.vote:
+    description: Use the vote command
+    default: true
+  jexvote.command.admin:
+    description: JExVote admin access
+    default: op
+    children:
+      jexvote.command.admin.reload: true
+      jexvote.command.admin.reset: true
+      jexvote.command.admin.fakevote: true
+  jexvote.command.admin.reload:
+    description: Reload JExVote configuration
+    default: op
+  jexvote.command.admin.reset:
+    description: Reset vote statistics
+    default: op
+  jexvote.command.admin.fakevote:
+    description: Simulate a vote for testing
+    default: op
