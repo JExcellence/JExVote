@@ -53,42 +53,51 @@ public class VotifierServer {
                 : new InetSocketAddress(host, port);
 
         ServerSocket ss = new ServerSocket();
-        ss.bind(address);
-        serverSocket.set(ss);
+        try {
+            ss.bind(address);
+            serverSocket.set(ss);
 
-        // Handler pool for processing accepted connections — separate from the accept loop.
-        executor.set(new ThreadPoolExecutor(
-                2, MAX_CONNECTIONS, 60L, TimeUnit.SECONDS,
-                new SynchronousQueue<>(),
-                r -> {
-                    Thread t = new Thread(r, "JExVote-Votifier-Handler");
-                    t.setDaemon(true);
-                    return t;
-                },
-                new ThreadPoolExecutor.CallerRunsPolicy()));
+            // Handler pool for processing accepted connections — separate from the accept loop.
+            executor.set(new ThreadPoolExecutor(
+                    2, MAX_CONNECTIONS, 60L, TimeUnit.SECONDS,
+                    new SynchronousQueue<>(),
+                    r -> {
+                        Thread t = new Thread(r, "JExVote-Votifier-Handler");
+                        t.setDaemon(true);
+                        return t;
+                    },
+                    new ThreadPoolExecutor.CallerRunsPolicy()));
 
-        running.set(true);
+            running.set(true);
 
-        // Accept loop runs on its own dedicated thread — never competes with handlers.
-        Thread at = new Thread(() -> {
-            while (running.get()) {
-                try {
-                    Socket client = serverSocket.get().accept();
-                    client.setSoTimeout(15_000);
-                    executor.get().submit(new VotifierProtocolHandler(
-                            logger, client, keyPair, token, voteCallback));
-                } catch (IOException e) {
-                    if (running.get()) {
-                        logger.log(Level.WARNING, "Error accepting vote connection", e);
+            // Accept loop runs on its own dedicated thread — never competes with handlers.
+            Thread at = new Thread(() -> {
+                while (running.get()) {
+                    try {
+                        Socket client = serverSocket.get().accept();
+                        client.setSoTimeout(15_000);
+                        executor.get().submit(new VotifierProtocolHandler(
+                                logger, client, keyPair, token, voteCallback));
+                    } catch (IOException e) {
+                        if (running.get()) {
+                            logger.log(Level.WARNING, "Error accepting vote connection", e);
+                        }
                     }
                 }
-            }
-        }, "JExVote-Votifier-Accept");
-        at.setDaemon(true);
-        at.start();
-        acceptThread.set(at);
+            }, "JExVote-Votifier-Accept");
+            at.setDaemon(true);
+            at.start();
+            acceptThread.set(at);
 
-        logger.log(Level.INFO, () -> String.format("Votifier server listening on %s", address));
+            logger.log(Level.INFO, () -> String.format("Votifier server listening on %s", address));
+        } catch (IOException e) {
+            try {
+                ss.close();
+            } catch (IOException ignored) {
+                // Best-effort close
+            }
+            throw e;
+        }
     }
 
     public void shutdown() {

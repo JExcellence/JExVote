@@ -45,6 +45,15 @@ public class VoteStreakView extends VoteBaseView {
     private static final String TAG_PREFIX_CLAIM = "claim:";
     private static final String TAG_DETAIL_BACK = "detail-back";
 
+    // String constants for i18n keys
+    private static final String I18N_DAY_LABEL = "vote_streak.day_label";
+    private static final String I18N_DAYS_LABEL = "vote_streak.days_label";
+    private static final String I18N_COUNT = "count";
+
+    // Gradient constants
+    private static final String GRADIENT_CLAIMED = "<gradient:#86efac:#16a34a>";
+    private static final String GRADIENT_CLAIMABLE = "<gradient:#fde047:#f59e0b>";
+
     private static final int[] MILESTONE_GRID = {
             28, 29, 30, 31, 32, 33, 34,
             37, 38, 39, 40, 41, 42, 43
@@ -189,7 +198,7 @@ public class VoteStreakView extends VoteBaseView {
                 renderStreakInfo(top, viewer, streak, highest);
                 renderRewardsSummary(top, viewer, streak, highest, milestones, claimed, manualMode);
                 renderProgress(top, viewer, streak, nextMs);
-                renderMilestoneGrid(top, viewer, streak, highest, nextMs, milestones, claimed, manualMode);
+                renderMilestoneGrid(top, viewer, highest, nextMs, milestones, claimed, manualMode);
             });
             return null;
         });
@@ -271,8 +280,8 @@ public class VoteStreakView extends VoteBaseView {
         } else {
             int remaining = day - state.highestStreak;
             String daysLabel = remaining == 1
-                    ? msg("vote_streak.day_label").text(viewer)
-                    : msg("vote_streak.days_label").text(viewer);
+                    ? msg(I18N_DAY_LABEL).text(viewer)
+                    : msg(I18N_DAYS_LABEL).text(viewer);
             inv.setItem(49, ItemBuilder.of(Material.RED_STAINED_GLASS_PANE)
                     .name(ic("vote_streak.detail.locked_status.name", viewer))
                     .lore(icsLocked("vote_streak.detail.locked_status.lore", viewer, day, remaining, daysLabel))
@@ -283,7 +292,7 @@ public class VoteStreakView extends VoteBaseView {
     // ── Claim handling ─────────────────────────────────────────────
 
     private void handleClaim(@NotNull Player viewer, int day, @NotNull ViewerState state) {
-        claimService.claimMilestone(viewer, day).thenAccept(result -> {
+        claimService.claimMilestone(viewer, day).thenAccept(result ->
             scheduler.runAtEntity(viewer, () -> {
                 switch (result) {
                     case SUCCESS -> {
@@ -297,8 +306,8 @@ public class VoteStreakView extends VoteBaseView {
                     case NOT_REACHED -> msg("vote_streak.claim.not_reached").send(viewer);
                     default -> msg("vote_streak.claim.failed").send(viewer);
                 }
-            });
-        });
+            })
+        );
     }
 
     // ── Track render helpers ───────────────────────────────────────
@@ -306,11 +315,11 @@ public class VoteStreakView extends VoteBaseView {
     private void renderStreakInfo(@NotNull Inventory inv, @NotNull Player viewer,
                                   int streak, int highest) {
         String currentLabel = streak == 1
-                ? msg("vote_streak.day_label").text(viewer)
-                : msg("vote_streak.days_label").text(viewer);
+                ? msg(I18N_DAY_LABEL).text(viewer)
+                : msg(I18N_DAYS_LABEL).text(viewer);
         String highestLabel = highest == 1
-                ? msg("vote_streak.day_label").text(viewer)
-                : msg("vote_streak.days_label").text(viewer);
+                ? msg(I18N_DAY_LABEL).text(viewer)
+                : msg(I18N_DAYS_LABEL).text(viewer);
 
         inv.setItem(11, ItemBuilder.of(Material.BLAZE_POWDER)
                 .name(ic("vote_streak.your_streak.name", viewer))
@@ -331,12 +340,12 @@ public class VoteStreakView extends VoteBaseView {
 
         List<Component> summaryLore = new ArrayList<>();
         summaryLore.add(Component.empty());
-        summaryLore.add(msg("vote_streak.milestones_label").with("count", milestones.size()).itemComponent(viewer));
-        summaryLore.add(msg("vote_streak.unlocked_label").with("count", unlocked).itemComponent(viewer));
+        summaryLore.add(msg("vote_streak.milestones_label").with(I18N_COUNT, milestones.size()).itemComponent(viewer));
+        summaryLore.add(msg("vote_streak.unlocked_label").with(I18N_COUNT, unlocked).itemComponent(viewer));
         if (manualMode && claimable > 0) {
-            summaryLore.add(msg("vote_streak.claimable_label").with("count", claimable).itemComponent(viewer));
+            summaryLore.add(msg("vote_streak.claimable_label").with(I18N_COUNT, claimable).itemComponent(viewer));
         }
-        summaryLore.add(msg("vote_streak.remaining_label").with("count", locked).itemComponent(viewer));
+        summaryLore.add(msg("vote_streak.remaining_label").with(I18N_COUNT, locked).itemComponent(viewer));
         summaryLore.add(Component.empty());
 
         inv.setItem(13, ItemBuilder.of(Material.CHEST)
@@ -355,14 +364,14 @@ public class VoteStreakView extends VoteBaseView {
     }
 
     private void renderMilestoneGrid(@NotNull Inventory inv, @NotNull Player viewer,
-                                      int streak, int highest, int nextMs,
+                                      int highest, int nextMs,
                                       @NotNull Map<Integer, List<AbstractReward>> milestones,
                                       @NotNull Set<Integer> claimed, boolean manualMode) {
         int idx = 0;
         for (var entry : milestones.entrySet()) {
             if (idx >= MILESTONE_GRID.length) break;
             ItemStack item = buildMilestoneItem(
-                    entry.getKey(), entry.getValue(), viewer, streak, highest,
+                    entry.getKey(), entry.getValue(), viewer, highest,
                     nextMs, claimed, manualMode);
             inv.setItem(MILESTONE_GRID[idx], item);
             idx++;
@@ -376,7 +385,7 @@ public class VoteStreakView extends VoteBaseView {
 
     private @NotNull ItemStack buildMilestoneItem(int day, @NotNull List<AbstractReward> rewards,
                                                     @NotNull Player viewer,
-                                                    int streak, int highest, int nextMs,
+                                                    int highest, int nextMs,
                                                     @NotNull Set<Integer> claimed,
                                                     boolean manualMode) {
         boolean reached = highest >= day;
@@ -395,8 +404,8 @@ public class VoteStreakView extends VoteBaseView {
         if (!reached) {
             int remaining = day - highest;
             String daysLabel = remaining == 1
-                    ? msg("vote_streak.day_label").text(viewer)
-                    : msg("vote_streak.days_label").text(viewer);
+                    ? msg(I18N_DAY_LABEL).text(viewer)
+                    : msg(I18N_DAYS_LABEL).text(viewer);
             itemLore.add(msg("vote_streak.days_to_go")
                     .with("remaining", remaining)
                     .with("label", daysLabel)
@@ -457,10 +466,10 @@ public class VoteStreakView extends VoteBaseView {
     private @NotNull String resolveGradient(boolean claimed, boolean claimable,
                                              boolean reached, boolean manualMode,
                                              boolean isNext) {
-        if (claimed) return "<gradient:#86efac:#16a34a>";
-        if (claimable) return "<gradient:#fde047:#f59e0b>";
-        if (reached && !manualMode) return "<gradient:#86efac:#16a34a>";
-        if (isNext) return "<gradient:#fde047:#f59e0b>";
+        if (claimed) return GRADIENT_CLAIMED;
+        if (claimable) return GRADIENT_CLAIMABLE;
+        if (reached && !manualMode) return GRADIENT_CLAIMED;
+        if (isNext) return GRADIENT_CLAIMABLE;
         return "<gradient:#fca5a5:#dc2626>";
     }
 
@@ -477,9 +486,9 @@ public class VoteStreakView extends VoteBaseView {
 
     private @NotNull String resolveStatusGradient(boolean claimed, boolean claimable,
                                                     boolean reached) {
-        if (claimed) return "<gradient:#86efac:#16a34a>";
-        if (claimable) return "<gradient:#fde047:#f59e0b>";
-        if (reached) return "<gradient:#86efac:#16a34a>";
+        if (claimed) return GRADIENT_CLAIMED;
+        if (claimable) return GRADIENT_CLAIMABLE;
+        if (reached) return GRADIENT_CLAIMED;
         return "<gradient:#fca5a5:#dc2626>";
     }
 

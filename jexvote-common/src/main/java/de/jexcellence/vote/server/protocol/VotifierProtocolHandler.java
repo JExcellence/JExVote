@@ -218,7 +218,7 @@ public class VotifierProtocolHandler implements Runnable {
         byte[] rawBytes = (firstByte == 0x00)
                 ? readV2LengthPrefixed(in)
                 : readV2BraceMatched(in, firstByte);
-        if (rawBytes == null) return;
+        if (rawBytes.length == 0) return;
 
         String rawJson = new String(rawBytes, StandardCharsets.UTF_8);
         processV2Json(rawJson, out, challenge);
@@ -231,11 +231,11 @@ public class VotifierProtocolHandler implements Runnable {
         }
         int high = in.read();
         int low = in.read();
-        if (high == -1 || low == -1) return null;
+        if (high == -1 || low == -1) return new byte[0];
         int length = (high << 8) | low;
         if (length <= 0 || length > 8192) {
             logger.log(Level.WARNING, () -> String.format("Invalid v2 frame length: %d", length));
-            return null;
+            return new byte[0];
         }
         return in.readNBytes(length);
     }
