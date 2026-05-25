@@ -59,6 +59,11 @@ public abstract class VoteBaseView implements Listener {
 
     // ── Lifecycle ──────────────────────────────────────────────────
 
+    /**
+     * Opens the GUI inventory for the specified player.
+     *
+     * @param viewer the player to open the GUI for
+     */
     public void open(@NotNull Player viewer) {
         Inventory inv = Bukkit.createInventory(holder(), rows() * 9,
                 msg(title()).itemComponent(viewer));
@@ -71,6 +76,11 @@ public abstract class VoteBaseView implements Listener {
 
     // ── Event handlers ─────────────────────────────────────────────
 
+    /**
+     * Handles inventory click events for this view.
+     *
+     * @param event the inventory click event
+     */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInventoryClick(@NotNull InventoryClickEvent event) {
         InventoryHolder owner = event.getInventory().getHolder();
@@ -87,6 +97,11 @@ public abstract class VoteBaseView implements Listener {
         }
     }
 
+    /**
+     * Handles inventory drag events for this view.
+     *
+     * @param event the inventory drag event
+     */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInventoryDrag(@NotNull InventoryDragEvent event) {
         InventoryHolder owner = event.getInventory().getHolder();
@@ -96,14 +111,34 @@ public abstract class VoteBaseView implements Listener {
 
     // ── I18n helpers ───────────────────────────────────────────────
 
+    /**
+     * Creates a message builder for the given translation key.
+     *
+     * @param key the translation key
+     * @return the message builder
+     */
     protected @NotNull MessageBuilder msg(@NotNull String key) {
         return R18nManager.getInstance().msg(key);
     }
 
+    /**
+     * Creates a component from a translation key for the specified player.
+     *
+     * @param key    the translation key
+     * @param viewer the player context (may be null)
+     * @return the translated component
+     */
     protected @NotNull Component ic(@NotNull String key, @Nullable Player viewer) {
         return msg(key).itemComponent(viewer);
     }
 
+    /**
+     * Creates a list of components from a multi-line translation key.
+     *
+     * @param key    the translation key
+     * @param viewer the player context (may be null)
+     * @return the list of translated components
+     */
     protected @NotNull List<Component> ics(@NotNull String key, @Nullable Player viewer) {
         return msg(key).toComponents(viewer).stream()
                 .map(c -> c.decoration(TextDecoration.ITALIC, false))
@@ -112,10 +147,22 @@ public abstract class VoteBaseView implements Listener {
 
     // ── Item helpers ───────────────────────────────────────────────
 
+    /**
+     * Creates a display name component from MiniMessage.
+     *
+     * @param mini the MiniMessage string
+     * @return the component with italics disabled
+     */
     protected static @NotNull Component name(@NotNull String mini) {
         return MM.deserialize(mini).decoration(TextDecoration.ITALIC, false);
     }
 
+    /**
+     * Creates a lore component from MiniMessage.
+     *
+     * @param mini the MiniMessage string
+     * @return the component with italics disabled
+     */
     protected static @NotNull Component lore(@NotNull String mini) {
         return MM.deserialize(mini).decoration(TextDecoration.ITALIC, false);
     }
@@ -140,17 +187,34 @@ public abstract class VoteBaseView implements Listener {
                 .build();
     }
 
+    /**
+     * Creates a filler item (black stained glass pane).
+     *
+     * @return the filler ItemStack
+     */
     protected @NotNull ItemStack filler() {
         return ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE)
                 .name(Component.empty())
                 .build();
     }
 
+    /**
+     * Fills multiple inventory slots with glass panes.
+     *
+     * @param inv   the inventory to fill
+     * @param mat   the material for the glass panes
+     * @param slots the slot indices to fill
+     */
     protected static void glass(@NotNull Inventory inv, @NotNull Material mat, int... slots) {
         ItemStack pane = ItemBuilder.of(mat).name(Component.empty()).build();
         for (int s : slots) inv.setItem(s, pane);
     }
 
+    /**
+     * Creates a back button with the "back" tag.
+     *
+     * @return the back button ItemStack
+     */
     protected @NotNull ItemStack backButton() {
         ItemStack btn = ItemBuilder.of(Material.ARROW)
                 .name(name("<gray>← Back"))
@@ -162,6 +226,12 @@ public abstract class VoteBaseView implements Listener {
 
     // ── Tag system ─────────────────────────────────────────────────
 
+    /**
+     * Tags an ItemStack with a persistent string value for click routing.
+     *
+     * @param stack the ItemStack to tag
+     * @param value the tag value
+     */
     protected void tag(@NotNull ItemStack stack, @NotNull String value) {
         ItemMeta meta = stack.getItemMeta();
         if (meta == null) return;
@@ -169,6 +239,12 @@ public abstract class VoteBaseView implements Listener {
         stack.setItemMeta(meta);
     }
 
+    /**
+     * Retrieves the tag value from an ItemStack.
+     *
+     * @param stack the ItemStack to read from
+     * @return the tag value, or null if not tagged
+     */
     protected @Nullable String tagOf(@NotNull ItemStack stack) {
         ItemMeta meta = stack.getItemMeta();
         if (meta == null) return null;
@@ -177,6 +253,14 @@ public abstract class VoteBaseView implements Listener {
 
     // ── Shared helpers ─────────────────────────────────────────────
 
+    /**
+     * Creates a visual progress bar using MiniMessage.
+     *
+     * @param current the current progress value
+     * @param target  the target value
+     * @param bars    the total number of bar segments
+     * @return the MiniMessage string for the progress bar
+     */
     protected static @NotNull String progressBar(int current, int target, int bars) {
         int filled = target > 0 ? Math.min(bars, (int) ((double) current / target * bars)) : 0;
         var sb = new StringBuilder("<dark_gray>[</dark_gray>");
@@ -187,6 +271,12 @@ public abstract class VoteBaseView implements Listener {
         return sb.toString();
     }
 
+    /**
+     * Returns the plural suffix for a number (English).
+     *
+     * @param n the number
+     * @return "s" if n != 1, otherwise empty string
+     */
     protected static @NotNull String plural(int n) {
         return n != 1 ? "s" : "";
     }

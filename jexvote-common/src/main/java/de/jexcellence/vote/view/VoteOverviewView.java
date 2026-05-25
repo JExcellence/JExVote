@@ -51,7 +51,18 @@ public class VoteOverviewView extends VoteBaseView {
         this.scheduler = PlatformScheduler.of(plugin);
     }
 
+    /**
+     * Sets the leaderboard view for navigation.
+     *
+     * @param view the leaderboard view
+     */
     public void setLeaderboardView(@NotNull VoteLeaderboardView view) { this.leaderboardView = view; }
+
+    /**
+     * Sets the streak view for navigation.
+     *
+     * @param view the streak view
+     */
     public void setStreakView(@NotNull VoteStreakView view) { this.streakView = view; }
 
     @Override protected @NotNull String title()           { return "vote_overview.title"; }
@@ -245,6 +256,12 @@ public class VoteOverviewView extends VoteBaseView {
 
     // ── Helpers ─────────────────────────────────────────────────
 
+    /**
+     * Returns the next milestone day based on the current streak.
+     *
+     * @param streak the current vote streak
+     * @return the next milestone day
+     */
     private static int nextMilestone(int streak) {
         for (int m : new int[]{7, 14, 30, 60, 90, 120, 180, 365}) {
             if (streak < m) return m;
@@ -252,6 +269,9 @@ public class VoteOverviewView extends VoteBaseView {
         return 365;
     }
 
+    /**
+     * Inventory holder for the overview view.
+     */
     private static final class Holder implements InventoryHolder {
         @Override public @NotNull Inventory getInventory() {
             throw new UnsupportedOperationException();

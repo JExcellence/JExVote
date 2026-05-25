@@ -48,6 +48,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Abstract base class for JExVote plugin initialization and lifecycle management.
+ * Handles database setup, service initialization, votifier server, commands, and API registration.
+ */
 public abstract class JExVote {
 
     private final JavaPlugin plugin;
@@ -75,13 +79,30 @@ public abstract class JExVote {
     private VoteProviderImpl voteProvider;
     private VoteOverviewView overviewView;
 
+    /**
+     * Creates a new JExVote instance.
+     *
+     * @param plugin  the JavaPlugin instance
+     * @param edition the edition name (e.g., "Free", "Premium")
+     */
     protected JExVote(@NotNull JavaPlugin plugin, @NotNull String edition) {
         this.plugin = plugin;
         this.edition = edition;
         this.logger = plugin.getLogger();
     }
 
+    /**
+     * Returns the metrics ID for bStats.
+     *
+     * @return the metrics ID
+     */
     protected abstract int metricsId();
+
+    /**
+     * Returns the vote edition.
+     *
+     * @return the vote edition
+     */
     protected abstract VoteEdition edition();
 
     public void onLoad() {
@@ -212,11 +233,9 @@ public abstract class JExVote {
             int configuredCount = sites.size();
             logger.log(Level.WARNING, () -> String.format("Free edition supports up to %d vote sites, but %d are configured. Only the first %d will be loaded.", maxSites, configuredCount, maxSites));
             var limited = new LinkedHashMap<String, VoteSite>();
-            int count = 0;
-            for (var entry : sites.entrySet()) {
-                if (count++ >= maxSites) break;
-                limited.put(entry.getKey(), entry.getValue());
-            }
+            sites.entrySet().stream()
+                    .limit(maxSites)
+                    .forEach(entry -> limited.put(entry.getKey(), entry.getValue()));
             sites = Collections.unmodifiableMap(limited);
         }
 
@@ -354,9 +373,38 @@ public abstract class JExVote {
                 JExVoteAPI.class, apiImpl, plugin, ServicePriority.Normal);
     }
 
+    /**
+     * Returns the JavaPlugin instance.
+     *
+     * @return the plugin instance
+     */
     public @NotNull JavaPlugin getPlugin() { return plugin; }
+
+    /**
+     * Returns the vote service.
+     *
+     * @return the vote service
+     */
     public @NotNull VoteService getVoteService() { return voteService; }
+
+    /**
+     * Returns the leaderboard service.
+     *
+     * @return the leaderboard service
+     */
     public @NotNull VoteLeaderboardService getLeaderboardService() { return leaderboardService; }
+
+    /**
+     * Returns the vote configuration.
+     *
+     * @return the vote config
+     */
     public @NotNull VoteConfig getVoteConfig() { return voteConfig; }
+
+    /**
+     * Returns the overview view.
+     *
+     * @return the overview view
+     */
     public @NotNull VoteOverviewView getOverviewView() { return overviewView; }
 }

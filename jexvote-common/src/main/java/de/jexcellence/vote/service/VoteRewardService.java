@@ -53,67 +53,68 @@ public class VoteRewardService {
         return mapper;
     }
 
+    /**
+     * Grants all applicable rewards to a player for a vote.
+     *
+     * @param player       the player to reward
+     * @param serviceName  the voting service name
+     * @param currentStreak the current vote streak
+     */
     public void grantRewards(@NotNull Player player, @NotNull String serviceName, int currentStreak) {
-        for (AbstractReward reward : defaultRewards) {
-            reward.grant(player).exceptionally(ex -> {
-                logger.log(Level.WARNING, "Failed to grant default reward to " + player.getName(), ex);
-                return false;
-            });
-        }
-
-        List<AbstractReward> siteSpecific = siteRewards.get(serviceName.toLowerCase());
-        if (siteSpecific != null) {
-            for (AbstractReward reward : siteSpecific) {
+        // Default rewards
+        defaultRewards.forEach(reward ->
                 reward.grant(player).exceptionally(ex -> {
-                    logger.log(Level.WARNING, "Failed to grant site reward to " + player.getName(), ex);
+                    logger.log(Level.WARNING, "Failed to grant default reward to " + player.getName(), ex);
                     return false;
-                });
-            }
-        }
+                }));
 
+        // Site-specific rewards
+        siteRewards.getOrDefault(serviceName.toLowerCase(), List.of())
+                .forEach(reward ->
+                        reward.grant(player).exceptionally(ex -> {
+                            logger.log(Level.WARNING, "Failed to grant site reward to " + player.getName(), ex);
+                            return false;
+                        }));
+
+        // Streak rewards (auto-claim mode only)
         if (!manualStreakClaim) {
-            List<AbstractReward> streakBonus = streakRewards.get(currentStreak);
-            if (streakBonus != null) {
-                for (AbstractReward reward : streakBonus) {
-                    reward.grant(player).exceptionally(ex -> {
-                        logger.log(Level.WARNING, "Failed to grant streak reward to " + player.getName(), ex);
-                        return false;
-                    });
-                }
-            }
+            streakRewards.getOrDefault(currentStreak, List.of())
+                    .forEach(reward ->
+                            reward.grant(player).exceptionally(ex -> {
+                                logger.log(Level.WARNING, "Failed to grant streak reward to " + player.getName(), ex);
+                                return false;
+                            }));
         }
 
-        for (String command : commandsOnVote) {
+        // Commands
+        commandsOnVote.forEach(command -> {
             String resolved = command
                     .replace("{player}", player.getName())
                     .replace("{service}", serviceName)
                     .replace("{streak}", String.valueOf(currentStreak));
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), resolved);
-        }
+        });
     }
 
+    /**
+     * Serializes rewards for offline players.
+     *
+     * @param serviceName  the voting service name
+     * @param currentStreak the current vote streak
+     * @return JSON string of rewards, or null if serialization failed
+     */
     public @Nullable String serializeRewards(@NotNull String serviceName, int currentStreak) {
         try {
             List<Map<String, Object>> rewardList = new ArrayList<>();
 
-            for (AbstractReward reward : defaultRewards) {
-                rewardList.add(serializeReward(reward));
-            }
+            defaultRewards.forEach(reward -> rewardList.add(serializeReward(reward)));
 
-            List<AbstractReward> siteSpecific = siteRewards.get(serviceName.toLowerCase());
-            if (siteSpecific != null) {
-                for (AbstractReward reward : siteSpecific) {
-                    rewardList.add(serializeReward(reward));
-                }
-            }
+            siteRewards.getOrDefault(serviceName.toLowerCase(), List.of())
+                    .forEach(reward -> rewardList.add(serializeReward(reward)));
 
             if (!manualStreakClaim) {
-                List<AbstractReward> streakBonus = streakRewards.get(currentStreak);
-                if (streakBonus != null) {
-                    for (AbstractReward reward : streakBonus) {
-                        rewardList.add(serializeReward(reward));
-                    }
-                }
+                streakRewards.getOrDefault(currentStreak, List.of())
+                        .forEach(reward -> rewardList.add(serializeReward(reward)));
             }
 
             Map<String, Object> data = new LinkedHashMap<>();
@@ -207,6 +208,8 @@ public class VoteRewardService {
      * Grants streak rewards for a specific milestone day. Used by the claim GUI
      * when {@code manualStreakClaim} is enabled.
      *
+     * @param player       the player to reward
+     * @param milestoneDay the milestone day to claim
      * @return a future that completes with {@code true} if all rewards were granted
      */
     public @NotNull CompletableFuture<Boolean> grantStreakReward(@NotNull Player player, int milestoneDay) {

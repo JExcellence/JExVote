@@ -196,7 +196,7 @@ public class VoteStreakView extends VoteBaseView {
                 boolean manualMode = rewardService.isManualStreakClaim();
 
                 renderStreakInfo(top, viewer, streak, highest);
-                renderRewardsSummary(top, viewer, streak, highest, milestones, claimed, manualMode);
+                renderRewardsSummary(top, viewer, highest, milestones, claimed, manualMode);
                 renderProgress(top, viewer, streak, nextMs);
                 renderMilestoneGrid(top, viewer, highest, nextMs, milestones, claimed, manualMode);
             });
@@ -239,10 +239,9 @@ public class VoteStreakView extends VoteBaseView {
         glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 9, 17);
 
         // Rows 2-3: Reward tiles
-        List<AbstractReward> flatRewards = new ArrayList<>();
-        for (AbstractReward reward : rewards) {
-            flatRewards.addAll(RewardViewHelper.flatten(reward));
-        }
+        List<AbstractReward> flatRewards = rewards.stream()
+                .flatMap(r -> RewardViewHelper.flatten(r).stream())
+                .toList();
 
         int[] rewardSlots = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
         for (int i = 0; i < rewardSlots.length; i++) {
@@ -330,7 +329,7 @@ public class VoteStreakView extends VoteBaseView {
     }
 
     private void renderRewardsSummary(@NotNull Inventory inv, @NotNull Player viewer,
-                                       int streak, int highest,
+                                       int highest,
                                        @NotNull Map<Integer, List<AbstractReward>> milestones,
                                        @NotNull Set<Integer> claimed, boolean manualMode) {
         int unlocked = countReached(highest, milestones);
@@ -507,10 +506,9 @@ public class VoteStreakView extends VoteBaseView {
             return rewards.isEmpty() ? Material.GRAY_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE;
         }
 
-        List<AbstractReward> flat = new ArrayList<>();
-        for (AbstractReward reward : rewards) {
-            flat.addAll(RewardViewHelper.flatten(reward));
-        }
+        List<AbstractReward> flat = rewards.stream()
+                .flatMap(r -> RewardViewHelper.flatten(r).stream())
+                .toList();
 
         if (flat.size() == 1) {
             return RewardViewHelper.toViewEntry(flat.getFirst()).icon();
@@ -580,6 +578,13 @@ public class VoteStreakView extends VoteBaseView {
 
     // ── Helpers ─────────────────────────────────────────────────────
 
+    /**
+     * Finds the next milestone day that is greater than the highest streak.
+     *
+     * @param highest   the highest streak achieved
+     * @param milestones the map of milestone days to rewards
+     * @return the next milestone day, or the maximum milestone if all are reached
+     */
     private static int findNextMilestone(int highest, Map<Integer, ?> milestones) {
         for (int day : milestones.keySet()) {
             if (day > highest) return day;
@@ -590,10 +595,24 @@ public class VoteStreakView extends VoteBaseView {
         return 7;
     }
 
+    /**
+     * Counts how many milestones have been reached based on the highest streak.
+     *
+     * @param highest   the highest streak achieved
+     * @param milestones the map of milestone days to rewards
+     * @return the count of reached milestones
+     */
     private static int countReached(int highest, Map<Integer, ?> milestones) {
         return (int) milestones.keySet().stream().filter(d -> highest >= d).count();
     }
 
+    /**
+     * Parses the day number from a tag string.
+     *
+     * @param tag    the full tag string (e.g., "milestone:7")
+     * @param prefix the prefix to strip (e.g., "milestone:")
+     * @return the day number, or -1 if parsing fails
+     */
     private static int parseDay(@NotNull String tag, @NotNull String prefix) {
         try {
             return Integer.parseInt(tag.substring(prefix.length()));
@@ -602,6 +621,12 @@ public class VoteStreakView extends VoteBaseView {
         }
     }
 
+    /**
+     * Capitalizes a type ID string, replacing underscores and hyphens with spaces.
+     *
+     * @param typeId the type ID to capitalize (e.g., "command_reward")
+     * @return the capitalized string (e.g., "Command Reward")
+     */
     private static @NotNull String capitalize(@Nullable String typeId) {
         if (typeId == null || typeId.isEmpty()) return "Reward";
         var sb = new StringBuilder();
@@ -620,12 +645,19 @@ public class VoteStreakView extends VoteBaseView {
 
     // ── Viewer state ───────────────────────────────────────────────
 
+    /**
+     * Holds the viewer-specific state for the streak view.
+     * Tracks the detail milestone, highest streak, and claimed days.
+     */
     private static final class ViewerState {
         int detailMilestone;
         int highestStreak;
         Set<Integer> claimedDays = Set.of();
     }
 
+    /**
+     * Inventory holder for the streak view.
+     */
     private static final class Holder implements InventoryHolder {
         @Override public @NotNull Inventory getInventory() {
             throw new UnsupportedOperationException();

@@ -242,23 +242,24 @@ public class VoteService {
 
     public @Nullable VoteSite findSiteByServiceName(@NotNull String serviceName) {
         String lower = serviceName.toLowerCase();
-        for (VoteSite site : voteSites.get().values()) {
-            if (site.serviceName().toLowerCase().equals(lower) ||
-                    site.id().toLowerCase().equals(lower)) {
-                return site;
-            }
-        }
-        return null;
+        return voteSites.get().values().stream()
+                .filter(site -> site.serviceName().toLowerCase().equals(lower) ||
+                        site.id().toLowerCase().equals(lower))
+                .findFirst()
+                .orElse(null);
     }
 
     /**
      * Resets all vote data for a specific player.
+     *
+     * @param uuid the player UUID to reset
+     * @return a future that completes with true if the player was found and reset
      */
     public @NotNull CompletableFuture<Boolean> resetPlayer(@NotNull UUID uuid) {
         return playerRepository.findByUuidAsync(uuid).thenApply(opt -> {
             if (opt.isEmpty()) return false;
 
-            VotePlayerEntity player = opt.get();
+            VotePlayerEntity player = opt.orElseThrow();
             player.setTotalVotes(0);
             player.setMonthlyVotes(0);
             player.setCurrentStreak(0);

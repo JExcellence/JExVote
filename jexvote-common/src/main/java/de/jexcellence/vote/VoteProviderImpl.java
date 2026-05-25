@@ -12,11 +12,21 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Implementation of the VoteProvider API interface.
+ * Provides external access to vote submission and statistics.
+ */
 public class VoteProviderImpl implements VoteProvider {
 
     private final VoteService voteService;
     private final VoteLeaderboardService leaderboardService;
 
+    /**
+     * Creates a new VoteProviderImpl.
+     *
+     * @param voteService       the vote service for processing votes
+     * @param leaderboardService the leaderboard service for rankings
+     */
     public VoteProviderImpl(@NotNull VoteService voteService,
                             @NotNull VoteLeaderboardService leaderboardService) {
         this.voteService = voteService;

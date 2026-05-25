@@ -41,6 +41,11 @@ public class VoteLeaderboardView extends VoteBaseView {
         this.scheduler = PlatformScheduler.of(plugin);
     }
 
+    /**
+     * Sets the overview view for back navigation.
+     *
+     * @param view the overview view to navigate back to
+     */
     public void setOverviewView(@NotNull VoteOverviewView view) { this.overviewView = view; }
 
     @Override protected @NotNull String title()           { return "vote_leaderboard.title"; }
@@ -163,6 +168,13 @@ public class VoteLeaderboardView extends VoteBaseView {
         }
     }
 
+    /**
+     * Renders a single leaderboard entry with rank, player info, and vote statistics.
+     *
+     * @param index the zero-based index in the leaderboard
+     * @param entry the vote snapshot data for this player
+     * @return the rendered ItemStack
+     */
     private @NotNull ItemStack renderEntry(int index, @NotNull VoteSnapshot entry) {
         int rank = index + 1;
         String playerName = entry.playerName() != null ? entry.playerName() : "Unknown";
@@ -224,6 +236,12 @@ public class VoteLeaderboardView extends VoteBaseView {
 
     // ── Helpers ─────────────────────────────────────────────────
 
+    /**
+     * Returns the material for a given rank.
+     *
+     * @param rank the rank position (1-based)
+     * @return the Material to display
+     */
     private static Material rankMaterial(int rank) {
         return switch (rank) {
             case 1 -> Material.DIAMOND_BLOCK;
@@ -234,6 +252,12 @@ public class VoteLeaderboardView extends VoteBaseView {
         };
     }
 
+    /**
+     * Returns the MiniMessage gradient string for a given rank.
+     *
+     * @param rank the rank position (1-based)
+     * @return the gradient string
+     */
     private static String rankGradient(int rank) {
         return switch (rank) {
             case 1 -> "<gradient:#FFD700:#FFA500>";
@@ -243,6 +267,12 @@ public class VoteLeaderboardView extends VoteBaseView {
         };
     }
 
+    /**
+     * Returns the symbol for a given rank.
+     *
+     * @param rank the rank position (1-based)
+     * @return the rank symbol
+     */
     private static String rankSymbol(int rank) {
         return switch (rank) {
             case 1 -> "👑";
@@ -252,6 +282,12 @@ public class VoteLeaderboardView extends VoteBaseView {
         };
     }
 
+    /**
+     * Builds a visual vote bar using logarithmic scaling.
+     *
+     * @param votes the total vote count
+     * @return the MiniMessage string for the vote bar
+     */
     private static String buildVoteBar(int votes) {
         int bars = 10;
         int filled = votes <= 0 ? 0 : Math.min(bars, Math.max(1, (int) (Math.log10((double) votes + 1) * 3)));
@@ -263,6 +299,9 @@ public class VoteLeaderboardView extends VoteBaseView {
         return sb.toString();
     }
 
+    /**
+     * Inventory holder for the leaderboard view.
+     */
     private static final class Holder implements InventoryHolder {
         @Override public @NotNull Inventory getInventory() {
             throw new UnsupportedOperationException();
