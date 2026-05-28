@@ -1,0 +1,371 @@
+[CENTER]
+[IMG]https://i.imgur.com/PLACEHOLDER_BANNER.png[/IMG]
+
+[SIZE=7][COLOR=#9333EA][B]JExVote[/B][/COLOR][/SIZE]
+[SIZE=4][COLOR=#C084FC]The Votifier Reward System[/COLOR][/SIZE]
+
+[SIZE=3][COLOR=#A78BFA]Built-in Votifier server[/COLOR] [COLOR=#7C3AED]·[/COLOR] [COLOR=#A78BFA]Vote streaks[/COLOR] [COLOR=#7C3AED]·[/COLOR] [COLOR=#A78BFA]Reward system[/COLOR] [COLOR=#7C3AED]·[/COLOR] [COLOR=#A78BFA]Beautiful GUIs[/COLOR] [COLOR=#7C3AED]·[/COLOR] [COLOR=#A78BFA]Multi-language[/COLOR][/SIZE]
+
+[SIZE=2][COLOR=#6D28D9]Supports Votifier v1 (RSA) and NuVotifier v2 (HMAC) — no external Votifier plugin required.[/COLOR][/SIZE]
+[/CENTER]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=5][COLOR=#D4A017][B]■[/B][/COLOR] [COLOR=#F5D78E][B]What is JExVote?[/B][/COLOR][/SIZE][/CENTER]
+
+[COLOR=#D4D4D8]JExVote handles everything related to server voting, from receiving votes off voting sites to rewarding players, tracking streaks, and displaying statistics. It ships with its own Votifier-compatible server built in, so you do not need NuVotifier or any other listener plugin. Just point your vote sites at the configured port and JExVote takes care of the rest.
+
+Votes trigger configurable rewards, feed into a streak system that keeps players coming back, and populate a leaderboard GUI accessible to every player. Admins get full control through commands and hot-reloadable configuration files.[/COLOR]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=5][COLOR=#D4A017][B]■[/B][/COLOR] [COLOR=#F5D78E][B]Feature Overview[/B][/COLOR][/SIZE][/CENTER]
+
+[LIST]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]Built-in Votifier server:[/B][/COLOR] [COLOR=#A5B4FC]Supports both v1 (RSA-encrypted) and v2 (HMAC-SHA256) protocols out of the box. No NuVotifier dependency.[/COLOR]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]12 reward types:[/B][/COLOR] [COLOR=#A5B4FC]Commands, items, XP, currency (JExEconomy), permissions (LuckPerms), sounds, particles, titles, teleports, composite bundles, choice menus, and custom handler hooks.[/COLOR]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]Vote streaks:[/B][/COLOR] [COLOR=#A5B4FC]Tracks consecutive daily votes with configurable timeout. Milestone rewards at any day threshold you define.[/COLOR]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]Per-site rewards:[/B][/COLOR] [COLOR=#A5B4FC]Assign bonus rewards for specific vote sites on top of the default reward set.[/COLOR]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]Offline vote queue:[/B][/COLOR] [COLOR=#A5B4FC]Votes received while a player is offline are stored and delivered on next login.[/COLOR]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]Interactive GUIs:[/B][/COLOR] [COLOR=#A5B4FC]Vote overview, paginated leaderboard, and streak progress — all accessible with /vote.[/COLOR]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]Vote site cooldowns:[/B][/COLOR] [COLOR=#A5B4FC]Rolling window or fixed daily reset per site. Players see exactly when they can vote again.[/COLOR]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]Vote points:[/B][/COLOR] [COLOR=#A5B4FC]Each site awards configurable points. Points are tracked separately from vote count.[/COLOR]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]Broadcast & private messages:[/B][/COLOR] [COLOR=#A5B4FC]Announce votes server-wide (all / others / none) with anti-spam cooldown, plus optional private thank-you messages.[/COLOR]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]Multi-language:[/B][/COLOR] [COLOR=#A5B4FC]Ships with English, German, Czech, and Slovak translations. Add your own or override existing ones.[/COLOR]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]Record retention:[/B][/COLOR] [COLOR=#A5B4FC]Automatically purges old vote records after a configurable number of days.[/COLOR]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]Spigot/Paper/Folia compatible:[/B][/COLOR] [COLOR=#A5B4FC]Scheduled tasks run through FoliaLib for full Folia support.[/COLOR]
+[*][COLOR=#38BDF8][B]✦[/B][/COLOR] [COLOR=#E0E7FF][B]Customizable commands:[/B][/COLOR] [COLOR=#A5B4FC]Aliases, translations, and command trees are fully configurable.[/COLOR]
+[/LIST]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=5][COLOR=#D4A017][B]■[/B][/COLOR] [COLOR=#F5D78E][B]GUIs[/B][/COLOR][/SIZE][/CENTER]
+
+[ATTACH type="full"]961712[/ATTACH]
+[CENTER][SIZE=3][COLOR=#C084FC][B]Vote Overview[/B][/COLOR][/SIZE]
+[COLOR=#94A3B8]The main menu players see when they type /vote. Shows personal stats, a progress bar for the current streak, all configured vote sites with clickable links, and navigation to the leaderboard and streak views.[/COLOR][/CENTER]
+
+
+[ATTACH type="full"]961713[/ATTACH]
+[CENTER][SIZE=3][COLOR=#C084FC][B]Leaderboard[/B][/COLOR][/SIZE]
+[COLOR=#94A3B8]A paginated all-time leaderboard with player heads for the top 3. Each entry displays total votes, monthly votes, streak, vote points, and a visual vote bar. Navigate pages with the arrow buttons.[/COLOR][/CENTER]
+
+
+[ATTACH type="full"]961714[/ATTACH]
+[CENTER][SIZE=3][COLOR=#C084FC][B]Streak Progress[/B][/COLOR][/SIZE]
+[COLOR=#94A3B8]Shows the player's current streak, highest streak, and all configured milestones. Achieved milestones glow green, the next target is highlighted yellow, and locked milestones are red. A 20-segment progress bar shows how close the player is to the next reward.[/COLOR][/CENTER]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=5][COLOR=#D4A017][B]■[/B][/COLOR] [COLOR=#F5D78E][B]Setup Guide[/B][/COLOR][/SIZE][/CENTER]
+
+[SPOILER="Step 1 — Install"]
+[COLOR=#D4D4D8]Drop [COLOR=#C084FC][B]JExVote.jar[/B][/COLOR] into your [COLOR=#C084FC]plugins/[/COLOR] folder and restart the server. JExVote generates its configuration files, an RSA keypair, and a Votifier token on first launch.[/COLOR]
+[/SPOILER]
+
+[SPOILER="Step 2 — Configure the Votifier server"]
+[COLOR=#D4D4D8]Open [COLOR=#C084FC]config.yml[/COLOR] and check the votifier section:[/COLOR]
+
+[CODE=YAML]votifier:
+  host: ''          # Leave empty to bind all interfaces
+  port: 8192        # The port vote sites connect to
+  token: ''         # Auto-generated on first run — copy this to your vote site settings[/CODE]
+
+[COLOR=#D4D4D8]If your host requires a specific bind address, set [COLOR=#C084FC]host[/COLOR] accordingly. The token is generated automatically — copy it from the config after the first start and paste it into your vote site's Votifier settings.[/COLOR]
+
+[COLOR=#F59E0B][B]Important:[/B][/COLOR] [COLOR=#D4D4D8]Make sure port 8192 (or whatever you set) is open in your firewall / hosting panel. Vote sites need to reach this port directly.[/COLOR]
+[/SPOILER]
+
+[SPOILER="Step 3 — Add vote sites"]
+[COLOR=#D4D4D8]Edit [COLOR=#C084FC]sites.yml[/COLOR] to register each voting site:[/COLOR]
+
+[CODE=YAML]sites:
+  serverliste:
+    display-name: "Serverliste.net"
+    service-name: "Serverliste"        # Must match what the site sends
+    vote-url: "https://serverliste.net/vote/12345"
+    cooldown-minutes: 1440             # 24-hour rolling window
+    points-per-vote: 1
+
+  mcserverlist:
+    display-name: "MC Server List"
+    service-name: "MCServerList"
+    vote-url: "https://minecraft-server-list.com/server/12345/vote/"
+    daily-reset: "00:00"              # Fixed daily reset
+    timezone: "Europe/Berlin"
+    points-per-vote: 2[/CODE]
+
+[COLOR=#E0E7FF][B]Cooldown modes[/B][/COLOR] [COLOR=#D4D4D8]— pick one per site:[/COLOR]
+[LIST]
+[*][COLOR=#38BDF8][B]cooldown-minutes[/B][/COLOR] [COLOR=#94A3B8]— Rolling window. The player can vote again X minutes after their last vote.[/COLOR]
+[*][COLOR=#38BDF8][B]daily-reset + timezone[/B][/COLOR] [COLOR=#94A3B8]— Fixed reset. Everyone can vote again at the specified time in the given timezone.[/COLOR]
+[/LIST]
+
+[COLOR=#94A3B8]The [COLOR=#C084FC]service-name[/COLOR] must exactly match the service identifier that the vote site sends in its Votifier payload. If you are unsure, use [COLOR=#C084FC]/jexvote fakevote <player> TestService[/COLOR] or check your server log for the incoming service name.[/COLOR]
+[/SPOILER]
+
+[SPOILER="Step 4 — Configure rewards"]
+[COLOR=#D4D4D8]Open [COLOR=#C084FC]rewards.yml[/COLOR] to set up what players receive when they vote:[/COLOR]
+
+[CODE=YAML]default-rewards:
+  - type: command
+    command: "give {player} diamond 1"
+    as-console: true
+  - type: sound
+    sound: ENTITY_PLAYER_LEVELUP
+    volume: 1.0
+    pitch: 1.2
+  - type: title
+    title: "<green>Thank you!"
+    subtitle: "<gray>Your vote has been counted."
+    fade-in: 10
+    stay: 40
+    fade-out: 10[/CODE]
+
+[COLOR=#D4D4D8]Rewards are split into three categories:[/COLOR]
+[LIST]
+[*][COLOR=#C084FC][B]default-rewards[/B][/COLOR] [COLOR=#94A3B8]— Granted on every vote, regardless of which site the vote came from.[/COLOR]
+[*][COLOR=#C084FC][B]streak-rewards[/B][/COLOR] [COLOR=#94A3B8]— Bonus rewards at specific streak milestones (day 7, 14, 30, etc.).[/COLOR]
+[*][COLOR=#C084FC][B]site-rewards[/B][/COLOR] [COLOR=#94A3B8]— Extra rewards for voting on a specific site, keyed by site ID from sites.yml.[/COLOR]
+[/LIST]
+[/SPOILER]
+
+[SPOILER="Step 5 — Verify"]
+[COLOR=#D4D4D8]Use [COLOR=#C084FC]/jexvote fakevote <yourname>[/COLOR] to trigger a test vote and confirm that rewards, broadcasts, and the GUI all work correctly. Check the console output — JExVote logs every vote it receives with the protocol version and service name.[/COLOR]
+[/SPOILER]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=5][COLOR=#D4A017][B]■[/B][/COLOR] [COLOR=#F5D78E][B]Reward Types[/B][/COLOR][/SIZE][/CENTER]
+
+[COLOR=#D4D4D8]All 12 reward types and their configuration keys:[/COLOR]
+
+[SPOILER="View all 12 reward types"]
+[TABLE]
+[TR]
+[TH][COLOR=#C084FC][B]Type[/B][/COLOR][/TH]
+[TH][COLOR=#C084FC][B]Description[/B][/COLOR][/TH]
+[TH][COLOR=#C084FC][B]Key Fields[/B][/COLOR][/TH]
+[/TR]
+[TR]
+[TD][COLOR=#38BDF8]command[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Execute a console or player command[/COLOR][/TD]
+[TD][COLOR=#A5B4FC]command, as-console[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#38BDF8]item[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Give an item stack with optional NBT[/COLOR][/TD]
+[TD][COLOR=#A5B4FC]material, amount, name, lore, enchantments[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#38BDF8]xp[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Grant vanilla XP points[/COLOR][/TD]
+[TD][COLOR=#A5B4FC]amount[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#38BDF8]currency[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Deposit into a JExEconomy currency[/COLOR][/TD]
+[TD][COLOR=#A5B4FC]currency, amount[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#38BDF8]permission[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Grant a timed permission via LuckPerms[/COLOR][/TD]
+[TD][COLOR=#A5B4FC]permission, duration, server[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#38BDF8]sound[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Play a sound effect[/COLOR][/TD]
+[TD][COLOR=#A5B4FC]sound, volume, pitch[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#38BDF8]particle[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Spawn a particle effect[/COLOR][/TD]
+[TD][COLOR=#A5B4FC]particle, count, offset[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#38BDF8]title[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Display a title + subtitle[/COLOR][/TD]
+[TD][COLOR=#A5B4FC]title, subtitle, fade-in, stay, fade-out[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#38BDF8]teleport[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Teleport the player[/COLOR][/TD]
+[TD][COLOR=#A5B4FC]world, x, y, z, yaw, pitch[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#38BDF8]composite[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Bundle multiple rewards together[/COLOR][/TD]
+[TD][COLOR=#A5B4FC]rewards (list)[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#38BDF8]choice[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Let the player pick from a GUI menu[/COLOR][/TD]
+[TD][COLOR=#A5B4FC]options (list of rewards)[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#38BDF8]custom[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Hook into your own plugin logic[/COLOR][/TD]
+[TD][COLOR=#A5B4FC]handler, data[/COLOR][/TD]
+[/TR]
+[/TABLE]
+[/SPOILER]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=5][COLOR=#D4A017][B]■[/B][/COLOR] [COLOR=#F5D78E][B]Commands & Permissions[/B][/COLOR][/SIZE][/CENTER]
+
+[SIZE=3][COLOR=#C084FC][B]Player Commands[/B][/COLOR][/SIZE]
+[CODE]
+/vote                    — Opens the vote GUI
+/vote help               — Shows player command help
+/vote sites              — Lists all vote sites with clickable links
+/vote stats [player]     — View vote statistics
+/vote top [count]        — View the all-time leaderboard (max 50)
+[/CODE]
+[COLOR=#94A3B8]Permission: [COLOR=#38BDF8]jexvote.command.vote[/COLOR] · Aliases: [COLOR=#38BDF8]/v[/COLOR][/COLOR]
+
+[SIZE=3][COLOR=#C084FC][B]Admin Commands[/B][/COLOR][/SIZE]
+[CODE]
+/jexvote                 — Shows admin help
+/jexvote info            — Shows edition, version, site count, Votifier port
+/jexvote reload          — Hot-reloads config.yml, rewards.yml, sites.yml
+/jexvote reset <player>  — Resets all vote data for a player
+/jexvote resetmonthly    — Resets monthly counts for ALL players
+/jexvote fakevote <player> [service]  — Simulates a vote for testing
+[/CODE]
+[COLOR=#94A3B8]Aliases: [COLOR=#38BDF8]/jv[/COLOR][/COLOR]
+
+[SPOILER="Permission Nodes"]
+[CODE]
+jexvote.command.vote              — Access to /vote and all subcommands
+jexvote.command.admin             — Access to /jexvote base and info
+jexvote.command.admin.reload      — Reload configuration files
+jexvote.command.admin.reset       — Reset player data and monthly counts
+jexvote.command.admin.fakevote    — Simulate test votes
+[/CODE]
+[/SPOILER]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=5][COLOR=#D4A017][B]■[/B][/COLOR] [COLOR=#F5D78E][B]Configuration Reference[/B][/COLOR][/SIZE][/CENTER]
+
+[SPOILER="config.yml — Full reference"]
+[CODE=YAML]# ── Votifier Server ──
+votifier:
+  host: ''                    # Bind address (empty = all interfaces)
+  port: 8192                  # Port for vote site connections
+  token: ''                   # HMAC token (auto-generated)
+
+# ── Broadcasts ──
+broadcast:
+  mode: 'all'                 # all | others | none
+  cooldown-minutes: 30        # Anti-spam between broadcasts
+
+# ── Private Messages ──
+private-message:
+  enabled: true               # Send a thank-you to the voter
+
+# ── Offline Queue ──
+offline-vote-queue: true      # Store votes for offline players
+
+# ── Streaks ──
+streak:
+  timeout-hours: 36           # Hours before streak resets
+  claim-mode: 'auto'          # auto | manual
+  bonus-commands:
+    7:
+      - "give {player} diamond 3"
+    14:
+      - "give {player} diamond 5"
+    30:
+      - "give {player} diamond_block 1"
+      - "broadcast &6{player} &7reached a &630-day &7vote streak!"
+
+# ── Housekeeping ──
+records:
+  retention-days: 90          # Auto-purge vote records older than this[/CODE]
+[/SPOILER]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=5][COLOR=#D4A017][B]■[/B][/COLOR] [COLOR=#F5D78E][B]Streak System[/B][/COLOR][/SIZE][/CENTER]
+
+[COLOR=#D4D4D8]Streaks track how many days in a row a player has voted. The timeout is configurable — by default, a player has [COLOR=#38BDF8]36 hours[/COLOR] between votes before the streak resets. This gives some buffer beyond a strict 24-hour window.
+
+Streak milestones can trigger two things independently:[/COLOR]
+
+[LIST]
+[*][COLOR=#C084FC][B]Bonus commands[/B][/COLOR] [COLOR=#94A3B8]— Defined in config.yml under streak.bonus-commands. Quick and simple for running commands.[/COLOR]
+[*][COLOR=#C084FC][B]Streak rewards[/B][/COLOR] [COLOR=#94A3B8]— Defined in rewards.yml under streak-rewards. Uses the full reward type system (items, currency, choice menus, etc.).[/COLOR]
+[/LIST]
+
+[COLOR=#94A3B8]Both fire at the same milestone if configured. Set up whichever fits your use case — or both.
+
+The streak progress is shown in every GUI: the overview displays a progress bar toward the next milestone, and the dedicated streak view breaks down every milestone with achieved/upcoming/locked status.[/COLOR]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=5][COLOR=#D4A017][B]■[/B][/COLOR] [COLOR=#F5D78E][B]Votifier Protocol[/B][/COLOR][/SIZE][/CENTER]
+
+[COLOR=#D4D4D8]JExVote includes a fully self-contained Votifier server. There is no need to install NuVotifier or any third-party listener.
+
+[COLOR=#E0E7FF][B]Supported protocols:[/B][/COLOR][/COLOR]
+[LIST]
+[*][COLOR=#38BDF8][B]Votifier v1[/B][/COLOR] [COLOR=#94A3B8]— 256-byte RSA-encrypted vote block. Legacy support for older vote sites.[/COLOR]
+[*][COLOR=#38BDF8][B]NuVotifier v2[/B][/COLOR] [COLOR=#94A3B8]— JSON payload with HMAC-SHA256 signature verification and challenge-response. Used by most modern vote sites.[/COLOR]
+[/LIST]
+
+[COLOR=#94A3B8]JExVote auto-detects the protocol version per connection. The RSA keypair is generated on first launch and stored in [COLOR=#C084FC]plugins/JExVote/rsa/[/COLOR]. The HMAC token is written to [COLOR=#C084FC]config.yml[/COLOR].
+
+If a vote site asks for your public key, you will find it at [COLOR=#C084FC]plugins/JExVote/rsa/public.key[/COLOR] (Base64-encoded).[/COLOR]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=5][COLOR=#D4A017][B]■[/B][/COLOR] [COLOR=#F5D78E][B]Language & Localization[/B][/COLOR][/SIZE][/CENTER]
+
+[COLOR=#D4D4D8]JExVote ships with translations for:[/COLOR]
+
+[LIST]
+[*][COLOR=#38BDF8]en_US[/COLOR] [COLOR=#94A3B8]— English[/COLOR]
+[*][COLOR=#38BDF8]de_DE[/COLOR] [COLOR=#94A3B8]— German[/COLOR]
+[*][COLOR=#38BDF8]cs_CZ[/COLOR] [COLOR=#94A3B8]— Czech[/COLOR]
+[*][COLOR=#38BDF8]sk_SK[/COLOR] [COLOR=#94A3B8]— Slovak[/COLOR]
+[/LIST]
+
+[COLOR=#D4D4D8]The language is auto-detected per player based on their client locale, more can be easily added. To force a specific language for the entire server, create a [COLOR=#C084FC]translations/config.yml[/COLOR] in the plugin folder:[/COLOR]
+
+[CODE=YAML]# Force all players to see this locale regardless of client setting.
+# Leave empty to use auto-detection.
+force-locale: 'de_DE'[/CODE]
+
+[COLOR=#94A3B8]You can add custom translations by placing a [COLOR=#C084FC]<locale>.yml[/COLOR] file in the [COLOR=#C084FC]translations/[/COLOR] folder. Missing keys fall back to the default English translation.[/COLOR]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=5][COLOR=#D4A017][B]■[/B][/COLOR] [COLOR=#F5D78E][B]Dependencies[/B][/COLOR][/SIZE][/CENTER]
+
+[SIZE=3][COLOR=#C084FC][B]Required[/B][/COLOR][/SIZE]
+[LIST]
+[*][COLOR=#D4D4D8]Paper 1.20.4+ [COLOR=#94A3B8](or Spigot / Folia)[/COLOR][/COLOR]
+[*][COLOR=#D4D4D8]Java 21+[/COLOR]
+[/LIST]
+
+[SIZE=3][COLOR=#C084FC][B]Optional[/B][/COLOR] [COLOR=#94A3B8](soft dependencies)[/COLOR][/SIZE]
+[LIST]
+[*][COLOR=#38BDF8]JExEconomy[/COLOR] [COLOR=#94A3B8]— Enables the currency reward type, which can be any type of currency[/COLOR]
+[*][COLOR=#38BDF8]LuckPerms[/COLOR] [COLOR=#94A3B8]— Enables the permission reward type (timed permissions, server-specific)[/COLOR]
+[*][COLOR=#38BDF8]PlaceholderAPI[/COLOR] [COLOR=#94A3B8]— Exposes vote placeholders for use in scoreboards, tab lists, etc.[/COLOR]
+[*][COLOR=#38BDF8]Vault[/COLOR] [COLOR=#94A3B8]— Economy fallback if JExEconomy is not installed[/COLOR]
+[/LIST]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][COLOR=#6D28D9]Free edition limited to 5 vote sites. Premium unlocks unlimited sites and the vote shop.[/COLOR]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=2][COLOR=#7C3AED]JExVote is part of the [B]JExcellence[/B] plugin suite.
+Issues, feature requests, and support: use the Discussion tab or open a ticket.[/COLOR][/SIZE]
+
+[IMG]https://i.imgur.com/PLACEHOLDER_LOGO.png[/IMG]
+[/CENTER]

@@ -110,28 +110,43 @@ public class VotifierProtocolHandler implements Runnable {
         }
 
         if (read == V1_BLOCK_SIZE) {
-            // Full 256-byte RSA block — standard v1
-            // Votifier v1 protocol mandates RSA/ECB/PKCS1Padding for backward compatibility
-            @SuppressWarnings("java:S5542")
-            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-            cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
-            byte[] decrypted = cipher.doFinal(block);
+            // Full 256-byte RSA block — attempt standard v1 decryption first.
+            // If RSA fails (e.g. a v2 message whose first byte bypassed v2 detection),
+            // fall through to tryV2Fallback before giving up.
+            try {
+                // Votifier v1 protocol mandates RSA/ECB/PKCS1Padding for backward compatibility
+                @SuppressWarnings("java:S5542")
+                Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+                cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+                byte[] decrypted = cipher.doFinal(block);
 
-            String payload = new String(decrypted, StandardCharsets.UTF_8);
-            String[] lines = payload.split("\n");
+                String payload = new String(decrypted, StandardCharsets.UTF_8);
+                String[] lines = payload.split("\n");
 
-            if (lines.length < 4 || !"VOTE".equals(lines[0])) {
-                logger.warning("Invalid v1 vote payload");
-                return;
+                if (lines.length < 4 || !"VOTE".equals(lines[0])) {
+                    logger.warning("Invalid v1 vote payload");
+                    return;
+                }
+
+                String serviceName = lines[1].trim();
+                String username = lines[2].trim();
+                String address = lines[3].trim();
+
+                Vote vote = new Vote(username, serviceName, address, Instant.now());
+                voteCallback.accept(new VoteResult(vote, VoteResult.Protocol.V1));
+                logger.log(Level.INFO, () -> String.format("Received v1 vote from %s for %s", serviceName, username));
+            } catch (GeneralSecurityException e) {
+                // RSA decryption failed — the 256-byte block may be a v2 message that
+                // slipped past the first-byte protocol detection (e.g. length-prefix
+                // framing whose high byte is not 0x73, 0x00, or '{').
+                logger.log(Level.FINE, () -> String.format(
+                        "v1 RSA decryption failed (%s) on 256-byte block — attempting v2 fallback",
+                        e.getClass().getSimpleName()));
+                if (!tryV2Fallback(block, out, challenge)) {
+                    logger.log(Level.WARNING,
+                            "Vote connection: 256-byte block failed both v1 RSA decryption and v2 fallback");
+                }
             }
-
-            String serviceName = lines[1].trim();
-            String username = lines[2].trim();
-            String address = lines[3].trim();
-
-            Vote vote = new Vote(username, serviceName, address, Instant.now());
-            voteCallback.accept(new VoteResult(vote, VoteResult.Protocol.V1));
-            logger.log(Level.INFO, () -> String.format("Received v1 vote from %s for %s", serviceName, username));
         } else {
             // Not 256 bytes — likely a v2 message with unrecognized framing.
             // Try to recover it as v2 JSON.

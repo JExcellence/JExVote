@@ -1,0 +1,148 @@
+[CENTER]
+[IMG]https://i.imgur.com/PLACEHOLDER_BANNER.png[/IMG]
+
+[SIZE=6][COLOR=#9333EA][B]JExVote[/B][/COLOR][/SIZE]
+[SIZE=3][COLOR=#C084FC]Drop-in Votifier replacement with a full reward engine.[/COLOR][/SIZE]
+[SIZE=2][COLOR=#94A3B8]No NuVotifier. No extra plugins. Just one JAR.[/COLOR][/SIZE]
+[/CENTER]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=4][COLOR=#F5D78E][B]Why JExVote?[/B][/COLOR][/SIZE][/CENTER]
+
+[LIST]
+[*][COLOR=#38BDF8][B]Replace NuVotifier entirely[/B][/COLOR] [COLOR=#94A3B8]— JExVote includes its own Votifier v1 + v2 server. Remove NuVotifier from your plugins folder.[/COLOR]
+[*][COLOR=#38BDF8][B]12 reward types out of the box[/B][/COLOR] [COLOR=#94A3B8]— Commands, items, XP, currency, permissions, sounds, particles, titles, teleports, bundles, choice menus, custom hooks.[/COLOR]
+[*][COLOR=#38BDF8][B]Streak milestones[/B][/COLOR] [COLOR=#94A3B8]— Day 7, 14, 30+ with escalating rewards. Manual claim mode with interactive GUI or auto-grant.[/COLOR]
+[*][COLOR=#38BDF8][B]Polished GUIs[/B][/COLOR] [COLOR=#94A3B8]— Vote overview, paginated leaderboard with player heads, streak progress tracker — all from /vote.[/COLOR]
+[*][COLOR=#38BDF8][B]Offline vote queue[/B][/COLOR] [COLOR=#94A3B8]— Votes received while a player is offline are stored and delivered on next login. Zero lost rewards.[/COLOR]
+[*][COLOR=#38BDF8][B]Spigot + Paper + Folia[/B][/COLOR] [COLOR=#94A3B8]— Works on all three. Folia-safe scheduling via FoliaLib.[/COLOR]
+[/LIST]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=4][COLOR=#F5D78E][B]Quick Start[/B][/COLOR][/SIZE][/CENTER]
+
+[COLOR=#D4D4D8][B][COLOR=#C084FC]1.[/COLOR][/B] Drop [COLOR=#C084FC]JExVote.jar[/COLOR] into [COLOR=#C084FC]plugins/[/COLOR] and restart.
+[B][COLOR=#C084FC]2.[/COLOR][/B] Copy the auto-generated [COLOR=#C084FC]token[/COLOR] from [COLOR=#C084FC]config.yml[/COLOR] into your vote site settings.
+[B][COLOR=#C084FC]3.[/COLOR][/B] Open port [COLOR=#C084FC]8192[/COLOR] in your firewall.
+[B][COLOR=#C084FC]4.[/COLOR][/B] Add your vote sites to [COLOR=#C084FC]sites.yml[/COLOR].
+[B][COLOR=#C084FC]5.[/COLOR][/B] Test with [COLOR=#C084FC]/jexvote fakevote <yourname>[/COLOR].
+
+That's it. Full setup guide in the [COLOR=#38BDF8][B][URL='']Description tab[/URL][/B][/COLOR].[/COLOR]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=4][COLOR=#F5D78E][B]At a Glance[/B][/COLOR][/SIZE][/CENTER]
+
+[TABLE]
+[TR]
+[TH][COLOR=#C084FC]Feature[/COLOR][/TH]
+[TH][COLOR=#C084FC]Details[/COLOR][/TH]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Votifier Protocol[/COLOR][/TD]
+[TD][COLOR=#94A3B8]v1 (RSA) + v2 (HMAC-SHA256), auto-detect per connection[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Reward Types[/COLOR][/TD]
+[TD][COLOR=#94A3B8]12 types — commands, items, XP, currency, permissions, sounds, particles, titles, teleports, composite, choice, custom[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Streaks[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Configurable timeout (default 36h), unlimited milestones, auto or manual claim[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]GUIs[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Vote overview, leaderboard (paginated, top-3 heads), streak tracker[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Cooldowns[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Rolling window or fixed daily reset per site, timezone-aware[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Languages[/COLOR][/TD]
+[TD][COLOR=#94A3B8]en_US, de_DE, cs_CZ, sk_SK — auto-detect per player, add your own[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Platforms[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Spigot, Paper, Folia — Java 21+, MC 1.20.4+[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Integrations[/COLOR][/TD]
+[TD][COLOR=#94A3B8]JExEconomy, Vault, LuckPerms, PlaceholderAPI (all optional)[/COLOR][/TD]
+[/TR]
+[/TABLE]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=4][COLOR=#F5D78E][B]Commands[/B][/COLOR][/SIZE][/CENTER]
+
+[CODE]
+/vote                — Open the vote GUI
+/vote sites          — List all vote sites with clickable links
+/vote stats [player] — View vote statistics
+/vote top [count]    — Leaderboard
+[/CODE]
+
+[CODE]
+/jexvote reload                    — Hot-reload all configs
+/jexvote fakevote <player> [site]  — Simulate a test vote
+/jexvote reset <player>            — Clear a player's vote data
+/jexvote resetmonthly              — Reset monthly counts server-wide
+[/CODE]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=4][COLOR=#F5D78E][B]Editions[/B][/COLOR][/SIZE][/CENTER]
+
+[TABLE]
+[TR]
+[TH][COLOR=#C084FC]Feature[/COLOR][/TH]
+[TH][COLOR=#38BDF8]Free[/COLOR][/TH]
+[TH][COLOR=#F59E0B]Premium[/COLOR][/TH]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Vote sites[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Up to 5[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Unlimited[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]All 12 reward types[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Streaks & milestones[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]GUIs & leaderboard[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Vote shop[/COLOR][/TD]
+[TD][COLOR=#EF4444]No[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Per-site rewards[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Multi-language[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[/TR]
+[/TABLE]
+
+[COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[CENTER][SIZE=2][COLOR=#7C3AED]JExVote is part of the [B]JExcellence[/B] plugin suite.
+Questions? Use the Discussion tab or open a ticket.[/COLOR][/SIZE]
+
+[IMG]https://i.imgur.com/PLACEHOLDER_LOGO.png[/IMG]
+[/CENTER]
