@@ -13,6 +13,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
@@ -82,8 +83,11 @@ public class VotifierProtocolHandler implements Runnable {
         } catch (Exception e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
+            } else if (e instanceof SocketTimeoutException) {
+                logger.log(Level.FINE, "Vote connection timed out (client did not send payload)", e);
+            } else {
+                logger.log(Level.WARNING, "Error handling vote connection", e);
             }
-            logger.log(Level.WARNING, "Error handling vote connection", e);
         }
     }
 
