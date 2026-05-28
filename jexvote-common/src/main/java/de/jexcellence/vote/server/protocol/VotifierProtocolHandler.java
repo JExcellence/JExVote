@@ -143,8 +143,11 @@ public class VotifierProtocolHandler implements Runnable {
                         "v1 RSA decryption failed (%s) on 256-byte block — attempting v2 fallback",
                         e.getClass().getSimpleName()));
                 if (!tryV2Fallback(block, out, challenge)) {
-                    logger.log(Level.WARNING,
-                            "Vote connection: 256-byte block failed both v1 RSA decryption and v2 fallback");
+                    final String remote = socket.getRemoteSocketAddress().toString();
+                    logger.log(Level.WARNING, () -> String.format(
+                            "Vote connection from %s: 256-byte block failed both v1 RSA decryption and v2 fallback"
+                                    + " — voting site may have the wrong public key configured",
+                            remote));
                 }
             }
         } else {
