@@ -7,6 +7,7 @@ import de.jexcellence.vote.VoteEdition;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
 import de.jexcellence.vote.model.Vote;
+import de.jexcellence.vote.service.MultiplierService;
 import de.jexcellence.vote.service.VoteService;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -125,7 +126,12 @@ public final class VoteAdminHandler {
                 voteConfig.getStreakTimeoutHours(),
                 voteConfig.getStreakCommands(),
                 voteConfig.getRecordRetentionDays(),
-                voteConfig.getStreakClaimMode() == VoteConfig.StreakClaimMode.MANUAL);
+                voteConfig.getStreakClaimMode() == VoteConfig.StreakClaimMode.MANUAL,
+                new MultiplierService.Settings(
+                        voteConfig.isWeekendMultiplierEnabled(),
+                        voteConfig.getWeekendMultiplierFactor(),
+                        voteConfig.getWeekendMultiplierDays(),
+                        voteConfig.getWeekendMultiplierTimezone()));
         r18n().msg("vote.reload").prefix().send(ctx.sender());
     }
 

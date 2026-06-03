@@ -30,6 +30,7 @@ public final class VoteRewardConfig {
     private List<AbstractReward> defaultRewards = Collections.emptyList();
     private Map<Integer, List<AbstractReward>> streakRewards = Collections.emptyMap();
     private Map<String, List<AbstractReward>> siteRewards = Collections.emptyMap();
+    private List<AbstractReward> votePartyRewards = Collections.emptyList();
 
     public VoteRewardConfig(@NotNull JavaPlugin plugin, @NotNull RewardRegistry rewardRegistry) {
         this.plugin = plugin;
@@ -52,9 +53,10 @@ public final class VoteRewardConfig {
         defaultRewards = loadRewardList(config.getConfigurationSection("default-rewards"));
         streakRewards = loadStreakRewards(config.getConfigurationSection("streak-rewards"));
         siteRewards = loadSiteRewards(config.getConfigurationSection("site-rewards"));
+        votePartyRewards = loadRewardList(config.getConfigurationSection("vote-party-rewards"));
 
-        logger.log(Level.INFO, () -> String.format("Loaded %d default reward(s), %d streak tier(s), %d site-specific reward set(s)",
-                defaultRewards.size(), streakRewards.size(), siteRewards.size()));
+        logger.log(Level.INFO, () -> String.format("Loaded %d default reward(s), %d streak tier(s), %d site-specific reward set(s), %d vote-party reward(s)",
+                defaultRewards.size(), streakRewards.size(), siteRewards.size(), votePartyRewards.size()));
     }
 
     private @NotNull List<AbstractReward> loadRewardList(ConfigurationSection section) {
@@ -124,4 +126,5 @@ public final class VoteRewardConfig {
     public @NotNull List<AbstractReward> getDefaultRewards() { return defaultRewards; }
     public @NotNull Map<Integer, List<AbstractReward>> getStreakRewards() { return streakRewards; }
     public @NotNull Map<String, List<AbstractReward>> getSiteRewards() { return siteRewards; }
+    public @NotNull List<AbstractReward> getVotePartyRewards() { return votePartyRewards; }
 }

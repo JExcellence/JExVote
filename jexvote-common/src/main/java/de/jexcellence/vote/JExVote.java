@@ -20,12 +20,16 @@ import de.jexcellence.vote.reward.ChanceReward;
 import de.jexcellence.vote.reward.LuckyReward;
 import de.jexcellence.vote.database.repository.ClaimedStreakRewardRepository;
 import de.jexcellence.vote.database.repository.PendingVoteRewardRepository;
+import de.jexcellence.vote.database.repository.VotePartyContributorRepository;
+import de.jexcellence.vote.database.repository.VotePartyRepository;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
 import de.jexcellence.vote.database.repository.VoteRecordRepository;
 import de.jexcellence.vote.listener.PlayerJoinListener;
 import de.jexcellence.vote.placeholder.VotePlaceholderExpansion;
 import de.jexcellence.vote.server.VotifierKeyManager;
 import de.jexcellence.vote.server.VotifierServer;
+import de.jexcellence.vote.service.MultiplierService;
+import de.jexcellence.vote.service.VotePartyService;
 import de.jexcellence.vote.service.StreakClaimService;
 import de.jexcellence.vote.service.VoteBroadcastService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
@@ -40,6 +44,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.security.KeyPair;
@@ -70,11 +75,14 @@ public abstract class JExVote {
     private VoteRecordRepository recordRepository;
     private PendingVoteRewardRepository pendingRewardRepository;
     private ClaimedStreakRewardRepository claimedStreakRepository;
+    private VotePartyRepository partyRepository;
+    private VotePartyContributorRepository partyContributorRepository;
 
     private VoteService voteService;
     private VoteRewardService rewardService;
     private VoteLeaderboardService leaderboardService;
     private StreakClaimService streakClaimService;
+    private VotePartyService votePartyService;
 
     private VotifierServer votifierServer;
     private VotePlaceholderExpansion placeholders;
@@ -201,6 +209,8 @@ public abstract class JExVote {
         recordRepository = repos.get(VoteRecordRepository.class);
         pendingRewardRepository = repos.get(PendingVoteRewardRepository.class);
         claimedStreakRepository = repos.get(ClaimedStreakRewardRepository.class);
+        partyRepository = repos.get(VotePartyRepository.class);
+        partyContributorRepository = repos.get(VotePartyContributorRepository.class);
     }
 
     private void initializeServices() {
@@ -215,12 +225,21 @@ public abstract class JExVote {
         rewardConfig = new VoteRewardConfig(plugin, rewardRegistry);
         rewardConfig.load();
 
+        MultiplierService multiplierService = new MultiplierService(
+                edition().weekendMultiplierEnabled(),
+                new MultiplierService.Settings(
+                        voteConfig.isWeekendMultiplierEnabled(),
+                        voteConfig.getWeekendMultiplierFactor(),
+                        voteConfig.getWeekendMultiplierDays(),
+                        voteConfig.getWeekendMultiplierTimezone()));
+
         rewardService = new VoteRewardService(
                 logger, rewardRegistry,
                 rewardConfig.getDefaultRewards(),
                 rewardConfig.getStreakRewards(),
                 rewardConfig.getSiteRewards(),
-                voteConfig.getCommandsOnVote());
+                voteConfig.getCommandsOnVote(),
+                multiplierService);
 
         boolean manualClaim = voteConfig.getStreakClaimMode() == VoteConfig.StreakClaimMode.MANUAL;
         rewardService.setManualStreakClaim(manualClaim);
@@ -248,15 +267,28 @@ public abstract class JExVote {
             sites = Collections.unmodifiableMap(limited);
         }
 
+        votePartyService = createVotePartyService(broadcastService);
+
         voteService = new VoteService(
                 plugin, playerRepository, recordRepository,
                 pendingRewardRepository, rewardService, broadcastService,
+                multiplierService, votePartyService,
                 sites, voteConfig.getStreakTimeoutHours(),
                 voteConfig.getStreakCommands(),
                 voteConfig.getRecordRetentionDays());
 
         // Purge old vote records on startup
         voteService.purgeOldRecords();
+    }
+
+    private @Nullable VotePartyService createVotePartyService(@NotNull VoteBroadcastService broadcastService) {
+        if (!edition().votePartyEnabled() || !voteConfig.isVotePartyEnabled()) {
+            return null;
+        }
+        return new VotePartyService(
+                plugin, partyRepository, partyContributorRepository,
+                pendingRewardRepository, rewardService, broadcastService,
+                rewardConfig.getVotePartyRewards(), voteConfig.getVotePartyTarget());
     }
 
     private void initializeVotifierServer() {

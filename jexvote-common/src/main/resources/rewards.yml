@@ -57,6 +57,19 @@ site-rewards: {}
 #      type: xp
 #      amount: 25
 
+# ── Vote Party Rewards (Premium) ────────────────────────────────
+# Granted to EVERY player who contributed to a vote party when it
+# completes (online players immediately, offline players on next
+# login). Configure the target/toggle under 'vote-party' in config.yml.
+vote-party-rewards: {}
+#  party-xp:
+#    type: xp
+#    amount: 200
+#  party-crate:
+#    type: command
+#    command: 'crate give {player} vote 1'
+#    as-console: true
+
 # ═════════════════════════════════════════════════════════════════
 # REWARD TYPE REFERENCE
 # ═════════════════════════════════════════════════════════════════

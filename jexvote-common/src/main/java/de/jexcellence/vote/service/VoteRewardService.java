@@ -29,20 +29,24 @@ public class VoteRewardService {
     private final Map<Integer, List<AbstractReward>> streakRewards;
     private final Map<String, List<AbstractReward>> siteRewards;
     private final List<String> commandsOnVote;
+    private final MultiplierService multiplierService;
     private volatile boolean manualStreakClaim;
 
+    @SuppressWarnings("java:S107")
     public VoteRewardService(@NotNull Logger logger,
                              @NotNull RewardRegistry rewardRegistry,
                              @NotNull List<AbstractReward> defaultRewards,
                              @NotNull Map<Integer, List<AbstractReward>> streakRewards,
                              @NotNull Map<String, List<AbstractReward>> siteRewards,
-                             @NotNull List<String> commandsOnVote) {
+                             @NotNull List<String> commandsOnVote,
+                             @NotNull MultiplierService multiplierService) {
         this.logger = logger;
         this.objectMapper = buildRewardMapper(rewardRegistry);
         this.defaultRewards = defaultRewards;
         this.streakRewards = streakRewards;
         this.siteRewards = siteRewards;
         this.commandsOnVote = commandsOnVote;
+        this.multiplierService = multiplierService;
     }
 
     private static @NotNull ObjectMapper buildRewardMapper(@NotNull RewardRegistry registry) {
@@ -61,29 +65,13 @@ public class VoteRewardService {
      * @param currentStreak the current vote streak
      */
     public void grantRewards(@NotNull Player player, @NotNull String serviceName, int currentStreak) {
-        // Default rewards
-        defaultRewards.forEach(reward ->
-                reward.grant(player).exceptionally(ex -> {
-                    logger.log(Level.WARNING, "Failed to grant default reward to " + player.getName(), ex);
-                    return false;
-                }));
+        double multiplier = multiplierService.current();
 
-        // Site-specific rewards
-        siteRewards.getOrDefault(serviceName.toLowerCase(), List.of())
-                .forEach(reward ->
-                        reward.grant(player).exceptionally(ex -> {
-                            logger.log(Level.WARNING, "Failed to grant site reward to " + player.getName(), ex);
-                            return false;
-                        }));
+        grantAll(defaultRewards, player, multiplier);
+        grantAll(siteRewards.getOrDefault(serviceName.toLowerCase(), List.of()), player, multiplier);
 
-        // Streak rewards (auto-claim mode only)
         if (!manualStreakClaim) {
-            streakRewards.getOrDefault(currentStreak, List.of())
-                    .forEach(reward ->
-                            reward.grant(player).exceptionally(ex -> {
-                                logger.log(Level.WARNING, "Failed to grant streak reward to " + player.getName(), ex);
-                                return false;
-                            }));
+            grantAll(streakRewards.getOrDefault(currentStreak, List.of()), player, multiplier);
         }
 
         // Commands
@@ -96,6 +84,46 @@ public class VoteRewardService {
         });
     }
 
+    private void grantAll(@NotNull List<AbstractReward> rewards, @NotNull Player player, double multiplier) {
+        for (AbstractReward reward : rewards) {
+            scaledReward(reward, multiplier).grant(player).exceptionally(ex -> {
+                logger.log(Level.WARNING, "Failed to grant reward to " + player.getName(), ex);
+                return false;
+            });
+        }
+    }
+
+    /**
+     * Returns a copy of {@code reward} with its top-level numeric {@code amount}
+     * scaled by {@code multiplier} (covers xp/currency). Returns the original when
+     * no scaling applies or scaling fails. Amounts nested inside composite/chance/
+     * lucky rewards are not scaled.
+     */
+    private @NotNull AbstractReward scaledReward(@NotNull AbstractReward reward, double multiplier) {
+        if (multiplier == 1.0) {
+            return reward;
+        }
+        try {
+            Map<String, Object> map = serializeReward(reward);
+            if (scaleAmountInPlace(map, multiplier)) {
+                String json = objectMapper.writeValueAsString(map);
+                return objectMapper.readValue(json, AbstractReward.class);
+            }
+        } catch (Exception e) {
+            logger.log(Level.FINE, e, () -> "Failed to scale reward amount; granting unscaled");
+        }
+        return reward;
+    }
+
+    private static boolean scaleAmountInPlace(@NotNull Map<String, Object> map, double multiplier) {
+        Object amount = map.get("amount");
+        if (amount instanceof Number number) {
+            map.put("amount", number.doubleValue() * multiplier);
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Serializes rewards for offline players.
      *
@@ -105,16 +133,17 @@ public class VoteRewardService {
      */
     public @Nullable String serializeRewards(@NotNull String serviceName, int currentStreak) {
         try {
+            double multiplier = multiplierService.current();
             List<Map<String, Object>> rewardList = new ArrayList<>();
 
-            defaultRewards.forEach(reward -> rewardList.add(serializeReward(reward)));
+            defaultRewards.forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
 
             siteRewards.getOrDefault(serviceName.toLowerCase(), List.of())
-                    .forEach(reward -> rewardList.add(serializeReward(reward)));
+                    .forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
 
             if (!manualStreakClaim) {
                 streakRewards.getOrDefault(currentStreak, List.of())
-                        .forEach(reward -> rewardList.add(serializeReward(reward)));
+                        .forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
             }
 
             Map<String, Object> data = new LinkedHashMap<>();
@@ -124,6 +153,34 @@ public class VoteRewardService {
             return objectMapper.writeValueAsString(data);
         } catch (JsonProcessingException e) {
             logger.log(Level.WARNING, "Failed to serialize vote rewards", e);
+            return null;
+        }
+    }
+
+    /**
+     * Grants an explicit reward list to a player (used by Vote Parties).
+     * No vote multiplier is applied — party rewards are granted as configured.
+     */
+    public void grantRewardList(@NotNull Player player, @NotNull List<AbstractReward> rewards) {
+        grantAll(rewards, player, 1.0);
+    }
+
+    /**
+     * Serializes an explicit reward list for offline delivery (used by Vote Parties).
+     *
+     * @return JSON string, or {@code null} if serialization failed
+     */
+    public @Nullable String serializeRewardList(@NotNull List<AbstractReward> rewards) {
+        try {
+            List<Map<String, Object>> rewardList = new ArrayList<>();
+            rewards.forEach(reward -> rewardList.add(serializeReward(reward)));
+
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("rewards", rewardList);
+            data.put("commands", Collections.emptyList());
+            return objectMapper.writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            logger.log(Level.WARNING, "Failed to serialize party rewards", e);
             return null;
         }
     }
@@ -161,6 +218,14 @@ public class VoteRewardService {
             String typeId = (String) rewardMap.get("type");
             logger.log(Level.WARNING, ex, () -> String.format("Failed to deserialize reward type: %s", typeId));
         }
+    }
+
+    private @NotNull Map<String, Object> serializeScaled(@NotNull AbstractReward reward, double multiplier) {
+        Map<String, Object> map = serializeReward(reward);
+        if (multiplier != 1.0) {
+            scaleAmountInPlace(map, multiplier);
+        }
+        return map;
     }
 
     @SuppressWarnings("unchecked")

@@ -6,15 +6,18 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,6 +67,14 @@ public final class VoteConfig {
     private Map<String, VoteSite> voteSites = Collections.emptyMap();
     private Map<Integer, List<String>> streakCommands = Collections.emptyMap();
 
+    private boolean weekendMultiplierEnabled = false;
+    private double weekendMultiplierFactor = 2.0;
+    private Set<DayOfWeek> weekendMultiplierDays = Set.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
+    private ZoneId weekendMultiplierTimezone = ZoneId.of("UTC");
+
+    private boolean votePartyEnabled = false;
+    private int votePartyTarget = 100;
+
     public VoteConfig(@NotNull JavaPlugin plugin) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
@@ -107,8 +118,54 @@ public final class VoteConfig {
 
         commandsOnVote = config.getStringList("commands-on-vote");
 
+        loadMultipliers(config);
+        loadVoteParty(config);
         loadStreakCommands(config);
         loadVoteSites();
+    }
+
+    private void loadMultipliers(@NotNull YamlConfiguration config) {
+        weekendMultiplierEnabled = config.getBoolean("multipliers.weekend.enabled", false);
+        weekendMultiplierFactor = config.getDouble("multipliers.weekend.factor", 2.0);
+
+        List<String> dayNames = config.getStringList("multipliers.weekend.days");
+        if (dayNames.isEmpty()) {
+            weekendMultiplierDays = Set.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
+        } else {
+            weekendMultiplierDays = parseDays(dayNames);
+        }
+
+        String timezoneStr = config.getString("multipliers.weekend.timezone", "UTC");
+        try {
+            weekendMultiplierTimezone = ZoneId.of(timezoneStr);
+        } catch (Exception e) {
+            logger.warning(String.format("Invalid multipliers.weekend.timezone '%s', using UTC", timezoneStr));
+            weekendMultiplierTimezone = ZoneId.of("UTC");
+        }
+    }
+
+    private @NotNull Set<DayOfWeek> parseDays(@NotNull List<String> dayNames) {
+        Set<DayOfWeek> days = EnumSet.noneOf(DayOfWeek.class);
+        for (String name : dayNames) {
+            try {
+                days.add(DayOfWeek.valueOf(name.trim().toUpperCase(Locale.ROOT)));
+            } catch (IllegalArgumentException e) {
+                logger.warning(String.format("Invalid weekend day '%s' in multipliers.weekend.days — ignored", name));
+            }
+        }
+        if (days.isEmpty()) {
+            return Set.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
+        }
+        return Collections.unmodifiableSet(days);
+    }
+
+    private void loadVoteParty(@NotNull YamlConfiguration config) {
+        votePartyEnabled = config.getBoolean("vote-party.enabled", false);
+        votePartyTarget = config.getInt("vote-party.target", 100);
+        if (votePartyTarget < 1) {
+            logger.warning(String.format("Invalid vote-party.target %d — using 100", votePartyTarget));
+            votePartyTarget = 100;
+        }
     }
 
     private void loadStreakCommands(@NotNull YamlConfiguration config) {
@@ -200,4 +257,10 @@ public final class VoteConfig {
     public @NotNull List<String> getCommandsOnVote() { return commandsOnVote; }
     public @NotNull Map<String, VoteSite> getVoteSites() { return voteSites; }
     public @NotNull Map<Integer, List<String>> getStreakCommands() { return streakCommands; }
+    public boolean isWeekendMultiplierEnabled() { return weekendMultiplierEnabled; }
+    public double getWeekendMultiplierFactor() { return weekendMultiplierFactor; }
+    public @NotNull Set<DayOfWeek> getWeekendMultiplierDays() { return weekendMultiplierDays; }
+    public @NotNull ZoneId getWeekendMultiplierTimezone() { return weekendMultiplierTimezone; }
+    public boolean isVotePartyEnabled() { return votePartyEnabled; }
+    public int getVotePartyTarget() { return votePartyTarget; }
 }

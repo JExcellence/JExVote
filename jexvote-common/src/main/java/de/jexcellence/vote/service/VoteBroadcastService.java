@@ -73,6 +73,17 @@ public class VoteBroadcastService {
     }
 
     /**
+     * Broadcasts to all online players that a vote party has completed.
+     */
+    public void broadcastPartyReached(int partyNumber) {
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            r18n().msg("vote.party.reached")
+                    .with("party", String.valueOf(partyNumber))
+                    .send(online);
+        }
+    }
+
+    /**
      * Notifies a player about pending rewards delivered on login.
      */
     public void notifyPendingRewards(@NotNull Player player, int count) {

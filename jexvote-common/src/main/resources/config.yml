@@ -78,3 +78,34 @@ records:
   # How long to keep individual vote records (days).
   # Set to 0 to keep forever.
   retention-days: 90
+
+# ── Multipliers (Premium) ───────────────────────────────────────
+# Scales vote rewards during configured windows.
+# Applies to: vote POINTS (exact) and top-level numeric reward
+# amounts (xp/currency). NOTE: amounts nested inside composite/
+# chance/lucky rewards are NOT scaled — only their own top-level
+# 'amount' field is. Requires the Premium edition.
+multipliers:
+  weekend:
+    # Master switch for the weekend multiplier.
+    enabled: false
+    # The factor applied during the weekend window (e.g. 2.0 = double).
+    factor: 2.0
+    # Which days count as "weekend" (English DayOfWeek names).
+    days:
+      - SATURDAY
+      - SUNDAY
+    # Timezone used to determine the current day.
+    timezone: 'UTC'
+
+# ── Vote Party (Premium) ────────────────────────────────────────
+# A shared, server-wide vote counter. When it reaches the target,
+# every player who contributed to that party is rewarded (online
+# players immediately, offline players on next login), then the
+# counter resets for the next party.
+# Party rewards are configured in rewards.yml under 'vote-party-rewards'.
+# Requires the Premium edition.
+vote-party:
+  enabled: false
+  # Number of votes required to complete a party.
+  target: 100

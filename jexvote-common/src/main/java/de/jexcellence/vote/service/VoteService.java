@@ -41,6 +41,8 @@ public class VoteService {
     private final PendingVoteRewardRepository pendingRewardRepository;
     private final VoteRewardService rewardService;
     private final VoteBroadcastService broadcastService;
+    private final MultiplierService multiplierService;
+    private final @Nullable VotePartyService votePartyService;
 
     private final AtomicReference<Map<String, VoteSite>> voteSites;
     // volatile is sufficient: single-write / multi-read
@@ -57,6 +59,8 @@ public class VoteService {
                        @NotNull PendingVoteRewardRepository pendingRewardRepository,
                        @NotNull VoteRewardService rewardService,
                        @NotNull VoteBroadcastService broadcastService,
+                       @NotNull MultiplierService multiplierService,
+                       @Nullable VotePartyService votePartyService,
                        @NotNull Map<String, VoteSite> voteSites,
                        int streakTimeoutHours,
                        @NotNull Map<Integer, List<String>> streakCommands,
@@ -69,6 +73,8 @@ public class VoteService {
         this.pendingRewardRepository = pendingRewardRepository;
         this.rewardService = rewardService;
         this.broadcastService = broadcastService;
+        this.multiplierService = multiplierService;
+        this.votePartyService = votePartyService;
         this.voteSites = new AtomicReference<>(voteSites);
         this.streakTimeout = Duration.ofHours(streakTimeoutHours);
         this.streakCommands = new AtomicReference<>(streakCommands);
@@ -78,16 +84,19 @@ public class VoteService {
     /**
      * Called by {@code /jexvote reload} to refresh mutable config state.
      */
+    @SuppressWarnings("java:S107")
     public void reload(@NotNull Map<String, VoteSite> voteSites,
                        int streakTimeoutHours,
                        @NotNull Map<Integer, List<String>> streakCommands,
                        int recordRetentionDays,
-                       boolean manualStreakClaim) {
+                       boolean manualStreakClaim,
+                       @NotNull MultiplierService.Settings multiplierSettings) {
         this.voteSites.set(voteSites);
         this.streakTimeout = Duration.ofHours(streakTimeoutHours);
         this.streakCommands.set(streakCommands);
         this.recordRetentionDays = recordRetentionDays;
         this.rewardService.setManualStreakClaim(manualStreakClaim);
+        this.multiplierService.reload(multiplierSettings);
     }
 
     public @NotNull CompletableFuture<Boolean> processVote(@NotNull Vote vote) {
@@ -115,6 +124,10 @@ public class VoteService {
                 recordRepository.create(new VoteRecordEntity(
                         uuid, vote.username(), vote.serviceName(),
                         vote.address(), vote.timestamp()));
+
+                if (votePartyService != null) {
+                    votePartyService.recordVote(uuid);
+                }
 
                 deliverOrQueueRewards(vote, uuid, player);
                 return true;
@@ -166,9 +179,10 @@ public class VoteService {
     }
 
     private void applyVoteToPlayer(@NotNull VotePlayerEntity player, @NotNull Vote vote, int points) {
+        int scaledPoints = (int) Math.round(points * multiplierService.current());
         player.setTotalVotes(player.getTotalVotes() + 1);
         player.setMonthlyVotes(player.getMonthlyVotes() + 1);
-        player.setVotePoints(player.getVotePoints() + points);
+        player.setVotePoints(player.getVotePoints() + scaledPoints);
         player.setLastVoteAt(vote.timestamp());
         playerRepository.update(player);
     }

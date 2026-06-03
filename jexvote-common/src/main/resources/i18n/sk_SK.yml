@@ -19,6 +19,9 @@ vote:
   pending_rewards: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Čaká na teba</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>odmien za hlasovanie! Už sú na ceste...</gray>'
   lucky:
     hit: '<gradient:#fde047:#f59e0b>★ Lucky Vote!</gradient> <gray>Vyhral si bonusovú odmenu!</gray> <yellow>{chance}</yellow>'
+  party:
+    progress: '<gray>Vote Party:</gray> <green>{current}</green><gray>/</gray><white>{target}</white>'
+    reached: '<dark_gray>[<gradient:#86efac:#16a34a>Vote</gradient><dark_gray>]</dark_gray> <gradient:#fde047:#f59e0b>★ Vote Party #{party} dokončená!</gradient> <gray>Všetci prispievatelia boli odmenení!</gray>'
   no_permission: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Na toto nemáš oprávnenie.</red>'
   player_not_found: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Hráč nenájdený:</red> <white>{player}</white>'
   stats:
