@@ -2,6 +2,8 @@ package de.jexcellence.vote.placeholder;
 
 import de.jexcellence.vote.database.entity.VotePlayerEntity;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
+import de.jexcellence.vote.service.RewardStatsService;
+import de.jexcellence.vote.service.VotePartyService;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
@@ -26,11 +28,19 @@ public class VotePlaceholderExpansion extends PlaceholderExpansion {
 
     private static final Duration CACHE_TTL = Duration.ofSeconds(30);
 
+    private static final String REWARD_COUNT_PREFIX = "reward_count_";
+
     private final VotePlayerRepository playerRepository;
+    private final @Nullable VotePartyService votePartyService;
+    private final @Nullable RewardStatsService rewardStatsService;
     private final Map<UUID, CachedPlayer> cache = new ConcurrentHashMap<>();
 
-    public VotePlaceholderExpansion(@NotNull VotePlayerRepository playerRepository) {
+    public VotePlaceholderExpansion(@NotNull VotePlayerRepository playerRepository,
+                                    @Nullable VotePartyService votePartyService,
+                                    @Nullable RewardStatsService rewardStatsService) {
         this.playerRepository = playerRepository;
+        this.votePartyService = votePartyService;
+        this.rewardStatsService = rewardStatsService;
     }
 
     @Override
@@ -55,6 +65,11 @@ public class VotePlaceholderExpansion extends PlaceholderExpansion {
 
     @Override
     public @Nullable String onRequest(@NotNull OfflinePlayer player, @NotNull String params) {
+        String global = resolveGlobal(params.toLowerCase());
+        if (global != null) {
+            return global;
+        }
+
         UUID uuid = player.getUniqueId();
         CachedPlayer cached = cache.get(uuid);
 
@@ -80,6 +95,26 @@ public class VotePlaceholderExpansion extends PlaceholderExpansion {
             case "last_vote" -> vp.getLastVoteAt() != null
                     ? DATE_FORMAT.format(vp.getLastVoteAt()) : "Never";
             case "player_name" -> vp.getPlayerName() != null ? vp.getPlayerName() : player.getName();
+            default -> null;
+        };
+    }
+
+    /**
+     * Resolves placeholders that do not depend on a specific player (vote party
+     * progress and reward grant counts). Returns {@code null} when {@code params}
+     * is not a global placeholder, so the caller falls through to player data.
+     */
+    private @Nullable String resolveGlobal(@NotNull String params) {
+        if (params.startsWith(REWARD_COUNT_PREFIX)) {
+            String key = params.substring(REWARD_COUNT_PREFIX.length());
+            long count = rewardStatsService != null ? rewardStatsService.getCount(key) : 0L;
+            return String.valueOf(count);
+        }
+
+        return switch (params) {
+            case "party_current" -> String.valueOf(votePartyService != null ? votePartyService.getCurrentVotes() : 0);
+            case "party_target" -> String.valueOf(votePartyService != null ? votePartyService.getTargetVotes() : 0);
+            case "party_remaining" -> String.valueOf(votePartyService != null ? votePartyService.getRemainingVotes() : 0);
             default -> null;
         };
     }

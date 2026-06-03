@@ -200,8 +200,11 @@ vote-party-rewards: {}
 # Optionally announces a message to the player on a hit. When
 # 'show-chance' is true the {chance} placeholder in the announce
 # message resolves to the percentage (e.g. 10); otherwise it is blank.
+# The optional 'id' tracks how many times this reward has dropped,
+# exposed via %jexvote_reward_count_<id>%.
 #   lucky-diamonds:
 #     type: chance
+#     id: 'lucky-diamonds'      # optional — enables the drop-count placeholder
 #     chance: 0.10              # 10% chance
 #     show-chance: true         # expose the % in the announce message
 #     announce: 'vote.lucky.hit'
@@ -217,16 +220,19 @@ vote-party-rewards: {}
 #     type: lucky
 #     entries:
 #       - weight: 70            # common
+#         id: 'jackpot-common'  # optional — drop-count via %jexvote_reward_count_jackpot-common%
 #         reward:
 #           type: xp
 #           amount: 50
 #       - weight: 25            # uncommon
+#         id: 'jackpot-uncommon'
 #         announce: 'vote.lucky.hit'
 #         reward:
 #           type: currency
 #           currency: 'coins'
 #           amount: 250.0
 #       - weight: 5             # rare
+#         id: 'jackpot-rare'
 #         announce: 'vote.lucky.hit'
 #         reward:
 #           type: command

@@ -28,17 +28,24 @@ public class LuckyReward extends AbstractReward {
     /** A single weighted outcome in the pool. */
     public static class Entry {
 
+        @JsonProperty("id") private final String id;
         @JsonProperty("weight") private final double weight;
         @JsonProperty("reward") private final AbstractReward reward;
         @JsonProperty("announce") private final String announceKey;
 
         @JsonCreator
-        public Entry(@JsonProperty("weight") double weight,
+        public Entry(@JsonProperty("id") @Nullable String id,
+                     @JsonProperty("weight") double weight,
                      @JsonProperty("reward") @NotNull AbstractReward reward,
                      @JsonProperty("announce") @Nullable String announceKey) {
+            this.id = id;
             this.weight = weight <= 0.0 ? 1.0 : weight;
             this.reward = reward;
             this.announceKey = announceKey;
+        }
+
+        public @Nullable String id() {
+            return id;
         }
 
         public double weight() {
@@ -70,9 +77,12 @@ public class LuckyReward extends AbstractReward {
 
         Entry chosen = pickWeighted();
         return chosen.reward().grant(player).thenApply(success -> {
-            String key = chosen.announceKey();
-            if (Boolean.TRUE.equals(success) && key != null && !key.isBlank()) {
-                R18nManager.getInstance().msg(key).send(player);
+            if (Boolean.TRUE.equals(success)) {
+                RewardStats.record(chosen.id());
+                String key = chosen.announceKey();
+                if (key != null && !key.isBlank()) {
+                    R18nManager.getInstance().msg(key).send(player);
+                }
             }
             return success;
         });

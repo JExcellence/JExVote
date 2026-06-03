@@ -25,17 +25,20 @@ public class ChanceReward extends AbstractReward {
 
     public static final String TYPE_ID = "chance";
 
+    @JsonProperty("id") private final String id;
     @JsonProperty("chance") private final double chance;
     @JsonProperty("reward") private final AbstractReward reward;
     @JsonProperty("announce") private final String announceKey;
     @JsonProperty("show-chance") private final boolean showChance;
 
     @JsonCreator
-    public ChanceReward(@JsonProperty("chance") double chance,
+    public ChanceReward(@JsonProperty("id") @Nullable String id,
+                        @JsonProperty("chance") double chance,
                         @JsonProperty("reward") @NotNull AbstractReward reward,
                         @JsonProperty("announce") @Nullable String announceKey,
                         @JsonProperty("show-chance") boolean showChance) {
         super(TYPE_ID);
+        this.id = id;
         this.chance = clamp(chance);
         this.reward = reward;
         this.announceKey = announceKey;
@@ -58,8 +61,11 @@ public class ChanceReward extends AbstractReward {
             return CompletableFuture.completedFuture(false);
         }
         return reward.grant(player).thenApply(success -> {
-            if (Boolean.TRUE.equals(success) && announceKey != null && !announceKey.isBlank()) {
-                announce(player);
+            if (Boolean.TRUE.equals(success)) {
+                RewardStats.record(id);
+                if (announceKey != null && !announceKey.isBlank()) {
+                    announce(player);
+                }
             }
             return success;
         });

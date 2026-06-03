@@ -18,8 +18,10 @@ import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
 import de.jexcellence.vote.reward.ChanceReward;
 import de.jexcellence.vote.reward.LuckyReward;
+import de.jexcellence.vote.reward.RewardStats;
 import de.jexcellence.vote.database.repository.ClaimedStreakRewardRepository;
 import de.jexcellence.vote.database.repository.PendingVoteRewardRepository;
+import de.jexcellence.vote.database.repository.RewardGrantStatRepository;
 import de.jexcellence.vote.database.repository.VotePartyContributorRepository;
 import de.jexcellence.vote.database.repository.VotePartyRepository;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
@@ -29,6 +31,7 @@ import de.jexcellence.vote.placeholder.VotePlaceholderExpansion;
 import de.jexcellence.vote.server.VotifierKeyManager;
 import de.jexcellence.vote.server.VotifierServer;
 import de.jexcellence.vote.service.MultiplierService;
+import de.jexcellence.vote.service.RewardStatsService;
 import de.jexcellence.vote.service.VotePartyService;
 import de.jexcellence.vote.service.StreakClaimService;
 import de.jexcellence.vote.service.VoteBroadcastService;
@@ -77,12 +80,14 @@ public abstract class JExVote {
     private ClaimedStreakRewardRepository claimedStreakRepository;
     private VotePartyRepository partyRepository;
     private VotePartyContributorRepository partyContributorRepository;
+    private RewardGrantStatRepository rewardStatRepository;
 
     private VoteService voteService;
     private VoteRewardService rewardService;
     private VoteLeaderboardService leaderboardService;
     private StreakClaimService streakClaimService;
     private VotePartyService votePartyService;
+    private RewardStatsService rewardStatsService;
 
     private VotifierServer votifierServer;
     private VotePlaceholderExpansion placeholders;
@@ -150,6 +155,7 @@ public abstract class JExVote {
     }
 
     public void onDisable() {
+        RewardStats.reset();
         if (votifierServer != null) {
             votifierServer.shutdown();
         }
@@ -211,6 +217,7 @@ public abstract class JExVote {
         claimedStreakRepository = repos.get(ClaimedStreakRewardRepository.class);
         partyRepository = repos.get(VotePartyRepository.class);
         partyContributorRepository = repos.get(VotePartyContributorRepository.class);
+        rewardStatRepository = repos.get(RewardGrantStatRepository.class);
     }
 
     private void initializeServices() {
@@ -221,6 +228,11 @@ public abstract class JExVote {
         // its Jackson mapper from the registry, so they deserialize from rewards.yml.
         rewardRegistry.register(RewardType.plugin(ChanceReward.TYPE_ID, "jexvote", ChanceReward.class));
         rewardRegistry.register(RewardType.plugin(LuckyReward.TYPE_ID, "jexvote", LuckyReward.class));
+
+        // Track how often keyed chance/lucky rewards are granted.
+        rewardStatsService = new RewardStatsService(rewardStatRepository, logger);
+        rewardStatsService.loadAsync();
+        RewardStats.setRecorder(rewardStatsService::record);
 
         rewardConfig = new VoteRewardConfig(plugin, rewardRegistry);
         rewardConfig.load();
@@ -401,7 +413,7 @@ public abstract class JExVote {
 
     private void registerPlaceholders() {
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            placeholders = new VotePlaceholderExpansion(playerRepository);
+            placeholders = new VotePlaceholderExpansion(playerRepository, votePartyService, rewardStatsService);
             placeholders.register();
             logger.info("Registered PlaceholderAPI expansion: %jexvote_<placeholder>%");
         }
