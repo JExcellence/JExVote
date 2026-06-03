@@ -44,6 +44,7 @@ public class VoteOverviewView extends VoteBaseView {
 
     private VoteLeaderboardView leaderboardView;
     private VoteStreakView streakView;
+    private VoteRewardsView rewardsView;
 
     public VoteOverviewView(@NotNull JavaPlugin plugin,
                             @NotNull VoteService voteService) {
@@ -64,6 +65,13 @@ public class VoteOverviewView extends VoteBaseView {
      * @param view the streak view
      */
     public void setStreakView(@NotNull VoteStreakView view) { this.streakView = view; }
+
+    /**
+     * Sets the rewards/economy view for navigation.
+     *
+     * @param view the rewards view
+     */
+    public void setRewardsView(@NotNull VoteRewardsView view) { this.rewardsView = view; }
 
     @Override protected @NotNull String title()           { return "vote_overview.title"; }
     @Override protected int rows()                         { return 6; }
@@ -222,6 +230,19 @@ public class VoteOverviewView extends VoteBaseView {
                 .build();
         tag(streakItem, "streaks");
         inv.setItem(51, streakItem);
+
+        ItemStack rewardsItem = ItemBuilder.of(Material.SPONGE)
+                .name(name("<gradient:#fde047:#f59e0b><bold>✦ Vote Economy" + GRADIENT_END))
+                .glow(true)
+                .lore(List.of(
+                        Component.empty(),
+                        lore("  <gray>Lucky Vote, multiplier & party!"),
+                        Component.empty(),
+                        lore("  <gradient:#fde047:#f59e0b>▶ Click to view"),
+                        Component.empty()))
+                .build();
+        tag(rewardsItem, "rewards");
+        inv.setItem(49, rewardsItem);
     }
 
     @Override
@@ -235,6 +256,10 @@ public class VoteOverviewView extends VoteBaseView {
         }
         if ("streaks".equals(id) && streakView != null) {
             streakView.open(viewer);
+            return;
+        }
+        if ("rewards".equals(id) && rewardsView != null) {
+            rewardsView.open(viewer);
             return;
         }
         if (id.startsWith("site:")) {

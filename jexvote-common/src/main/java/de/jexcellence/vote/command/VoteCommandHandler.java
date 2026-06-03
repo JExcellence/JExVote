@@ -9,6 +9,7 @@ import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.view.VoteOverviewView;
+import de.jexcellence.vote.view.VoteRewardsView;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -28,15 +29,18 @@ public final class VoteCommandHandler {
     private final VoteService voteService;
     private final VoteLeaderboardService leaderboardService;
     private final VoteOverviewView overviewView;
+    private final VoteRewardsView rewardsView;
 
     @SuppressWarnings("unused") // voteConfig kept for caller compatibility; handled separately in JExVote
     public VoteCommandHandler(@NotNull VoteService voteService,
                               @NotNull VoteLeaderboardService leaderboardService,
                               @NotNull VoteConfig voteConfig,
-                              @NotNull VoteOverviewView overviewView) {
+                              @NotNull VoteOverviewView overviewView,
+                              @NotNull VoteRewardsView rewardsView) {
         this.voteService = voteService;
         this.leaderboardService = leaderboardService;
         this.overviewView = overviewView;
+        this.rewardsView = rewardsView;
     }
 
     public @NotNull Map<String, CommandHandler> handlerMap() {
@@ -45,8 +49,18 @@ public final class VoteCommandHandler {
                 Map.entry("vote.help", this::onHelp),
                 Map.entry("vote.sites", this::onSites),
                 Map.entry("vote.stats", this::onStats),
-                Map.entry("vote.top", this::onTop)
+                Map.entry("vote.top", this::onTop),
+                Map.entry("vote.rewards", this::onRewards)
         );
+    }
+
+    private void onRewards(@NotNull CommandContext ctx) {
+        Player player = ctx.asPlayer().orElse(null);
+        if (player != null) {
+            rewardsView.open(player);
+        } else {
+            rewardsView.sendTextSummary(ctx.sender());
+        }
     }
 
     private void onVote(@NotNull CommandContext ctx) {

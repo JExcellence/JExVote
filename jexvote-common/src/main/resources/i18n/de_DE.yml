@@ -56,6 +56,20 @@ vote_streak:
 vote_shop:
   title: '<dark_gray>Vote-Shop'
 
+vote_rewards:
+  title: '<dark_gray>Vote-Economy'
+  header:
+    lore:
+      - ''
+      - '  <gray>Lucky Vote, Wochenend-Multiplikator,'
+      - '  <gray>Vote-Party & Belohnungs-Statistiken.'
+      - ''
+  text:
+    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Vote-Economy</bold></gradient> <dark_gray>━━━━'
+    lucky-entry: '<dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow> <dark_gray>({won}× gewonnen)</dark_gray>'
+    multiplier: '<dark_gray>▸</dark_gray> <gray>Multiplikator:</gray> <yellow>{factor}×</yellow> <dark_gray>({status})</dark_gray>'
+    party: '<dark_gray>▸</dark_gray> <gray>Vote-Party:</gray> <green>{current}</green><dark_gray>/</dark_gray><white>{target}</white> <dark_gray>(noch {remaining})</dark_gray>'
+
 # ── Built-in JExCommand keys ──────────────────────────────────────────────────
 
 jexcommand:

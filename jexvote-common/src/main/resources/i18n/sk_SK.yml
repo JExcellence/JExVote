@@ -56,6 +56,20 @@ vote_streak:
 vote_shop:
   title: '<dark_gray>Hlasovací obchod'
 
+vote_rewards:
+  title: '<dark_gray>Vote Ekonomika'
+  header:
+    lore:
+      - ''
+      - '  <gray>Lucky Vote, víkendový násobiteľ,'
+      - '  <gray>vote party & štatistiky odmien.'
+      - ''
+  text:
+    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Vote Ekonomika</bold></gradient> <dark_gray>━━━━'
+    lucky-entry: '<dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow> <dark_gray>({won}× vyhraté)</dark_gray>'
+    multiplier: '<dark_gray>▸</dark_gray> <gray>Násobiteľ:</gray> <yellow>{factor}×</yellow> <dark_gray>({status})</dark_gray>'
+    party: '<dark_gray>▸</dark_gray> <gray>Vote Party:</gray> <green>{current}</green><dark_gray>/</dark_gray><white>{target}</white> <dark_gray>(zostáva {remaining})</dark_gray>'
+
 # ── Built-in JExCommand keys ──────────────────────────────────────────────────
 
 jexcommand:

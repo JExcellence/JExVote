@@ -41,6 +41,7 @@ import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.view.VoteLeaderboardView;
 import de.jexcellence.vote.view.VoteOverviewView;
+import de.jexcellence.vote.view.VoteRewardsView;
 import de.jexcellence.vote.view.VoteStreakView;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -88,11 +89,13 @@ public abstract class JExVote {
     private StreakClaimService streakClaimService;
     private VotePartyService votePartyService;
     private RewardStatsService rewardStatsService;
+    private MultiplierService multiplierService;
 
     private VotifierServer votifierServer;
     private VotePlaceholderExpansion placeholders;
     private VoteProviderImpl voteProvider;
     private VoteOverviewView overviewView;
+    private VoteRewardsView rewardsView;
 
     /**
      * Creates a new JExVote instance.
@@ -237,7 +240,7 @@ public abstract class JExVote {
         rewardConfig = new VoteRewardConfig(plugin, rewardRegistry);
         rewardConfig.load();
 
-        MultiplierService multiplierService = new MultiplierService(
+        multiplierService = new MultiplierService(
                 edition().weekendMultiplierEnabled(),
                 new MultiplierService.Settings(
                         voteConfig.isWeekendMultiplierEnabled(),
@@ -382,7 +385,7 @@ public abstract class JExVote {
         saveDefaultResource("commands/jexvote.yml");
 
         factory.registerTree(new File(plugin.getDataFolder(), "commands/vote.yml"),
-                new VoteCommandHandler(voteService, leaderboardService, voteConfig, overviewView).handlerMap(),
+                new VoteCommandHandler(voteService, leaderboardService, voteConfig, overviewView, rewardsView).handlerMap(),
                 messages, registry);
         factory.registerTree(new File(plugin.getDataFolder(), "commands/jexvote.yml"),
                 new VoteAdminHandler(plugin, edition(), voteService, voteConfig, rewardConfig).handlerMap(),
@@ -398,17 +401,22 @@ public abstract class JExVote {
         overviewView = new VoteOverviewView(plugin, voteService);
         var leaderboardView = new VoteLeaderboardView(plugin, leaderboardService);
         var streakView = new VoteStreakView(plugin, voteService, rewardService, streakClaimService);
+        rewardsView = new VoteRewardsView(plugin, voteConfig, rewardConfig,
+                multiplierService, votePartyService, rewardStatsService);
 
         // Wire cross-navigation references
         overviewView.setLeaderboardView(leaderboardView);
         overviewView.setStreakView(streakView);
+        overviewView.setRewardsView(rewardsView);
         leaderboardView.setOverviewView(overviewView);
         streakView.setOverviewView(overviewView);
+        rewardsView.setOverviewView(overviewView);
 
         // Register as Bukkit listeners (raw inventory click handling)
         pm.registerEvents(overviewView, plugin);
         pm.registerEvents(leaderboardView, plugin);
         pm.registerEvents(streakView, plugin);
+        pm.registerEvents(rewardsView, plugin);
     }
 
     private void registerPlaceholders() {

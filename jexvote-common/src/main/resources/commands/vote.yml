@@ -31,3 +31,10 @@ subcommands:
     senders: [player, console]
     argumentSchema:
       - { name: count, type: positive_long, required: false, defaultValue: "10", description: "Number of entries" }
+
+  - name: rewards
+    description: "View Lucky Vote rewards, weekend multiplier, vote party and drop stats"
+    aliases:
+      - economy
+      - eco
+    senders: [player, console]

@@ -89,6 +89,10 @@ public class ChanceReward extends AbstractReward {
         return chance;
     }
 
+    public @Nullable String getId() {
+        return id;
+    }
+
     public @NotNull AbstractReward getReward() {
         return reward;
     }
