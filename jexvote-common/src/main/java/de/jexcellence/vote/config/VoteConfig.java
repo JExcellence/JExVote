@@ -6,9 +6,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -73,18 +70,7 @@ public final class VoteConfig {
     }
 
     public void load() {
-        File configFile = new File(plugin.getDataFolder(), CONFIG_FILE);
-        if (!configFile.exists()) {
-            plugin.saveResource(CONFIG_FILE, false);
-        }
-
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-
-        var defaults = plugin.getResource(CONFIG_FILE);
-        if (defaults != null) {
-            config.setDefaults(YamlConfiguration.loadConfiguration(
-                    new InputStreamReader(defaults, StandardCharsets.UTF_8)));
-        }
+        YamlConfiguration config = ConfigMigrator.loadAndMigrate(plugin, CONFIG_FILE);
 
         ConfigurationSection server = config.getConfigurationSection("votifier");
         if (server != null) {
@@ -148,12 +134,7 @@ public final class VoteConfig {
     }
 
     private void loadVoteSites() {
-        File sitesFile = new File(plugin.getDataFolder(), "sites.yml");
-        if (!sitesFile.exists()) {
-            plugin.saveResource("sites.yml", false);
-        }
-
-        YamlConfiguration sitesConfig = YamlConfiguration.loadConfiguration(sitesFile);
+        YamlConfiguration sitesConfig = ConfigMigrator.loadAndMigrate(plugin, "sites.yml");
         ConfigurationSection section = sitesConfig.getConfigurationSection("sites");
         if (section == null) {
             voteSites = Collections.emptyMap();

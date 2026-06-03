@@ -7,6 +7,7 @@ import de.jexcellence.jehibernate.core.JEHibernate;
 import de.jexcellence.jexplatform.JExPlatform;
 import de.jexcellence.jexplatform.logging.LogLevel;
 import de.jexcellence.jexplatform.reward.RewardRegistry;
+import de.jexcellence.jexplatform.reward.RewardType;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.JExVoteAPI;
@@ -15,6 +16,8 @@ import de.jexcellence.vote.command.VoteAdminHandler;
 import de.jexcellence.vote.command.VoteCommandHandler;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
+import de.jexcellence.vote.reward.ChanceReward;
+import de.jexcellence.vote.reward.LuckyReward;
 import de.jexcellence.vote.database.repository.ClaimedStreakRewardRepository;
 import de.jexcellence.vote.database.repository.PendingVoteRewardRepository;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
@@ -39,7 +42,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.security.KeyPair;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -183,10 +185,12 @@ public abstract class JExVote {
     private void persistTokenToConfig(@NotNull String token) {
         try {
             File configFile = new File(plugin.getDataFolder(), "config.yml");
-            var config = YamlConfiguration.loadConfiguration(configFile);
+            var config = new YamlConfiguration();
+            config.options().parseComments(true);
+            config.load(configFile);
             config.set("votifier.token", token);
             config.save(configFile);
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.log(Level.WARNING, "Could not save generated token to config.yml", e);
         }
     }
@@ -202,6 +206,11 @@ public abstract class JExVote {
     private void initializeServices() {
         RewardRegistry rewardRegistry = platform.rewardRegistry().orElseThrow(
                 () -> new IllegalStateException("Reward registry not initialized"));
+
+        // Register JExVote's custom reward types before the reward config builds
+        // its Jackson mapper from the registry, so they deserialize from rewards.yml.
+        rewardRegistry.register(RewardType.plugin(ChanceReward.TYPE_ID, "jexvote", ChanceReward.class));
+        rewardRegistry.register(RewardType.plugin(LuckyReward.TYPE_ID, "jexvote", LuckyReward.class));
 
         rewardConfig = new VoteRewardConfig(plugin, rewardRegistry);
         rewardConfig.load();

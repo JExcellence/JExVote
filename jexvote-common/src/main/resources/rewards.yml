@@ -6,7 +6,8 @@
 # ║                                                               ║
 # ║  Available reward types:                                      ║
 # ║    command, xp, currency, item, permission, sound, particle,  ║
-# ║    teleport, title, composite, choice, custom                 ║
+# ║    teleport, title, composite, choice, custom,                ║
+# ║    chance, lucky  (JExVote — Lucky Vote)                      ║
 # ╚═══════════════════════════════════════════════════════════════╝
 
 # ── Default Rewards ─────────────────────────────────────────────
@@ -180,3 +181,41 @@ site-rewards: {}
 #     data:
 #       key1: 'value1'
 #       key2: 42
+#
+# ── chance (Lucky Vote) ─────────────────────────────────────────
+# Grants a single nested reward with a probability (0.0–1.0).
+# Optionally announces a message to the player on a hit. When
+# 'show-chance' is true the {chance} placeholder in the announce
+# message resolves to the percentage (e.g. 10); otherwise it is blank.
+#   lucky-diamonds:
+#     type: chance
+#     chance: 0.10              # 10% chance
+#     show-chance: true         # expose the % in the announce message
+#     announce: 'vote.lucky.hit'
+#     reward:
+#       type: command
+#       command: 'give {player} diamond 5'
+#       as-console: true
+#
+# ── lucky (weighted jackpot) ────────────────────────────────────
+# Grants EXACTLY ONE reward from a weighted pool. Higher weight =
+# more likely. Each entry may carry its own announce message.
+#   vote-jackpot:
+#     type: lucky
+#     entries:
+#       - weight: 70            # common
+#         reward:
+#           type: xp
+#           amount: 50
+#       - weight: 25            # uncommon
+#         announce: 'vote.lucky.hit'
+#         reward:
+#           type: currency
+#           currency: 'coins'
+#           amount: 250.0
+#       - weight: 5             # rare
+#         announce: 'vote.lucky.hit'
+#         reward:
+#           type: command
+#           command: 'give {player} diamond_block 1'
+#           as-console: true

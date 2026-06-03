@@ -10,9 +10,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -50,18 +47,7 @@ public final class VoteRewardConfig {
     }
 
     public void load() {
-        File rewardsFile = new File(plugin.getDataFolder(), REWARDS_FILE);
-        if (!rewardsFile.exists()) {
-            plugin.saveResource(REWARDS_FILE, false);
-        }
-
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(rewardsFile);
-
-        var defaults = plugin.getResource(REWARDS_FILE);
-        if (defaults != null) {
-            config.setDefaults(YamlConfiguration.loadConfiguration(
-                    new InputStreamReader(defaults, StandardCharsets.UTF_8)));
-        }
+        YamlConfiguration config = ConfigMigrator.loadAndMigrate(plugin, REWARDS_FILE);
 
         defaultRewards = loadRewardList(config.getConfigurationSection("default-rewards"));
         streakRewards = loadStreakRewards(config.getConfigurationSection("streak-rewards"));
