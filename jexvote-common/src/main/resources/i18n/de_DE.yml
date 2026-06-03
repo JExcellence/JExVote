@@ -59,11 +59,33 @@ vote_shop:
 vote_rewards:
   title: '<dark_gray>Vote-Economy'
   header:
+    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote-Economy</bold></gradient>'
     lore:
       - ''
       - '  <gray>Lucky Vote, Wochenend-Multiplikator,'
       - '  <gray>Vote-Party & Belohnungs-Statistiken.'
       - ''
+  lucky:
+    name: '<gradient:#fde047:#f59e0b><bold>★ Lucky Vote</bold></gradient>'
+    empty: '  <gray>Keine Lucky-Belohnungen konfiguriert.'
+    entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}× gewonnen)</dark_gray>'
+    pool: '  <dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>Jackpot-Pool</gradient> <dark_gray>({count} Ausgänge)</dark_gray>'
+    pool-entry: '     <dark_gray>•</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}×)</dark_gray>'
+  multiplier:
+    name: '<gradient:#fde047:#f59e0b><bold>⚡ Wochenend-Multiplikator</bold></gradient>'
+    status-active: '  <dark_gray>▸</dark_gray> <gray>Status:</gray> <gradient:#86efac:#16a34a>AKTIV</gradient>'
+    status-inactive: '  <dark_gray>▸</dark_gray> <gray>Status:</gray> <dark_gray>inaktiv</dark_gray>'
+    current: '  <dark_gray>▸</dark_gray> <gray>Aktuell:</gray> <yellow>{factor}×</yellow>'
+    weekend: '  <dark_gray>▸</dark_gray> <gray>Wochenend-Faktor:</gray> <yellow>{factor}×</yellow>'
+    days: '  <dark_gray>▸</dark_gray> <gray>Tage:</gray> <white>{days}</white>'
+  party:
+    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote-Party</bold></gradient>'
+    disabled: '  <dark_gray>Vote-Partys sind deaktiviert.'
+    progress: '  <dark_gray>▸</dark_gray> <gray>Fortschritt:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
+    remaining: '  <dark_gray>▸</dark_gray> <gray>Verbleibend:</gray> <white>{remaining}</white>'
+    rewards-header: '  <gray>Bei Abschluss erhältst du:'
+    reward-entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray>'
+    none: '  <dark_gray>Keine Party-Belohnungen konfiguriert.'
   text:
     header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Vote-Economy</bold></gradient> <dark_gray>━━━━'
     lucky-entry: '<dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow> <dark_gray>({won}× gewonnen)</dark_gray>'

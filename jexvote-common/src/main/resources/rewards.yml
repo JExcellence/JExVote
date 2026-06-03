@@ -13,33 +13,48 @@
 # ── Default Rewards ─────────────────────────────────────────────
 # Granted every time a player votes, regardless of site or streak.
 default-rewards:
-  vote-xp:
-    type: xp
-    amount: 50
-  vote-command:
-    type: command
-    command: 'give {player} diamond 1'
-    as-console: true
+  # Oneblock-relevant baseline: a little XP + coins into the economy every vote.
+  vote-xp:    { type: xp,       amount: 50 }
+  vote-coins: { type: currency, currency: coins, amount: 2500.0 }
+  # Lucky Vote (live): 10% chance for a coin jackpot on top. Shown in
+  # /vote rewards with its odds + drop count (id drives the stat).
+  lucky-vote:
+    type: chance
+    id: 'lucky-vote'
+    chance: 0.10
+    show-chance: true
+    announce: 'vote.lucky.hit'
+    reward:
+      type: currency
+      currency: coins
+      amount: 25000.0
 
 # ── Streak Rewards ──────────────────────────────────────────────
-# Bonus rewards when a player reaches a specific streak day.
-# These are IN ADDITION to the default rewards.
+# Bonus rewards when a player reaches a specific streak day. These are IN
+# ADDITION to the default rewards and are shown in /vote (Streak Rewards):
+# the milestone grid lists every tier, and clicking one opens its full reward
+# list. Five milestones (3/7/14/21/30) give a clear 0–30 progression curve.
+# Rewards are oneblock-relevant (coins via the economy + items).
 streak-rewards:
+  3:
+    streak-3-xp:       { type: xp,       amount: 100 }
+    streak-3-coins:    { type: currency, currency: coins, amount: 5000.0 }
   7:
-    streak-7-bonus:
-      type: command
-      command: 'give {player} diamond 3'
-      as-console: true
+    streak-7-xp:       { type: xp,       amount: 250 }
+    streak-7-coins:    { type: currency, currency: coins, amount: 15000.0 }
+    streak-7-item:     { type: item,     material: DIAMOND, amount: 1 }
   14:
-    streak-14-bonus:
-      type: command
-      command: 'give {player} diamond 5'
-      as-console: true
+    streak-14-xp:      { type: xp,       amount: 500 }
+    streak-14-coins:   { type: currency, currency: coins, amount: 50000.0 }
+    streak-14-item:    { type: item,     material: DIAMOND, amount: 3 }
+  21:
+    streak-21-xp:      { type: xp,       amount: 1000 }
+    streak-21-coins:   { type: currency, currency: coins, amount: 150000.0 }
+    streak-21-key:     { type: command,  command: 'crates give {player} vote 1', as-console: true }
   30:
-    streak-30-bonus:
-      type: command
-      command: 'give {player} diamond_block 1'
-      as-console: true
+    streak-30-xp:      { type: xp,       amount: 2000 }
+    streak-30-coins:   { type: currency, currency: coins, amount: 500000.0 }
+    streak-30-item:    { type: item,     material: DIAMOND_BLOCK, amount: 1 }
     streak-30-title:
       type: title
       title: '<gold><bold>30 Day Streak!'

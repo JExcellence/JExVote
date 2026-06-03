@@ -59,11 +59,33 @@ vote_shop:
 vote_rewards:
   title: '<dark_gray>Vote Economy'
   header:
+    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Economy</bold></gradient>'
     lore:
       - ''
       - '  <gray>Lucky Vote, weekend multiplier,'
       - '  <gray>vote party & reward drop stats.'
       - ''
+  lucky:
+    name: '<gradient:#fde047:#f59e0b><bold>★ Lucky Vote</bold></gradient>'
+    empty: '  <gray>No lucky rewards configured.'
+    entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}× won)</dark_gray>'
+    pool: '  <dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>Jackpot pool</gradient> <dark_gray>({count} outcomes)</dark_gray>'
+    pool-entry: '     <dark_gray>•</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}×)</dark_gray>'
+  multiplier:
+    name: '<gradient:#fde047:#f59e0b><bold>⚡ Weekend Multiplier</bold></gradient>'
+    status-active: '  <dark_gray>▸</dark_gray> <gray>Status:</gray> <gradient:#86efac:#16a34a>ACTIVE</gradient>'
+    status-inactive: '  <dark_gray>▸</dark_gray> <gray>Status:</gray> <dark_gray>inactive</dark_gray>'
+    current: '  <dark_gray>▸</dark_gray> <gray>Current:</gray> <yellow>{factor}×</yellow>'
+    weekend: '  <dark_gray>▸</dark_gray> <gray>Weekend factor:</gray> <yellow>{factor}×</yellow>'
+    days: '  <dark_gray>▸</dark_gray> <gray>Days:</gray> <white>{days}</white>'
+  party:
+    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Party</bold></gradient>'
+    disabled: '  <dark_gray>Vote parties are disabled.'
+    progress: '  <dark_gray>▸</dark_gray> <gray>Progress:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
+    remaining: '  <dark_gray>▸</dark_gray> <gray>Remaining:</gray> <white>{remaining}</white>'
+    rewards-header: '  <gray>On completion you get:'
+    reward-entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray>'
+    none: '  <dark_gray>No party rewards configured.'
   text:
     header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Vote Economy</bold></gradient> <dark_gray>━━━━'
     lucky-entry: '<dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow> <dark_gray>({won}× won)</dark_gray>'

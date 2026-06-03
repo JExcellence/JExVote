@@ -59,11 +59,33 @@ vote_shop:
 vote_rewards:
   title: '<dark_gray>Vote Ekonomika'
   header:
+    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Ekonomika</bold></gradient>'
     lore:
       - ''
       - '  <gray>Lucky Vote, víkendový násobitel,'
       - '  <gray>vote party & statistiky odměn.'
       - ''
+  lucky:
+    name: '<gradient:#fde047:#f59e0b><bold>★ Lucky Vote</bold></gradient>'
+    empty: '  <gray>Žádné lucky odměny nakonfigurovány.'
+    entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}× vyhráno)</dark_gray>'
+    pool: '  <dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>Jackpot pool</gradient> <dark_gray>({count} výsledků)</dark_gray>'
+    pool-entry: '     <dark_gray>•</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}×)</dark_gray>'
+  multiplier:
+    name: '<gradient:#fde047:#f59e0b><bold>⚡ Víkendový násobitel</bold></gradient>'
+    status-active: '  <dark_gray>▸</dark_gray> <gray>Stav:</gray> <gradient:#86efac:#16a34a>AKTIVNÍ</gradient>'
+    status-inactive: '  <dark_gray>▸</dark_gray> <gray>Stav:</gray> <dark_gray>neaktivní</dark_gray>'
+    current: '  <dark_gray>▸</dark_gray> <gray>Aktuální:</gray> <yellow>{factor}×</yellow>'
+    weekend: '  <dark_gray>▸</dark_gray> <gray>Víkendový faktor:</gray> <yellow>{factor}×</yellow>'
+    days: '  <dark_gray>▸</dark_gray> <gray>Dny:</gray> <white>{days}</white>'
+  party:
+    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Party</bold></gradient>'
+    disabled: '  <dark_gray>Vote party jsou vypnuté.'
+    progress: '  <dark_gray>▸</dark_gray> <gray>Postup:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
+    remaining: '  <dark_gray>▸</dark_gray> <gray>Zbývá:</gray> <white>{remaining}</white>'
+    rewards-header: '  <gray>Po dokončení získáš:'
+    reward-entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray>'
+    none: '  <dark_gray>Žádné party odměny nakonfigurovány.'
   text:
     header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Vote Ekonomika</bold></gradient> <dark_gray>━━━━'
     lucky-entry: '<dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow> <dark_gray>({won}× vyhráno)</dark_gray>'

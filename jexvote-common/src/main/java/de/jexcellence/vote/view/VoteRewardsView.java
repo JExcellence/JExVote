@@ -2,6 +2,7 @@ package de.jexcellence.vote.view;
 
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.utility.item.ItemBuilder;
+import de.jexcellence.jexplatform.view.RewardViewHelper;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
@@ -26,19 +27,13 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * "Vote Economy" overview: surfaces the Lucky Vote / chance rewards, the
- * weekend multiplier status, vote-party progress and reward drop-count stats —
- * the player-facing window onto the Phase A/B/C systems. Text summary mirrors
- * the GUI for console / chat use.
+ * "Vote Economy" overview — Lucky Vote / chance rewards (with odds + drop
+ * counts), weekend-multiplier status, and vote-party progress + the rewards you
+ * earn. Fully i18n + the shared gradient palette; text summary mirrors the GUI.
  *
  * @author JExcellence
- * @since 3.5.0
  */
 public final class VoteRewardsView extends VoteBaseView {
-
-    private static final String GRADIENT_END = "</bold></gradient>";
-    private static final String GOLD = "<gradient:#fde047:#f59e0b><bold>";
-    private static final String GREEN = "<gradient:#86efac:#16a34a><bold>";
 
     private final Holder holder = new Holder();
     private final VoteConfig voteConfig;
@@ -74,7 +69,7 @@ public final class VoteRewardsView extends VoteBaseView {
         glass(inv, Material.LIME_STAINED_GLASS_PANE, 0, 2, 6, 8);
         glass(inv, Material.GREEN_STAINED_GLASS_PANE, 1, 7);
         inv.setItem(4, ItemBuilder.of(Material.EMERALD)
-                .name(name(GOLD + "✦ Vote Economy" + GRADIENT_END))
+                .name(ic("vote_rewards.header.name", viewer))
                 .glow(true)
                 .lore(ics("vote_rewards.header.lore", viewer))
                 .build());
@@ -97,29 +92,32 @@ public final class VoteRewardsView extends VoteBaseView {
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
         if (chances.isEmpty() && luckies.isEmpty()) {
-            lore.add(lore("  <gray>No lucky rewards configured."));
+            lore.add(ic("vote_rewards.lucky.empty", viewer));
         } else {
             for (ChanceReward cr : chances) {
-                long won = cr.getId() != null ? stats.getCount(cr.getId()) : 0L;
-                lore.add(lore("  <dark_gray>▸</dark_gray> <gray>" + describe(cr.getReward())
-                        + "</gray> <yellow>" + percent(cr.getChance()) + "%</yellow>"
-                        + "  <dark_gray>(" + won + "× won)</dark_gray>"));
+                lore.add(msg("vote_rewards.lucky.entry")
+                        .with("reward", RewardViewHelper.describe(cr.getReward()))
+                        .with("chance", percent(cr.getChance()))
+                        .with("won", String.valueOf(countFor(cr.getId())))
+                        .itemComponent(viewer));
             }
             for (LuckyReward lr : luckies) {
+                lore.add(msg("vote_rewards.lucky.pool")
+                        .with("count", String.valueOf(lr.getEntries().size())).itemComponent(viewer));
                 double total = lr.getEntries().stream().mapToDouble(LuckyReward.Entry::weight).sum();
-                lore.add(lore("  <dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>Jackpot pool</gradient> <dark_gray>(" + lr.getEntries().size() + " outcomes)</dark_gray>"));
                 for (LuckyReward.Entry e : lr.getEntries()) {
-                    long won = e.id() != null ? stats.getCount(e.id()) : 0L;
                     double chance = total > 0 ? (e.weight() / total) * 100.0 : 0.0;
-                    lore.add(lore("     <dark_gray>•</dark_gray> <gray>" + describe(e.reward())
-                            + "</gray> <yellow>" + fmt(chance) + "%</yellow>"
-                            + "  <dark_gray>(" + won + "×)</dark_gray>"));
+                    lore.add(msg("vote_rewards.lucky.pool-entry")
+                            .with("reward", RewardViewHelper.describe(e.reward()))
+                            .with("chance", fmt(chance))
+                            .with("won", String.valueOf(countFor(e.id())))
+                            .itemComponent(viewer));
                 }
             }
         }
         lore.add(Component.empty());
         return ItemBuilder.of(Material.SPONGE)
-                .name(name(GOLD + "★ Lucky Vote" + GRADIENT_END))
+                .name(ic("vote_rewards.lucky.name", viewer))
                 .glow(!chances.isEmpty() || !luckies.isEmpty())
                 .lore(lore)
                 .build();
@@ -127,24 +125,23 @@ public final class VoteRewardsView extends VoteBaseView {
 
     private @NotNull ItemStack multiplierIcon(@NotNull Player viewer) {
         boolean active = multipliers.isActive();
-        double factor = multipliers.current();
-        MultiplierService.Settings s = settingsOrNull();
+        MultiplierService.Settings s = settings();
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(lore("  <dark_gray>▸</dark_gray> <gray>Status:</gray> "
-                + (active ? "<gradient:#86efac:#16a34a>ACTIVE</gradient>" : "<dark_gray>inactive</dark_gray>")));
-        lore.add(lore("  <dark_gray>▸</dark_gray> <gray>Current:</gray> <yellow>" + fmt(factor) + "×</yellow>"));
-        if (s != null) {
-            lore.add(lore("  <dark_gray>▸</dark_gray> <gray>Weekend factor:</gray> <yellow>" + fmt(s.weekendFactor()) + "×</yellow>"));
-            String days = s.weekendDays().stream()
-                    .map(d -> d.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH))
-                    .reduce((a, b) -> a + ", " + b).orElse("—");
-            lore.add(lore("  <dark_gray>▸</dark_gray> <gray>Days:</gray> <white>" + days + "</white>"));
-        }
+        lore.add(active ? ic("vote_rewards.multiplier.status-active", viewer)
+                        : ic("vote_rewards.multiplier.status-inactive", viewer));
+        lore.add(msg("vote_rewards.multiplier.current")
+                .with("factor", fmt(multipliers.current())).itemComponent(viewer));
+        lore.add(msg("vote_rewards.multiplier.weekend")
+                .with("factor", fmt(s.weekendFactor())).itemComponent(viewer));
+        String days = s.weekendDays().stream()
+                .map(d -> d.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH))
+                .reduce((a, b) -> a + ", " + b).orElse("—");
+        lore.add(msg("vote_rewards.multiplier.days").with("days", days).itemComponent(viewer));
         lore.add(Component.empty());
         return ItemBuilder.of(Material.CLOCK)
-                .name(name(GOLD + "⚡ Weekend Multiplier" + GRADIENT_END))
+                .name(ic("vote_rewards.multiplier.name", viewer))
                 .glow(active)
                 .lore(lore)
                 .build();
@@ -154,21 +151,33 @@ public final class VoteRewardsView extends VoteBaseView {
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
         if (party == null) {
-            lore.add(lore("  <dark_gray>Vote parties are disabled."));
+            lore.add(ic("vote_rewards.party.disabled", viewer));
         } else {
             int current = party.getCurrentVotes();
             int target = party.getTargetVotes();
-            lore.add(lore("  <dark_gray>▸</dark_gray> <gray>Progress:</gray> <gradient:#86efac:#16a34a>"
-                    + current + "</gradient><dark_gray>/</dark_gray><white>" + target + "</white>"));
-            lore.add(lore("  <dark_gray>▸</dark_gray> <gray>Remaining:</gray> <white>" + party.getRemainingVotes() + "</white>"));
+            lore.add(msg("vote_rewards.party.progress")
+                    .with("current", String.valueOf(current))
+                    .with("target", String.valueOf(target)).itemComponent(viewer));
+            lore.add(msg("vote_rewards.party.remaining")
+                    .with("remaining", String.valueOf(party.getRemainingVotes())).itemComponent(viewer));
             lore.add(lore("  " + progressBar(current, target, 20)));
             lore.add(Component.empty());
-            int rewardCount = rewardConfig.getVotePartyRewards().size();
-            lore.add(lore("  <dark_gray>" + rewardCount + " party reward" + plural(rewardCount) + " on completion"));
+            lore.add(ic("vote_rewards.party.rewards-header", viewer));
+            List<AbstractReward> rewards = rewardConfig.getVotePartyRewards();
+            if (rewards.isEmpty()) {
+                lore.add(ic("vote_rewards.party.none", viewer));
+            } else {
+                for (AbstractReward reward : rewards) {
+                    for (AbstractReward atomic : RewardViewHelper.flatten(reward)) {
+                        lore.add(msg("vote_rewards.party.reward-entry")
+                                .with("reward", RewardViewHelper.describe(atomic)).itemComponent(viewer));
+                    }
+                }
+            }
         }
         lore.add(Component.empty());
         return ItemBuilder.of(Material.TOTEM_OF_UNDYING)
-                .name(name(GOLD + "✦ Vote Party" + GRADIENT_END))
+                .name(ic("vote_rewards.party.name", viewer))
                 .glow(party != null)
                 .lore(lore)
                 .build();
@@ -183,19 +192,15 @@ public final class VoteRewardsView extends VoteBaseView {
 
     // ── Text summary (console / chat) ───────────────────────────────
 
-    /**
-     * Sends a plain-text equivalent of the GUI, for console or chat use.
-     */
     public void sendTextSummary(@NotNull CommandSender sender) {
         R18nManager r18n = R18nManager.getInstance();
         r18n.msg("vote_rewards.text.header").send(sender);
 
         for (ChanceReward cr : collect(ChanceReward.class)) {
-            long won = cr.getId() != null ? stats.getCount(cr.getId()) : 0L;
             r18n.msg("vote_rewards.text.lucky-entry").prefix()
-                    .with("reward", describe(cr.getReward()))
+                    .with("reward", RewardViewHelper.describe(cr.getReward()))
                     .with("chance", percent(cr.getChance()))
-                    .with("won", String.valueOf(won))
+                    .with("won", String.valueOf(countFor(cr.getId())))
                     .send(sender);
         }
 
@@ -215,6 +220,10 @@ public final class VoteRewardsView extends VoteBaseView {
 
     // ── Helpers ─────────────────────────────────────────────────────
 
+    private long countFor(@Nullable String id) {
+        return id == null ? 0L : stats.getCount(id);
+    }
+
     private <T extends AbstractReward> @NotNull List<T> collect(@NotNull Class<T> type) {
         List<T> out = new ArrayList<>();
         addMatching(rewardConfig.getDefaultRewards(), type, out);
@@ -232,22 +241,12 @@ public final class VoteRewardsView extends VoteBaseView {
         }
     }
 
-    private @Nullable MultiplierService.Settings settingsOrNull() {
+    private @NotNull MultiplierService.Settings settings() {
         return new MultiplierService.Settings(
                 voteConfig.isWeekendMultiplierEnabled(),
                 voteConfig.getWeekendMultiplierFactor(),
                 voteConfig.getWeekendMultiplierDays(),
                 voteConfig.getWeekendMultiplierTimezone());
-    }
-
-    /** A short human label for a reward, from its type and estimated value. */
-    private static @NotNull String describe(@NotNull AbstractReward reward) {
-        double value = reward.estimatedValue();
-        String type = reward.typeId();
-        if (value > 0) {
-            return type + " ×" + (value == Math.floor(value) ? String.valueOf((long) value) : fmt(value));
-        }
-        return type;
     }
 
     private static @NotNull String percent(double chance) {
