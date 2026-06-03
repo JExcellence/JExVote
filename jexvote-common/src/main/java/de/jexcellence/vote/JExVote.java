@@ -18,7 +18,9 @@ import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
 import de.jexcellence.vote.reward.ChanceReward;
 import de.jexcellence.vote.reward.LuckyReward;
+import de.jexcellence.jexplatform.reward.impl.CurrencyReward;
 import de.jexcellence.vote.reward.RewardStats;
+import de.jexcellence.vote.service.RewardEconomy;
 import de.jexcellence.vote.database.repository.ClaimedStreakRewardRepository;
 import de.jexcellence.vote.database.repository.PendingVoteRewardRepository;
 import de.jexcellence.vote.database.repository.RewardGrantStatRepository;
@@ -159,6 +161,7 @@ public abstract class JExVote {
 
     public void onDisable() {
         RewardStats.reset();
+        CurrencyReward.clearDepositor();
         if (votifierServer != null) {
             votifierServer.shutdown();
         }
@@ -236,6 +239,11 @@ public abstract class JExVote {
         rewardStatsService = new RewardStatsService(rewardStatRepository, logger);
         rewardStatsService.loadAsync();
         RewardStats.setRecorder(rewardStatsService::record);
+
+        // Make 'currency' rewards actually pay out — JExPlatform's CurrencyReward
+        // has no economy on its classpath, so install a depositor (JExEconomy → Vault).
+        // This also covers currency nested inside chance/lucky rewards.
+        CurrencyReward.setDepositor(new RewardEconomy(logger)::deposit);
 
         rewardConfig = new VoteRewardConfig(plugin, rewardRegistry);
         rewardConfig.load();
