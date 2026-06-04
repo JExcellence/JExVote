@@ -89,6 +89,14 @@ public class VotePlayerEntity {
     @Transient
     private int consumedFreezesThisVote;
 
+    /**
+     * Number of free Streak Freezes just granted on profile creation (first
+     * vote). Not persisted — read once by the delivery step to congratulate
+     * the player on their welcome freeze.
+     */
+    @Transient
+    private int freshFreezeGrant;
+
     protected VotePlayerEntity() {}
 
     public VotePlayerEntity(UUID playerUuid, String playerName) {
@@ -143,4 +151,7 @@ public class VotePlayerEntity {
 
     public int getConsumedFreezesThisVote() { return consumedFreezesThisVote; }
     public void setConsumedFreezesThisVote(int consumedFreezesThisVote) { this.consumedFreezesThisVote = consumedFreezesThisVote; }
+
+    public int getFreshFreezeGrant() { return freshFreezeGrant; }
+    public void setFreshFreezeGrant(int freshFreezeGrant) { this.freshFreezeGrant = freshFreezeGrant; }
 }

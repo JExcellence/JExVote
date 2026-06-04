@@ -104,6 +104,7 @@ public abstract class JExVote {
     private VotePlaceholderExpansion placeholders;
     private VoteProviderImpl voteProvider;
     private VoteOverviewView overviewView;
+    private VoteLeaderboardView leaderboardView;
     private VoteRewardsView rewardsView;
 
     /**
@@ -424,7 +425,7 @@ public abstract class JExVote {
 
         factory.registerTree(new File(plugin.getDataFolder(), "commands/vote.yml"),
                 new VoteCommandHandler(voteService, leaderboardService, voteConfig, overviewView, rewardsView,
-                        streakFreezeService, voteGiftService).handlerMap(),
+                        leaderboardView, streakFreezeService, voteGiftService).handlerMap(),
                 messages, registry);
         factory.registerTree(new File(plugin.getDataFolder(), "commands/jexvote.yml"),
                 new VoteAdminHandler(plugin, edition(), voteService, voteConfig, rewardConfig).handlerMap(),
@@ -438,7 +439,7 @@ public abstract class JExVote {
         var pm = Bukkit.getPluginManager();
 
         overviewView = new VoteOverviewView(plugin, voteService);
-        var leaderboardView = new VoteLeaderboardView(plugin, leaderboardService);
+        leaderboardView = new VoteLeaderboardView(plugin, leaderboardService);
         var streakView = new VoteStreakView(plugin, voteService, rewardService, streakClaimService);
         rewardsView = new VoteRewardsView(plugin, voteConfig, rewardConfig,
                 multiplierService, votePartyService, rewardStatsService,

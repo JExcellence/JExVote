@@ -417,7 +417,7 @@ public class VoteStreakView extends VoteBaseView {
         for (AbstractReward reward : rewards) {
             List<AbstractReward> flat = RewardViewHelper.flatten(reward);
             for (AbstractReward atomic : flat) {
-                itemLore.add(lore("  <dark_gray>▸</dark_gray> " + RewardViewHelper.describe(atomic)));
+                itemLore.add(lore("  <dark_gray>▸</dark_gray> " + VoteRewardDescriber.describe(atomic)));
             }
         }
         itemLore.add(Component.empty());
@@ -447,7 +447,7 @@ public class VoteStreakView extends VoteBaseView {
     private @NotNull ItemStack buildRewardTile(@NotNull AbstractReward reward,
                                                 @NotNull Player viewer) {
         RewardViewHelper.ViewEntry entry = RewardViewHelper.toViewEntry(reward);
-        String description = RewardViewHelper.describe(reward);
+        String description = VoteRewardDescriber.describe(reward);
 
         return ItemBuilder.of(entry.icon())
                 .name(name(description))

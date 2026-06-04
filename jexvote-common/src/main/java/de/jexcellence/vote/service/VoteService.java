@@ -201,12 +201,18 @@ public class VoteService {
         int streak = player.getCurrentStreak();
         int consumedFreezes = player.getConsumedFreezesThisVote();
         int remainingFreezes = player.getStreakFreezes();
+        int freshFreezeGrant = player.getFreshFreezeGrant();
 
         if (onlinePlayer != null && onlinePlayer.isOnline()) {
             scheduler.runAtEntity(onlinePlayer, () -> {
                 rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
                 executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
                 broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
+                if (freshFreezeGrant > 0) {
+                    R18nManager.getInstance().msg("vote.freeze.granted").prefix()
+                            .with("amount", String.valueOf(freshFreezeGrant))
+                            .send(onlinePlayer);
+                }
                 if (consumedFreezes > 0) {
                     R18nManager.getInstance().msg("vote.freeze.saved").prefix()
                             .with("consumed", String.valueOf(consumedFreezes))
@@ -401,6 +407,7 @@ public class VoteService {
         VoteConfig.FreezeSettings settings = freezeSettings.get();
         if (settings.enabled() && settings.freeAmount() > 0) {
             player.setStreakFreezes(settings.freeAmount());
+            player.setFreshFreezeGrant(settings.freeAmount());
         }
         player.setFreezeInitialized(true);
     }

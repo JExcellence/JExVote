@@ -86,6 +86,14 @@ public class StreakFreezeService {
     }
 
     /**
+     * Returns the player's current vote-point balance (0 if no profile yet).
+     */
+    public @NotNull CompletableFuture<Integer> getPoints(@NotNull UUID uuid) {
+        return playerRepository.findByUuidAsync(uuid)
+                .thenApply(opt -> opt.map(VotePlayerEntity::getVotePoints).orElse(0));
+    }
+
+    /**
      * Attempts to buy one Streak Freeze for the player, charging vote points.
      */
     public @NotNull CompletableFuture<PurchaseResult> purchase(@NotNull Player player) {

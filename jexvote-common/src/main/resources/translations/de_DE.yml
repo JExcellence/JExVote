@@ -14,6 +14,7 @@ vote:
     hit: '<gradient:#fde047:#f59e0b>★ Lucky Vote!</gradient> <gray>Du hast eine Bonus-Belohnung gewonnen!</gray> <yellow>{chance}</yellow>'
     jackpot: '<gradient:#fde047:#f59e0b>★ Vote-Jackpot!</gradient> <gray>Das Glück ist dir hold — sieh in deine Belohnungen!</gray>'
   freeze:
+    granted: '<gradient:#a5f3fc:#06b6d4>❄ Willkommensgeschenk!</gradient> <gray>Du hast</gray> <white>{amount}</white> <gray>kostenlose(n) Streak-Freeze(s) erhalten — sie schützen deine Serie automatisch, wenn du einen Tag verpasst. Kaufe mehr mit</gray> <gradient:#86efac:#16a34a>/vote freeze</gradient><gray>.</gray>'
     saved: '<gradient:#a5f3fc:#06b6d4>❄ Streak-Freeze!</gradient> <gray>Deine Serie wurde gerettet</gray> <dark_gray>(</dark_gray><white>{consumed} verbraucht</white><dark_gray>,</dark_gray> <white>{remaining} übrig</white><dark_gray>)</dark_gray><gray>. Serie:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient>'
     bought: '<gradient:#a5f3fc:#06b6d4>❄</gradient> <gray>Streak-Freeze gekauft für</gray> <gradient:#d8b4fe:#9333ea>{cost} Punkte</gradient><gray>.</gray>'
     disabled: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Streak-Freezes sind auf diesem Server deaktiviert.</red>'
@@ -203,6 +204,10 @@ vote_rewards:
     rewards-header: '  <gray>Bei Abschluss erhältst du:'
     reward-entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray>'
     none: '  <dark_gray>Keine Party-Belohnungen konfiguriert.'
+  points:
+    name: '<gradient:#d8b4fe:#9333ea><bold>✦ Vote-Punkte</bold></gradient>'
+    balance: '  <dark_gray>▸</dark_gray> <gray>Guthaben:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient>'
+    hint: '  <dark_gray>Sammle Punkte durch Voten; gib sie für Streak-Freezes aus.'
   freeze:
     name: '<gradient:#a5f3fc:#06b6d4><bold>❄ Streak-Freeze</bold></gradient>'
     disabled: '  <dark_gray>Streak-Freezes sind deaktiviert.'

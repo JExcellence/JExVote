@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * "Vote Economy" overview — Lucky Vote / chance rewards (with odds + drop
@@ -38,6 +40,7 @@ import java.util.Locale;
  */
 public final class VoteRewardsView extends VoteBaseView {
 
+    private static final int SLOT_POINTS = 13;
     private static final int SLOT_FREEZE = 30;
     private static final int SLOT_GIFT = 32;
     private static final String TAG_BUY_FREEZE = "buy_freeze";
@@ -95,8 +98,9 @@ public final class VoteRewardsView extends VoteBaseView {
         inv.setItem(22, multiplierIcon(viewer));
         inv.setItem(24, partyIcon(viewer));
 
-        // Live owned/remaining counts are filled in asynchronously by
+        // Live owned/remaining/points are filled in asynchronously by
         // refreshLiveCounts(); these are the immediate placeholders.
+        inv.setItem(SLOT_POINTS, pointsIcon(viewer, -1));
         inv.setItem(SLOT_FREEZE, freezeIcon(viewer, -1));
         inv.setItem(SLOT_GIFT, giftIcon(viewer, -1));
 
@@ -117,19 +121,38 @@ public final class VoteRewardsView extends VoteBaseView {
      * still open.
      */
     private void refreshLiveCounts(@NotNull Player viewer) {
-        freezeService.getOwned(viewer.getUniqueId()).thenAcceptBoth(
-                giftService.remainingToday(viewer),
-                (owned, remaining) -> scheduler.runAtEntity(viewer, () -> {
+        UUID uuid = viewer.getUniqueId();
+        CompletableFuture<Integer> ownedFuture = freezeService.getOwned(uuid);
+        CompletableFuture<Integer> remainingFuture = giftService.remainingToday(viewer);
+        CompletableFuture<Integer> pointsFuture = freezeService.getPoints(uuid);
+
+        CompletableFuture.allOf(ownedFuture, remainingFuture, pointsFuture).thenRun(() ->
+                scheduler.runAtEntity(viewer, () -> {
                     Inventory top = viewer.getOpenInventory().getTopInventory();
                     if (top.getHolder() != holder) {
                         return;
                     }
-                    top.setItem(SLOT_FREEZE, freezeIcon(viewer, owned));
-                    top.setItem(SLOT_GIFT, giftIcon(viewer, remaining));
+                    top.setItem(SLOT_POINTS, pointsIcon(viewer, pointsFuture.join()));
+                    top.setItem(SLOT_FREEZE, freezeIcon(viewer, ownedFuture.join()));
+                    top.setItem(SLOT_GIFT, giftIcon(viewer, remainingFuture.join()));
                 })).exceptionally(ex -> {
             plugin.getLogger().fine(() -> "Failed to refresh vote reward live counts: " + ex.getMessage());
             return null;
         });
+    }
+
+    private @NotNull ItemStack pointsIcon(@NotNull Player viewer, int points) {
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.add(msg("vote_rewards.points.balance")
+                .with("points", points < 0 ? "…" : String.valueOf(points)).itemComponent(viewer));
+        lore.add(Component.empty());
+        lore.add(ic("vote_rewards.points.hint", viewer));
+        return ItemBuilder.of(Material.NETHER_STAR)
+                .name(ic("vote_rewards.points.name", viewer))
+                .glow(points > 0)
+                .lore(lore)
+                .build();
     }
 
     // ── Section icons ───────────────────────────────────────────────
@@ -145,7 +168,7 @@ public final class VoteRewardsView extends VoteBaseView {
         } else {
             for (ChanceReward cr : chances) {
                 lore.add(msg("vote_rewards.lucky.entry")
-                        .with("reward", RewardViewHelper.describe(cr.getReward()))
+                        .with("reward", VoteRewardDescriber.describe(cr.getReward()))
                         .with("chance", percent(cr.getChance()))
                         .with("won", String.valueOf(countFor(cr.getId())))
                         .itemComponent(viewer));
@@ -157,7 +180,7 @@ public final class VoteRewardsView extends VoteBaseView {
                 for (LuckyReward.Entry e : lr.getEntries()) {
                     double chance = total > 0 ? (e.weight() / total) * 100.0 : 0.0;
                     lore.add(msg("vote_rewards.lucky.pool-entry")
-                            .with("reward", RewardViewHelper.describe(e.reward()))
+                            .with("reward", VoteRewardDescriber.describe(e.reward()))
                             .with("chance", fmt(chance))
                             .with("won", String.valueOf(countFor(e.id())))
                             .itemComponent(viewer));
@@ -219,7 +242,7 @@ public final class VoteRewardsView extends VoteBaseView {
                 for (AbstractReward reward : rewards) {
                     for (AbstractReward atomic : RewardViewHelper.flatten(reward)) {
                         lore.add(msg("vote_rewards.party.reward-entry")
-                                .with("reward", RewardViewHelper.describe(atomic)).itemComponent(viewer));
+                                .with("reward", VoteRewardDescriber.describe(atomic)).itemComponent(viewer));
                     }
                 }
             }
@@ -339,7 +362,7 @@ public final class VoteRewardsView extends VoteBaseView {
 
         for (ChanceReward cr : collect(ChanceReward.class)) {
             r18n.msg("vote_rewards.text.lucky-entry").prefix()
-                    .with("reward", RewardViewHelper.describe(cr.getReward()))
+                    .with("reward", VoteRewardDescriber.describe(cr.getReward()))
                     .with("chance", percent(cr.getChance()))
                     .with("won", String.valueOf(countFor(cr.getId())))
                     .send(sender);

@@ -10,6 +10,7 @@ import de.jexcellence.vote.service.StreakFreezeService;
 import de.jexcellence.vote.service.VoteGiftService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteService;
+import de.jexcellence.vote.view.VoteLeaderboardView;
 import de.jexcellence.vote.view.VoteOverviewView;
 import de.jexcellence.vote.view.VoteRewardsView;
 import net.kyori.adventure.text.Component;
@@ -34,6 +35,7 @@ public final class VoteCommandHandler {
     private final VoteLeaderboardService leaderboardService;
     private final VoteOverviewView overviewView;
     private final VoteRewardsView rewardsView;
+    private final VoteLeaderboardView leaderboardView;
     private final StreakFreezeService streakFreezeService;
     private final VoteGiftService voteGiftService;
 
@@ -43,12 +45,14 @@ public final class VoteCommandHandler {
                               @NotNull VoteConfig voteConfig,
                               @NotNull VoteOverviewView overviewView,
                               @NotNull VoteRewardsView rewardsView,
+                              @NotNull VoteLeaderboardView leaderboardView,
                               @NotNull StreakFreezeService streakFreezeService,
                               @NotNull VoteGiftService voteGiftService) {
         this.voteService = voteService;
         this.leaderboardService = leaderboardService;
         this.overviewView = overviewView;
         this.rewardsView = rewardsView;
+        this.leaderboardView = leaderboardView;
         this.streakFreezeService = streakFreezeService;
         this.voteGiftService = voteGiftService;
     }
@@ -171,7 +175,7 @@ public final class VoteCommandHandler {
                 new HelpEntry("/vote stats", "[player]", "View vote statistics", true),
                 new HelpEntry("/vote top", "[count]", "View the vote leaderboard", true),
                 new HelpEntry("/vote rewards", "", "View rewards, multiplier & drop odds", false),
-                new HelpEntry("/vote freeze", "", "Buy a Streak Freeze to protect your streak", false),
+                new HelpEntry("/vote freeze", "", "Buy a Streak Freeze (you start with 1 free!) to protect your streak", false),
                 new HelpEntry("/vote gift", "<player|random>", "Gift a streak advance to a friend", true),
                 new HelpEntry("/vote help", "", "Show this help", false)
         );
@@ -228,9 +232,17 @@ public final class VoteCommandHandler {
     }
 
     private void onStats(@NotNull CommandContext ctx) {
-        OfflinePlayer target = ctx.get("player", OfflinePlayer.class)
-                .orElseGet(() -> ctx.asPlayer().orElseThrow());
+        var explicitTarget = ctx.get("player", OfflinePlayer.class);
+        Player self = ctx.asPlayer().orElse(null);
 
+        // Self lookup from a player → open the overview GUI (stats + points +
+        // sites + navigation). Console or an explicit target → text summary.
+        if (explicitTarget.isEmpty() && self != null) {
+            overviewView.open(self);
+            return;
+        }
+
+        OfflinePlayer target = explicitTarget.orElseGet(() -> ctx.asPlayer().orElseThrow());
         voteService.getPlayerStats(target.getUniqueId()).thenAccept(stats -> {
             r18n().msg("vote.stats.header").send(ctx.sender());
             r18n().msg("vote.stats.total").prefix()
@@ -247,6 +259,13 @@ public final class VoteCommandHandler {
     }
 
     private void onTop(@NotNull CommandContext ctx) {
+        Player self = ctx.asPlayer().orElse(null);
+        // Players get the leaderboard GUI; console falls back to the text list.
+        if (self != null) {
+            leaderboardView.open(self);
+            return;
+        }
+
         int count = ctx.get("count", Long.class).map(Long::intValue).orElse(10);
         leaderboardService.getAllTimeTop(Math.min(count, 50)).thenAccept(top -> {
             r18n().msg("vote.leaderboard.header").send(ctx.sender());
