@@ -10,9 +10,11 @@ import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -84,11 +86,26 @@ public class VotifierProtocolHandler implements Runnable {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             } else if (e instanceof SocketTimeoutException) {
-                logger.log(Level.FINE, "Vote connection timed out (client did not send payload)", e);
+                logger.log(Level.FINE, () -> "Vote connection timed out (client sent no payload)");
+            } else if (isBenignDisconnect(e)) {
+                // Connection reset / aborted / EOF — almost always a port scan,
+                // uptime check, or other non-Votifier probe hitting the open
+                // port. Benign; keep it out of the warning log.
+                logger.log(Level.FINE, () -> String.format(
+                        "Vote connection dropped before completion (%s)", e.getMessage()));
             } else {
                 logger.log(Level.WARNING, "Error handling vote connection", e);
             }
         }
+    }
+
+    /**
+     * A connection the remote side reset/aborted, or that ended mid-read.
+     * These are expected on any publicly reachable port (scanners, health
+     * checks, browsers) and are not real vote failures.
+     */
+    private static boolean isBenignDisconnect(@NotNull Throwable error) {
+        return error instanceof SocketException || error instanceof EOFException;
     }
 
     private void handleV1(@NotNull BufferedInputStream in, @NotNull OutputStream out,
@@ -151,14 +168,17 @@ public class VotifierProtocolHandler implements Runnable {
                 }
             }
         } else {
-            // Not 256 bytes — likely a v2 message with unrecognized framing.
-            // Try to recover it as v2 JSON.
+            // Fewer than 256 bytes: not a v1 block. A real v1 vote always sends
+            // a full 256-byte RSA block, and v2 votes take the 0x00 / '{' / magic
+            // paths — so this is either a v2 message with odd framing (recovered
+            // by the fallback) or, far more often, non-Votifier traffic (HTTP/TLS
+            // probes, port scans). Recover quietly; never warn on the junk.
             final int bytesRead = read;
-            logger.log(Level.INFO, () -> String.format("Got %d bytes (v1 expects 256), attempting v2 fallback. First bytes: %s",
-                    bytesRead, hexDump(block, Math.min(bytesRead, 16))));
             byte[] data = Arrays.copyOf(block, bytesRead);
             if (!tryV2Fallback(data, out, challenge)) {
-                logger.log(Level.WARNING, () -> String.format("Vote block (%d bytes) — neither valid v1 nor v2", bytesRead));
+                logger.log(Level.FINE, () -> String.format(
+                        "Ignoring non-Votifier connection (%d bytes, neither v1 nor v2). First bytes: %s",
+                        bytesRead, hexDump(block, Math.min(bytesRead, 16))));
             }
         }
     }
