@@ -74,7 +74,7 @@ public final class VoteRewardConfig {
                 } else if (rewardRegistry.find(type).isEmpty()) {
                     logger.log(Level.WARNING, () -> String.format("Unknown reward type: %s", type));
                 } else {
-                    Map<String, Object> data = new LinkedHashMap<>(rewardSection.getValues(false));
+                    Map<String, Object> data = toDeepMap(rewardSection);
                     String json = rewardMapper.writeValueAsString(data);
                     AbstractReward reward = rewardMapper.readValue(json, AbstractReward.class);
                     rewards.add(reward);
@@ -84,6 +84,45 @@ public final class VoteRewardConfig {
             }
         }
         return Collections.unmodifiableList(rewards);
+    }
+
+    /**
+     * Recursively converts a {@link ConfigurationSection} into a plain nested
+     * {@link Map}/{@link List} structure suitable for Jackson.
+     *
+     * <p>Bukkit returns nested mappings as {@code ConfigurationSection} objects
+     * (not maps) from {@code getValues(false)}, which Jackson cannot serialize
+     * into the expected nested JSON. Without this, any reward carrying a nested
+     * object — a {@code chance} reward's {@code reward:} block or an {@code item}
+     * reward's {@code enchantments:} map — silently fails to load.
+     */
+    private static @NotNull Map<String, Object> toDeepMap(@NotNull ConfigurationSection section) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        for (String key : section.getKeys(false)) {
+            map.put(key, normalizeValue(section.get(key)));
+        }
+        return map;
+    }
+
+    private static Object normalizeValue(Object value) {
+        if (value instanceof ConfigurationSection nested) {
+            return toDeepMap(nested);
+        }
+        if (value instanceof Map<?, ?> rawMap) {
+            Map<String, Object> out = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+                out.put(String.valueOf(entry.getKey()), normalizeValue(entry.getValue()));
+            }
+            return out;
+        }
+        if (value instanceof List<?> list) {
+            List<Object> out = new ArrayList<>(list.size());
+            for (Object element : list) {
+                out.add(normalizeValue(element));
+            }
+            return out;
+        }
+        return value;
     }
 
     private @NotNull Map<Integer, List<AbstractReward>> loadStreakRewards(ConfigurationSection section) {
