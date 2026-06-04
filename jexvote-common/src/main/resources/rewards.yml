@@ -16,18 +16,48 @@ default-rewards:
   # Oneblock-relevant baseline: a little XP + coins into the economy every vote.
   vote-xp:    { type: xp,       amount: 50 }
   vote-coins: { type: currency, currency: coins, amount: 2500.0 }
-  # Lucky Vote (live): 10% chance for a coin jackpot on top. Shown in
-  # /vote rewards with its odds + drop count (id drives the stat).
-  lucky-vote:
-    type: chance
-    id: 'lucky-vote'
-    chance: 0.10
-    show-chance: true
-    announce: 'vote.lucky.hit'
-    reward:
-      type: currency
-      currency: coins
-      amount: 25000.0
+  # Vote Jackpot (live): every vote also rolls exactly ONE prize from this
+  # weighted pool. Weights sum to 100, so each weight IS its drop chance in %.
+  # Shown in /vote rewards with per-entry odds + drop counts (id drives the
+  # stat). Ten oneblock-themed outcomes from common coins up to a Dragon Key.
+  vote-jackpot:
+    type: lucky
+    entries:
+      - weight: 28          # 28% — pocket change
+        id: 'jackpot-coins-small'
+        reward: { type: currency, currency: coins, amount: 1000.0 }
+      - weight: 20          # 20% — a little XP
+        id: 'jackpot-xp'
+        reward: { type: xp, amount: 150 }
+      - weight: 15          # 15% — a handful of diamonds
+        id: 'jackpot-diamonds'
+        reward: { type: item, material: DIAMOND, amount: 8 }
+      - weight: 12          # 12% — a tidy coin stack
+        id: 'jackpot-coins-medium'
+        reward: { type: currency, currency: coins, amount: 5000.0 }
+      - weight: 8           # 8% — netherite for the grind
+        id: 'jackpot-netherite'
+        reward: { type: item, material: NETHERITE_INGOT, amount: 2 }
+      - weight: 6           # 6% — a Vote Crate key
+        id: 'jackpot-vote-crate'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'crate give key {player} vote_crate 1', asConsole: true }
+      - weight: 4           # 4% — the coin jackpot
+        id: 'jackpot-coins-large'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: currency, currency: coins, amount: 25000.0 }
+      - weight: 3.5         # 3.5% — a Season Crate key
+        id: 'jackpot-season-crate'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'crate give key {player} season_crate 1', asConsole: true }
+      - weight: 2           # 2% — a Shadow Crate key
+        id: 'jackpot-shadow-crate'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'crate give key {player} shadow_crate 1', asConsole: true }
+      - weight: 1.5         # 1.5% — the grand prize: a Dragon Crate key
+        id: 'jackpot-dragon-crate'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'crate give key {player} dragon_crate 1', asConsole: true }
 
 # ── Streak Rewards ──────────────────────────────────────────────
 # Bonus rewards when a player reaches a specific streak day. IN ADDITION to
@@ -158,14 +188,13 @@ site-rewards: {}
 # Granted to EVERY player who contributed to a vote party when it
 # completes (online players immediately, offline players on next
 # login). Configure the target/toggle under 'vote-party' in config.yml.
-vote-party-rewards: {}
-#  party-xp:
-#    type: xp
-#    amount: 200
-#  party-crate:
-#    type: command
-#    command: 'crate give {player} vote 1'
-#    as-console: true
+# NOTE: Vote Party is a Premium-edition feature — on the Free edition it
+# stays disabled regardless of these settings.
+vote-party-rewards:
+  party-xp:    { type: xp,       amount: 300 }
+  party-coins: { type: currency, currency: coins, amount: 10000.0 }
+  party-crate: { type: command,  command: 'crate give key {player} vote_crate 1', asConsole: true }
+  party-item:  { type: item,     material: DIAMOND, amount: 8 }
 
 # ═════════════════════════════════════════════════════════════════
 # REWARD TYPE REFERENCE

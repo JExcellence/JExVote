@@ -128,7 +128,8 @@ multipliers:
 # Party rewards are configured in rewards.yml under 'vote-party-rewards'.
 # Requires the Premium edition.
 vote-party:
-  enabled: false
+  # Premium-only feature. On the Free edition this stays disabled regardless.
+  enabled: true
   # Number of votes required to complete a party.
   target: 100
 

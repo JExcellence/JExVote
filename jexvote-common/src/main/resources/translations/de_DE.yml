@@ -12,6 +12,7 @@ vote:
   pending_rewards: '<green>Du hast <yellow>{count} <green>ausstehende Vote-Belohnung(en)! Wird jetzt zugestellt...'
   lucky:
     hit: '<gradient:#fde047:#f59e0b>★ Lucky Vote!</gradient> <gray>Du hast eine Bonus-Belohnung gewonnen!</gray> <yellow>{chance}</yellow>'
+    jackpot: '<gradient:#fde047:#f59e0b>★ Vote-Jackpot!</gradient> <gray>Das Glück ist dir hold — sieh in deine Belohnungen!</gray>'
   freeze:
     saved: '<gradient:#a5f3fc:#06b6d4>❄ Streak-Freeze!</gradient> <gray>Deine Serie wurde gerettet</gray> <dark_gray>(</dark_gray><white>{consumed} verbraucht</white><dark_gray>,</dark_gray> <white>{remaining} übrig</white><dark_gray>)</dark_gray><gray>. Serie:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient>'
     bought: '<gradient:#a5f3fc:#06b6d4>❄</gradient> <gray>Streak-Freeze gekauft für</gray> <gradient:#d8b4fe:#9333ea>{cost} Punkte</gradient><gray>.</gray>'
