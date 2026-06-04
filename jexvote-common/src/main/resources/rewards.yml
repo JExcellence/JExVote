@@ -30,38 +30,120 @@ default-rewards:
       amount: 25000.0
 
 # ── Streak Rewards ──────────────────────────────────────────────
-# Bonus rewards when a player reaches a specific streak day. These are IN
-# ADDITION to the default rewards and are shown in /vote (Streak Rewards):
-# the milestone grid lists every tier, and clicking one opens its full reward
-# list. Five milestones (3/7/14/21/30) give a clear 0–30 progression curve.
-# Rewards are oneblock-relevant (coins via the economy + items).
+# Bonus rewards when a player reaches a specific streak day. IN ADDITION to
+# the default rewards, shown in /vote (Streak Rewards): the milestone grid
+# lists every tier, and clicking one opens its full reward list.
+#
+# Five oneblock-themed milestones (3/7/14/21/30) form an escalating ladder.
+# Every tier grants the SAME shape — Experience + Coins + a Crate Key + useful
+# item(s) — so each streak day clearly steps up and stays worth voting for:
+#
+#   Day  Tier        Crate key       Headline gear
+#   ──── ─────────── ─────────────── ───────────────────────────────
+#    3   Sprout      vote_crate      Voter's Hoppers (automation)
+#    7   Settler     season_crate    Voter's Pickaxe (Eff IV / Fortune II)
+#   14   Veteran     shadow_crate    Voter's Blade (Sharp V / Looting III)
+#   21   Champion    void_crate      Champion's Drill (Eff VI / Fortune IV)
+#   30   Legend      dragon_crate    Streak Master's Wings (Elytra)
+#
+# dragon_crate is the highest-priced purchasable crate — the day-30 capstone.
+# Crate keys use 'crate give key <player> <crate> <amount>' as console.
 streak-rewards:
+
+  # ── Day 3 · Sprout ──────────────────────────────────────────────
   3:
-    streak-3-xp:       { type: xp,       amount: 100 }
-    streak-3-coins:    { type: currency, currency: coins, amount: 5000.0 }
+    streak-3-xp:        { type: xp,       amount: 100 }
+    streak-3-coins:     { type: currency, currency: coins, amount: 5000.0 }
+    streak-3-crate:     { type: command,  command: 'crate give key {player} vote_crate 1', asConsole: true }
+    streak-3-hoppers:
+      type: item
+      material: HOPPER
+      amount: 16
+      name: "<gradient:#ffffff:#bdc3c7>Voter's Hoppers</gradient>"
+      lore:
+        - "<gray>Automate your one block."
+    streak-3-diamonds:  { type: item, material: DIAMOND, amount: 6 }
+
+  # ── Day 7 · Settler ─────────────────────────────────────────────
   7:
-    streak-7-xp:       { type: xp,       amount: 250 }
-    streak-7-coins:    { type: currency, currency: coins, amount: 15000.0 }
-    streak-7-item:     { type: item,     material: DIAMOND, amount: 1 }
+    streak-7-xp:        { type: xp,       amount: 250 }
+    streak-7-coins:     { type: currency, currency: coins, amount: 15000.0 }
+    streak-7-crate:     { type: command,  command: 'crate give key {player} season_crate 1', asConsole: true }
+    streak-7-pickaxe:
+      type: item
+      material: DIAMOND_PICKAXE
+      amount: 1
+      name: "<gradient:#55ff55:#16a34a>Voter's Pickaxe</gradient>"
+      lore:
+        - "<gray>Forged from a week of devotion."
+      enchantments:
+        efficiency: 4
+        fortune: 2
+        unbreaking: 3
+        mending: 1
+      glow: true
+    streak-7-diamonds:  { type: item, material: DIAMOND, amount: 16 }
+
+  # ── Day 14 · Veteran ────────────────────────────────────────────
   14:
-    streak-14-xp:      { type: xp,       amount: 500 }
-    streak-14-coins:   { type: currency, currency: coins, amount: 50000.0 }
-    streak-14-item:    { type: item,     material: DIAMOND, amount: 3 }
+    streak-14-xp:       { type: xp,       amount: 500 }
+    streak-14-coins:    { type: currency, currency: coins, amount: 50000.0 }
+    streak-14-crate:    { type: command,  command: 'crate give key {player} shadow_crate 1', asConsole: true }
+    streak-14-sword:
+      type: item
+      material: NETHERITE_SWORD
+      amount: 1
+      name: "<gradient:#5dade2:#2980b9>Voter's Blade</gradient>"
+      lore:
+        - "<gray>Loyalty sharpened to an edge."
+      enchantments:
+        sharpness: 5
+        looting: 3
+        unbreaking: 3
+        mending: 1
+      glow: true
+    streak-14-netherite: { type: item, material: NETHERITE_INGOT, amount: 2 }
+    streak-14-hoppers:   { type: item, material: HOPPER, amount: 32 }
+
+  # ── Day 21 · Champion ───────────────────────────────────────────
   21:
-    streak-21-xp:      { type: xp,       amount: 1000 }
-    streak-21-coins:   { type: currency, currency: coins, amount: 150000.0 }
-    streak-21-key:     { type: command,  command: 'crates give {player} vote 1', as-console: true }
+    streak-21-xp:       { type: xp,       amount: 1000 }
+    streak-21-coins:    { type: currency, currency: coins, amount: 150000.0 }
+    streak-21-crate:    { type: command,  command: 'crate give key {player} void_crate 1', asConsole: true }
+    streak-21-pickaxe:
+      type: item
+      material: NETHERITE_PICKAXE
+      amount: 1
+      name: "<gradient:#aa55ff:#6c3483>Champion's Drill</gradient>"
+      lore:
+        - "<gray>Carves through the void itself."
+      enchantments:
+        efficiency: 6
+        fortune: 4
+        unbreaking: 4
+        mending: 1
+      glow: true
+    streak-21-shulkers:  { type: item, material: SHULKER_BOX, amount: 2 }
+    streak-21-netherite: { type: item, material: NETHERITE_INGOT, amount: 4 }
+
+  # ── Day 30 · Legend ─────────────────────────────────────────────
   30:
-    streak-30-xp:      { type: xp,       amount: 2000 }
-    streak-30-coins:   { type: currency, currency: coins, amount: 500000.0 }
-    streak-30-item:    { type: item,     material: DIAMOND_BLOCK, amount: 1 }
-    streak-30-title:
-      type: title
-      title: '<gold><bold>30 Day Streak!'
-      subtitle: '<gray>You are a dedicated voter!'
-      fade-in: 10
-      stay: 60
-      fade-out: 10
+    streak-30-xp:       { type: xp,       amount: 2000 }
+    streak-30-coins:    { type: currency, currency: coins, amount: 500000.0 }
+    streak-30-crate:    { type: command,  command: 'crate give key {player} dragon_crate 1', asConsole: true }
+    streak-30-elytra:
+      type: item
+      material: ELYTRA
+      amount: 1
+      name: "<gradient:#ffd700:#e67e22>Streak Master's Wings</gradient>"
+      lore:
+        - "<gray>30 days of unbroken devotion."
+        - "<dark_gray>The sky is yours."
+      enchantments:
+        unbreaking: 4
+        mending: 1
+      glow: true
+    streak-30-netherite: { type: item, material: NETHERITE_BLOCK, amount: 1 }
 
 # ── Site-Specific Rewards ───────────────────────────────────────
 # Extra rewards for voting on specific sites.
