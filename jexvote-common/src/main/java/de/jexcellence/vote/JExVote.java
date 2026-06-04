@@ -36,7 +36,9 @@ import de.jexcellence.vote.service.MultiplierService;
 import de.jexcellence.vote.service.RewardStatsService;
 import de.jexcellence.vote.service.VotePartyService;
 import de.jexcellence.vote.service.StreakClaimService;
+import de.jexcellence.vote.service.StreakFreezeService;
 import de.jexcellence.vote.service.VoteBroadcastService;
+import de.jexcellence.vote.service.VoteGiftService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteRewardService;
 import de.jexcellence.vote.service.VoteService;
@@ -47,6 +49,7 @@ import de.jexcellence.vote.view.VoteRewardsView;
 import de.jexcellence.vote.view.VoteStreakView;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -54,8 +57,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.security.KeyPair;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
@@ -89,6 +94,8 @@ public abstract class JExVote {
     private VoteRewardService rewardService;
     private VoteLeaderboardService leaderboardService;
     private StreakClaimService streakClaimService;
+    private StreakFreezeService streakFreezeService;
+    private VoteGiftService voteGiftService;
     private VotePartyService votePartyService;
     private RewardStatsService rewardStatsService;
     private MultiplierService multiplierService;
@@ -298,10 +305,16 @@ public abstract class JExVote {
                 multiplierService, votePartyService,
                 sites, voteConfig.getStreakTimeoutHours(),
                 voteConfig.getStreakCommands(),
-                voteConfig.getRecordRetentionDays());
+                voteConfig.getRecordRetentionDays(),
+                voteConfig.getFreezeSettings());
+
+        streakFreezeService = new StreakFreezeService(playerRepository, voteConfig);
+        voteGiftService = new VoteGiftService(playerRepository, voteConfig);
 
         // Purge old vote records on startup
         voteService.purgeOldRecords();
+        // One-time, idempotent free Streak Freeze back-fill for existing players
+        voteService.initializeFreezesForExistingPlayers();
     }
 
     private @Nullable VotePartyService createVotePartyService(@NotNull VoteBroadcastService broadcastService) {
@@ -387,13 +400,31 @@ public abstract class JExVote {
                             .toList();
                 }));
 
+        // Custom argument type: tab-completes online player names plus the
+        // literal "random" for /vote gift.
+        registry.register(ArgumentType.custom("vote_gift_target", String.class,
+                (sender, raw) -> ArgumentType.ParseResult.ok(raw),
+                (sender, partial) -> {
+                    var lower = partial.toLowerCase(Locale.ROOT);
+                    List<String> suggestions = new ArrayList<>();
+                    if ("random".startsWith(lower)) {
+                        suggestions.add("random");
+                    }
+                    Bukkit.getOnlinePlayers().stream()
+                            .map(Player::getName)
+                            .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(lower))
+                            .forEach(suggestions::add);
+                    return suggestions;
+                }));
+
         // Save command YAMLs to data folder on first run so users can edit
         // names, aliases, permissions, and descriptions.
         saveDefaultResource("commands/vote.yml");
         saveDefaultResource("commands/jexvote.yml");
 
         factory.registerTree(new File(plugin.getDataFolder(), "commands/vote.yml"),
-                new VoteCommandHandler(voteService, leaderboardService, voteConfig, overviewView, rewardsView).handlerMap(),
+                new VoteCommandHandler(voteService, leaderboardService, voteConfig, overviewView, rewardsView,
+                        streakFreezeService, voteGiftService).handlerMap(),
                 messages, registry);
         factory.registerTree(new File(plugin.getDataFolder(), "commands/jexvote.yml"),
                 new VoteAdminHandler(plugin, edition(), voteService, voteConfig, rewardConfig).handlerMap(),
@@ -410,7 +441,8 @@ public abstract class JExVote {
         var leaderboardView = new VoteLeaderboardView(plugin, leaderboardService);
         var streakView = new VoteStreakView(plugin, voteService, rewardService, streakClaimService);
         rewardsView = new VoteRewardsView(plugin, voteConfig, rewardConfig,
-                multiplierService, votePartyService, rewardStatsService);
+                multiplierService, votePartyService, rewardStatsService,
+                streakFreezeService, voteGiftService);
 
         // Wire cross-navigation references
         overviewView.setLeaderboardView(leaderboardView);

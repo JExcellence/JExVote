@@ -6,6 +6,8 @@ import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.model.VoteSnapshot;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.model.VoteSite;
+import de.jexcellence.vote.service.StreakFreezeService;
+import de.jexcellence.vote.service.VoteGiftService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.view.VoteOverviewView;
@@ -15,12 +17,14 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public final class VoteCommandHandler {
 
@@ -30,17 +34,23 @@ public final class VoteCommandHandler {
     private final VoteLeaderboardService leaderboardService;
     private final VoteOverviewView overviewView;
     private final VoteRewardsView rewardsView;
+    private final StreakFreezeService streakFreezeService;
+    private final VoteGiftService voteGiftService;
 
-    @SuppressWarnings("unused") // voteConfig kept for caller compatibility; handled separately in JExVote
+    @SuppressWarnings({"unused", "java:S107"}) // voteConfig kept for caller compatibility; handled separately in JExVote
     public VoteCommandHandler(@NotNull VoteService voteService,
                               @NotNull VoteLeaderboardService leaderboardService,
                               @NotNull VoteConfig voteConfig,
                               @NotNull VoteOverviewView overviewView,
-                              @NotNull VoteRewardsView rewardsView) {
+                              @NotNull VoteRewardsView rewardsView,
+                              @NotNull StreakFreezeService streakFreezeService,
+                              @NotNull VoteGiftService voteGiftService) {
         this.voteService = voteService;
         this.leaderboardService = leaderboardService;
         this.overviewView = overviewView;
         this.rewardsView = rewardsView;
+        this.streakFreezeService = streakFreezeService;
+        this.voteGiftService = voteGiftService;
     }
 
     public @NotNull Map<String, CommandHandler> handlerMap() {
@@ -50,7 +60,9 @@ public final class VoteCommandHandler {
                 Map.entry("vote.sites", this::onSites),
                 Map.entry("vote.stats", this::onStats),
                 Map.entry("vote.top", this::onTop),
-                Map.entry("vote.rewards", this::onRewards)
+                Map.entry("vote.rewards", this::onRewards),
+                Map.entry("vote.freeze", this::onFreeze),
+                Map.entry("vote.gift", this::onGift)
         );
     }
 
@@ -68,6 +80,83 @@ public final class VoteCommandHandler {
         overviewView.open(player);
     }
 
+    private void onFreeze(@NotNull CommandContext ctx) {
+        Player player = ctx.asPlayer().orElseThrow();
+        int cost = streakFreezeService.settings().costPoints();
+        int max = streakFreezeService.resolveMax(player);
+
+        streakFreezeService.purchase(player).thenAccept(result -> {
+            switch (result) {
+                case SUCCESS -> r18n().msg("vote.freeze.bought").prefix()
+                        .with("cost", String.valueOf(cost))
+                        .send(player);
+                case DISABLED -> r18n().msg("vote.freeze.disabled").prefix().send(player);
+                case AT_MAX -> r18n().msg("vote.freeze.at_max").prefix()
+                        .with("max", String.valueOf(max))
+                        .send(player);
+                case NOT_ENOUGH_POINTS -> r18n().msg("vote.freeze.not_enough").prefix()
+                        .with("cost", String.valueOf(cost))
+                        .send(player);
+                case NO_PROFILE -> r18n().msg("vote.freeze.no_profile").prefix().send(player);
+                default -> r18n().msg("vote.freeze.error").prefix().send(player);
+            }
+        });
+    }
+
+    private void onGift(@NotNull CommandContext ctx) {
+        Player player = ctx.asPlayer().orElseThrow();
+        String target = ctx.get("target", String.class).orElse("").trim();
+        if (target.isEmpty()) {
+            r18n().msg("vote.gift.usage").prefix().send(player);
+            return;
+        }
+
+        CompletableFuture<VoteGiftService.GiftOutcome> future;
+        if (target.equalsIgnoreCase("random")) {
+            future = voteGiftService.giftRandom(player);
+        } else {
+            OfflinePlayer offline = Bukkit.getOfflinePlayer(target);
+            future = voteGiftService.gift(player, offline);
+        }
+        future.thenAccept(outcome -> handleGiftOutcome(player, outcome));
+    }
+
+    private void handleGiftOutcome(@NotNull Player gifter, @NotNull VoteGiftService.GiftOutcome outcome) {
+        String targetName = outcome.targetName() != null ? outcome.targetName() : "?";
+        switch (outcome.result()) {
+            case SUCCESS -> notifyGiftSuccess(gifter, outcome, targetName);
+            case DISABLED -> r18n().msg("vote.gift.disabled").prefix().send(gifter);
+            case GIFTER_NO_PROFILE -> r18n().msg("vote.gift.gifter_no_profile").prefix().send(gifter);
+            case NOT_VOTED_TODAY -> r18n().msg("vote.gift.not_voted").prefix().send(gifter);
+            case LIMIT_REACHED -> r18n().msg("vote.gift.limit").prefix().send(gifter);
+            case SELF_GIFT -> r18n().msg("vote.gift.self").prefix().send(gifter);
+            case TARGET_NOT_FOUND -> r18n().msg("vote.gift.target_not_found").prefix()
+                    .with("target", targetName).send(gifter);
+            case ALREADY_ADVANCED -> r18n().msg("vote.gift.already_advanced").prefix()
+                    .with("target", targetName).send(gifter);
+            case NO_RANDOM_TARGET -> r18n().msg("vote.gift.no_random").prefix().send(gifter);
+            default -> r18n().msg("vote.gift.error").prefix().send(gifter);
+        }
+    }
+
+    private void notifyGiftSuccess(@NotNull Player gifter,
+                                   @NotNull VoteGiftService.GiftOutcome outcome,
+                                   @NotNull String targetName) {
+        r18n().msg("vote.gift.sent").prefix()
+                .with("target", targetName)
+                .with("streak", String.valueOf(outcome.receiverStreak()))
+                .with("remaining", String.valueOf(outcome.remainingToday()))
+                .send(gifter);
+
+        Player receiver = Bukkit.getPlayerExact(targetName);
+        if (receiver != null && receiver.isOnline()) {
+            r18n().msg("vote.gift.received").prefix()
+                    .with("gifter", gifter.getName())
+                    .with("streak", String.valueOf(outcome.receiverStreak()))
+                    .send(receiver);
+        }
+    }
+
     private void onHelp(@NotNull CommandContext ctx) {
         var sender = ctx.sender();
 
@@ -81,6 +170,9 @@ public final class VoteCommandHandler {
                 new HelpEntry("/vote sites", "", "List all vote sites with links", false),
                 new HelpEntry("/vote stats", "[player]", "View vote statistics", true),
                 new HelpEntry("/vote top", "[count]", "View the vote leaderboard", true),
+                new HelpEntry("/vote rewards", "", "View rewards, multiplier & drop odds", false),
+                new HelpEntry("/vote freeze", "", "Buy a Streak Freeze to protect your streak", false),
+                new HelpEntry("/vote gift", "<player|random>", "Gift a streak advance to a friend", true),
                 new HelpEntry("/vote help", "", "Show this help", false)
         );
 

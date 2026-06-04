@@ -131,7 +131,8 @@ public final class VoteAdminHandler {
                         voteConfig.isWeekendMultiplierEnabled(),
                         voteConfig.getWeekendMultiplierFactor(),
                         voteConfig.getWeekendMultiplierDays(),
-                        voteConfig.getWeekendMultiplierTimezone()));
+                        voteConfig.getWeekendMultiplierTimezone()),
+                voteConfig.getFreezeSettings());
         r18n().msg("vote.reload").prefix().send(ctx.sender());
     }
 

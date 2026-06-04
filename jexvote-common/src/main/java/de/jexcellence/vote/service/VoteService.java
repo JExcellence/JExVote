@@ -1,9 +1,11 @@
 package de.jexcellence.vote.service;
 
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
+import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.event.VoteReceivedEvent;
 import de.jexcellence.vote.api.event.VoteRewardClaimedEvent;
 import de.jexcellence.vote.api.model.VoteSnapshot;
+import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.database.entity.PendingVoteRewardEntity;
 import de.jexcellence.vote.database.entity.VotePlayerEntity;
 import de.jexcellence.vote.database.entity.VoteRecordEntity;
@@ -50,6 +52,7 @@ public class VoteService {
     private final AtomicReference<Map<Integer, List<String>>> streakCommands;
     // volatile is sufficient: single-write / multi-read
     private volatile int recordRetentionDays;
+    private final AtomicReference<VoteConfig.FreezeSettings> freezeSettings;
 
     // Configuration group — suppressed (S107)
     @SuppressWarnings("java:S107")
@@ -64,7 +67,8 @@ public class VoteService {
                        @NotNull Map<String, VoteSite> voteSites,
                        int streakTimeoutHours,
                        @NotNull Map<Integer, List<String>> streakCommands,
-                       int recordRetentionDays) {
+                       int recordRetentionDays,
+                       @NotNull VoteConfig.FreezeSettings freezeSettings) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
         this.scheduler = PlatformScheduler.of(plugin);
@@ -79,6 +83,7 @@ public class VoteService {
         this.streakTimeout = Duration.ofHours(streakTimeoutHours);
         this.streakCommands = new AtomicReference<>(streakCommands);
         this.recordRetentionDays = recordRetentionDays;
+        this.freezeSettings = new AtomicReference<>(freezeSettings);
     }
 
     /**
@@ -90,13 +95,15 @@ public class VoteService {
                        @NotNull Map<Integer, List<String>> streakCommands,
                        int recordRetentionDays,
                        boolean manualStreakClaim,
-                       @NotNull MultiplierService.Settings multiplierSettings) {
+                       @NotNull MultiplierService.Settings multiplierSettings,
+                       @NotNull VoteConfig.FreezeSettings freezeSettings) {
         this.voteSites.set(voteSites);
         this.streakTimeout = Duration.ofHours(streakTimeoutHours);
         this.streakCommands.set(streakCommands);
         this.recordRetentionDays = recordRetentionDays;
         this.rewardService.setManualStreakClaim(manualStreakClaim);
         this.multiplierService.reload(multiplierSettings);
+        this.freezeSettings.set(freezeSettings);
     }
 
     public @NotNull CompletableFuture<Boolean> processVote(@NotNull Vote vote) {
@@ -158,6 +165,7 @@ public class VoteService {
                 .orElseGet(() -> {
                     logger.info(String.format("Creating new vote profile for %s (%s)", vote.username(), uuid));
                     VotePlayerEntity newPlayer = new VotePlayerEntity(uuid, vote.username());
+                    initializeFreezes(newPlayer);
                     playerRepository.create(newPlayer);
                     return newPlayer;
                 });
@@ -191,12 +199,21 @@ public class VoteService {
         Player onlinePlayer = Bukkit.getPlayer(uuid);
         VoteSnapshot snapshot = toSnapshot(player);
         int streak = player.getCurrentStreak();
+        int consumedFreezes = player.getConsumedFreezesThisVote();
+        int remainingFreezes = player.getStreakFreezes();
 
         if (onlinePlayer != null && onlinePlayer.isOnline()) {
             scheduler.runAtEntity(onlinePlayer, () -> {
                 rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
                 executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
                 broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
+                if (consumedFreezes > 0) {
+                    R18nManager.getInstance().msg("vote.freeze.saved").prefix()
+                            .with("consumed", String.valueOf(consumedFreezes))
+                            .with("remaining", String.valueOf(remainingFreezes))
+                            .with("streak", String.valueOf(streak))
+                            .send(onlinePlayer);
+                }
                 Bukkit.getPluginManager().callEvent(
                         new VoteRewardClaimedEvent(uuid, vote.serviceName(), snapshot));
             });
@@ -321,16 +338,102 @@ public class VoteService {
     }
 
     private void updateStreak(@NotNull VotePlayerEntity player) {
+        player.setConsumedFreezesThisVote(0);
         Instant lastVote = player.getLastVoteAt();
-        if (lastVote == null || Duration.between(lastVote, Instant.now()).compareTo(streakTimeout) > 0) {
+
+        if (lastVote == null) {
             player.setCurrentStreak(1);
-        } else {
-            player.setCurrentStreak(player.getCurrentStreak() + 1);
+            recordHighestStreak(player);
+            return;
         }
 
+        Duration gap = Duration.between(lastVote, Instant.now());
+        if (gap.compareTo(streakTimeout) <= 0) {
+            player.setCurrentStreak(player.getCurrentStreak() + 1);
+            recordHighestStreak(player);
+            return;
+        }
+
+        if (tryConsumeFreezes(player, gap)) {
+            player.setCurrentStreak(player.getCurrentStreak() + 1);
+        } else {
+            player.setCurrentStreak(1);
+        }
+        recordHighestStreak(player);
+    }
+
+    /**
+     * Attempts to cover a streak gap that exceeds the timeout using owned
+     * Streak Freezes. Each freeze absorbs one {@code duration-hours} window
+     * beyond the normal timeout. Returns {@code true} (and decrements the
+     * owned freezes) only when the player has enough to cover every missed
+     * window; otherwise the streak is allowed to break.
+     */
+    private boolean tryConsumeFreezes(@NotNull VotePlayerEntity player, @NotNull Duration gap) {
+        VoteConfig.FreezeSettings settings = freezeSettings.get();
+        if (!settings.enabled() || player.getStreakFreezes() <= 0) {
+            return false;
+        }
+
+        long overflowHours = gap.minus(streakTimeout).toHours();
+        long windowsNeeded = Math.max(1L,
+                (long) Math.ceil(overflowHours / (double) settings.durationHours()));
+        if (player.getStreakFreezes() < windowsNeeded) {
+            return false;
+        }
+
+        int consumed = (int) windowsNeeded;
+        player.setStreakFreezes(player.getStreakFreezes() - consumed);
+        player.setConsumedFreezesThisVote(consumed);
+        return true;
+    }
+
+    private void recordHighestStreak(@NotNull VotePlayerEntity player) {
         if (player.getCurrentStreak() > player.getHighestStreak()) {
             player.setHighestStreak(player.getCurrentStreak());
         }
+    }
+
+    /**
+     * Sets the free Streak Freeze grant on a freshly created profile.
+     */
+    private void initializeFreezes(@NotNull VotePlayerEntity player) {
+        VoteConfig.FreezeSettings settings = freezeSettings.get();
+        if (settings.enabled() && settings.freeAmount() > 0) {
+            player.setStreakFreezes(settings.freeAmount());
+        }
+        player.setFreezeInitialized(true);
+    }
+
+    /**
+     * One-time, idempotent back-fill: grants the configured free Streak Freeze
+     * amount to existing players whose profile predates the feature. Guarded by
+     * {@code freezeInitialized} so it never double-grants across restarts.
+     */
+    public void initializeFreezesForExistingPlayers() {
+        VoteConfig.FreezeSettings settings = freezeSettings.get();
+        if (!settings.enabled() || settings.freeAmount() <= 0) {
+            return;
+        }
+        playerRepository.findAllAsync().thenAccept(players -> {
+            int granted = 0;
+            for (VotePlayerEntity player : players) {
+                if (!player.isFreezeInitialized()) {
+                    player.setStreakFreezes(player.getStreakFreezes() + settings.freeAmount());
+                    player.setFreezeInitialized(true);
+                    playerRepository.update(player);
+                    granted++;
+                }
+            }
+            final int count = granted;
+            if (count > 0) {
+                logger.log(Level.INFO, () -> String.format(
+                        "Granted free Streak Freeze to %d existing player(s)", count));
+            }
+        }).exceptionally(ex -> {
+            logger.log(Level.WARNING, "Free Streak Freeze back-fill failed", ex);
+            return null;
+        });
     }
 
     private void executeStreakCommands(@NotNull Player player, @NotNull String serviceName, int streak) {

@@ -54,6 +54,28 @@ streak:
   #   manual — player must claim rewards from the /vote streak GUI
   claim-mode: 'auto'
 
+  # ── Streak Freeze (Duolingo-style) ────────────────────────────
+  # A Streak Freeze protects a player's streak when they miss a vote.
+  # Freezes auto-equip: if a vote arrives after the streak would have
+  # broken, the needed freezes are consumed automatically and the
+  # streak survives — no player action required.
+  freeze:
+    # Master switch.
+    enabled: true
+    # Free freezes granted once, on first profile creation (and back-filled
+    # one time to existing players). 1 = everyone starts protected once.
+    free-amount: 1
+    # Vote points charged per purchased freeze (/vote freeze).
+    cost-points: 5
+    # Max freezes a player may own without a permission override.
+    # A player with 'jexvote.freeze.max.<n>' may own up to <n> instead
+    # (the highest matching node wins).
+    default-max: 3
+    # Grace time a single freeze covers. Each freeze absorbs one window of
+    # this many hours beyond the normal streak timeout. Missing more than
+    # one window consumes multiple freezes.
+    duration-hours: 24
+
   # Bonus commands executed at specific streak milestones.
   # Placeholders: {player}, {service}, {streak}
   bonus-commands:
@@ -109,3 +131,23 @@ vote-party:
   enabled: false
   # Number of votes required to complete a party.
   target: 100
+
+# ── Vote Gifting ────────────────────────────────────────────────
+# Lets active voters keep a friend's streak alive. A gift advances ONLY
+# the receiver's streak (+1 and resets their timeout) — no reward items
+# move, and the gifter keeps their own vote and rewards in full.
+#   /vote gift <player>  — gift a specific player
+#   /vote gift random    — gift a random online player (never yourself)
+vote-gift:
+  # Master switch.
+  enabled: true
+  # Gifts a player may send per day. A player with 'jexvote.gift.daily.<n>'
+  # may send up to <n> instead (the highest matching node wins).
+  daily-limit: 1
+  # Require the gifter to have voted today before they can gift
+  # (matches "redirect today's live vote"). Set false to allow gifting
+  # without voting first.
+  require-vote-today: true
+  # Day-boundary timezone for both the daily gift limit and the
+  # "voted today" check.
+  timezone: 'UTC'

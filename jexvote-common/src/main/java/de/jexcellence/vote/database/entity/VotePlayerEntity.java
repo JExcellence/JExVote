@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -61,6 +62,33 @@ public class VotePlayerEntity {
     @Column(name = "monthly_reset_month", length = 7)
     private String monthlyResetMonth;
 
+    /** Number of Streak Freezes currently owned (Duolingo-style auto-equip). */
+    @Column(name = "streak_freezes", nullable = false)
+    private int streakFreezes;
+
+    /**
+     * Whether the one-time free Streak Freeze grant has been applied to this
+     * profile. Guards the idempotent free-freeze migration for existing players.
+     */
+    @Column(name = "freeze_initialized", nullable = false)
+    private boolean freezeInitialized;
+
+    /** Day (ISO yyyy-MM-dd, in the configured gift timezone) of the last gift sent. */
+    @Column(name = "gift_day", length = 10)
+    private String giftDay;
+
+    /** Number of gifts already sent during {@link #giftDay}. */
+    @Column(name = "gifts_today", nullable = false)
+    private int giftsToday;
+
+    /**
+     * Number of Streak Freezes auto-consumed during the vote currently being
+     * processed. Not persisted — read once by the delivery step to notify the
+     * player that their streak was saved.
+     */
+    @Transient
+    private int consumedFreezesThisVote;
+
     protected VotePlayerEntity() {}
 
     public VotePlayerEntity(UUID playerUuid, String playerName) {
@@ -100,4 +128,19 @@ public class VotePlayerEntity {
 
     public String getMonthlyResetMonth() { return monthlyResetMonth; }
     public void setMonthlyResetMonth(String monthlyResetMonth) { this.monthlyResetMonth = monthlyResetMonth; }
+
+    public int getStreakFreezes() { return streakFreezes; }
+    public void setStreakFreezes(int streakFreezes) { this.streakFreezes = streakFreezes; }
+
+    public boolean isFreezeInitialized() { return freezeInitialized; }
+    public void setFreezeInitialized(boolean freezeInitialized) { this.freezeInitialized = freezeInitialized; }
+
+    public String getGiftDay() { return giftDay; }
+    public void setGiftDay(String giftDay) { this.giftDay = giftDay; }
+
+    public int getGiftsToday() { return giftsToday; }
+    public void setGiftsToday(int giftsToday) { this.giftsToday = giftsToday; }
+
+    public int getConsumedFreezesThisVote() { return consumedFreezesThisVote; }
+    public void setConsumedFreezesThisVote(int consumedFreezesThisVote) { this.consumedFreezesThisVote = consumedFreezesThisVote; }
 }

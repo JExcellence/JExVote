@@ -38,3 +38,15 @@ subcommands:
       - economy
       - eco
     senders: [player, console]
+
+  - name: freeze
+    description: "Buy a Streak Freeze with vote points to protect your streak"
+    aliases:
+      - freezes
+    senders: [player]
+
+  - name: gift
+    description: "Gift today's streak advance to a player (or 'random')"
+    senders: [player]
+    argumentSchema:
+      - { name: target, type: vote_gift_target, required: true, description: "Player name or 'random'" }

@@ -47,6 +47,29 @@ public final class VoteConfig {
         MANUAL
     }
 
+    /**
+     * Streak Freeze settings (Duolingo-style auto-equip protection).
+     *
+     * @param enabled       whether the feature is active
+     * @param freeAmount    freezes granted for free on first profile creation
+     * @param costPoints    vote points charged per purchased freeze
+     * @param defaultMax    max freezes a player may own without a permission override
+     * @param durationHours how much grace time a single freeze covers
+     */
+    public record FreezeSettings(boolean enabled, int freeAmount, int costPoints,
+                                 int defaultMax, long durationHours) {}
+
+    /**
+     * Vote Gifting settings.
+     *
+     * @param enabled          whether gifting is active
+     * @param dailyLimit       default gifts a player may send per day (perm-overridable)
+     * @param requireVoteToday whether the gifter must have voted today to gift
+     * @param timezone         day-boundary timezone for the daily gift limit
+     */
+    public record GiftSettings(boolean enabled, int dailyLimit,
+                               boolean requireVoteToday, ZoneId timezone) {}
+
     private final JavaPlugin plugin;
     private final Logger logger;
 
@@ -74,6 +97,11 @@ public final class VoteConfig {
 
     private boolean votePartyEnabled = false;
     private int votePartyTarget = 100;
+
+    private FreezeSettings freezeSettings =
+            new FreezeSettings(true, 1, 5, 3, 24L);
+    private GiftSettings giftSettings =
+            new GiftSettings(true, 1, true, ZoneId.of("UTC"));
 
     public VoteConfig(@NotNull JavaPlugin plugin) {
         this.plugin = plugin;
@@ -121,7 +149,38 @@ public final class VoteConfig {
         loadMultipliers(config);
         loadVoteParty(config);
         loadStreakCommands(config);
+        loadStreakFreeze(config);
+        loadVoteGift(config);
         loadVoteSites();
+    }
+
+    private void loadStreakFreeze(@NotNull YamlConfiguration config) {
+        boolean enabled = config.getBoolean("streak-freeze.enabled", true);
+        int freeAmount = Math.max(0, config.getInt("streak-freeze.free-amount", 1));
+        int costPoints = Math.max(0, config.getInt("streak-freeze.cost-points", 5));
+        int defaultMax = Math.max(0, config.getInt("streak-freeze.default-max", 3));
+        long durationHours = config.getLong("streak-freeze.duration-hours", 24L);
+        if (durationHours < 1L) {
+            logger.warning(String.format("Invalid streak-freeze.duration-hours %d — using 24", durationHours));
+            durationHours = 24L;
+        }
+        freezeSettings = new FreezeSettings(enabled, freeAmount, costPoints, defaultMax, durationHours);
+    }
+
+    private void loadVoteGift(@NotNull YamlConfiguration config) {
+        boolean enabled = config.getBoolean("vote-gift.enabled", true);
+        int dailyLimit = Math.max(1, config.getInt("vote-gift.daily-limit", 1));
+        boolean requireVoteToday = config.getBoolean("vote-gift.require-vote-today", true);
+
+        String timezoneStr = config.getString("vote-gift.timezone", "UTC");
+        ZoneId timezone;
+        try {
+            timezone = ZoneId.of(timezoneStr);
+        } catch (Exception e) {
+            logger.warning(String.format("Invalid vote-gift.timezone '%s', using UTC", timezoneStr));
+            timezone = ZoneId.of("UTC");
+        }
+        giftSettings = new GiftSettings(enabled, dailyLimit, requireVoteToday, timezone);
     }
 
     private void loadMultipliers(@NotNull YamlConfiguration config) {
@@ -263,4 +322,6 @@ public final class VoteConfig {
     public @NotNull ZoneId getWeekendMultiplierTimezone() { return weekendMultiplierTimezone; }
     public boolean isVotePartyEnabled() { return votePartyEnabled; }
     public int getVotePartyTarget() { return votePartyTarget; }
+    public @NotNull FreezeSettings getFreezeSettings() { return freezeSettings; }
+    public @NotNull GiftSettings getGiftSettings() { return giftSettings; }
 }
