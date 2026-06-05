@@ -43,18 +43,23 @@ public class VotePlayerEntity {
     private String playerName;
 
     @Column(name = "total_votes", nullable = false)
+    @ColumnDefault("0")
     private int totalVotes;
 
     @Column(name = "monthly_votes", nullable = false)
+    @ColumnDefault("0")
     private int monthlyVotes;
 
     @Column(name = "current_streak", nullable = false)
+    @ColumnDefault("0")
     private int currentStreak;
 
     @Column(name = "highest_streak", nullable = false)
+    @ColumnDefault("0")
     private int highestStreak;
 
     @Column(name = "vote_points", nullable = false)
+    @ColumnDefault("0")
     private int votePoints;
 
     @Column(name = "last_vote_at")

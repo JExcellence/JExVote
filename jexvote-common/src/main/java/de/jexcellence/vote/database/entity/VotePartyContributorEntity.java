@@ -9,6 +9,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.util.UUID;
 
@@ -31,12 +32,14 @@ public class VotePartyContributorEntity {
     private Long id;
 
     @Column(name = "party_id", nullable = false)
+    @ColumnDefault("0")
     private long partyId;
 
     @Column(name = "player_uuid", nullable = false, length = 36)
     private UUID playerUuid;
 
     @Column(name = "contributed_votes", nullable = false)
+    @ColumnDefault("0")
     private int contributedVotes;
 
     protected VotePartyContributorEntity() {}

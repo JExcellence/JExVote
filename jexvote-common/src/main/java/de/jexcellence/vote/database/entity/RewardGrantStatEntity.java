@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 
@@ -32,6 +33,7 @@ public class RewardGrantStatEntity {
     private String rewardKey;
 
     @Column(name = "times_granted", nullable = false)
+    @ColumnDefault("0")
     private long timesGranted;
 
     @Column(name = "last_granted_at")

@@ -9,6 +9,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -35,12 +36,14 @@ public class ClaimedStreakRewardEntity {
     private UUID playerUuid;
 
     @Column(name = "milestone_day", nullable = false)
+    @ColumnDefault("0")
     private int milestoneDay;
 
     @Column(name = "claimed_at", nullable = false)
     private Instant claimedAt;
 
     @Column(name = "auto_claimed", nullable = false)
+    @ColumnDefault("false")
     private boolean autoClaimed;
 
     protected ClaimedStreakRewardEntity() {}

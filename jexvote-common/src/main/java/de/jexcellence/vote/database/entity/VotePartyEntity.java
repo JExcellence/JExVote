@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 
@@ -23,12 +24,15 @@ public class VotePartyEntity {
     private Long id;
 
     @Column(name = "party_number", nullable = false)
+    @ColumnDefault("0")
     private int partyNumber;
 
     @Column(name = "current_votes", nullable = false)
+    @ColumnDefault("0")
     private int currentVotes;
 
     @Column(name = "target_votes", nullable = false)
+    @ColumnDefault("0")
     private int targetVotes;
 
     @Column(name = "started_at", nullable = false)
