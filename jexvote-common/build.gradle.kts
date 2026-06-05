@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "de.jexcellence.vote"
-version = "3.1.0"
+version = "3.1.1"
 description = "JExVote Common - Shared library for JExVote"
 
 dependenciesYml {
@@ -23,6 +23,7 @@ dependencies {
 
     // ── External Libraries ──
     compileOnly(project(":JExEconomy:jexeconomy-api"))
+    compileOnly(project(":JExEssentials:jexessentials-api"))
     compileOnly(libs.paper.api)
     compileOnly(libs.bundles.adventure)
     compileOnly(libs.folialib)

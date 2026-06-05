@@ -1,5 +1,5 @@
 name: JExVote
-version: '3.1.0'
+version: '3.1.1'
 main: de.jexcellence.vote.JExVoteFree
 description: All-in-one vote listener, reward & leaderboard system (Free Edition)
 api-version: '1.21'

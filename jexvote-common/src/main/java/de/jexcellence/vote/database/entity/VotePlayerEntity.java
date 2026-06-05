@@ -9,6 +9,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -62,15 +63,23 @@ public class VotePlayerEntity {
     @Column(name = "monthly_reset_month", length = 7)
     private String monthlyResetMonth;
 
-    /** Number of Streak Freezes currently owned (Duolingo-style auto-equip). */
+    /**
+     * Number of Streak Freezes currently owned (Duolingo-style auto-equip).
+     * {@link ColumnDefault} provides a SQL default so the column can be added
+     * to an existing table that already has rows (otherwise the NOT NULL
+     * add-column migration fails on those rows).
+     */
     @Column(name = "streak_freezes", nullable = false)
+    @ColumnDefault("0")
     private int streakFreezes;
 
     /**
      * Whether the one-time free Streak Freeze grant has been applied to this
      * profile. Guards the idempotent free-freeze migration for existing players.
+     * Defaults to {@code false} so existing rows receive the back-fill.
      */
     @Column(name = "freeze_initialized", nullable = false)
+    @ColumnDefault("false")
     private boolean freezeInitialized;
 
     /** Day (ISO yyyy-MM-dd, in the configured gift timezone) of the last gift sent. */
@@ -79,6 +88,7 @@ public class VotePlayerEntity {
 
     /** Number of gifts already sent during {@link #giftDay}. */
     @Column(name = "gifts_today", nullable = false)
+    @ColumnDefault("0")
     private int giftsToday;
 
     /**
