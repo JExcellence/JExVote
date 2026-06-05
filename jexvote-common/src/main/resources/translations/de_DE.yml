@@ -254,6 +254,20 @@ vote_party:
   entry-won: '  <dark_gray>▸</dark_gray> <gray>Gezogen:</gray> <white>{won}×</white>'
   empty: '<gray>Kein Party-Pool konfiguriert.</gray>'
 
+# ── Vote-Token Shop (VoteShopView) ────────────────────────────────────────────
+vote_shop:
+  title: '<gradient:#d8b4fe:#9333ea>Vote-Shop</gradient>'
+  header-name: '<gradient:#d8b4fe:#9333ea><bold>✦ Vote-Tokens</bold></gradient>'
+  points: '  <dark_gray>▸</dark_gray> <gray>Guthaben:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient> <gray>Punkte</gray>'
+  hint: '  <dark_gray>Punkte durch Voten verdienen; hier ausgeben.'
+  cost: '  <dark_gray>▸</dark_gray> <gray>Kosten:</gray> <gradient:#d8b4fe:#9333ea>{cost}</gradient> <gray>Punkte</gray>'
+  click-buy: '  <gradient:#86efac:#16a34a>Zum Kaufen klicken</gradient>'
+  empty: '<gray>Der Vote-Shop ist leer.</gray>'
+  bought: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Hast</gray> <white>{item}</white> <gray>für</gray> <gradient:#d8b4fe:#9333ea>{cost}</gradient> <gray>Punkte gekauft.</gray>'
+  not-enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Du brauchst</red> <white>{cost}</white> <red>Vote-Punkte dafür.</red>'
+  no-profile: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote zuerst mindestens einmal.</red>'
+  error: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Kauf fehlgeschlagen. Versuche es erneut.</red>'
+
 # ── Built-in JExCommand keys ──────────────────────────────────────────────────
 
 jexcommand:

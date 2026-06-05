@@ -39,6 +39,13 @@ subcommands:
       - eco
     senders: [player, console]
 
+  - name: shop
+    description: "Spend vote points in the vote-token shop"
+    aliases:
+      - store
+      - tokens
+    senders: [player]
+
   - name: freeze
     description: "Buy a Streak Freeze with vote points to protect your streak"
     aliases:

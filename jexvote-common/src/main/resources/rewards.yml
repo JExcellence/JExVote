@@ -162,9 +162,9 @@ streak-rewards:
       lore:
         - "<gray>Carves through the void itself."
       enchantments:
-        efficiency: 6
-        fortune: 4
-        unbreaking: 4
+        efficiency: 5
+        fortune: 3
+        unbreaking: 3
         mending: 1
       glow: true
     streak-21-shulkers:  { type: item, material: SHULKER_BOX, amount: 2 }
@@ -175,17 +175,16 @@ streak-rewards:
     streak-30-xp:       { type: xp,       amount: 2000 }
     streak-30-coins:    { type: currency, currency: coins, amount: 100000.0 }
     streak-30-crate:    { type: command,  command: 'crate give key {player} shadow_crate 1', asConsole: true }
-    streak-30-elytra:
+    # No elytra (free flight is too OP for a vote reward). Capstone is a Beacon
+    # — a build/status flex, not a power item.
+    streak-30-beacon:
       type: item
-      material: ELYTRA
+      material: BEACON
       amount: 1
-      name: "<gradient:#ffd700:#e67e22>Streak Master's Wings</gradient>"
+      name: "<gradient:#ffd700:#e67e22>Streak Master's Beacon</gradient>"
       lore:
         - "<gray>30 days of unbroken devotion."
-        - "<dark_gray>The sky is yours."
-      enchantments:
-        unbreaking: 4
-        mending: 1
+        - "<dark_gray>A monument to your loyalty."
       glow: true
     streak-30-netherite: { type: item, material: NETHERITE_BLOCK, amount: 1 }
     # Value shifted off coins (350k→100k) onto items per the "voting ≠ big money" call.
@@ -223,28 +222,83 @@ vote-party-rewards:
 vote-party-pool:
   type: lucky
   entries:
-    # ── Common (≈54%) — useful bulk, keeps the economy fed ──
-    - { weight: 12, id: 'party-iron-block',   reward: { type: item, material: IRON_BLOCK,     amount: 4 } }
-    - { weight: 10, id: 'party-gold-block',   reward: { type: item, material: GOLD_BLOCK,     amount: 4 } }
-    - { weight: 9,  id: 'party-coins-small',  reward: { type: currency, currency: coins, amount: 3000.0 } }
-    - { weight: 8,  id: 'party-redstone',     reward: { type: item, material: REDSTONE_BLOCK, amount: 8 } }
-    - { weight: 8,  id: 'party-hoppers',      reward: { type: item, material: HOPPER,         amount: 16 } }
-    - { weight: 7,  id: 'party-xp-bottles',   reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 16 } }
-    # ── Uncommon (≈26%) — chase mats + a vote key ──
-    - { weight: 8,  id: 'party-diamonds',     reward: { type: item, material: DIAMOND,        amount: 12 } }
-    - { weight: 7,  id: 'party-netherite-scrap', reward: { type: item, material: NETHERITE_SCRAP, amount: 3 } }
-    - { weight: 6,  id: 'party-shulker',      reward: { type: item, material: SHULKER_BOX,    amount: 2 } }
-    - { weight: 5,  id: 'party-vote-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} vote_crate 1', asConsole: true } }
-    # ── Rare (≈14%) — netherite + a season key ──
-    - { weight: 4,  id: 'party-netherite-ingot', reward: { type: item, material: NETHERITE_INGOT, amount: 2 } }
-    - { weight: 3.5, id: 'party-mending-book', reward: { type: item, material: ENCHANTED_BOOK, amount: 1 } }
-    - { weight: 3,  id: 'party-season-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} season_crate 1', asConsole: true } }
-    - { weight: 2,  id: 'party-coins-large',  reward: { type: currency, currency: coins, amount: 12000.0 } }
-    # ── Epic (≈4.5%) — shadow key + premium mats ──
-    - { weight: 2,  id: 'party-netherite-block', reward: { type: item, material: NETHERITE_BLOCK, amount: 1 } }
-    - { weight: 1.5, id: 'party-shadow-key',  announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} shadow_crate 1', asConsole: true } }
-    # ── Legendary (≈1%) — void key, the party grand prize ──
-    - { weight: 1,  id: 'party-void-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} void_crate 1', asConsole: true } }
+    # 50 entries, NO gear / NO elytra / nothing power-granting. Drop % shown in
+    # the /vote party GUI is each entry's weight ÷ total weight.
+    # ── Common — bulk materials & resources (keeps the economy fed) ──
+    - { weight: 6,   id: 'party-cobble',       reward: { type: item, material: COBBLESTONE,      amount: 256 } }
+    - { weight: 5,   id: 'party-iron-block',   reward: { type: item, material: IRON_BLOCK,       amount: 4 } }
+    - { weight: 4.5, id: 'party-gold-block',   reward: { type: item, material: GOLD_BLOCK,       amount: 4 } }
+    - { weight: 4.5, id: 'party-coins-small',  reward: { type: currency, currency: coins, amount: 3000.0 } }
+    - { weight: 4,   id: 'party-copper-block', reward: { type: item, material: COPPER_BLOCK,     amount: 16 } }
+    - { weight: 4,   id: 'party-coal-block',   reward: { type: item, material: COAL_BLOCK,       amount: 16 } }
+    - { weight: 4,   id: 'party-redstone',     reward: { type: item, material: REDSTONE_BLOCK,   amount: 8 } }
+    - { weight: 4,   id: 'party-hoppers',      reward: { type: item, material: HOPPER,           amount: 16 } }
+    - { weight: 4,   id: 'party-xp-bottles',   reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 16 } }
+    - { weight: 3.5, id: 'party-lapis-block',  reward: { type: item, material: LAPIS_BLOCK,      amount: 8 } }
+    - { weight: 3.5, id: 'party-oak-logs',     reward: { type: item, material: OAK_LOG,          amount: 64 } }
+    - { weight: 3,   id: 'party-glass',        reward: { type: item, material: GLASS,            amount: 64 } }
+    - { weight: 3,   id: 'party-sand',         reward: { type: item, material: SAND,             amount: 128 } }
+    - { weight: 3,   id: 'party-bonemeal',     reward: { type: item, material: BONE_MEAL,        amount: 32 } }
+    - { weight: 3,   id: 'party-food',         reward: { type: item, material: COOKED_BEEF,      amount: 32 } }
+    - { weight: 3,   id: 'party-obsidian',     reward: { type: item, material: OBSIDIAN,         amount: 16 } }
+    - { weight: 2.5, id: 'party-rails',        reward: { type: item, material: RAIL,             amount: 32 } }
+    - { weight: 2.5, id: 'party-torches',      reward: { type: item, material: TORCH,            amount: 64 } }
+    # ── Uncommon — chase mats, QoL, cosmetics, a vote key ──
+    - { weight: 4,   id: 'party-vote-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} vote_crate 1', asConsole: true } }
+    - { weight: 3.5, id: 'party-diamonds',     reward: { type: item, material: DIAMOND,          amount: 12 } }
+    - { weight: 2.5, id: 'party-emerald',      reward: { type: item, material: EMERALD,          amount: 16 } }
+    - { weight: 2.5, id: 'party-quartz',       reward: { type: item, material: QUARTZ,           amount: 64 } }
+    - { weight: 2.5, id: 'party-ender-pearls', reward: { type: item, material: ENDER_PEARL,      amount: 8 } }
+    - { weight: 2.5, id: 'party-shulker',      reward: { type: item, material: SHULKER_BOX,      amount: 2 } }
+    - { weight: 2.5, id: 'party-coins-medium', reward: { type: currency, currency: coins, amount: 6000.0 } }
+    - { weight: 2,   id: 'party-concrete',     reward: { type: item, material: WHITE_CONCRETE,   amount: 64 } }
+    - { weight: 2,   id: 'party-slime',        reward: { type: item, material: SLIME_BLOCK,      amount: 16 } }
+    - { weight: 2,   id: 'party-honey',        reward: { type: item, material: HONEY_BLOCK,      amount: 16 } }
+    - { weight: 2,   id: 'party-amethyst',     reward: { type: item, material: AMETHYST_BLOCK,   amount: 16 } }
+    - { weight: 2,   id: 'party-glowstone',    reward: { type: item, material: GLOWSTONE,        amount: 32 } }
+    - { weight: 2,   id: 'party-prismarine',   reward: { type: item, material: PRISMARINE,       amount: 32 } }
+    - { weight: 2,   id: 'party-xp-large',     reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 32 } }
+    - { weight: 2,   id: 'party-mending-book', reward: { type: item, material: ENCHANTED_BOOK,   amount: 1 } }
+    - { weight: 2,   id: 'party-nametags',     reward: { type: item, material: NAME_TAG,         amount: 4 } }
+    # ── Cosmetic flavour (no power) ──
+    - { weight: 1.5, id: 'party-fireworks',    reward: { type: item, material: FIREWORK_ROCKET,  amount: 16 } }
+    - { weight: 1.5, id: 'party-disc',         reward: { type: item, material: MUSIC_DISC_BLOCKS, amount: 1 } }
+    - { weight: 1.5, id: 'party-banner',       reward: { type: item, material: PURPLE_BANNER,    amount: 4 } }
+    - { weight: 1,   id: 'party-skull',        reward: { type: item, material: SKELETON_SKULL,   amount: 1 } }
+    # ── Rare — netherite mats, season key, larger coin ──
+    - { weight: 2.5, id: 'party-season-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} season_crate 1', asConsole: true } }
+    - { weight: 2,   id: 'party-netherite-scrap', reward: { type: item, material: NETHERITE_SCRAP, amount: 3 } }
+    - { weight: 1.5, id: 'party-vote-keys-2',  announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} vote_crate 2', asConsole: true } }
+    - { weight: 1.5, id: 'party-netherite-ingot', reward: { type: item, material: NETHERITE_INGOT, amount: 2 } }
+    - { weight: 1.5, id: 'party-coins-large',  reward: { type: currency, currency: coins, amount: 12000.0 } }
+    - { weight: 1.5, id: 'party-shulker-3',    reward: { type: item, material: SHULKER_BOX,      amount: 3 } }
+    - { weight: 1,   id: 'party-diamond-blocks', reward: { type: item, material: DIAMOND_BLOCK,  amount: 2 } }
+    # ── Epic — shadow key, build flex ──
+    - { weight: 1.5, id: 'party-shadow-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} shadow_crate 1', asConsole: true } }
+    - { weight: 1,   id: 'party-beacon',       reward: { type: item, material: BEACON,           amount: 1 } }
+    - { weight: 1,   id: 'party-netherite-block', reward: { type: item, material: NETHERITE_BLOCK, amount: 1 } }
+    # ── Legendary — void & dragon keys (the grand prizes) ──
+    - { weight: 1,   id: 'party-void-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} void_crate 1', asConsole: true } }
+    - { weight: 0.5, id: 'party-dragon-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} dragon_crate 1', asConsole: true } }
+
+# ── Vote-Token Shop (/vote shop) ────────────────────────────────
+# A proper sink for vote points (earned ~1 per vote). Each entry costs a
+# number of points and grants a reward. Non-OP: materials, resources, crate
+# keys, cosmetics. 'cost' is in vote points; 'icon' is the GUI material.
+vote-shop:
+  iron-block:    { name: "Iron Blocks",        icon: IRON_BLOCK,        cost: 4,  reward: { type: item, material: IRON_BLOCK, amount: 4 } }
+  hoppers:       { name: "Hoppers",            icon: HOPPER,            cost: 4,  reward: { type: item, material: HOPPER, amount: 16 } }
+  fireworks:     { name: "Fireworks",          icon: FIREWORK_ROCKET,   cost: 3,  reward: { type: item, material: FIREWORK_ROCKET, amount: 16 } }
+  xp-bottles:    { name: "Experience Bottles", icon: EXPERIENCE_BOTTLE, cost: 5,  reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 32 } }
+  nametags:      { name: "Name Tags",          icon: NAME_TAG,          cost: 5,  reward: { type: item, material: NAME_TAG, amount: 4 } }
+  music-disc:    { name: "Music Disc",         icon: MUSIC_DISC_BLOCKS, cost: 6,  reward: { type: item, material: MUSIC_DISC_BLOCKS, amount: 1 } }
+  diamonds:      { name: "Diamond Bundle",     icon: DIAMOND,           cost: 8,  reward: { type: item, material: DIAMOND, amount: 8 } }
+  shulker:       { name: "Shulker Boxes",      icon: SHULKER_BOX,       cost: 10, reward: { type: item, material: SHULKER_BOX, amount: 2 } }
+  vote-key:      { name: "Vote Crate Key",     icon: TRIPWIRE_HOOK,     cost: 6,  reward: { type: command, command: 'crate give key {player} vote_crate 1', asConsole: true } }
+  season-key:    { name: "Season Crate Key",   icon: TRIPWIRE_HOOK,     cost: 12, reward: { type: command, command: 'crate give key {player} season_crate 1', asConsole: true } }
+  netherite:     { name: "Netherite Ingots",   icon: NETHERITE_INGOT,   cost: 30, reward: { type: item, material: NETHERITE_INGOT, amount: 2 } }
+  shadow-key:    { name: "Shadow Crate Key",   icon: TRIPWIRE_HOOK,     cost: 25, reward: { type: command, command: 'crate give key {player} shadow_crate 1', asConsole: true } }
+  beacon:        { name: "Beacon",             icon: BEACON,            cost: 50, reward: { type: item, material: BEACON, amount: 1 } }
 
 # ═════════════════════════════════════════════════════════════════
 # REWARD TYPE REFERENCE

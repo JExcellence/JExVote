@@ -46,6 +46,9 @@ vote:
     slot-title: '<gradient:#fde047:#f59e0b><bold>★ VOTE PARTY ★</bold></gradient>'
     reveal-title: '<gradient:#86efac:#16a34a><bold>✦ REWARDS! ✦</bold></gradient>'
     reveal-subtitle: '<gray>You won <gradient:#fde047:#f59e0b>{count}</gradient> rewards!</gray>'
+  shop:
+    players_only: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Only players can open the vote shop.</red>'
+    unavailable: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>The vote shop is currently unavailable.</red>'
   no_permission: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You do not have permission to do this.</red>'
   player_not_found: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Player not found:</red> <white>{player}</white>'
   stats:

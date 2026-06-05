@@ -14,6 +14,7 @@ import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.view.VoteLeaderboardView;
 import de.jexcellence.vote.view.VoteOverviewView;
 import de.jexcellence.vote.view.VoteRewardsView;
+import de.jexcellence.vote.view.VoteShopView;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -40,6 +41,7 @@ public final class VoteCommandHandler {
     private final StreakFreezeService streakFreezeService;
     private final VoteGiftService voteGiftService;
     private final VoteFlyService voteFlyService;
+    private VoteShopView shopView;
 
     @SuppressWarnings({"unused", "java:S107"}) // voteConfig kept for caller compatibility; handled separately in JExVote
     public VoteCommandHandler(@NotNull VoteService voteService,
@@ -72,8 +74,25 @@ public final class VoteCommandHandler {
                 Map.entry("vote.freeze", this::onFreeze),
                 Map.entry("vote.gift", this::onGift),
                 Map.entry("vote.fly", this::onFly),
-                Map.entry("vote.eventfly", this::onEventFly)
+                Map.entry("vote.eventfly", this::onEventFly),
+                Map.entry("vote.shop", this::onShop)
         );
+    }
+
+    /** Sets the vote-token shop view (wired post-construction in JExVote). */
+    public void setShopView(@NotNull VoteShopView view) { this.shopView = view; }
+
+    private void onShop(@NotNull CommandContext ctx) {
+        Player player = ctx.asPlayer().orElse(null);
+        if (player == null) {
+            r18n().msg("vote.shop.players_only").prefix().send(ctx.sender());
+            return;
+        }
+        if (shopView == null) {
+            r18n().msg("vote.shop.unavailable").prefix().send(player);
+            return;
+        }
+        shopView.open(player);
     }
 
     private void onFly(@NotNull CommandContext ctx) {

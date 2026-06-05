@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.jsontype.NamedType;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.reward.RewardRegistry;
 import de.jexcellence.vote.reward.LuckyReward;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -34,6 +35,7 @@ public final class VoteRewardConfig {
     private Map<String, List<AbstractReward>> siteRewards = Collections.emptyMap();
     private List<AbstractReward> votePartyRewards = Collections.emptyList();
     private @Nullable LuckyReward votePartyPool;
+    private List<VoteShopItem> voteShopItems = Collections.emptyList();
 
     public VoteRewardConfig(@NotNull JavaPlugin plugin, @NotNull RewardRegistry rewardRegistry) {
         this.plugin = plugin;
@@ -58,6 +60,7 @@ public final class VoteRewardConfig {
         siteRewards = loadSiteRewards(config.getConfigurationSection("site-rewards"));
         votePartyRewards = loadRewardList(config.getConfigurationSection("vote-party-rewards"));
         votePartyPool = loadSingleLuckyReward(config.getConfigurationSection("vote-party-pool"));
+        voteShopItems = loadVoteShop(config.getConfigurationSection("vote-shop"));
 
         final int poolSize = votePartyPool != null ? votePartyPool.getEntries().size() : 0;
         logger.log(Level.INFO, () -> String.format("Loaded %d default reward(s), %d streak tier(s), %d site-specific reward set(s), %d vote-party baseline reward(s), %d party-pool entr(y/ies)",
@@ -203,4 +206,45 @@ public final class VoteRewardConfig {
 
     /** The weighted party rotation pool, or {@code null} if not configured. */
     public @Nullable LuckyReward getVotePartyPool() { return votePartyPool; }
+
+    /** Vote-token shop entries (purchasable with vote points). */
+    public @NotNull List<VoteShopItem> getVoteShopItems() { return voteShopItems; }
+
+    /**
+     * Parses the {@code vote-shop} section: each child is a shop entry with a
+     * {@code name}, {@code icon}, {@code cost} (vote points) and a nested
+     * {@code reward} block.
+     */
+    private @NotNull List<VoteShopItem> loadVoteShop(@Nullable ConfigurationSection section) {
+        if (section == null) {
+            return Collections.emptyList();
+        }
+        List<VoteShopItem> items = new ArrayList<>();
+        for (String key : section.getKeys(false)) {
+            ConfigurationSection entry = section.getConfigurationSection(key);
+            if (entry == null) {
+                continue;
+            }
+            try {
+                String name = entry.getString("name", key);
+                int cost = entry.getInt("cost", 0);
+                Material icon = Material.matchMaterial(entry.getString("icon", "PAPER"));
+                if (icon == null) {
+                    icon = Material.PAPER;
+                }
+                ConfigurationSection rewardSection = entry.getConfigurationSection("reward");
+                if (rewardSection == null) {
+                    logger.log(Level.WARNING, () -> String.format("Vote-shop item '%s' missing 'reward'", key));
+                    continue;
+                }
+                Map<String, Object> data = toDeepMap(rewardSection);
+                String json = rewardMapper.writeValueAsString(data);
+                AbstractReward reward = rewardMapper.readValue(json, AbstractReward.class);
+                items.add(new VoteShopItem(key, name, icon, cost, reward));
+            } catch (Exception e) {
+                logger.log(Level.WARNING, String.format("Failed to load vote-shop item '%s'", key), e);
+            }
+        }
+        return Collections.unmodifiableList(items);
+    }
 }
