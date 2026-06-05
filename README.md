@@ -1,7 +1,5 @@
 <div align="center">
 
-![JExVote banner](attachment-961876)
-
 # JExVote
 ### The Votifier Reward System
 

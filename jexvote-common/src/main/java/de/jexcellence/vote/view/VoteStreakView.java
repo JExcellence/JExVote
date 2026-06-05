@@ -54,10 +54,9 @@ public class VoteStreakView extends VoteBaseView {
     private static final String GRADIENT_CLAIMED = "<gradient:#86efac:#16a34a>";
     private static final String GRADIENT_CLAIMABLE = "<gradient:#fde047:#f59e0b>";
 
-    private static final int[] MILESTONE_GRID = {
-            28, 29, 30, 31, 32, 33, 34,
-            37, 38, 39, 40, 41, 42, 43
-    };
+    /** Milestone band lives on row 3 (slots 27..35); tiles are centered to the count. */
+    private static final int GRID_ROW_BASE = 27;
+    private static final int GRID_ROW_COLS = 9;
 
     private final Holder holder = new Holder();
     private final VoteService voteService;
@@ -366,20 +365,29 @@ public class VoteStreakView extends VoteBaseView {
                                       int highest, int nextMs,
                                       @NotNull Map<Integer, List<AbstractReward>> milestones,
                                       @NotNull Set<Integer> claimed, boolean manualMode) {
-        int idx = 0;
-        for (var entry : milestones.entrySet()) {
-            if (idx >= MILESTONE_GRID.length) break;
-            ItemStack item = buildMilestoneItem(
-                    entry.getKey(), entry.getValue(), viewer, highest,
-                    nextMs, claimed, manualMode);
-            inv.setItem(MILESTONE_GRID[idx], item);
-            idx++;
+        // Render milestones in ascending day order, centered to the count so
+        // there are no off-looking trailing filler panes (the old fixed 14-slot
+        // grid left gray panes whenever fewer milestones were configured).
+        List<Integer> days = new ArrayList<>(milestones.keySet());
+        Collections.sort(days);
+        int[] slots = centeredMilestoneSlots(days.size());
+        for (int i = 0; i < slots.length; i++) {
+            int day = days.get(i);
+            inv.setItem(slots[i], buildMilestoneItem(
+                    day, milestones.get(day), viewer, highest,
+                    nextMs, claimed, manualMode));
         }
+    }
 
-        for (int i = idx; i < MILESTONE_GRID.length; i++) {
-            inv.setItem(MILESTONE_GRID[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
-                    .name(Component.empty()).build());
+    /** Computes centered slots on the milestone row for {@code count} tiles. */
+    private int[] centeredMilestoneSlots(int count) {
+        int n = Math.min(Math.max(count, 0), GRID_ROW_COLS);
+        int start = GRID_ROW_BASE + (GRID_ROW_COLS - n) / 2;
+        int[] slots = new int[n];
+        for (int i = 0; i < n; i++) {
+            slots[i] = start + i;
         }
+        return slots;
     }
 
     private @NotNull ItemStack buildMilestoneItem(int day, @NotNull List<AbstractReward> rewards,

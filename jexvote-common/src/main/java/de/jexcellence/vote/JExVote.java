@@ -39,12 +39,15 @@ import de.jexcellence.vote.service.StreakClaimService;
 import de.jexcellence.vote.service.StreakFreezeService;
 import de.jexcellence.vote.service.VoteBroadcastService;
 import de.jexcellence.vote.service.VoteGiftService;
+import de.jexcellence.vote.service.FlyBridge;
+import de.jexcellence.vote.service.VoteFlyService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteRewardService;
 import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.view.VoteLeaderboardView;
 import de.jexcellence.vote.view.VoteOverviewView;
+import de.jexcellence.vote.view.VotePartyView;
 import de.jexcellence.vote.view.VoteRewardsView;
 import de.jexcellence.vote.view.VoteStreakView;
 import org.bukkit.Bukkit;
@@ -96,6 +99,7 @@ public abstract class JExVote {
     private StreakClaimService streakClaimService;
     private StreakFreezeService streakFreezeService;
     private VoteGiftService voteGiftService;
+    private VoteFlyService voteFlyService;
     private VotePartyService votePartyService;
     private RewardStatsService rewardStatsService;
     private MultiplierService multiplierService;
@@ -311,6 +315,14 @@ public abstract class JExVote {
 
         streakFreezeService = new StreakFreezeService(playerRepository, voteConfig);
         voteGiftService = new VoteGiftService(playerRepository, voteConfig);
+        // Vote-token → temporary flight redemption (1 token = 45 min by default)
+        // and the one-time event auto-fly perk purchase (5 tokens by default).
+        voteFlyService = new VoteFlyService(playerRepository, new FlyBridge(logger),
+                PlatformScheduler.of(plugin),
+                plugin.getConfig().getBoolean("fly.enabled", true),
+                plugin.getConfig().getInt("fly.cost-points", 1),
+                plugin.getConfig().getInt("fly.minutes", 45),
+                plugin.getConfig().getInt("fly.event-fly-cost-points", 5));
 
         // Purge old vote records on startup
         voteService.purgeOldRecords();
@@ -322,10 +334,12 @@ public abstract class JExVote {
         if (!edition().votePartyEnabled() || !voteConfig.isVotePartyEnabled()) {
             return null;
         }
-        return new VotePartyService(
+        VotePartyService service = new VotePartyService(
                 plugin, partyRepository, partyContributorRepository,
                 pendingRewardRepository, rewardService, broadcastService,
                 rewardConfig.getVotePartyRewards(), voteConfig.getVotePartyTarget());
+        service.setPartyPool(rewardConfig.getVotePartyPool());
+        return service;
     }
 
     private void initializeVotifierServer() {
@@ -425,7 +439,7 @@ public abstract class JExVote {
 
         factory.registerTree(new File(plugin.getDataFolder(), "commands/vote.yml"),
                 new VoteCommandHandler(voteService, leaderboardService, voteConfig, overviewView, rewardsView,
-                        leaderboardView, streakFreezeService, voteGiftService).handlerMap(),
+                        leaderboardView, streakFreezeService, voteGiftService, voteFlyService).handlerMap(),
                 messages, registry);
         factory.registerTree(new File(plugin.getDataFolder(), "commands/jexvote.yml"),
                 new VoteAdminHandler(plugin, edition(), voteService, voteConfig, rewardConfig).handlerMap(),
@@ -444,6 +458,7 @@ public abstract class JExVote {
         rewardsView = new VoteRewardsView(plugin, voteConfig, rewardConfig,
                 multiplierService, votePartyService, rewardStatsService,
                 streakFreezeService, voteGiftService);
+        var partyView = new VotePartyView(rewardConfig, votePartyService, rewardStatsService);
 
         // Wire cross-navigation references
         overviewView.setLeaderboardView(leaderboardView);
@@ -452,12 +467,15 @@ public abstract class JExVote {
         leaderboardView.setOverviewView(overviewView);
         streakView.setOverviewView(overviewView);
         rewardsView.setOverviewView(overviewView);
+        rewardsView.setPartyView(partyView);
+        partyView.setRewardsView(rewardsView);
 
         // Register as Bukkit listeners (raw inventory click handling)
         pm.registerEvents(overviewView, plugin);
         pm.registerEvents(leaderboardView, plugin);
         pm.registerEvents(streakView, plugin);
         pm.registerEvents(rewardsView, plugin);
+        pm.registerEvents(partyView, plugin);
     }
 
     private void registerPlaceholders() {

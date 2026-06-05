@@ -22,6 +22,17 @@ vote:
     not_enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Du brauchst</red> <gradient:#d8b4fe:#9333ea>{cost} Vote-Punkte</gradient><red>, um einen Streak-Freeze zu kaufen.</red>'
     no_profile: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote mindestens einmal, bevor du einen Streak-Freeze kaufst.</red>'
     error: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Kauf konnte nicht abgeschlossen werden. Versuche es erneut.</red>'
+  fly:
+    granted: '<gradient:#7dd3fc:#2563eb>✈ Flug freigeschaltet!</gradient> <gray>Du kannst</gray> <white>{minutes} Min</white> <gray>fliegen — Kosten</gray> <gradient:#d8b4fe:#9333ea>{cost} Vote-Punkte</gradient><gray>.</gray>'
+    disabled: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Flug-Einlösung ist auf diesem Server deaktiviert.</red>'
+    not_enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Du brauchst</red> <gradient:#d8b4fe:#9333ea>{cost} Vote-Punkte</gradient><red>, um Flug einzulösen.</red>'
+    no_profile: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote mindestens einmal, bevor du Flug einlöst.</red>'
+    unavailable: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Flug ist gerade nicht verfügbar (JExEssentials fehlt?).</red>'
+    error: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Flug konnte nicht eingelöst werden. Versuche es erneut.</red>'
+  eventfly:
+    granted: '<gradient:#7dd3fc:#2563eb>✈ Event-Auto-Flug freigeschaltet!</gradient> <gray>Du fliegst jetzt automatisch, solange ein Insel-Event aktiv ist — Kosten</gray> <gradient:#d8b4fe:#9333ea>{cost} Vote-Punkte</gradient><gray>.</gray>'
+    already_owned: '<gradient:#fde047:#f59e0b>✦</gradient> <yellow>Du besitzt den Event-Auto-Flug bereits.</yellow>'
+    not_enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Du brauchst</red> <gradient:#d8b4fe:#9333ea>{cost} Vote-Punkte</gradient><red>, um Event-Auto-Flug freizuschalten.</red>'
   gift:
     usage: '<dark_gray>▸</dark_gray> <gray>Verwendung:</gray> <gradient:#86efac:#16a34a>/vote gift <white><Spieler|random></white></gradient>'
     sent: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Du hast</gray> <gradient:#86efac:#16a34a>{target}</gradient> <gray>einen Serien-Fortschritt geschenkt! Serie:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient> <dark_gray>(</dark_gray><white>{remaining} Geschenk(e) heute übrig</white><dark_gray>)</dark_gray>'
@@ -204,6 +215,7 @@ vote_rewards:
     rewards-header: '  <gray>Bei Abschluss erhältst du:'
     reward-entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray>'
     none: '  <dark_gray>Keine Party-Belohnungen konfiguriert.'
+    view-all: '  <gradient:#86efac:#16a34a>Klicke, um alle Party-Belohnungen zu sehen</gradient>'
   points:
     name: '<gradient:#d8b4fe:#9333ea><bold>✦ Vote-Punkte</bold></gradient>'
     balance: '  <dark_gray>▸</dark_gray> <gray>Guthaben:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient>'
@@ -228,6 +240,19 @@ vote_rewards:
     lucky-entry: '<dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow> <dark_gray>({won}× gewonnen)</dark_gray>'
     multiplier: '<dark_gray>▸</dark_gray> <gray>Multiplikator:</gray> <yellow>{factor}×</yellow> <dark_gray>({status})</dark_gray>'
     party: '<dark_gray>▸</dark_gray> <gray>Vote-Party:</gray> <green>{current}</green><dark_gray>/</dark_gray><white>{target}</white> <dark_gray>(noch {remaining})</dark_gray>'
+
+# ── Vote-Party Belohnungskatalog (VotePartyView) ──────────────────────────────
+vote_party:
+  title: '<gradient:#fde047:#f59e0b>Vote-Party Belohnungen</gradient>'
+  disabled: '  <dark_gray>Vote-Partys sind deaktiviert.'
+  header:
+    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote-Party ✦</bold></gradient>'
+    lore: '<gray>3 garantierte Ziehungen + Bonus-Würfe pro Party.</gray>'
+  progress: '  <dark_gray>▸</dark_gray> <gray>Fortschritt:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
+  remaining: '  <dark_gray>▸</dark_gray> <gray>Verbleibend:</gray> <white>{remaining}</white>'
+  entry-chance: '  <dark_gray>▸</dark_gray> <gray>Chance:</gray> <gradient:#86efac:#16a34a>{chance}%</gradient>'
+  entry-won: '  <dark_gray>▸</dark_gray> <gray>Gezogen:</gray> <white>{won}×</white>'
+  empty: '<gray>Kein Party-Pool konfiguriert.</gray>'
 
 # ── Built-in JExCommand keys ──────────────────────────────────────────────────
 

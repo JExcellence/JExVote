@@ -13,6 +13,10 @@ dependencies:
       load: BEFORE
       required: false
       join-classpath: true
+    JExEssentials:
+      load: BEFORE
+      required: false
+      join-classpath: true
     Vault:
       load: BEFORE
       required: false

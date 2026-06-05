@@ -88,6 +88,15 @@ public class LuckyReward extends AbstractReward {
         });
     }
 
+    /**
+     * Draws one entry from the pool using the configured weights. Public so
+     * callers that need several draws (e.g. the vote-party rotation) can roll
+     * the same pool without going through {@link #grant(Player)}.
+     */
+    public @NotNull Entry pick() {
+        return pickWeighted();
+    }
+
     private @NotNull Entry pickWeighted() {
         double total = 0.0;
         for (Entry entry : entries) {

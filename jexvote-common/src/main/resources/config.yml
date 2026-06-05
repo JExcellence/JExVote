@@ -111,8 +111,10 @@ multipliers:
   weekend:
     # Master switch for the weekend multiplier.
     enabled: false
-    # The factor applied during the weekend window (e.g. 2.0 = double).
-    factor: 2.0
+    # The factor applied during the weekend window to vote points + coin/XP
+    # reward amounts. Kept at 1.2 so this stays a minor additive-style nudge
+    # rather than a full multiplicative income lever (economy doc cap = 2).
+    factor: 1.2
     # Which days count as "weekend" (English DayOfWeek names).
     days:
       - SATURDAY
@@ -152,3 +154,17 @@ vote-gift:
   # Day-boundary timezone for both the daily gift limit and the
   # "voted today" check.
   timezone: 'UTC'
+
+# ── Fly redemption ────────────────────────────────────────────────────────────
+# Redeem vote points for temporary flight via /vote fly. Requires JExEssentials.
+fly:
+  # Master switch.
+  enabled: true
+  # Vote points charged per redemption.
+  cost-points: 1
+  # Minutes of flight granted per redemption (default: 1 token = 45 min).
+  minutes: 45
+  # One-time cost (vote points) of the permanent "event auto-fly" perk
+  # (/vote eventfly). Grants the jexoneblock.eventfly permission, which makes
+  # JExOneblock auto-enable flight while any island event is active.
+  event-fly-cost-points: 5

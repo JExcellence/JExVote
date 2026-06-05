@@ -44,6 +44,7 @@ public final class VoteRewardsView extends VoteBaseView {
     private static final int SLOT_FREEZE = 30;
     private static final int SLOT_GIFT = 32;
     private static final String TAG_BUY_FREEZE = "buy_freeze";
+    private static final String TAG_OPEN_PARTY = "open_party";
 
     private final Holder holder = new Holder();
     private final JavaPlugin plugin;
@@ -57,6 +58,7 @@ public final class VoteRewardsView extends VoteBaseView {
     private final VoteGiftService giftService;
 
     private VoteOverviewView overviewView;
+    private @Nullable VotePartyView partyView;
 
     @SuppressWarnings("java:S107")
     public VoteRewardsView(@NotNull JavaPlugin plugin,
@@ -79,6 +81,9 @@ public final class VoteRewardsView extends VoteBaseView {
     }
 
     public void setOverviewView(@NotNull VoteOverviewView view) { this.overviewView = view; }
+
+    /** Wires the clickable party icon to the dedicated party reward catalog. */
+    public void setPartyView(@NotNull VotePartyView view) { this.partyView = view; }
 
     @Override protected @NotNull String title()          { return "vote_rewards.title"; }
     @Override protected int rows()                        { return 6; }
@@ -247,12 +252,20 @@ public final class VoteRewardsView extends VoteBaseView {
                 }
             }
         }
+        if (partyView != null) {
+            lore.add(Component.empty());
+            lore.add(ic("vote_rewards.party.view-all", viewer));
+        }
         lore.add(Component.empty());
-        return ItemBuilder.of(Material.TOTEM_OF_UNDYING)
+        ItemStack icon = ItemBuilder.of(Material.TOTEM_OF_UNDYING)
                 .name(ic("vote_rewards.party.name", viewer))
                 .glow(party != null)
                 .lore(lore)
                 .build();
+        if (partyView != null) {
+            tag(icon, TAG_OPEN_PARTY);
+        }
+        return icon;
     }
 
     private @NotNull ItemStack freezeIcon(@NotNull Player viewer, int owned) {
@@ -327,6 +340,10 @@ public final class VoteRewardsView extends VoteBaseView {
         String tag = tagOf(clicked);
         if ("back".equals(tag) && overviewView != null) {
             overviewView.open(viewer);
+            return;
+        }
+        if (TAG_OPEN_PARTY.equals(tag) && partyView != null) {
+            partyView.open(viewer);
             return;
         }
         if (TAG_BUY_FREEZE.equals(tag)) {

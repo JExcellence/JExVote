@@ -45,6 +45,16 @@ subcommands:
       - freezes
     senders: [player]
 
+  - name: fly
+    description: "Redeem vote points for temporary flight"
+    senders: [player]
+
+  - name: eventfly
+    description: "Unlock permanent auto-flight during island events"
+    aliases:
+      - flyupgrade
+    senders: [player]
+
   - name: gift
     description: "Gift today's streak advance to a player (or 'random')"
     senders: [player]

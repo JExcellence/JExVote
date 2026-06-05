@@ -22,6 +22,17 @@ vote:
     not_enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You need</red> <gradient:#d8b4fe:#9333ea>{cost} vote points</gradient> <red>to buy a Streak Freeze.</red>'
     no_profile: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote at least once before buying a Streak Freeze.</red>'
     error: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Could not complete the purchase. Try again.</red>'
+  fly:
+    granted: '<gradient:#7dd3fc:#2563eb>✈ Flight granted!</gradient> <gray>You can fly for</gray> <white>{minutes} min</white> <gray>— cost</gray> <gradient:#d8b4fe:#9333ea>{cost} vote points</gradient><gray>.</gray>'
+    disabled: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Flight redemption is disabled on this server.</red>'
+    not_enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You need</red> <gradient:#d8b4fe:#9333ea>{cost} vote points</gradient> <red>to redeem flight.</red>'
+    no_profile: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote at least once before redeeming flight.</red>'
+    unavailable: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Flight is unavailable right now (JExEssentials missing?).</red>'
+    error: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Could not redeem flight. Try again.</red>'
+  eventfly:
+    granted: '<gradient:#7dd3fc:#2563eb>✈ Event auto-fly unlocked!</gradient> <gray>You now fly automatically while any island event is active — cost</gray> <gradient:#d8b4fe:#9333ea>{cost} vote points</gradient><gray>.</gray>'
+    already_owned: '<gradient:#fde047:#f59e0b>✦</gradient> <yellow>You already own the event auto-fly perk.</yellow>'
+    not_enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You need</red> <gradient:#d8b4fe:#9333ea>{cost} vote points</gradient> <red>to unlock event auto-fly.</red>'
   gift:
     usage: '<dark_gray>▸</dark_gray> <gray>Usage:</gray> <gradient:#86efac:#16a34a>/vote gift <white><player|random></white></gradient>'
     sent: '<gradient:#86efac:#16a34a>✔</gradient> <gray>You gifted a streak advance to</gray> <gradient:#86efac:#16a34a>{target}</gradient><gray>! Their streak:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient> <dark_gray>(</dark_gray><white>{remaining} gift(s) left today</white><dark_gray>)</dark_gray>'
@@ -204,6 +215,7 @@ vote_rewards:
     rewards-header: '  <gray>On completion you get:'
     reward-entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray>'
     none: '  <dark_gray>No party rewards configured.'
+    view-all: '  <gradient:#86efac:#16a34a>Click to view all party rewards</gradient>'
   points:
     name: '<gradient:#d8b4fe:#9333ea><bold>✦ Vote Points</bold></gradient>'
     balance: '  <dark_gray>▸</dark_gray> <gray>Balance:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient>'
@@ -228,6 +240,19 @@ vote_rewards:
     lucky-entry: '<dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow> <dark_gray>({won}× won)</dark_gray>'
     multiplier: '<dark_gray>▸</dark_gray> <gray>Multiplier:</gray> <yellow>{factor}×</yellow> <dark_gray>({status})</dark_gray>'
     party: '<dark_gray>▸</dark_gray> <gray>Vote Party:</gray> <green>{current}</green><dark_gray>/</dark_gray><white>{target}</white> <dark_gray>({remaining} left)</dark_gray>'
+
+# ── Vote Party reward catalog (VotePartyView) ─────────────────────────────────
+vote_party:
+  title: '<gradient:#fde047:#f59e0b>Vote Party Rewards</gradient>'
+  disabled: '  <dark_gray>Vote parties are disabled.'
+  header:
+    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Party ✦</bold></gradient>'
+    lore: '<gray>3 guaranteed draws + bonus rolls per party.</gray>'
+  progress: '  <dark_gray>▸</dark_gray> <gray>Progress:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
+  remaining: '  <dark_gray>▸</dark_gray> <gray>Remaining:</gray> <white>{remaining}</white>'
+  entry-chance: '  <dark_gray>▸</dark_gray> <gray>Chance:</gray> <gradient:#86efac:#16a34a>{chance}%</gradient>'
+  entry-won: '  <dark_gray>▸</dark_gray> <gray>Pulled:</gray> <white>{won}×</white>'
+  empty: '<gray>No party pool configured.</gray>'
 
 # ── Built-in JExCommand keys ──────────────────────────────────────────────────
 

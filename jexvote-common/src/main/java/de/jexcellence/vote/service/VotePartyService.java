@@ -8,15 +8,28 @@ import de.jexcellence.vote.database.entity.VotePartyEntity;
 import de.jexcellence.vote.database.repository.PendingVoteRewardRepository;
 import de.jexcellence.vote.database.repository.VotePartyContributorRepository;
 import de.jexcellence.vote.database.repository.VotePartyRepository;
+import de.jexcellence.jextranslate.R18nManager;
+import de.jexcellence.vote.reward.LuckyReward;
+import de.jexcellence.vote.reward.RewardStats;
+import de.jexcellence.vote.view.VoteRewardDescriber;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,6 +50,18 @@ public class VotePartyService {
 
     private static final String PARTY_SERVICE_NAME = "VoteParty";
 
+    /** Guaranteed pool draws every contributor receives. */
+    private static final int GUARANTEED_PICKS = 3;
+    /** Hard cap on total pool draws (guaranteed + extras). */
+    private static final int MAX_TOTAL_PICKS = 10;
+    /** First extra-roll chance; decays by {@link #EXTRA_STEP} each step. */
+    private static final double EXTRA_START_CHANCE = 0.75;
+    private static final double EXTRA_STEP = 0.08;
+    /** Slot-machine animation: spin frames + ticks between frames. */
+    private static final int ANIM_FRAMES = 14;
+    private static final long ANIM_FRAME_TICKS = 3L;
+    private static final int ROLL_GUARD = 200;
+
     private final Logger logger;
     private final PlatformScheduler scheduler;
     private final VotePartyRepository partyRepository;
@@ -46,6 +71,9 @@ public class VotePartyService {
     private final VoteBroadcastService broadcastService;
     private final List<AbstractReward> partyRewards;
     private final int target;
+
+    /** Weighted rotation pool for the 3-guaranteed + decaying-extra draws. */
+    private @Nullable LuckyReward partyPool;
 
     // Live view of party progress for placeholders.
     private final AtomicInteger currentVotes = new AtomicInteger(0);
@@ -130,17 +158,122 @@ public class VotePartyService {
                 "Vote Party #%d completed — rewarded %d contributor(s)", completedNumber, rewarded));
     }
 
+    /** Injects the weighted party rotation pool (null = no rotation, baseline only). */
+    public void setPartyPool(@Nullable LuckyReward partyPool) {
+        this.partyPool = partyPool;
+    }
+
     private void rewardContributor(@NotNull UUID uuid) {
-        Player online = Bukkit.getPlayer(uuid);
-        if (online != null && online.isOnline()) {
-            scheduler.runAtEntity(online, () -> rewardService.grantRewardList(online, partyRewards));
-        } else {
-            String data = rewardService.serializeRewardList(partyRewards);
-            if (data != null) {
-                pendingRewardRepository.create(
-                        new PendingVoteRewardEntity(uuid, PARTY_SERVICE_NAME, data));
+        List<LuckyReward.Entry> picks = rollPartyEntries();
+        List<AbstractReward> rewards = new ArrayList<>(partyRewards);
+        for (LuckyReward.Entry entry : picks) {
+            rewards.add(entry.reward());
+            if (entry.id() != null) {
+                RewardStats.record(entry.id());
             }
         }
+
+        Player online = Bukkit.getPlayer(uuid);
+        if (online != null && online.isOnline()) {
+            if (picks.isEmpty()) {
+                scheduler.runAtEntity(online, () -> rewardService.grantRewardList(online, rewards));
+            } else {
+                animateThenGrant(uuid, picks, rewards, 0);
+            }
+        } else {
+            queuePending(uuid, rewards);
+        }
+    }
+
+    /** Serializes a reward list into the offline pending-reward queue. */
+    private void queuePending(@NotNull UUID uuid, @NotNull List<AbstractReward> rewards) {
+        String data = rewardService.serializeRewardList(rewards);
+        if (data != null) {
+            pendingRewardRepository.create(
+                    new PendingVoteRewardEntity(uuid, PARTY_SERVICE_NAME, data));
+        }
+    }
+
+    /**
+     * Draws the per-contributor pool picks: {@link #GUARANTEED_PICKS} distinct
+     * draws plus decaying-chance extras (start {@link #EXTRA_START_CHANCE},
+     * −{@link #EXTRA_STEP}/step) up to {@link #MAX_TOTAL_PICKS}. Empty when no
+     * pool is configured.
+     */
+    private @NotNull List<LuckyReward.Entry> rollPartyEntries() {
+        LuckyReward pool = partyPool;
+        if (pool == null || pool.getEntries().isEmpty()) {
+            return List.of();
+        }
+        List<LuckyReward.Entry> picks = new ArrayList<>();
+        Set<String> usedIds = new HashSet<>();
+        int distinctTarget = Math.min(GUARANTEED_PICKS, pool.getEntries().size());
+        int guard = 0;
+        while (picks.size() < distinctTarget && guard < ROLL_GUARD) {
+            guard++;
+            LuckyReward.Entry entry = pool.pick();
+            String key = entry.id() != null ? entry.id() : "@" + System.identityHashCode(entry);
+            if (usedIds.add(key)) {
+                picks.add(entry);
+            }
+        }
+        double chance = EXTRA_START_CHANCE;
+        for (int i = GUARANTEED_PICKS; i < MAX_TOTAL_PICKS && chance > 0.0; i++) {
+            if (ThreadLocalRandom.current().nextDouble() < chance) {
+                picks.add(pool.pick());
+            }
+            chance -= EXTRA_STEP;
+        }
+        return picks;
+    }
+
+    /**
+     * Plays the slot-machine reveal for an online contributor, then grants the
+     * rewards on the final frame. Self-reschedules via the platform scheduler
+     * (Folia-safe: player ops run in the entity's region). If the player drops
+     * mid-animation, the rewards fall back to the offline queue.
+     */
+    private void animateThenGrant(@NotNull UUID uuid, @NotNull List<LuckyReward.Entry> picks,
+                                  @NotNull List<AbstractReward> rewards, int frame) {
+        Player player = Bukkit.getPlayer(uuid);
+        if (player == null || !player.isOnline()) {
+            queuePending(uuid, rewards);
+            return;
+        }
+        if (frame >= ANIM_FRAMES) {
+            scheduler.runAtEntity(player, () -> {
+                showReveal(player, picks);
+                rewardService.grantRewardList(player, rewards);
+            });
+            return;
+        }
+        scheduler.runAtEntity(player, () -> showSpinFrame(player, picks, frame));
+        scheduler.runDelayed(() -> animateThenGrant(uuid, picks, rewards, frame + 1), ANIM_FRAME_TICKS);
+    }
+
+    private void showSpinFrame(@NotNull Player player, @NotNull List<LuckyReward.Entry> picks, int frame) {
+        LuckyReward.Entry spin = picks.get(ThreadLocalRandom.current().nextInt(picks.size()));
+        String name = VoteRewardDescriber.describe(spin.reward());
+        player.showTitle(Title.title(
+                MiniMessage.miniMessage().deserialize(rawMsg("vote.party.slot-title", player)),
+                MiniMessage.miniMessage().deserialize(name),
+                Title.Times.times(Duration.ZERO, Duration.ofMillis(200), Duration.ZERO)));
+        player.playSound(player, Sound.BLOCK_NOTE_BLOCK_HAT, 0.7f, 1.0f + (frame % 5) * 0.1f);
+    }
+
+    private void showReveal(@NotNull Player player, @NotNull List<LuckyReward.Entry> picks) {
+        String subtitle = rawMsg("vote.party.reveal-subtitle", player)
+                .replace("{count}", String.valueOf(picks.size()));
+        player.showTitle(Title.title(
+                MiniMessage.miniMessage().deserialize(rawMsg("vote.party.reveal-title", player)),
+                MiniMessage.miniMessage().deserialize(subtitle),
+                Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(400))));
+        player.playSound(player, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+    }
+
+    /** Resolves a translation key to its raw MiniMessage string for {@code player}. */
+    private @NotNull String rawMsg(@NotNull String key, @NotNull Player player) {
+        return R18nManager.getInstance().msg(key).toString(player);
     }
 
     private @NotNull VotePartyEntity getOrCreateActiveParty() {

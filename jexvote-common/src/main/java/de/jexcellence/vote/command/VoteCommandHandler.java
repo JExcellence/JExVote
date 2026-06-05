@@ -7,6 +7,7 @@ import de.jexcellence.vote.api.model.VoteSnapshot;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.StreakFreezeService;
+import de.jexcellence.vote.service.VoteFlyService;
 import de.jexcellence.vote.service.VoteGiftService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteService;
@@ -38,6 +39,7 @@ public final class VoteCommandHandler {
     private final VoteLeaderboardView leaderboardView;
     private final StreakFreezeService streakFreezeService;
     private final VoteGiftService voteGiftService;
+    private final VoteFlyService voteFlyService;
 
     @SuppressWarnings({"unused", "java:S107"}) // voteConfig kept for caller compatibility; handled separately in JExVote
     public VoteCommandHandler(@NotNull VoteService voteService,
@@ -47,7 +49,8 @@ public final class VoteCommandHandler {
                               @NotNull VoteRewardsView rewardsView,
                               @NotNull VoteLeaderboardView leaderboardView,
                               @NotNull StreakFreezeService streakFreezeService,
-                              @NotNull VoteGiftService voteGiftService) {
+                              @NotNull VoteGiftService voteGiftService,
+                              @NotNull VoteFlyService voteFlyService) {
         this.voteService = voteService;
         this.leaderboardService = leaderboardService;
         this.overviewView = overviewView;
@@ -55,6 +58,7 @@ public final class VoteCommandHandler {
         this.leaderboardView = leaderboardView;
         this.streakFreezeService = streakFreezeService;
         this.voteGiftService = voteGiftService;
+        this.voteFlyService = voteFlyService;
     }
 
     public @NotNull Map<String, CommandHandler> handlerMap() {
@@ -66,8 +70,51 @@ public final class VoteCommandHandler {
                 Map.entry("vote.top", this::onTop),
                 Map.entry("vote.rewards", this::onRewards),
                 Map.entry("vote.freeze", this::onFreeze),
-                Map.entry("vote.gift", this::onGift)
+                Map.entry("vote.gift", this::onGift),
+                Map.entry("vote.fly", this::onFly),
+                Map.entry("vote.eventfly", this::onEventFly)
         );
+    }
+
+    private void onFly(@NotNull CommandContext ctx) {
+        Player player = ctx.asPlayer().orElseThrow();
+        int cost = voteFlyService.costPoints();
+        int minutes = voteFlyService.minutes();
+        voteFlyService.redeem(player).thenAccept(result -> {
+            switch (result) {
+                case SUCCESS -> r18n().msg("vote.fly.granted").prefix()
+                        .with("minutes", String.valueOf(minutes))
+                        .with("cost", String.valueOf(cost))
+                        .send(player);
+                case DISABLED -> r18n().msg("vote.fly.disabled").prefix().send(player);
+                case NOT_ENOUGH_POINTS -> r18n().msg("vote.fly.not_enough").prefix()
+                        .with("cost", String.valueOf(cost))
+                        .send(player);
+                case NO_PROFILE -> r18n().msg("vote.fly.no_profile").prefix().send(player);
+                case UNAVAILABLE -> r18n().msg("vote.fly.unavailable").prefix().send(player);
+                default -> r18n().msg("vote.fly.error").prefix().send(player);
+            }
+        });
+    }
+
+    private void onEventFly(@NotNull CommandContext ctx) {
+        Player player = ctx.asPlayer().orElseThrow();
+        int cost = voteFlyService.eventFlyCost();
+        voteFlyService.redeemEventFly(player).thenAccept(result -> {
+            switch (result) {
+                case SUCCESS -> r18n().msg("vote.eventfly.granted").prefix()
+                        .with("cost", String.valueOf(cost))
+                        .send(player);
+                case ALREADY_OWNED -> r18n().msg("vote.eventfly.already_owned").prefix().send(player);
+                case DISABLED -> r18n().msg("vote.fly.disabled").prefix().send(player);
+                case NOT_ENOUGH_POINTS -> r18n().msg("vote.eventfly.not_enough").prefix()
+                        .with("cost", String.valueOf(cost))
+                        .send(player);
+                case NO_PROFILE -> r18n().msg("vote.fly.no_profile").prefix().send(player);
+                case UNAVAILABLE -> r18n().msg("vote.fly.unavailable").prefix().send(player);
+                default -> r18n().msg("vote.fly.error").prefix().send(player);
+            }
+        });
     }
 
     private void onRewards(@NotNull CommandContext ctx) {

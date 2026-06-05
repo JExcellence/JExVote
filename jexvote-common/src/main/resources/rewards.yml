@@ -42,10 +42,10 @@ default-rewards:
         id: 'jackpot-vote-crate'
         announce: 'vote.lucky.jackpot'
         reward: { type: command, command: 'crate give key {player} vote_crate 1', asConsole: true }
-      - weight: 4           # 4% — the coin jackpot
+      - weight: 4           # 4% — the coin jackpot (trimmed 25k→8k per "voting ≠ big money")
         id: 'jackpot-coins-large'
         announce: 'vote.lucky.jackpot'
-        reward: { type: currency, currency: coins, amount: 25000.0 }
+        reward: { type: currency, currency: coins, amount: 8000.0 }
       - weight: 3.5         # 3.5% — a Season Crate key
         id: 'jackpot-season-crate'
         announce: 'vote.lucky.jackpot'
@@ -70,15 +70,29 @@ default-rewards:
 #
 #   Day  Tier        Crate key       Headline gear
 #   ──── ─────────── ─────────────── ───────────────────────────────
+#    1   Spark       —               Voter's Iron (8 ingots, warm-up)
 #    3   Sprout      vote_crate      Voter's Hoppers (automation)
 #    7   Settler     season_crate    Voter's Pickaxe (Eff IV / Fortune II)
-#   14   Veteran     shadow_crate    Voter's Blade (Sharp V / Looting III)
+#   14   Veteran     2× vote_crate   Voter's Blade (Sharp V / Looting III)
 #   21   Champion    void_crate      Champion's Drill (Eff VI / Fortune IV)
-#   30   Legend      dragon_crate    Streak Master's Wings (Elytra)
+#   30   Legend      shadow_crate    Streak Master's Wings (Elytra)
 #
-# dragon_crate is the highest-priced purchasable crate — the day-30 capstone.
-# Crate keys use 'crate give key <player> <crate> <amount>' as console.
+# Crate ladder is deliberately toned down: dragon_crate is NOT a streak prize
+# (only via the rarer jackpot/party). Crate keys use
+# 'crate give key <player> <crate> <amount>' as console.
 streak-rewards:
+
+  # ── Day 1 · Spark ───────────────────────────────────────────────
+  1:
+    streak-1-xp:        { type: xp,       amount: 50 }
+    streak-1-coins:     { type: currency, currency: coins, amount: 2500.0 }
+    streak-1-iron:
+      type: item
+      material: IRON_INGOT
+      amount: 8
+      name: "<gradient:#ffffff:#bdc3c7>Voter's Iron</gradient>"
+      lore:
+        - "<gray>A warm-up reward for showing up."
 
   # ── Day 3 · Sprout ──────────────────────────────────────────────
   3:
@@ -118,7 +132,7 @@ streak-rewards:
   14:
     streak-14-xp:       { type: xp,       amount: 500 }
     streak-14-coins:    { type: currency, currency: coins, amount: 50000.0 }
-    streak-14-crate:    { type: command,  command: 'crate give key {player} shadow_crate 1', asConsole: true }
+    streak-14-crate:    { type: command,  command: 'crate give key {player} vote_crate 2', asConsole: true }
     streak-14-sword:
       type: item
       material: NETHERITE_SWORD
@@ -138,7 +152,7 @@ streak-rewards:
   # ── Day 21 · Champion ───────────────────────────────────────────
   21:
     streak-21-xp:       { type: xp,       amount: 1000 }
-    streak-21-coins:    { type: currency, currency: coins, amount: 150000.0 }
+    streak-21-coins:    { type: currency, currency: coins, amount: 75000.0 }
     streak-21-crate:    { type: command,  command: 'crate give key {player} void_crate 1', asConsole: true }
     streak-21-pickaxe:
       type: item
@@ -159,8 +173,8 @@ streak-rewards:
   # ── Day 30 · Legend ─────────────────────────────────────────────
   30:
     streak-30-xp:       { type: xp,       amount: 2000 }
-    streak-30-coins:    { type: currency, currency: coins, amount: 500000.0 }
-    streak-30-crate:    { type: command,  command: 'crate give key {player} dragon_crate 1', asConsole: true }
+    streak-30-coins:    { type: currency, currency: coins, amount: 100000.0 }
+    streak-30-crate:    { type: command,  command: 'crate give key {player} shadow_crate 1', asConsole: true }
     streak-30-elytra:
       type: item
       material: ELYTRA
@@ -174,6 +188,8 @@ streak-rewards:
         mending: 1
       glow: true
     streak-30-netherite: { type: item, material: NETHERITE_BLOCK, amount: 1 }
+    # Value shifted off coins (350k→100k) onto items per the "voting ≠ big money" call.
+    streak-30-diamond-blocks: { type: item, material: DIAMOND_BLOCK, amount: 8 }
 
 # ── Site-Specific Rewards ───────────────────────────────────────
 # Extra rewards for voting on specific sites.
@@ -190,11 +206,45 @@ site-rewards: {}
 # login). Configure the target/toggle under 'vote-party' in config.yml.
 # NOTE: Vote Party is a Premium-edition feature — on the Free edition it
 # stays disabled regardless of these settings.
+#
+# Two parts:
+#   vote-party-rewards : a small GUARANTEED baseline granted to everyone.
+#   vote-party-pool    : a weighted rotation. Each contributor receives 3
+#                        guaranteed draws plus decaying-chance extras
+#                        (75% then −8%/step, hard cap 10 total). Online
+#                        players see a slot-machine reveal animation first.
 vote-party-rewards:
-  party-xp:    { type: xp,       amount: 300 }
+  party-xp:    { type: xp,       amount: 200 }
   party-coins: { type: currency, currency: coins, amount: 10000.0 }
-  party-crate: { type: command,  command: 'crate give key {player} vote_crate 1', asConsole: true }
-  party-item:  { type: item,     material: DIAMOND, amount: 8 }
+
+# Weighted party rotation — rare items + keys (small coin/XP allowed), kept
+# deliberately not-OP. Each entry has a stable 'id' so its drop-% and pull
+# count surface in the /vote party GUI (RewardStatsService).
+vote-party-pool:
+  type: lucky
+  entries:
+    # ── Common (≈54%) — useful bulk, keeps the economy fed ──
+    - { weight: 12, id: 'party-iron-block',   reward: { type: item, material: IRON_BLOCK,     amount: 4 } }
+    - { weight: 10, id: 'party-gold-block',   reward: { type: item, material: GOLD_BLOCK,     amount: 4 } }
+    - { weight: 9,  id: 'party-coins-small',  reward: { type: currency, currency: coins, amount: 3000.0 } }
+    - { weight: 8,  id: 'party-redstone',     reward: { type: item, material: REDSTONE_BLOCK, amount: 8 } }
+    - { weight: 8,  id: 'party-hoppers',      reward: { type: item, material: HOPPER,         amount: 16 } }
+    - { weight: 7,  id: 'party-xp-bottles',   reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 16 } }
+    # ── Uncommon (≈26%) — chase mats + a vote key ──
+    - { weight: 8,  id: 'party-diamonds',     reward: { type: item, material: DIAMOND,        amount: 12 } }
+    - { weight: 7,  id: 'party-netherite-scrap', reward: { type: item, material: NETHERITE_SCRAP, amount: 3 } }
+    - { weight: 6,  id: 'party-shulker',      reward: { type: item, material: SHULKER_BOX,    amount: 2 } }
+    - { weight: 5,  id: 'party-vote-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} vote_crate 1', asConsole: true } }
+    # ── Rare (≈14%) — netherite + a season key ──
+    - { weight: 4,  id: 'party-netherite-ingot', reward: { type: item, material: NETHERITE_INGOT, amount: 2 } }
+    - { weight: 3.5, id: 'party-mending-book', reward: { type: item, material: ENCHANTED_BOOK, amount: 1 } }
+    - { weight: 3,  id: 'party-season-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} season_crate 1', asConsole: true } }
+    - { weight: 2,  id: 'party-coins-large',  reward: { type: currency, currency: coins, amount: 12000.0 } }
+    # ── Epic (≈4.5%) — shadow key + premium mats ──
+    - { weight: 2,  id: 'party-netherite-block', reward: { type: item, material: NETHERITE_BLOCK, amount: 1 } }
+    - { weight: 1.5, id: 'party-shadow-key',  announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} shadow_crate 1', asConsole: true } }
+    # ── Legendary (≈1%) — void key, the party grand prize ──
+    - { weight: 1,  id: 'party-void-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} void_crate 1', asConsole: true } }
 
 # ═════════════════════════════════════════════════════════════════
 # REWARD TYPE REFERENCE

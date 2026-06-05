@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.reward.RewardRegistry;
+import de.jexcellence.vote.reward.LuckyReward;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +33,7 @@ public final class VoteRewardConfig {
     private Map<Integer, List<AbstractReward>> streakRewards = Collections.emptyMap();
     private Map<String, List<AbstractReward>> siteRewards = Collections.emptyMap();
     private List<AbstractReward> votePartyRewards = Collections.emptyList();
+    private @Nullable LuckyReward votePartyPool;
 
     public VoteRewardConfig(@NotNull JavaPlugin plugin, @NotNull RewardRegistry rewardRegistry) {
         this.plugin = plugin;
@@ -54,9 +57,40 @@ public final class VoteRewardConfig {
         streakRewards = loadStreakRewards(config.getConfigurationSection("streak-rewards"));
         siteRewards = loadSiteRewards(config.getConfigurationSection("site-rewards"));
         votePartyRewards = loadRewardList(config.getConfigurationSection("vote-party-rewards"));
+        votePartyPool = loadSingleLuckyReward(config.getConfigurationSection("vote-party-pool"));
 
-        logger.log(Level.INFO, () -> String.format("Loaded %d default reward(s), %d streak tier(s), %d site-specific reward set(s), %d vote-party reward(s)",
-                defaultRewards.size(), streakRewards.size(), siteRewards.size(), votePartyRewards.size()));
+        final int poolSize = votePartyPool != null ? votePartyPool.getEntries().size() : 0;
+        logger.log(Level.INFO, () -> String.format("Loaded %d default reward(s), %d streak tier(s), %d site-specific reward set(s), %d vote-party baseline reward(s), %d party-pool entr(y/ies)",
+                defaultRewards.size(), streakRewards.size(), siteRewards.size(), votePartyRewards.size(), poolSize));
+    }
+
+    /**
+     * Parses a single reward section (one that carries {@code type:} directly,
+     * e.g. {@code vote-party-pool}) into a {@link LuckyReward}. Returns
+     * {@code null} when absent, malformed, or not a lucky pool.
+     */
+    private @Nullable LuckyReward loadSingleLuckyReward(@Nullable ConfigurationSection section) {
+        if (section == null) {
+            return null;
+        }
+        try {
+            String type = section.getString("type");
+            if (type == null || rewardRegistry.find(type).isEmpty()) {
+                logger.log(Level.WARNING, () -> String.format("vote-party-pool has missing/unknown type: %s", type));
+                return null;
+            }
+            Map<String, Object> data = toDeepMap(section);
+            String json = rewardMapper.writeValueAsString(data);
+            AbstractReward reward = rewardMapper.readValue(json, AbstractReward.class);
+            if (reward instanceof LuckyReward lucky) {
+                return lucky;
+            }
+            logger.log(Level.WARNING, () -> "vote-party-pool must be a 'lucky' reward pool");
+            return null;
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to load vote-party-pool", e);
+            return null;
+        }
     }
 
     private @NotNull List<AbstractReward> loadRewardList(ConfigurationSection section) {
@@ -166,4 +200,7 @@ public final class VoteRewardConfig {
     public @NotNull Map<Integer, List<AbstractReward>> getStreakRewards() { return streakRewards; }
     public @NotNull Map<String, List<AbstractReward>> getSiteRewards() { return siteRewards; }
     public @NotNull List<AbstractReward> getVotePartyRewards() { return votePartyRewards; }
+
+    /** The weighted party rotation pool, or {@code null} if not configured. */
+    public @Nullable LuckyReward getVotePartyPool() { return votePartyPool; }
 }
