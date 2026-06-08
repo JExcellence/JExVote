@@ -253,7 +253,7 @@ public abstract class JExVote {
         // Track how often keyed chance/lucky rewards are granted.
         rewardStatsService = new RewardStatsService(rewardStatRepository, logger);
         rewardStatsService.loadAsync();
-        RewardStats.setRecorder(rewardStatsService::record);
+        RewardStats.setRecorder(rewardStatsService::trackGrant);
 
         // Make 'currency' rewards actually pay out — JExPlatform's CurrencyReward
         // has no economy on its classpath, so install a depositor (JExEconomy → Vault).

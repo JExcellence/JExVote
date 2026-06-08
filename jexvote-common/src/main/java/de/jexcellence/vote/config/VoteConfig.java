@@ -91,7 +91,7 @@ public final class VoteConfig {
     private Map<Integer, List<String>> streakCommands = Collections.emptyMap();
 
     private boolean weekendMultiplierEnabled = false;
-    private double weekendMultiplierFactor = 2.0;
+    private double weekendMultiplierFactor = 1.2;
     private Set<DayOfWeek> weekendMultiplierDays = Set.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
     private ZoneId weekendMultiplierTimezone = ZoneId.of("UTC");
 
@@ -155,13 +155,13 @@ public final class VoteConfig {
     }
 
     private void loadStreakFreeze(@NotNull YamlConfiguration config) {
-        boolean enabled = config.getBoolean("streak-freeze.enabled", true);
-        int freeAmount = Math.max(0, config.getInt("streak-freeze.free-amount", 1));
-        int costPoints = Math.max(0, config.getInt("streak-freeze.cost-points", 5));
-        int defaultMax = Math.max(0, config.getInt("streak-freeze.default-max", 3));
-        long durationHours = config.getLong("streak-freeze.duration-hours", 24L);
+        boolean enabled = config.getBoolean("streak.freeze.enabled", true);
+        int freeAmount = Math.max(0, config.getInt("streak.freeze.free-amount", 1));
+        int costPoints = Math.max(0, config.getInt("streak.freeze.cost-points", 5));
+        int defaultMax = Math.max(0, config.getInt("streak.freeze.default-max", 3));
+        long durationHours = config.getLong("streak.freeze.duration-hours", 24L);
         if (durationHours < 1L) {
-            logger.warning(String.format("Invalid streak-freeze.duration-hours %d — using 24", durationHours));
+            logger.warning(String.format("Invalid streak.freeze.duration-hours %d — using 24", durationHours));
             durationHours = 24L;
         }
         freezeSettings = new FreezeSettings(enabled, freeAmount, costPoints, defaultMax, durationHours);
@@ -185,7 +185,7 @@ public final class VoteConfig {
 
     private void loadMultipliers(@NotNull YamlConfiguration config) {
         weekendMultiplierEnabled = config.getBoolean("multipliers.weekend.enabled", false);
-        weekendMultiplierFactor = config.getDouble("multipliers.weekend.factor", 2.0);
+        weekendMultiplierFactor = config.getDouble("multipliers.weekend.factor", 1.2);
 
         List<String> dayNames = config.getStringList("multipliers.weekend.days");
         if (dayNames.isEmpty()) {

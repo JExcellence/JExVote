@@ -48,7 +48,7 @@ public class RewardStatsService {
     /**
      * Increments the count for {@code key} in memory and persists asynchronously.
      */
-    public void record(@NotNull String key) {
+    public void trackGrant(@NotNull String key) {
         counts.computeIfAbsent(key, ignored -> new AtomicLong()).incrementAndGet();
         repository.increment(key).exceptionally(ex -> {
             logger.log(Level.WARNING, ex, () -> "Failed to persist reward stat: " + key);

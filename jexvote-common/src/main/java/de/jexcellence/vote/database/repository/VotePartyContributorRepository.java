@@ -13,6 +13,8 @@ import java.util.concurrent.ExecutorService;
 public class VotePartyContributorRepository
         extends AbstractCrudRepository<VotePartyContributorEntity, Long> {
 
+    private static final String PARTY_ID = "partyId";
+
     public VotePartyContributorRepository(@NotNull ExecutorService executor,
                                           @NotNull EntityManagerFactory emf,
                                           @NotNull Class<VotePartyContributorEntity> entityClass) {
@@ -20,12 +22,12 @@ public class VotePartyContributorRepository
     }
 
     public @NotNull List<VotePartyContributorEntity> findByParty(long partyId) {
-        return query().and("partyId", partyId).list();
+        return query().and(PARTY_ID, partyId).list();
     }
 
     public @NotNull Optional<VotePartyContributorEntity> findByPartyAndPlayer(long partyId,
                                                                               @NotNull UUID uuid) {
-        return query().and("partyId", partyId).and("playerUuid", uuid).first();
+        return query().and(PARTY_ID, partyId).and("playerUuid", uuid).first();
     }
 
     /**
@@ -36,7 +38,7 @@ public class VotePartyContributorRepository
     public int deleteByParty(long partyId) {
         return withSession(ctx -> ctx.getEntityManager()
                 .createNamedQuery("VotePartyContributor.deleteByParty")
-                .setParameter("partyId", partyId)
+                .setParameter(PARTY_ID, partyId)
                 .executeUpdate());
     }
 }

@@ -78,7 +78,7 @@ public class LuckyReward extends AbstractReward {
         Entry chosen = pickWeighted();
         return chosen.reward().grant(player).thenApply(success -> {
             if (Boolean.TRUE.equals(success)) {
-                RewardStats.record(chosen.id());
+                RewardStats.logGrant(chosen.id());
                 String key = chosen.announceKey();
                 if (key != null && !key.isBlank()) {
                     R18nManager.getInstance().msg(key).send(player);

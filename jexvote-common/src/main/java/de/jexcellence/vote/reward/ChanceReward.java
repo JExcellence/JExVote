@@ -62,7 +62,7 @@ public class ChanceReward extends AbstractReward {
         }
         return reward.grant(player).thenApply(success -> {
             if (Boolean.TRUE.equals(success)) {
-                RewardStats.record(id);
+                RewardStats.logGrant(id);
                 if (announceKey != null && !announceKey.isBlank()) {
                     announce(player);
                 }
@@ -73,7 +73,7 @@ public class ChanceReward extends AbstractReward {
 
     private void announce(@NotNull Player player) {
         R18nManager.getInstance().msg(announceKey)
-                .with("chance", showChance ? formatPercent(chance) + "%" : "")
+                .with(TYPE_ID, showChance ? formatPercent(chance) + "%" : "")
                 .send(player);
     }
 

@@ -3,6 +3,7 @@ package de.jexcellence.vote.reward;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -15,9 +16,9 @@ import java.util.function.Consumer;
  */
 public final class RewardStats {
 
-    private static volatile Consumer<String> recorder = key -> {
+    private static final AtomicReference<Consumer<String>> recorder = new AtomicReference<>(key -> {
         // No-op until the plugin installs a recorder.
-    };
+    });
 
     private RewardStats() {
         // Static utility — no instances
@@ -27,25 +28,25 @@ public final class RewardStats {
      * Installs the recorder invoked on each successful keyed grant.
      */
     public static void setRecorder(@NotNull Consumer<String> recorder) {
-        RewardStats.recorder = recorder;
+        RewardStats.recorder.set(recorder);
     }
 
     /**
      * Restores the no-op recorder (called on plugin disable).
      */
     public static void reset() {
-        RewardStats.recorder = key -> {
+        RewardStats.recorder.set(key -> {
             // No-op
-        };
+        });
     }
 
     /**
      * Reports a successful grant of the reward identified by {@code key}.
      * Keys that are null or blank are ignored.
      */
-    public static void record(@Nullable String key) {
+    public static void logGrant(@Nullable String key) {
         if (key != null && !key.isBlank()) {
-            recorder.accept(key);
+            recorder.get().accept(key);
         }
     }
 }

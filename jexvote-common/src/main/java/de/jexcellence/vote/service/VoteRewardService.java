@@ -22,6 +22,9 @@ import java.util.logging.Logger;
 
 public class VoteRewardService {
 
+    private static final String REWARDS_KEY = "rewards";
+    private static final String COMMANDS_KEY = "commands";
+
     private final Logger logger;
     private final ObjectMapper objectMapper;
 
@@ -147,8 +150,8 @@ public class VoteRewardService {
             }
 
             Map<String, Object> data = new LinkedHashMap<>();
-            data.put("rewards", rewardList);
-            data.put("commands", resolveCommands(serviceName, currentStreak));
+            data.put(REWARDS_KEY, rewardList);
+            data.put(COMMANDS_KEY, resolveCommands(serviceName, currentStreak));
 
             return objectMapper.writeValueAsString(data);
         } catch (JsonProcessingException e) {
@@ -176,8 +179,8 @@ public class VoteRewardService {
             rewards.forEach(reward -> rewardList.add(serializeReward(reward)));
 
             Map<String, Object> data = new LinkedHashMap<>();
-            data.put("rewards", rewardList);
-            data.put("commands", Collections.emptyList());
+            data.put(REWARDS_KEY, rewardList);
+            data.put(COMMANDS_KEY, Collections.emptyList());
             return objectMapper.writeValueAsString(data);
         } catch (JsonProcessingException e) {
             logger.log(Level.WARNING, "Failed to serialize party rewards", e);
@@ -189,8 +192,8 @@ public class VoteRewardService {
     public void grantSerializedRewards(@NotNull Player player, @NotNull String rewardData) {
         try {
             Map<String, Object> data = objectMapper.readValue(rewardData, Map.class);
-            List<Map<String, Object>> rewards = (List<Map<String, Object>>) data.get("rewards");
-            List<String> commands = (List<String>) data.get("commands");
+            List<Map<String, Object>> rewards = (List<Map<String, Object>>) data.get(REWARDS_KEY);
+            List<String> commands = (List<String>) data.get(COMMANDS_KEY);
 
             if (rewards != null) {
                 for (Map<String, Object> rewardMap : rewards) {
