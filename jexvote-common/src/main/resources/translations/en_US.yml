@@ -7,9 +7,12 @@ _defaults:
   back: '<gray>Back'
 
 vote:
-  broadcast: '<dark_gray>[<green>Vote<dark_gray>] <green>{player} <gray>voted on <aqua>{service}<gray>!'
-  received: '<green>Thank you for voting on <aqua>{service}<green>! Streak: <yellow>{streak}'
-  pending_rewards: '<green>You have <yellow>{count} <green>pending vote reward(s)! Delivering now...'
+   broadcast: '<dark_gray>[<green>Vote<dark_gray>] <green>{player} <gray>voted on <aqua>{service}<gray>!'
+   received: '<green>Thank you for voting on <aqua>{service}<green>! Streak: <yellow>{streak}'
+   pending_rewards: '<green>You have <yellow>{count} <green>pending vote reward(s)! Delivering now...'
+   shop:
+     players_only: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Only players can open the vote shop.</red>'
+     unavailable: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>The vote shop is not available on this server.</red>'
   lucky:
     hit: '<gradient:#fde047:#f59e0b>★ Lucky Vote!</gradient> <gray>You won a bonus reward!</gray> <yellow>{chance}</yellow>'
     jackpot: '<gradient:#fde047:#f59e0b>★ Vote Jackpot!</gradient> <gray>Fortune smiles on you — check your rewards!</gray>'

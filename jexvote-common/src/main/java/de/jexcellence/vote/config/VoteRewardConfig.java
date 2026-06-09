@@ -240,11 +240,32 @@ public final class VoteRewardConfig {
                 Map<String, Object> data = toDeepMap(rewardSection);
                 String json = rewardMapper.writeValueAsString(data);
                 AbstractReward reward = rewardMapper.readValue(json, AbstractReward.class);
-                items.add(new VoteShopItem(key, name, icon, cost, reward));
+
+                // Load optional effects
+                VoteShopItem.ShopEffects effects = loadShopEffects(entry);
+
+                items.add(new VoteShopItem(key, name, icon, cost, reward, effects));
             } catch (Exception e) {
                 logger.log(Level.WARNING, String.format("Failed to load vote-shop item '%s'", key), e);
             }
         }
         return Collections.unmodifiableList(items);
+    }
+
+    /**
+     * Loads optional sound and message effects for a shop item.
+     */
+    private @NotNull VoteShopItem.ShopEffects loadShopEffects(@NotNull ConfigurationSection entry) {
+        String purchaseSound = entry.getString("purchase-sound", "ENTITY_PLAYER_LEVELUP");
+        float purchaseVolume = (float) entry.getDouble("purchase-volume", 1.0);
+        float purchasePitch = (float) entry.getDouble("purchase-pitch", 1.0);
+        List<String> purchaseMessages = entry.getStringList("purchase-messages");
+
+        return new VoteShopItem.ShopEffects(
+                purchaseSound,
+                purchaseVolume,
+                purchasePitch,
+                purchaseMessages.isEmpty() ? Collections.emptyList() : purchaseMessages
+        );
     }
 }

@@ -5,6 +5,7 @@ import de.jexcellence.vote.config.VoteRewardConfig;
 import de.jexcellence.vote.config.VoteShopItem;
 import de.jexcellence.vote.database.entity.VotePlayerEntity;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
+import net.kyori.adventure.sound.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,8 @@ import java.util.concurrent.CompletableFuture;
  * (materials, crate keys, cosmetics — see the {@code vote-shop} section of
  * {@code rewards.yml}). This is the primary sink for vote points alongside
  * Streak Freezes.
+ *
+ * <p>Supports customizable sound effects and messages on purchase.
  *
  * @author JExcellence
  */
@@ -65,6 +68,7 @@ public class VoteShopService {
     /**
      * Attempts to buy {@code item} for {@code player}, charging vote points and
      * granting the reward on success (on the player's region thread).
+     * Plays the configured purchase sound and messages.
      */
     public @NotNull CompletableFuture<PurchaseResult> purchase(@NotNull Player player, @NotNull VoteShopItem item) {
         UUID uuid = player.getUniqueId();
@@ -79,9 +83,53 @@ public class VoteShopService {
             }
             entity.setVotePoints(entity.getVotePoints() - item.cost());
             playerRepository.update(entity);
-            scheduler.runAtEntity(player, () ->
-                    rewardService.grantRewardList(player, List.of(item.reward())));
+            scheduler.runAtEntity(player, () -> {
+                // Play purchase sound
+                playPurchaseSound(player, item);
+                // Send purchase messages
+                sendPurchaseMessages(player, item);
+                // Grant the reward
+                rewardService.grantRewardList(player, List.of(item.reward()));
+            });
             return PurchaseResult.SUCCESS;
         });
+    }
+
+    /**
+     * Plays the configured purchase sound for the shop item.
+     */
+    private void playPurchaseSound(@NotNull Player player, @NotNull VoteShopItem item) {
+        VoteShopItem.ShopEffects effects = item.effects();
+        try {
+            Sound.BuiltinSound sound = Sound.BuiltinSound.valueOf(effects.purchaseSound());
+            player.playSound(
+                    net.kyori.adventure.sound.Sound.sound()
+                            .volume(effects.purchaseVolume())
+                            .pitch(effects.purchasePitch())
+                            .type(sound)
+                            .build()
+            );
+        } catch (IllegalArgumentException ignored) {
+            // Invalid sound name, use default
+            player.playSound(
+                    net.kyori.adventure.sound.Sound.sound()
+                            .volume(effects.purchaseVolume())
+                            .pitch(effects.purchasePitch())
+                            .type(Sound.BuiltinSound.ENTITY_PLAYER_LEVELUP)
+                            .build()
+            );
+        }
+    }
+
+    /**
+     * Sends the configured purchase messages to the player.
+     */
+    private void sendPurchaseMessages(@NotNull Player player, @NotNull VoteShopItem item) {
+        VoteShopItem.ShopEffects effects = item.effects();
+        for (String message : effects.purchaseMessages()) {
+            player.sendMessage(
+                    net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(message)
+            );
+        }
     }
 }

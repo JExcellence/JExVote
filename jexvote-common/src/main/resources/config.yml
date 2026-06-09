@@ -168,3 +168,47 @@ fly:
   # (/vote eventfly). Grants the jexoneblock.eventfly permission, which makes
   # JExOneblock auto-enable flight while any island event is active.
   event-fly-cost-points: 5
+
+  # Sound effects for fly redemption
+  effects:
+    # Sound played when flight is granted
+    grant-sound: ENTITY_ENDER_DRAGON_FLAP
+    grant-volume: 1.0
+    grant-pitch: 1.0
+    # Sound played when flight expires
+    expire-sound: ENTITY_ENDER_DRAGON_HURT
+    expire-volume: 1.0
+    expire-pitch: 1.0
+
+  # Display settings for fly in the rewards GUI
+  display:
+    name: "<gradient:#a5f3fc:#06b6d4>❄ Fly Time</gradient>"
+    lore:
+      - "<gray>Redeem vote points for temporary flight."
+      - "<gray>Useful for building and exploring!"
+
+# ── Vote Effects ─────────────────────────────────────────────────────────────
+# Visual and audio effects when a player receives vote rewards.
+vote-effects:
+  # Sound played on every vote
+  vote:
+    sound: ENTITY_PLAYER_LEVELUP
+    volume: 1.0
+    pitch: 1.0
+
+  # Sound played when a streak milestone is reached
+  streak:
+    sound: ENTITY_PLAYER_LEVELUP
+    volume: 1.0
+    pitch: 1.2
+
+  # Sound and title played when a streak milestone reward is granted
+  milestone:
+    sound: UI_TOAST_CHALLENGE_COMPLETE
+    volume: 1.0
+    pitch: 1.0
+    title: "<gradient:#86efac:#16a34a><bold>Vote Streak!</bold></gradient>"
+    subtitle: "<gray>You reached a new milestone!</gray>"
+    fade-in: 10
+    stay: 40
+    fade-out: 10

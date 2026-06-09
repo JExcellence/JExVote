@@ -2,6 +2,7 @@ package de.jexcellence.vote.service;
 
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
+import de.jexcellence.vote.config.VotePartyConfig;
 import de.jexcellence.vote.database.entity.PendingVoteRewardEntity;
 import de.jexcellence.vote.database.entity.VotePartyContributorEntity;
 import de.jexcellence.vote.database.entity.VotePartyEntity;
@@ -44,22 +45,14 @@ import java.util.logging.Logger;
  * completion. This is a Premium feature; the service is only constructed when the
  * edition permits it and {@code vote-party.enabled} is set.
  *
+ * <p>Animations, sounds, and title messages are fully configurable via
+ * {@link VotePartyConfig}.
+ *
  * @author JExcellence
  */
 public class VotePartyService {
 
     private static final String PARTY_SERVICE_NAME = "VoteParty";
-
-    /** Guaranteed pool draws every contributor receives. */
-    private static final int GUARANTEED_PICKS = 3;
-    /** Hard cap on total pool draws (guaranteed + extras). */
-    private static final int MAX_TOTAL_PICKS = 10;
-    /** First extra-roll chance; decays by {@link #EXTRA_STEP} each step. */
-    private static final double EXTRA_START_CHANCE = 0.75;
-    private static final double EXTRA_STEP = 0.08;
-    /** Slot-machine animation: spin frames + ticks between frames. */
-    private static final int ANIM_FRAMES = 14;
-    private static final long ANIM_FRAME_TICKS = 3L;
     private static final int ROLL_GUARD = 200;
 
     private final Logger logger;
@@ -69,10 +62,11 @@ public class VotePartyService {
     private final PendingVoteRewardRepository pendingRewardRepository;
     private final VoteRewardService rewardService;
     private final VoteBroadcastService broadcastService;
+    private final VotePartyConfig partyConfig;
     private final List<AbstractReward> partyRewards;
     private final int target;
 
-    /** Weighted rotation pool for the 3-guaranteed + decaying-extra draws. */
+    /** Weighted rotation pool for the guaranteed + decaying-extra draws. */
     private @Nullable LuckyReward partyPool;
 
     // Live view of party progress for placeholders.
@@ -86,6 +80,7 @@ public class VotePartyService {
                             @NotNull PendingVoteRewardRepository pendingRewardRepository,
                             @NotNull VoteRewardService rewardService,
                             @NotNull VoteBroadcastService broadcastService,
+                            @NotNull VotePartyConfig partyConfig,
                             @NotNull List<AbstractReward> partyRewards,
                             int target) {
         this.logger = plugin.getLogger();
@@ -95,6 +90,7 @@ public class VotePartyService {
         this.pendingRewardRepository = pendingRewardRepository;
         this.rewardService = rewardService;
         this.broadcastService = broadcastService;
+        this.partyConfig = partyConfig;
         this.partyRewards = partyRewards;
         this.target = target;
 
@@ -169,7 +165,7 @@ public class VotePartyService {
         for (LuckyReward.Entry entry : picks) {
             rewards.add(entry.reward());
             if (entry.id() != null) {
-                RewardStats.record(entry.id());
+                RewardStats.logGrant(entry.id());
             }
         }
 
@@ -195,19 +191,20 @@ public class VotePartyService {
     }
 
     /**
-     * Draws the per-contributor pool picks: {@link #GUARANTEED_PICKS} distinct
-     * draws plus decaying-chance extras (start {@link #EXTRA_START_CHANCE},
-     * −{@link #EXTRA_STEP}/step) up to {@link #MAX_TOTAL_PICKS}. Empty when no
-     * pool is configured.
+     * Draws the per-contributor pool picks: {@link VotePartyConfig.AnimationSettings#guaranteedPicks()}
+     * distinct draws plus decaying-chance extras (start {@link VotePartyConfig.AnimationSettings#extraStartChance()},
+     * −{@link VotePartyConfig.AnimationSettings#extraStep()}/step) up to {@link VotePartyConfig.AnimationSettings#maxTotalPicks()}.
+     * Empty when no pool is configured.
      */
     private @NotNull List<LuckyReward.Entry> rollPartyEntries() {
         LuckyReward pool = partyPool;
         if (pool == null || pool.getEntries().isEmpty()) {
             return List.of();
         }
+        var settings = partyConfig.getAnimationSettings();
         List<LuckyReward.Entry> picks = new ArrayList<>();
         Set<String> usedIds = new HashSet<>();
-        int distinctTarget = Math.min(GUARANTEED_PICKS, pool.getEntries().size());
+        int distinctTarget = Math.min(settings.guaranteedPicks(), pool.getEntries().size());
         int guard = 0;
         while (picks.size() < distinctTarget && guard < ROLL_GUARD) {
             guard++;
@@ -217,12 +214,12 @@ public class VotePartyService {
                 picks.add(entry);
             }
         }
-        double chance = EXTRA_START_CHANCE;
-        for (int i = GUARANTEED_PICKS; i < MAX_TOTAL_PICKS && chance > 0.0; i++) {
+        double chance = settings.extraStartChance();
+        for (int i = settings.guaranteedPicks(); i < settings.maxTotalPicks() && chance > 0.0; i++) {
             if (ThreadLocalRandom.current().nextDouble() < chance) {
                 picks.add(pool.pick());
             }
-            chance -= EXTRA_STEP;
+            chance -= settings.extraStep();
         }
         return picks;
     }
@@ -240,7 +237,8 @@ public class VotePartyService {
             queuePending(uuid, rewards);
             return;
         }
-        if (frame >= ANIM_FRAMES) {
+        var settings = partyConfig.getAnimationSettings();
+        if (frame >= settings.spinFrames()) {
             scheduler.runAtEntity(player, () -> {
                 showReveal(player, picks);
                 rewardService.grantRewardList(player, rewards);
@@ -248,32 +246,39 @@ public class VotePartyService {
             return;
         }
         scheduler.runAtEntity(player, () -> showSpinFrame(player, picks, frame));
-        scheduler.runDelayed(() -> animateThenGrant(uuid, picks, rewards, frame + 1), ANIM_FRAME_TICKS);
+        scheduler.runDelayed(() -> animateThenGrant(uuid, picks, rewards, frame + 1), settings.frameTicks());
     }
 
     private void showSpinFrame(@NotNull Player player, @NotNull List<LuckyReward.Entry> picks, int frame) {
+        var soundSettings = partyConfig.getSoundSettings();
+        var titleSettings = partyConfig.getTitleSettings();
+
         LuckyReward.Entry spin = picks.get(ThreadLocalRandom.current().nextInt(picks.size()));
         String name = VoteRewardDescriber.describe(spin.reward());
+
         player.showTitle(Title.title(
-                MiniMessage.miniMessage().deserialize(rawMsg("vote.party.slot-title", player)),
+                MiniMessage.miniMessage().deserialize(titleSettings.spinTitle()),
                 MiniMessage.miniMessage().deserialize(name),
-                Title.Times.times(Duration.ZERO, Duration.ofMillis(200), Duration.ZERO)));
-        player.playSound(player, Sound.BLOCK_NOTE_BLOCK_HAT, 0.7f, 1.0f + (frame % 5) * 0.1f);
+                Title.Times.times(titleSettings.fadeIn(), titleSettings.stay(), titleSettings.fadeOut())));
+
+        Sound spinSound = Sound.valueOf(soundSettings.spinSound());
+        float pitch = soundSettings.spinPitchBase() + (frame % 5) * soundSettings.spinPitchStep();
+        player.playSound(player, spinSound, soundSettings.spinVolume(), pitch);
     }
 
     private void showReveal(@NotNull Player player, @NotNull List<LuckyReward.Entry> picks) {
-        String subtitle = rawMsg("vote.party.reveal-subtitle", player)
+        var soundSettings = partyConfig.getSoundSettings();
+        var titleSettings = partyConfig.getTitleSettings();
+
+        String subtitle = titleSettings.revealSubtitle()
                 .replace("{count}", String.valueOf(picks.size()));
         player.showTitle(Title.title(
-                MiniMessage.miniMessage().deserialize(rawMsg("vote.party.reveal-title", player)),
+                MiniMessage.miniMessage().deserialize(titleSettings.revealTitle()),
                 MiniMessage.miniMessage().deserialize(subtitle),
-                Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(400))));
-        player.playSound(player, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-    }
+                Title.Times.times(Duration.ofMillis(100), titleSettings.stay(), Duration.ofMillis(400))));
 
-    /** Resolves a translation key to its raw MiniMessage string for {@code player}. */
-    private @NotNull String rawMsg(@NotNull String key, @NotNull Player player) {
-        return R18nManager.getInstance().msg(key).toString(player);
+        Sound revealSound = Sound.valueOf(soundSettings.revealSound());
+        player.playSound(player, revealSound, soundSettings.revealVolume(), soundSettings.revealPitch());
     }
 
     private @NotNull VotePartyEntity getOrCreateActiveParty() {
