@@ -101,11 +101,13 @@ public final class FlyServiceConfig {
         String expireSound = section.getString("expire-sound", FlyEffects.DEFAULTS.expireSound());
 
         if (!isValidSound(grantSound)) {
-            logger.log(Level.WARNING, () -> "Invalid grant sound '" + grantSound + "', using default");
+            final String invalidGrant = grantSound;
+            logger.log(Level.WARNING, () -> "Invalid grant sound '" + invalidGrant + "', using default");
             grantSound = FlyEffects.DEFAULTS.grantSound();
         }
         if (!isValidSound(expireSound)) {
-            logger.log(Level.WARNING, () -> "Invalid expire sound '" + expireSound + "', using default");
+            final String invalidExpire = expireSound;
+            logger.log(Level.WARNING, () -> "Invalid expire sound '" + invalidExpire + "', using default");
             expireSound = FlyEffects.DEFAULTS.expireSound();
         }
 

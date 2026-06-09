@@ -82,15 +82,18 @@ public final class VoteEffectsConfig {
 
         // Validate sounds
         if (!isValidSound(voteSound)) {
-            logger.log(Level.WARNING, () -> "Invalid vote sound '" + voteSound + "', using default");
+            final String invalidVote = voteSound;
+            logger.log(Level.WARNING, () -> "Invalid vote sound '" + invalidVote + "', using default");
             voteSound = VoteEffects.DEFAULTS.voteSound();
         }
         if (!isValidSound(streakSound)) {
-            logger.log(Level.WARNING, () -> "Invalid streak sound '" + streakSound + "', using default");
+            final String invalidStreak = streakSound;
+            logger.log(Level.WARNING, () -> "Invalid streak sound '" + invalidStreak + "', using default");
             streakSound = VoteEffects.DEFAULTS.streakSound();
         }
         if (!isValidSound(milestoneSound)) {
-            logger.log(Level.WARNING, () -> "Invalid milestone sound '" + milestoneSound + "', using default");
+            final String invalidMilestone = milestoneSound;
+            logger.log(Level.WARNING, () -> "Invalid milestone sound '" + invalidMilestone + "', using default");
             milestoneSound = VoteEffects.DEFAULTS.milestoneSound();
         }
 

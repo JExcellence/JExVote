@@ -5,7 +5,7 @@ import de.jexcellence.vote.config.VoteRewardConfig;
 import de.jexcellence.vote.config.VoteShopItem;
 import de.jexcellence.vote.database.entity.VotePlayerEntity;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
-import net.kyori.adventure.sound.Sound;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -100,25 +100,14 @@ public class VoteShopService {
      */
     private void playPurchaseSound(@NotNull Player player, @NotNull VoteShopItem item) {
         VoteShopItem.ShopEffects effects = item.effects();
+        Sound sound;
         try {
-            Sound.BuiltinSound sound = Sound.BuiltinSound.valueOf(effects.purchaseSound());
-            player.playSound(
-                    net.kyori.adventure.sound.Sound.sound()
-                            .volume(effects.purchaseVolume())
-                            .pitch(effects.purchasePitch())
-                            .type(sound)
-                            .build()
-            );
+            sound = Sound.valueOf(effects.purchaseSound());
         } catch (IllegalArgumentException ignored) {
-            // Invalid sound name, use default
-            player.playSound(
-                    net.kyori.adventure.sound.Sound.sound()
-                            .volume(effects.purchaseVolume())
-                            .pitch(effects.purchasePitch())
-                            .type(Sound.BuiltinSound.ENTITY_PLAYER_LEVELUP)
-                            .build()
-            );
+            // Invalid sound name — fall back to the level-up sound.
+            sound = Sound.ENTITY_PLAYER_LEVELUP;
         }
+        player.playSound(player, sound, effects.purchaseVolume(), effects.purchasePitch());
     }
 
     /**

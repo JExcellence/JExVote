@@ -36,10 +36,10 @@ dependencies:
   - "org.eclipse.angus:angus-activation:2.0.0"
 
   # Jackson JSON (2.x)
-  - "com.fasterxml.jackson.core:jackson-core:2.18.2"
-  - "com.fasterxml.jackson.core:jackson-databind:2.18.2"
-  - "com.fasterxml.jackson.core:jackson-annotations:2.18.2"
-  - "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2"
+  - "com.fasterxml.jackson.core:jackson-core:2.22.0"
+  - "com.fasterxml.jackson.core:jackson-databind:2.22.0"
+  - "com.fasterxml.jackson.core:jackson-annotations:2.22"
+  - "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.0"
   - "com.fasterxml.uuid:java-uuid-generator:5.1.0"
 
   # Logging

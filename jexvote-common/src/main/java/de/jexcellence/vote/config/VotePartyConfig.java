@@ -133,11 +133,13 @@ public final class VotePartyConfig {
 
         // Validate sounds exist
         if (!isValidSound(spinSound)) {
-            logger.log(Level.WARNING, () -> "Invalid spin sound '" + spinSound + "', using default");
+            final String invalidSpin = spinSound;
+            logger.log(Level.WARNING, () -> "Invalid spin sound '" + invalidSpin + "', using default");
             spinSound = SoundSettings.DEFAULTS.spinSound();
         }
         if (!isValidSound(revealSound)) {
-            logger.log(Level.WARNING, () -> "Invalid reveal sound '" + revealSound + "', using default");
+            final String invalidReveal = revealSound;
+            logger.log(Level.WARNING, () -> "Invalid reveal sound '" + invalidReveal + "', using default");
             revealSound = SoundSettings.DEFAULTS.revealSound();
         }
 
