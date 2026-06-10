@@ -45,6 +45,10 @@ public abstract class VoteBaseView implements Listener {
     protected static final NamespacedKey SLOT_KEY =
             new NamespacedKey("jexvote", "gui_slot");
 
+    /** Shared nav tags routed centrally by {@link #onInventoryClick(InventoryClickEvent)}. */
+    protected static final String TAG_BACK = "back";
+    protected static final String TAG_CLOSE = "close";
+
     // ── Abstract hooks ─────────────────────────────────────────────
 
     protected abstract @NotNull String title();
@@ -90,6 +94,11 @@ public abstract class VoteBaseView implements Listener {
         ItemStack clicked = event.getCurrentItem();
         if (clicked == null || clicked.getType() == Material.AIR) return;
         if (clicked.getType() == Material.BLACK_STAINED_GLASS_PANE) return;
+        // Close is handled centrally so every view gets it for free.
+        if (TAG_CLOSE.equals(tagOf(clicked))) {
+            viewer.closeInventory();
+            return;
+        }
         try {
             onClick(viewer, event.getRawSlot(), clicked);
         } catch (Exception ex) {
@@ -143,6 +152,34 @@ public abstract class VoteBaseView implements Listener {
         return msg(key).toComponents(viewer).stream()
                 .map(c -> c.decoration(TextDecoration.ITALIC, false))
                 .toList();
+    }
+
+    /**
+     * Appends any lines from {@code <baseKey>.lore_extra} to {@code lore}, in
+     * place. Server owners can populate that list in the translation YAML to
+     * add their own bullet points to any tile (e.g. event hints, raffle CTAs)
+     * without code changes. When the key is missing or its list is empty this
+     * is a no-op, so it's safe to call unconditionally per tile.
+     *
+     * @param lore    the mutable lore list being assembled
+     * @param baseKey the tile's base i18n key (e.g. {@code "vote_overview.identity"})
+     * @param viewer  the viewing player (for placeholder resolution)
+     */
+    protected void appendLoreExtra(@NotNull List<Component> lore,
+                                   @NotNull String baseKey,
+                                   @Nullable Player viewer) {
+        List<Component> extras = ics(baseKey + ".lore_extra", viewer);
+        if (extras.isEmpty()) {
+            return;
+        }
+        // Filter out the literal placeholder pattern "{key}.lore_extra" that
+        // the translation framework returns when the key is missing entirely
+        // (defensive — JExTranslate behavior varies by version).
+        boolean placeholder = extras.size() == 1 &&
+                extras.get(0).toString().contains(".lore_extra");
+        if (!placeholder) {
+            lore.addAll(extras);
+        }
     }
 
     // ── Item helpers ───────────────────────────────────────────────
@@ -199,29 +236,100 @@ public abstract class VoteBaseView implements Listener {
     }
 
     /**
-     * Fills multiple inventory slots with glass panes.
+     * Creates a back button with the {@value #TAG_BACK} tag (top-left nav slot).
      *
-     * @param inv   the inventory to fill
-     * @param mat   the material for the glass panes
-     * @param slots the slot indices to fill
-     */
-    protected static void glass(@NotNull Inventory inv, @NotNull Material mat, int... slots) {
-        ItemStack pane = ItemBuilder.of(mat).name(Component.empty()).build();
-        for (int s : slots) inv.setItem(s, pane);
-    }
-
-    /**
-     * Creates a back button with the "back" tag.
+     * <p>Uses {@link Material#DARK_OAK_DOOR} as a "go through to the previous
+     * room" metaphor. The name and lore are read from the {@code gui.common.back}
+     * i18n keys so server owners can rename/translate without touching code.</p>
      *
      * @return the back button ItemStack
      */
     protected @NotNull ItemStack backButton() {
-        ItemStack btn = ItemBuilder.of(Material.ARROW)
-                .name(name("<gray>← Back"))
+        ItemStack btn = ItemBuilder.of(Material.DARK_OAK_DOOR)
+                .name(ic("gui.common.back-name", null))
+                .lore(List.of(ic("gui.common.back-lore", null)))
                 .flags(ItemFlag.HIDE_ATTRIBUTES)
                 .build();
-        tag(btn, "back");
+        tag(btn, TAG_BACK);
         return btn;
+    }
+
+    /**
+     * Creates a close button with the {@value #TAG_CLOSE} tag (bottom-left nav
+     * slot). Closing is routed centrally in {@link #onInventoryClick}.
+     *
+     * <p>Uses {@link Material#OAK_DOOR} (deliberately a different wood than the
+     * back button) as a "leave the building" metaphor. We avoid
+     * {@link Material#BARRIER} here on purpose: the red barrier reads as
+     * "error / not allowed" which is the wrong message for a normal close
+     * action. Name/lore are read from the {@code gui.common.close} i18n keys.</p>
+     *
+     * @return the close button ItemStack
+     */
+    protected @NotNull ItemStack closeButton() {
+        ItemStack btn = ItemBuilder.of(Material.OAK_DOOR)
+                .name(ic("gui.common.close-name", null))
+                .lore(List.of(ic("gui.common.close-lore", null)))
+                .flags(ItemFlag.HIDE_ATTRIBUTES)
+                .build();
+        tag(btn, TAG_CLOSE);
+        return btn;
+    }
+
+    /**
+     * Places the standard nav bar: back at the top-left (slot 0) and close at
+     * the bottom-left ({@code (rows-1)*9}). Mirrors JExOneblock's IslandView
+     * convention so every vote view aligns identically.
+     *
+     * @param inv      the inventory being rendered
+     * @param withBack {@code true} to place the back button (top-level views omit it)
+     */
+    protected void navBar(@NotNull Inventory inv, boolean withBack) {
+        int rows = inv.getSize() / 9;
+        if (withBack) {
+            inv.setItem(0, backButton());
+        }
+        inv.setItem((rows - 1) * 9, closeButton());
+    }
+
+    /**
+     * Fills the 1-wide frame — column 0, column 8, the top row and the bottom
+     * row — with a single pane material, leaving the centered interior
+     * (cols 1–7 × the inner rows) free for content.
+     *
+     * @param inv the inventory to frame
+     * @param mat the pane material
+     */
+    protected void frame(@NotNull Inventory inv, @NotNull Material mat) {
+        int rows = inv.getSize() / 9;
+        ItemStack pane = ItemBuilder.of(mat).name(Component.empty()).build();
+        for (int c = 0; c < 9; c++) {
+            inv.setItem(c, pane);
+            inv.setItem((rows - 1) * 9 + c, pane);
+        }
+        for (int r = 1; r < rows - 1; r++) {
+            inv.setItem(r * 9, pane);
+            inv.setItem(r * 9 + 8, pane);
+        }
+    }
+
+    /**
+     * Returns the centered interior slots for this view (rows 1..rows-2 ×
+     * columns 1..7), in reading order. Use these for content so the 1-wide
+     * frame stays clear.
+     *
+     * @return the centered body slot indices
+     */
+    protected int @NotNull [] bodySlots() {
+        int rows = rows();
+        int[] slots = new int[(rows - 2) * 7];
+        int idx = 0;
+        for (int r = 1; r <= rows - 2; r++) {
+            for (int c = 1; c <= 7; c++) {
+                slots[idx++] = r * 9 + c;
+            }
+        }
+        return slots;
     }
 
     // ── Tag system ─────────────────────────────────────────────────

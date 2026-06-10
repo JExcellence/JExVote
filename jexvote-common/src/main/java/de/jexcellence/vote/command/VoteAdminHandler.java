@@ -4,14 +4,12 @@ import com.raindropcentral.commands.v2.CommandContext;
 import com.raindropcentral.commands.v2.CommandHandler;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.VoteEdition;
+import de.jexcellence.vote.command.help.HelpRenderer;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
 import de.jexcellence.vote.model.Vote;
 import de.jexcellence.vote.service.MultiplierService;
 import de.jexcellence.vote.service.VoteService;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -59,45 +57,21 @@ public final class VoteAdminHandler {
     }
 
     private void onHelp(@NotNull CommandContext ctx) {
-        var sender = ctx.sender();
-
-        sender.sendMessage(MM.deserialize(
-                "<dark_gray>━━━━ <gradient:#fca5a5:#dc2626><bold>JExVote Admin</bold></gradient> <dark_gray>━━━━"));
-
-        record HelpEntry(String command, String args, String description, boolean suggest) {}
-
-        List<HelpEntry> entries = List.of(
-                new HelpEntry("/jexvote info", "", "Show edition and version", false),
-                new HelpEntry("/jexvote reload", "", "Reload configuration files", false),
-                new HelpEntry("/jexvote reset", "<player>", "Reset a player's vote stats", true),
-                new HelpEntry("/jexvote resetmonthly", "", "Reset monthly votes for everyone", false),
-                new HelpEntry("/jexvote fakevote", "<player> [service]", "Simulate a vote for testing", true),
-                new HelpEntry("/jexvote help", "", "Show this help", false)
+        List<HelpRenderer.Entry> entries = List.of(
+                HelpRenderer.Entry.of("/jexvote info", "", "Show edition, version, site count and Votifier port",
+                        HelpRenderer.Action.RUN),
+                HelpRenderer.Entry.of("/jexvote reload", "", "Reload config.yml, rewards.yml and sites.yml",
+                        HelpRenderer.Action.RUN),
+                HelpRenderer.Entry.of("/jexvote reset", "<player>", "Reset a player's vote stats",
+                        HelpRenderer.Action.SUGGEST),
+                HelpRenderer.Entry.of("/jexvote resetmonthly", "", "Reset monthly vote counts for everyone",
+                        HelpRenderer.Action.RUN),
+                HelpRenderer.Entry.of("/jexvote fakevote", "<player> [service]", "Simulate a vote for testing",
+                        HelpRenderer.Action.SUGGEST),
+                HelpRenderer.Entry.of("/jexvote help", "", "Show this help",
+                        HelpRenderer.Action.RUN)
         );
-
-        for (HelpEntry e : entries) {
-            String full = e.command() + (e.args().isEmpty() ? "" : " " + e.args());
-            Component line = MM.deserialize(
-                    "  <dark_gray>▸</dark_gray> <gradient:#fca5a5:#dc2626>" + e.command() + "</gradient>"
-                            + (e.args().isEmpty() ? "" : " <dark_gray>⟨</dark_gray><white>" + e.args() + C_WHITE + "<dark_gray>⟩</dark_gray>")
-                            + " <dark_gray>—</dark_gray> <gray>" + e.description() + "</gray>");
-
-            if (e.suggest()) {
-                line = line.clickEvent(ClickEvent.suggestCommand(e.command() + " "))
-                        .hoverEvent(HoverEvent.showText(MM.deserialize(
-                                "<gradient:#fca5a5:#dc2626>" + full + "</gradient>\n"
-                                        + "<gray>" + e.description() + "</gray>\n"
-                                        + "<dark_gray>Click to suggest</dark_gray>")));
-            } else {
-                line = line.clickEvent(ClickEvent.runCommand(e.command()))
-                        .hoverEvent(HoverEvent.showText(MM.deserialize(
-                                "<gradient:#fca5a5:#dc2626>" + full + "</gradient>\n"
-                                        + "<gray>" + e.description() + "</gray>\n"
-                                        + "<dark_gray>Click to run</dark_gray>")));
-            }
-
-            sender.sendMessage(line);
-        }
+        new HelpRenderer("vote_admin").render(ctx.sender(), entries);
     }
 
     @SuppressWarnings("deprecation")

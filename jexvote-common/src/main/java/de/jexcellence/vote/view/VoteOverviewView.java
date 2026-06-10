@@ -16,9 +16,15 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Main vote overview GUI. Shows player stats, vote sites, and navigation
@@ -36,7 +42,39 @@ public class VoteOverviewView extends VoteBaseView {
      *  45 46 47 48 49 50 51 52 53
      */
 
-    private static final String GRADIENT_END = "</bold></gradient>";
+    // ── Slot layout ──────────────────────────────────────────────────────
+    // Row 0 (header)         — slot 4
+    // Row 1 (stats)          — slots 11 / 13 / 15  (Identity / Points / Streak)
+    // Row 3 (vote sites)     — slots 29-33 (5 centered), paging at 27/35
+    // Row 5 (nav)            — 45 close, 46/48/50/52 buttons
+    private static final int SLOT_HEADER       = 4;
+    private static final int SLOT_IDENTITY     = 11;
+    private static final int SLOT_POINTS       = 13;
+    private static final int SLOT_STREAK       = 15;
+    private static final int SLOT_PAGE_PREV    = 27;
+    private static final int SLOT_PAGE_NEXT    = 35;
+    private static final int[] SITE_SLOTS      = { 29, 30, 31, 32, 33 };
+    private static final int SLOT_CLOSE        = 45;
+    private static final int SLOT_NAV_LB       = 46;
+    private static final int SLOT_NAV_STREAKS  = 48;
+    private static final int SLOT_NAV_REWARDS  = 50;
+    private static final int SLOT_NAV_SHOP     = 52;
+
+    private static final String TAG_LEADERBOARD = "leaderboard";
+    private static final String TAG_STREAKS     = "streaks";
+    private static final String TAG_REWARDS     = "rewards";
+    private static final String TAG_SHOP        = "shop";
+    private static final String TAG_PAGE_PREV   = "page-prev";
+    private static final String TAG_PAGE_NEXT   = "page-next";
+    private static final String TAG_SITE_PREFIX = "site:";
+
+    private static final int SITES_PER_PAGE = SITE_SLOTS.length;
+
+    /**
+     * Per-viewer page index of the vote-site row. Cleared on close to keep
+     * the map small (only one row of state per active GUI).
+     */
+    private final Map<UUID, Integer> sitePage = new ConcurrentHashMap<>();
 
     private final Holder holder = new Holder();
     private final VoteService voteService;
@@ -45,6 +83,7 @@ public class VoteOverviewView extends VoteBaseView {
     private VoteLeaderboardView leaderboardView;
     private VoteStreakView streakView;
     private VoteRewardsView rewardsView;
+    private VoteShopView shopView;
 
     public VoteOverviewView(@NotNull JavaPlugin plugin,
                             @NotNull VoteService voteService) {
@@ -73,6 +112,13 @@ public class VoteOverviewView extends VoteBaseView {
      */
     public void setRewardsView(@NotNull VoteRewardsView view) { this.rewardsView = view; }
 
+    /**
+     * Sets the vote-token shop view for navigation.
+     *
+     * @param view the shop view
+     */
+    public void setShopView(@NotNull VoteShopView view) { this.shopView = view; }
+
     @Override protected @NotNull String title()           { return "vote_overview.title"; }
     @Override protected int rows()                         { return 6; }
     @Override protected @NotNull InventoryHolder holder()  { return holder; }
@@ -80,203 +126,279 @@ public class VoteOverviewView extends VoteBaseView {
     @Override
     protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
 
-        // ── Row 0: Header ───────────────────────────────────────
-        glass(inv, Material.LIME_STAINED_GLASS_PANE, 0, 2, 6, 8);
-        glass(inv, Material.GREEN_STAINED_GLASS_PANE, 1, 7);
-        inv.setItem(4, ItemBuilder.of(Material.EMERALD)
-                .name(name("<gradient:#86efac:#16a34a><bold>✦ Vote Overview" + GRADIENT_END))
+        // ── 1-wide frame; content sits in the centered interior ──
+        frame(inv, Material.LIME_STAINED_GLASS_PANE);
+
+        // ── Header (slot 4) ────────────────────────────────────────
+        inv.setItem(SLOT_HEADER, ItemBuilder.of(Material.EMERALD)
+                .name(ic("vote_overview.header.name", viewer))
                 .glow(true)
-                .lore(List.of(
-                        Component.empty(),
-                        lore("  <gray>Vote for us to earn rewards!"),
-                        lore("  <gray>Click a site below to get started."),
-                        Component.empty()))
+                .lore(ics("vote_overview.header.lore", viewer))
                 .build());
 
-        // ── Row 1: Player info (placeholders) ───────────────────
-        glass(inv, Material.GREEN_STAINED_GLASS_PANE, 9, 17);
+        // ── Stat tiles (slots 11/13/15): placeholders, then async fill ──
+        // Loading state: pass -1/null so each tile renders "…" sentinels.
+        inv.setItem(SLOT_IDENTITY, identityTile(viewer, null, -1, -1));
+        inv.setItem(SLOT_POINTS, pointsTile(viewer, -1));
+        inv.setItem(SLOT_STREAK, streakTile(viewer, -1, -1, -1));
 
-        inv.setItem(12, HeadBuilder.fromPlayer(viewer)
-                .name(name("<gradient:#86efac:#16a34a><bold>" + viewer.getName() + GRADIENT_END))
-                .lore(List.of(
-                        Component.empty(),
-                        lore("  <gray>Loading stats..."),
-                        Component.empty()))
-                .build());
-
-        inv.setItem(13, ItemBuilder.of(Material.NETHER_STAR)
-                .name(name("<gradient:#d8b4fe:#9333ea><bold>Vote Points" + GRADIENT_END))
-                .lore(List.of(Component.empty(), lore("  <gray>Loading..."), Component.empty()))
-                .build());
-
-        inv.setItem(14, ItemBuilder.of(Material.BLAZE_POWDER)
-                .name(name("<gradient:#fde047:#f59e0b><bold>Vote Streak" + GRADIENT_END))
-                .lore(List.of(Component.empty(), lore("  <gray>Loading..."), Component.empty()))
-                .build());
-
-        // ── Async: update stats via raw inventory ───────────────
         voteService.getPlayerStats(viewer.getUniqueId()).thenAccept(stats ->
                 scheduler.runAtEntity(viewer, () -> {
                     Inventory top = viewer.getOpenInventory().getTopInventory();
-                    if (top.getHolder() != holder) return; // GUI closed
-
+                    if (top.getHolder() != holder) {
+                        return; // GUI was closed before async returned
+                    }
                     int streak = stats.currentStreak();
-                    int nextMs = nextMilestone(streak);
-                    String bar = progressBar(streak, nextMs, 10);
-
-                    top.setItem(12, HeadBuilder.fromPlayer(viewer)
-                            .name(name("<gradient:#86efac:#16a34a><bold>" + viewer.getName() + GRADIENT_END))
-                            .lore(List.of(
-                                    Component.empty(),
-                                    lore("  <dark_gray>▸</dark_gray> <gray>Total Votes:</gray> <white>" + stats.totalVotes()),
-                                    lore("  <dark_gray>▸</dark_gray> <gray>Monthly:</gray> <white>" + stats.monthlyVotes()),
-                                    lore("  <dark_gray>▸</dark_gray> <gray>Vote Points:</gray> <gradient:#d8b4fe:#9333ea>" + stats.votePoints()),
-                                    Component.empty(),
-                                    lore("  <gradient:#fde047:#f59e0b>Streak:</gradient> <white>" + streak + "</white> <dark_gray>/</dark_gray> <gray>" + nextMs),
-                                    lore("  " + bar),
-                                    lore("  <gray>Highest:</gray> <gradient:#fde047:#f59e0b>" + stats.highestStreak()),
-                                    Component.empty()))
-                            .build());
-
-                    top.setItem(13, ItemBuilder.of(Material.NETHER_STAR)
-                            .name(name("<gradient:#d8b4fe:#9333ea><bold>Vote Points" + GRADIENT_END))
-                            .glow(true)
-                            .lore(List.of(
-                                    Component.empty(),
-                                    lore("  <gray>Balance:</gray> <gradient:#d8b4fe:#9333ea>" + stats.votePoints()),
-                                    Component.empty(),
-                                    lore("  <dark_gray>Earn points by voting daily!"),
-                                    Component.empty()))
-                            .build());
-
-                    top.setItem(14, ItemBuilder.of(Material.BLAZE_POWDER)
-                            .name(name("<gradient:#fde047:#f59e0b><bold>Vote Streak" + GRADIENT_END))
-                            .glow(streak >= 7)
-                            .lore(List.of(
-                                    Component.empty(),
-                                    lore("  <gray>Current:</gray> <gradient:#86efac:#16a34a>" + streak + " day" + plural(streak)),
-                                    lore("  <gray>Highest:</gray> <gradient:#fde047:#f59e0b>" + stats.highestStreak() + " day" + plural(stats.highestStreak())),
-                                    Component.empty(),
-                                    lore("  " + bar),
-                                    lore("  <dark_gray>Next milestone: Day " + nextMs),
-                                    Component.empty()))
-                            .build());
+                    int next = nextMilestone(streak);
+                    top.setItem(SLOT_IDENTITY, identityTile(viewer, stats.lastVoteAt(),
+                            stats.totalVotes(), stats.monthlyVotes()));
+                    top.setItem(SLOT_POINTS, pointsTile(viewer, stats.votePoints()));
+                    top.setItem(SLOT_STREAK, streakTile(viewer, streak, stats.highestStreak(), next));
                 }));
 
-        // ── Row 2: Separator ────────────────────────────────────
-        glass(inv, Material.LIME_STAINED_GLASS_PANE, 18, 22, 26);
+        // ── Sites (paginated, slots 29-33) ─────────────────────────
+        renderSites(inv, viewer);
 
-        // ── Row 3: Vote sites ───────────────────────────────────
-        glass(inv, Material.LIME_STAINED_GLASS_PANE, 27, 35);
+        // ── Bottom nav (slots 45/46/48/50/52) ──────────────────────
+        inv.setItem(SLOT_CLOSE, closeButton());
+        inv.setItem(SLOT_NAV_LB, navTile(viewer, Material.GOLD_BLOCK, "vote_overview.nav.leaderboard", TAG_LEADERBOARD));
+        inv.setItem(SLOT_NAV_STREAKS, navTile(viewer, Material.MAGMA_CREAM, "vote_overview.nav.streaks", TAG_STREAKS));
+        inv.setItem(SLOT_NAV_REWARDS, navTile(viewer, Material.SPONGE, "vote_overview.nav.rewards", TAG_REWARDS));
+        inv.setItem(SLOT_NAV_SHOP, navTile(viewer, Material.EMERALD_BLOCK, "vote_overview.nav.shop", TAG_SHOP));
+    }
 
+    // ── Tile builders ────────────────────────────────────────────────
+
+    /**
+     * Identity tile: name + lifetime totals. Pass {@code total} and
+     * {@code monthly} as -1 (with {@code lastVoteAt == null}) to render the
+     * "…" loading placeholder before async stats arrive.
+     */
+    private @NotNull ItemStack identityTile(@NotNull Player viewer, @Nullable Instant lastVoteAt,
+                                            int total, int monthly) {
+        boolean loaded = total >= 0 && monthly >= 0;
+        String totalText = loaded ? String.valueOf(total) : "…";
+        String monthlyText = loaded ? String.valueOf(monthly) : "…";
+        String lastVoted = loaded ? formatLastVoted(viewer, lastVoteAt) : "…";
+        List<Component> lore = new ArrayList<>(msg("vote_overview.identity.lore")
+                .with("total", totalText)
+                .with("monthly", monthlyText)
+                .with("last_voted", lastVoted)
+                .toComponents(viewer));
+        appendLoreExtra(lore, "vote_overview.identity", viewer);
+        return HeadBuilder.fromPlayer(viewer)
+                .name(msg("vote_overview.identity.name")
+                        .with("player", viewer.getName()).itemComponent(viewer))
+                .lore(lore)
+                .build();
+    }
+
+    private @NotNull ItemStack pointsTile(@NotNull Player viewer, int points) {
+        String pointsText = points < 0 ? "…" : String.valueOf(points);
+        List<Component> lore = new ArrayList<>(msg("vote_overview.points.lore")
+                .with("points", pointsText).toComponents(viewer));
+        appendLoreExtra(lore, "vote_overview.points", viewer);
+        return ItemBuilder.of(Material.NETHER_STAR)
+                .name(ic("vote_overview.points.name", viewer))
+                .glow(points > 0)
+                .lore(lore)
+                .build();
+    }
+
+    private @NotNull ItemStack streakTile(@NotNull Player viewer, int streak, int highest, int next) {
+        boolean loaded = streak >= 0 && next > 0;
+        String streakText = loaded ? String.valueOf(streak) : "…";
+        String highestText = loaded ? String.valueOf(highest) : "…";
+        String nextText = loaded ? String.valueOf(next) : "…";
+        String bar = loaded ? progressBar(streak, next, 10) : "";
+        List<Component> lore = new ArrayList<>(msg("vote_overview.streak.lore")
+                .with("streak", streakText)
+                .with("highest", highestText)
+                .with("next", nextText)
+                .with("bar", bar)
+                .toComponents(viewer));
+        appendLoreExtra(lore, "vote_overview.streak", viewer);
+        return ItemBuilder.of(Material.BLAZE_POWDER)
+                .name(ic("vote_overview.streak.name", viewer))
+                .glow(loaded && streak >= 7)
+                .lore(lore)
+                .build();
+    }
+
+    private @NotNull ItemStack navTile(@NotNull Player viewer, @NotNull Material icon,
+                                       @NotNull String keyBase, @NotNull String navTag) {
+        List<Component> lore = new ArrayList<>(ics(keyBase + ".lore", viewer));
+        appendLoreExtra(lore, keyBase, viewer);
+        ItemStack tile = ItemBuilder.of(icon)
+                .name(ic(keyBase + ".name", viewer))
+                .glow(true)
+                .lore(lore)
+                .build();
+        tag(tile, navTag);
+        return tile;
+    }
+
+    // ── Site row ─────────────────────────────────────────────────────
+
+    private void renderSites(@NotNull Inventory inv, @NotNull Player viewer) {
         List<VoteSite> sites = new ArrayList<>(voteService.getVoteSites().values());
-        Material[] siteMats = {
-                Material.EMERALD, Material.DIAMOND, Material.GOLD_INGOT,
-                Material.AMETHYST_SHARD, Material.LAPIS_LAZULI, Material.REDSTONE, Material.COPPER_INGOT
-        };
+        int totalPages = Math.max(1, (sites.size() + SITES_PER_PAGE - 1) / SITES_PER_PAGE);
+        int page = clampPage(sitePage.getOrDefault(viewer.getUniqueId(), 0), totalPages);
+        sitePage.put(viewer.getUniqueId(), page);
 
-        for (int i = 0; i < 7; i++) {
-            int slot = 28 + i;
-            if (i < sites.size()) {
-                VoteSite site = sites.get(i);
-                List<Component> siteLore = new ArrayList<>();
-                siteLore.add(Component.empty());
-                siteLore.add(lore("  <dark_gray>▸</dark_gray> <gray>Service:</gray> <white>" + site.serviceName()));
-                siteLore.add(lore("  <dark_gray>▸</dark_gray> <gray>Points:</gray> <gradient:#86efac:#16a34a>+" + site.pointsPerVote()));
-                if (site.voteUrl() != null) {
-                    siteLore.add(Component.empty());
-                    siteLore.add(lore("  <gradient:#fde047:#f59e0b>▶ Click to get vote link"));
-                }
-                ItemStack siteItem = ItemBuilder.of(siteMats[i % siteMats.length])
-                        .name(name("<gradient:#a5f3fc:#06b6d4><bold>" + site.displayName() + GRADIENT_END))
-                        .lore(siteLore)
-                        .build();
-                tag(siteItem, "site:" + site.serviceName());
-                inv.setItem(slot, siteItem);
+        int start = page * SITES_PER_PAGE;
+        for (int i = 0; i < SITES_PER_PAGE; i++) {
+            int siteIdx = start + i;
+            int slot = SITE_SLOTS[i];
+            if (siteIdx < sites.size()) {
+                inv.setItem(slot, siteTile(viewer, sites.get(siteIdx)));
             } else {
-                inv.setItem(slot, ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
-                        .name(Component.empty()).build());
+                inv.setItem(slot, emptySiteTile(viewer));
             }
         }
 
-        // ── Row 4: Separator ────────────────────────────────────
-        glass(inv, Material.LIME_STAINED_GLASS_PANE, 36, 40, 44);
+        if (totalPages > 1) {
+            inv.setItem(SLOT_PAGE_PREV, pageButton(viewer, "vote_overview.page-prev", TAG_PAGE_PREV, page, totalPages));
+            inv.setItem(SLOT_PAGE_NEXT, pageButton(viewer, "vote_overview.page-next", TAG_PAGE_NEXT, page, totalPages));
+        } else {
+            inv.setItem(SLOT_PAGE_PREV, null);
+            inv.setItem(SLOT_PAGE_NEXT, null);
+        }
+    }
 
-        // ── Row 5: Navigation ───────────────────────────────────
-        glass(inv, Material.GREEN_STAINED_GLASS_PANE, 46, 52);
-
-        ItemStack lbItem = ItemBuilder.of(Material.GOLD_BLOCK)
-                .name(name("<gradient:#fde047:#f59e0b><bold>⭐ Leaderboard" + GRADIENT_END))
-                .glow(true)
-                .lore(List.of(
-                        Component.empty(),
-                        lore("  <gray>See who voted the most!"),
-                        Component.empty(),
-                        lore("  <gradient:#fde047:#f59e0b>▶ Click to view"),
-                        Component.empty()))
+    private @NotNull ItemStack siteTile(@NotNull Player viewer, @NotNull VoteSite site) {
+        // Single material across every site so the gradient title does the
+        // visual differentiation (was a cycling array of arbitrary materials).
+        ItemStack tile = ItemBuilder.of(Material.PAPER)
+                .name(msg("vote_overview.site.name")
+                        .with("site", site.displayName()).itemComponent(viewer))
+                .lore(msg("vote_overview.site.lore")
+                        .with("site", site.displayName())
+                        .with("service", site.serviceName())
+                        .with("points", String.valueOf(site.pointsPerVote()))
+                        .toComponents(viewer))
                 .build();
-        tag(lbItem, "leaderboard");
-        inv.setItem(47, lbItem);
+        tag(tile, TAG_SITE_PREFIX + site.serviceName());
+        return tile;
+    }
 
-        ItemStack streakItem = ItemBuilder.of(Material.MAGMA_CREAM)
-                .name(name("<gradient:#fca5a5:#dc2626><bold>🔥 Streak Rewards" + GRADIENT_END))
-                .glow(true)
-                .lore(List.of(
-                        Component.empty(),
-                        lore("  <gray>View milestone rewards!"),
-                        Component.empty(),
-                        lore("  <gradient:#fca5a5:#dc2626>▶ Click to view"),
-                        Component.empty()))
+    private @NotNull ItemStack emptySiteTile(@NotNull Player viewer) {
+        return ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
+                .name(ic("vote_overview.site-empty.name", viewer))
+                .lore(ics("vote_overview.site-empty.lore", viewer))
                 .build();
-        tag(streakItem, "streaks");
-        inv.setItem(51, streakItem);
+    }
 
-        ItemStack rewardsItem = ItemBuilder.of(Material.SPONGE)
-                .name(name("<gradient:#fde047:#f59e0b><bold>✦ Vote Economy" + GRADIENT_END))
-                .glow(true)
-                .lore(List.of(
-                        Component.empty(),
-                        lore("  <gray>Lucky Vote, multiplier & party!"),
-                        Component.empty(),
-                        lore("  <gradient:#fde047:#f59e0b>▶ Click to view"),
-                        Component.empty()))
+    private @NotNull ItemStack pageButton(@NotNull Player viewer, @NotNull String keyBase,
+                                          @NotNull String navTag, int page, int totalPages) {
+        ItemStack btn = ItemBuilder.of(Material.ARROW)
+                .name(ic(keyBase + ".name", viewer))
+                .lore(msg(keyBase + ".lore")
+                        .with("page", String.valueOf(page + 1))
+                        .with("total", String.valueOf(totalPages))
+                        .toComponents(viewer))
                 .build();
-        tag(rewardsItem, "rewards");
-        inv.setItem(49, rewardsItem);
+        tag(btn, navTag);
+        return btn;
+    }
+
+    private static int clampPage(int page, int totalPages) {
+        if (page < 0) {
+            return 0;
+        }
+        return Math.min(page, totalPages - 1);
     }
 
     @Override
     protected void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked) {
         String id = tagOf(clicked);
-        if (id == null) return;
+        if (id == null) {
+            return;
+        }
+        if (handleNavigation(viewer, id)) {
+            return;
+        }
+        if (handlePaging(viewer, id)) {
+            return;
+        }
+        if (id.startsWith(TAG_SITE_PREFIX)) {
+            handleSiteClick(viewer, id.substring(TAG_SITE_PREFIX.length()));
+        }
+    }
 
-        if ("leaderboard".equals(id) && leaderboardView != null) {
+    private boolean handleNavigation(@NotNull Player viewer, @NotNull String id) {
+        if (TAG_LEADERBOARD.equals(id) && leaderboardView != null) {
             leaderboardView.open(viewer);
-            return;
+            return true;
         }
-        if ("streaks".equals(id) && streakView != null) {
+        if (TAG_STREAKS.equals(id) && streakView != null) {
             streakView.open(viewer);
-            return;
+            return true;
         }
-        if ("rewards".equals(id) && rewardsView != null) {
+        if (TAG_REWARDS.equals(id) && rewardsView != null) {
             rewardsView.open(viewer);
+            return true;
+        }
+        if (TAG_SHOP.equals(id) && shopView != null) {
+            shopView.open(viewer);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean handlePaging(@NotNull Player viewer, @NotNull String id) {
+        UUID uuid = viewer.getUniqueId();
+        if (TAG_PAGE_PREV.equals(id)) {
+            sitePage.put(uuid, Math.max(0, sitePage.getOrDefault(uuid, 0) - 1));
+            renderSites(viewer.getOpenInventory().getTopInventory(), viewer);
+            return true;
+        }
+        if (TAG_PAGE_NEXT.equals(id)) {
+            sitePage.put(uuid, sitePage.getOrDefault(uuid, 0) + 1);
+            renderSites(viewer.getOpenInventory().getTopInventory(), viewer);
+            return true;
+        }
+        return false;
+    }
+
+    private void handleSiteClick(@NotNull Player viewer, @NotNull String serviceName) {
+        VoteSite site = voteService.getVoteSites().values().stream()
+                .filter(s -> serviceName.equals(s.serviceName()))
+                .findFirst().orElse(null);
+        if (site == null || site.voteUrl() == null) {
             return;
         }
-        if (id.startsWith("site:")) {
-            String serviceName = id.substring(5);
-            VoteSite site = voteService.getVoteSites().values().stream()
-                    .filter(s -> serviceName.equals(s.serviceName()))
-                    .findFirst().orElse(null);
-            if (site != null && site.voteUrl() != null) {
-                viewer.closeInventory();
-                viewer.sendMessage(
-                        MM.deserialize("<gradient:#86efac:#16a34a>✔</gradient> <gray>Vote on</gray> <gradient:#a5f3fc:#06b6d4>" + site.displayName() + "</gradient><gray>:</gray> ")
-                                .append(Component.text(site.voteUrl(), NamedTextColor.AQUA)
-                                        .clickEvent(ClickEvent.openUrl(site.voteUrl()))
-                                        .hoverEvent(HoverEvent.showText(
-                                                Component.text("Click to open in browser", NamedTextColor.YELLOW)))));
-            }
+        viewer.closeInventory();
+        viewer.sendMessage(
+                MM.deserialize("<gradient:#86EFAC:#22C55E>✔</gradient> <gray>Vote on</gray> <gradient:#A5F3FC:#06B6D4>"
+                                + site.displayName() + "</gradient><gray>:</gray> ")
+                        .append(Component.text(site.voteUrl(), NamedTextColor.AQUA)
+                                .clickEvent(ClickEvent.openUrl(site.voteUrl()))
+                                .hoverEvent(HoverEvent.showText(
+                                        Component.text("Click to open in browser", NamedTextColor.YELLOW)))));
+    }
+
+    /**
+     * Formats {@code lastVoteAt} as a short "X days ago" / "today" string,
+     * resolving from the {@code vote_overview.points-never} i18n key when the
+     * player has never voted. Resolution is server-default-locale (placeholders
+     * carry no localized data themselves).
+     */
+    private @NotNull String formatLastVoted(@NotNull Player viewer, @Nullable Instant lastVoteAt) {
+        if (lastVoteAt == null) {
+            return MM.serialize(ic("vote_overview.points-never", viewer));
         }
+        Duration since = Duration.between(lastVoteAt, Instant.now());
+        long days = since.toDays();
+        if (days >= 1) {
+            return days + " day(s) ago";
+        }
+        long hours = since.toHours();
+        if (hours >= 1) {
+            return hours + "h ago";
+        }
+        long minutes = Math.max(1, since.toMinutes());
+        return minutes + "m ago";
     }
 
     // ── Helpers ─────────────────────────────────────────────────

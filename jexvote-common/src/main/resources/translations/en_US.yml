@@ -25,17 +25,6 @@ vote:
     not_enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You need</red> <gradient:#d8b4fe:#9333ea>{cost} vote points</gradient> <red>to buy a Streak Freeze.</red>'
     no_profile: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote at least once before buying a Streak Freeze.</red>'
     error: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Could not complete the purchase. Try again.</red>'
-  fly:
-    granted: '<gradient:#7dd3fc:#2563eb>✈ Flight granted!</gradient> <gray>You can fly for</gray> <white>{minutes} min</white> <gray>— cost</gray> <gradient:#d8b4fe:#9333ea>{cost} vote points</gradient><gray>.</gray>'
-    disabled: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Flight redemption is disabled on this server.</red>'
-    not_enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You need</red> <gradient:#d8b4fe:#9333ea>{cost} vote points</gradient> <red>to redeem flight.</red>'
-    no_profile: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote at least once before redeeming flight.</red>'
-    unavailable: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Flight is unavailable right now (JExEssentials missing?).</red>'
-    error: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Could not redeem flight. Try again.</red>'
-  eventfly:
-    granted: '<gradient:#7dd3fc:#2563eb>✈ Event auto-fly unlocked!</gradient> <gray>You now fly automatically while any island event is active — cost</gray> <gradient:#d8b4fe:#9333ea>{cost} vote points</gradient><gray>.</gray>'
-    already_owned: '<gradient:#fde047:#f59e0b>✦</gradient> <yellow>You already own the event auto-fly perk.</yellow>'
-    not_enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You need</red> <gradient:#d8b4fe:#9333ea>{cost} vote points</gradient> <red>to unlock event auto-fly.</red>'
   gift:
     usage: '<dark_gray>▸</dark_gray> <gray>Usage:</gray> <gradient:#86efac:#16a34a>/vote gift <white><player|random></white></gradient>'
     sent: '<gradient:#86efac:#16a34a>✔</gradient> <gray>You gifted a streak advance to</gray> <gradient:#86efac:#16a34a>{target}</gradient><gray>! Their streak:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient> <dark_gray>(</dark_gray><white>{remaining} gift(s) left today</white><dark_gray>)</dark_gray>'
@@ -74,8 +63,147 @@ vote:
     entry: '<green>{name} <gray>— <aqua>Click to vote'
     no_sites: '<gray>No vote sites configured.'
 
+# ── Shared GUI vocabulary ────────────────────────────────────────────────────
+# Reused by every vote view (navigation buttons, paging, filter labels). Edit
+# here to retheme the whole plugin's chrome without touching individual views.
+#
+# Style tokens you can rely on inside MiniMessage:
+#   brand gradient  : <gradient:#86EFAC:#22C55E:#16A34A>...</gradient>
+#   value highlight : <#C084FC>...</#C084FC>
+#   muted body line : <gray>...</gray>
+#   faint border    : <dark_gray>...</dark_gray>
+gui:
+  common:
+    # Back button (top-left, DARK_OAK_DOOR). Re-styled per server here.
+    back-name: '<gradient:#86EFAC:#22C55E:#16A34A>« Back</gradient>'
+    back-lore: '<dark_gray>┃ <gray>Return to the previous menu</gray>'
+    # Close button (bottom-left, OAK_DOOR — deliberately not BARRIER, since
+    # the red barrier reads as "error/not allowed" rather than "leave").
+    close-name: '<gradient:#A5F3FC:#06B6D4>✘ Close</gradient>'
+    close-lore: '<dark_gray>┃ <gray>Close this menu</gray>'
+    # Click prompts used inside lore lines (kept short — they sit on a tile).
+    click-open: '<dark_gray>┃ <gradient:#86EFAC:#22C55E>» Click to open</gradient>'
+    click-view: '<dark_gray>┃ <gradient:#86EFAC:#22C55E>» Click to view</gradient>'
+    click-buy:  '<dark_gray>┃ <gradient:#86EFAC:#22C55E>» Click to buy</gradient>'
+    click-run:  '<dark_gray>┃ <gradient:#86EFAC:#22C55E>» Click to run</gradient>'
+
 vote_overview:
   title: '<dark_gray>Vote Overview'
+  # Every tile in this section accepts an optional `lore_extra` list — when
+  # present (and non-empty) its lines are appended after the standard lore.
+  # Use it to add server-specific hints (e.g. event CTAs, raffle info) without
+  # touching the plugin code. Example:
+  #   identity:
+  #     lore_extra:
+  #       - '<dark_gray>┃ <gradient:#FDE047:#F59E0B>★ Top voter this season!</gradient>'
+  # ── Header tile (slot 4) ─────────────────────────────────────────────────
+  header:
+    name: '<gradient:#86EFAC:#22C55E:#16A34A><bold>✦ Vote Overview</bold></gradient>'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>Vote daily, earn rewards.'
+      - '<dark_gray>┃ <gray>Click a site below to begin.'
+      - ''
+
+  # ── Identity tile (slot 11): name + lifetime totals, no points/streak ────
+  # Placeholders: {player} {total} {monthly} {last_voted}
+  identity:
+    name: '<gradient:#86EFAC:#22C55E:#16A34A><bold>{player}</bold></gradient>'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>Total votes: <#C084FC>{total}'
+      - '<dark_gray>┃ <gray>This month: <#C084FC>{monthly}'
+      - '<dark_gray>┃ <gray>Last voted: <#C084FC>{last_voted}'
+      - ''
+
+  # ── Points tile (slot 13): balance + what to spend it on ─────────────────
+  # Placeholders: {points}
+  points:
+    name: '<gradient:#D8B4FE:#9333EA><bold>✦ Vote Points</bold></gradient>'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>Balance: <gradient:#D8B4FE:#9333EA>{points}</gradient>'
+      - ''
+      - '<dark_gray>┃ <gray>Spend on:'
+      - '<dark_gray>┕ <gray>❄ Streak Freezes <dark_gray>/vote freeze'
+      - '<dark_gray>┕ <gray>✦ Reward shop <dark_gray>/vote shop'
+      - ''
+  points-never: '<gray>never'
+
+  # ── Streak tile (slot 15): current/highest, progress bar, next milestone ─
+  # Placeholders: {streak} {highest} {next} {bar}
+  streak:
+    name: '<gradient:#FDE047:#F59E0B><bold>★ Vote Streak</bold></gradient>'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>Current: <gradient:#86EFAC:#22C55E>{streak} day(s)</gradient>'
+      - '<dark_gray>┃ <gray>Highest: <gradient:#FDE047:#F59E0B>{highest} day(s)</gradient>'
+      - ''
+      - '<dark_gray>┃ <gray>Next milestone: <#C084FC>Day {next}'
+      - '<dark_gray>┃ {bar}'
+      - ''
+
+  # ── Vote site tile (slots 29-33) ─────────────────────────────────────────
+  # Placeholders: {site} {service} {points}
+  site:
+    name: '<gradient:#A5F3FC:#06B6D4><bold>{site}</bold></gradient>'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>Service: <#C084FC>{service}'
+      - '<dark_gray>┃ <gray>Reward: <gradient:#86EFAC:#22C55E>+{points} points</gradient>'
+      - ''
+      - '<dark_gray>┕ <gradient:#A5F3FC:#06B6D4>» Click to open the vote link</gradient>'
+      - ''
+  site-empty:
+    name: '<dark_gray>· Empty slot'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>No site configured.'
+      - ''
+  page-prev:
+    name: '<gradient:#A5F3FC:#06B6D4>« Previous page</gradient>'
+    lore:
+      - '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
+  page-next:
+    name: '<gradient:#A5F3FC:#06B6D4>Next page »</gradient>'
+    lore:
+      - '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
+
+  # ── Bottom nav (slots 46, 48, 50, 52) ────────────────────────────────────
+  nav:
+    leaderboard:
+      name: '<gradient:#FDE047:#F59E0B><bold>❖ Leaderboard</bold></gradient>'
+      lore:
+        - ''
+        - '<dark_gray>┃ <gray>See who voted the most.'
+        - ''
+        - '<dark_gray>┕ <gradient:#FDE047:#F59E0B>» Click to open</gradient>'
+        - ''
+    streaks:
+      name: '<gradient:#FCA5A5:#DC2626><bold>★ Streak Rewards</bold></gradient>'
+      lore:
+        - ''
+        - '<dark_gray>┃ <gray>Claim your milestone rewards.'
+        - ''
+        - '<dark_gray>┕ <gradient:#FCA5A5:#DC2626>» Click to open</gradient>'
+        - ''
+    rewards:
+      name: '<gradient:#D8B4FE:#9333EA><bold>✦ Vote Economy</bold></gradient>'
+      lore:
+        - ''
+        - '<dark_gray>┃ <gray>Jackpot odds, multiplier, party,'
+        - '<dark_gray>┃ <gray>freeze, gift and your points.'
+        - ''
+        - '<dark_gray>┕ <gradient:#D8B4FE:#9333EA>» Click to open</gradient>'
+        - ''
+    shop:
+      name: '<gradient:#86EFAC:#22C55E:#16A34A><bold>✦ Vote Shop</bold></gradient>'
+      lore:
+        - ''
+        - '<dark_gray>┃ <gray>Spend vote points on rewards.'
+        - ''
+        - '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to open</gradient>'
+        - ''
 
 vote_leaderboard:
   title: '<dark_gray>Vote Leaderboard'
@@ -187,59 +315,70 @@ vote_streak:
 
 vote_rewards:
   title: '<dark_gray>Vote Economy'
+  # Every panel below also accepts `lore_extra` for server-specific notes.
   header:
-    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Economy</bold></gradient>'
+    name: '<gradient:#FDE047:#F59E0B>✦ Vote Economy</gradient>'
     lore:
       - ''
-      - '  <gray>Lucky Vote, weekend multiplier,'
-      - '  <gray>vote party & reward drop stats.'
+      - '<dark_gray>┃ <gray>Lucky Vote odds & drop stats,'
+      - '<dark_gray>┃ <gray>weekend multiplier, vote party,'
+      - '<dark_gray>┃ <gray>Streak Freezes and Vote Gifts.'
       - ''
   lucky:
-    name: '<gradient:#fde047:#f59e0b><bold>★ Lucky Vote</bold></gradient>'
-    empty: '  <gray>No lucky rewards configured.'
-    entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}× won)</dark_gray>'
-    pool: '  <dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>Jackpot pool</gradient> <dark_gray>({count} outcomes)</dark_gray>'
-    pool-entry: '     <dark_gray>•</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}×)</dark_gray>'
+    name: '<gradient:#FDE047:#F59E0B>★ Lucky Vote</gradient>'
+    empty: '<dark_gray>┃ <gray>No lucky rewards configured.'
+    entry: '<dark_gray>┃ <gray>{reward} <yellow>{chance}%</yellow> <dark_gray>({won}× won)'
+    pool: '<dark_gray>┃ <gradient:#FDE047:#F59E0B>Jackpot pool</gradient> <dark_gray>({count} outcomes)'
+    pool-entry: '<dark_gray>┕ <gray>{reward} <yellow>{chance}%</yellow> <dark_gray>({won}×)'
   multiplier:
-    name: '<gradient:#fde047:#f59e0b><bold>⚡ Weekend Multiplier</bold></gradient>'
-    status-active: '  <dark_gray>▸</dark_gray> <gray>Status:</gray> <gradient:#86efac:#16a34a>ACTIVE</gradient>'
-    status-inactive: '  <dark_gray>▸</dark_gray> <gray>Status:</gray> <dark_gray>inactive</dark_gray>'
-    current: '  <dark_gray>▸</dark_gray> <gray>Current:</gray> <yellow>{factor}×</yellow>'
-    weekend: '  <dark_gray>▸</dark_gray> <gray>Weekend factor:</gray> <yellow>{factor}×</yellow>'
-    days: '  <dark_gray>▸</dark_gray> <gray>Days:</gray> <white>{days}</white>'
+    name: '<gradient:#FDE047:#F59E0B>⚡ Weekend Multiplier</gradient>'
+    status-active:   '<dark_gray>┃ <gray>Status: <gradient:#86EFAC:#22C55E>ACTIVE</gradient>'
+    status-inactive: '<dark_gray>┃ <gray>Status: <dark_gray>inactive</dark_gray>'
+    current: '<dark_gray>┃ <gray>Current: <yellow>{factor}×</yellow>'
+    weekend: '<dark_gray>┃ <gray>Weekend factor: <yellow>{factor}×</yellow>'
+    days:    '<dark_gray>┃ <gray>Days: <#C084FC>{days}'
   party:
-    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Party</bold></gradient>'
-    disabled: '  <dark_gray>Vote parties are disabled.'
-    progress: '  <dark_gray>▸</dark_gray> <gray>Progress:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
-    remaining: '  <dark_gray>▸</dark_gray> <gray>Remaining:</gray> <white>{remaining}</white>'
-    rewards-header: '  <gray>On completion you get:'
-    reward-entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray>'
-    none: '  <dark_gray>No party rewards configured.'
-    view-all: '  <gradient:#86efac:#16a34a>Click to view all party rewards</gradient>'
+    name: '<gradient:#FDE047:#F59E0B>✦ Vote Party</gradient>'
+    disabled: '<dark_gray>┃ <gray>Vote parties are disabled.'
+    progress: '<dark_gray>┃ <gray>Progress: <gradient:#86EFAC:#22C55E>{current}</gradient><dark_gray>/<#C084FC>{target}'
+    remaining: '<dark_gray>┃ <gray>Remaining: <#C084FC>{remaining}'
+    rewards-header: '<dark_gray>┃ <gray>On completion you get:'
+    reward-entry: '<dark_gray>┕ {reward}'
+    none: '<dark_gray>┃ <gray>No party rewards configured.'
+    view-all: '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to view all party rewards</gradient>'
   points:
-    name: '<gradient:#d8b4fe:#9333ea><bold>✦ Vote Points</bold></gradient>'
-    balance: '  <dark_gray>▸</dark_gray> <gray>Balance:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient>'
-    hint: '  <dark_gray>Earn points by voting; spend them on Streak Freezes.'
+    name: '<gradient:#D8B4FE:#9333EA>✦ Vote Points</gradient>'
+    balance: '<dark_gray>┃ <gray>Balance: <gradient:#D8B4FE:#9333EA>{points}</gradient>'
+    hint: '<dark_gray>┃ <gray>Earn by voting; spend on Freezes or Shop.'
   freeze:
-    name: '<gradient:#a5f3fc:#06b6d4><bold>❄ Streak Freeze</bold></gradient>'
-    disabled: '  <dark_gray>Streak Freezes are disabled.'
-    how: '  <gray>Protects your streak when you miss a vote.'
-    owned: '  <dark_gray>▸</dark_gray> <gray>Owned:</gray> <gradient:#a5f3fc:#06b6d4>{owned}</gradient><dark_gray>/</dark_gray><white>{max}</white>'
-    cost: '  <dark_gray>▸</dark_gray> <gray>Cost:</gray> <gradient:#d8b4fe:#9333ea>{cost} points</gradient>'
-    duration: '  <dark_gray>▸</dark_gray> <gray>Covers:</gray> <white>{duration}h per freeze</white>'
-    buy-hint: '  <gradient:#86efac:#16a34a>Click to buy</gradient> <dark_gray>(or /vote freeze)</dark_gray>'
+    name: '<gradient:#A5F3FC:#06B6D4>❄ Streak Freeze</gradient>'
+    disabled: '<dark_gray>┃ <gray>Streak Freezes are disabled.'
+    how:      '<dark_gray>┃ <gray>Protects your streak when you miss a vote.'
+    owned:    '<dark_gray>┃ <gray>Owned: <gradient:#A5F3FC:#06B6D4>{owned}</gradient><dark_gray>/<#C084FC>{max}'
+    cost:     '<dark_gray>┃ <gray>Cost: <gradient:#D8B4FE:#9333EA>{cost} points</gradient>'
+    duration: '<dark_gray>┃ <gray>Covers: <#C084FC>{duration}h <gray>per freeze'
+    buy-hint: '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to buy</gradient> <dark_gray>(or /vote freeze)'
   gift:
-    name: '<gradient:#86efac:#16a34a><bold>✦ Vote Gift</bold></gradient>'
-    disabled: '  <dark_gray>Vote gifting is disabled.'
-    how: '  <gray>Keep a friend''s streak alive — advances'
-    limit: '  <dark_gray>▸</dark_gray> <gray>Gifts left today:</gray> <gradient:#86efac:#16a34a>{remaining}</gradient><dark_gray>/</dark_gray><white>{limit}</white>'
-    require-vote: '  <dark_gray>▸</dark_gray> <gray>Requires:</gray> <white>you voted today</white>'
-    usage: '  <gray>Use</gray> <gradient:#86efac:#16a34a>/vote gift <player|random></gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Gift</gradient>'
+    disabled: '<dark_gray>┃ <gray>Vote gifting is disabled.'
+    how:      '<dark_gray>┃ <gray>Keep a friend''s streak alive.'
+    limit:    '<dark_gray>┃ <gray>Gifts left today: <gradient:#86EFAC:#22C55E>{remaining}</gradient><dark_gray>/<#C084FC>{limit}'
+    require-vote: '<dark_gray>┃ <gray>Requires: <#C084FC>you voted today'
+    usage: '<dark_gray>┕ <gray>Use <gradient:#86EFAC:#22C55E>/vote gift <player|random></gradient>'
+  shop:
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Shop</gradient>'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>Spend your vote points on rewards.'
+      - '<dark_gray>┃ <gray>Crate keys, items & perks.'
+      - ''
+      - '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to open the shop</gradient>'
+      - ''
   text:
-    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Vote Economy</bold></gradient> <dark_gray>━━━━'
-    lucky-entry: '<dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow> <dark_gray>({won}× won)</dark_gray>'
-    multiplier: '<dark_gray>▸</dark_gray> <gray>Multiplier:</gray> <yellow>{factor}×</yellow> <dark_gray>({status})</dark_gray>'
-    party: '<dark_gray>▸</dark_gray> <gray>Vote Party:</gray> <green>{current}</green><dark_gray>/</dark_gray><white>{target}</white> <dark_gray>({remaining} left)</dark_gray>'
+    header: '<dark_gray>━━━━ <gradient:#FDE047:#F59E0B><bold>Vote Economy</bold></gradient> <dark_gray>━━━━'
+    lucky-entry: '<dark_gray>┃ <gray>{reward} <yellow>{chance}%</yellow> <dark_gray>({won}× won)'
+    multiplier: '<dark_gray>┃ <gray>Multiplier: <yellow>{factor}×</yellow> <dark_gray>({status})'
+    party: '<dark_gray>┃ <gray>Vote Party: <green>{current}</green><dark_gray>/<#C084FC>{target} <dark_gray>({remaining} left)'
 
 # ── Vote Party reward catalog (VotePartyView) ─────────────────────────────────
 vote_party:
@@ -253,20 +392,127 @@ vote_party:
   entry-chance: '  <dark_gray>▸</dark_gray> <gray>Chance:</gray> <gradient:#86efac:#16a34a>{chance}%</gradient>'
   entry-won: '  <dark_gray>▸</dark_gray> <gray>Pulled:</gray> <white>{won}×</white>'
   empty: '<gray>No party pool configured.</gray>'
+  page:
+    prev: '<gradient:#fde047:#f59e0b>← Previous Page</gradient>'
+    next: '<gradient:#fde047:#f59e0b>Next Page →</gradient>'
+    indicator: '<gradient:#a5f3fc:#06b6d4><bold>Page {page} / {pages}</bold></gradient>'
+    showing: '  <gray>Showing {from}–{to} of {total}</gray>'
+  rewarded:
+    header: '<gradient:#fde047:#f59e0b>✦ Vote Party!</gradient> <gray>You received:</gray>'
+    entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray>'
 
 # ── Vote-Token Shop (VoteShopView) ────────────────────────────────────────────
 vote_shop:
-  title: '<gradient:#d8b4fe:#9333ea>Vote Shop</gradient>'
-  header-name: '<gradient:#d8b4fe:#9333ea><bold>✦ Vote Tokens</bold></gradient>'
-  points: '  <dark_gray>▸</dark_gray> <gray>Balance:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient> <gray>points</gray>'
-  hint: '  <dark_gray>Earn points by voting; spend them here.'
-  cost: '  <dark_gray>▸</dark_gray> <gray>Cost:</gray> <gradient:#d8b4fe:#9333ea>{cost}</gradient> <gray>points</gray>'
-  click-buy: '  <gradient:#86efac:#16a34a>Click to buy</gradient>'
-  empty: '<gray>The vote shop is empty.</gray>'
-  bought: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Bought</gray> <white>{item}</white> <gray>for</gray> <gradient:#d8b4fe:#9333ea>{cost}</gradient> <gray>points.</gray>'
-  not-enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You need</red> <white>{cost}</white> <red>vote points for that.</red>'
-  no-profile: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote at least once first.</red>'
-  error: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Purchase failed. Try again.</red>'
+  title: '<gradient:#D8B4FE:#9333EA>Vote Shop</gradient>'
+  # Every tile here also accepts `lore_extra` for server-specific notes.
+  # ── Header tile (slot 4) — live points balance ───────────────────────────
+  # Placeholders: {points}
+  header:
+    name: '<gradient:#D8B4FE:#9333EA><bold>✦ Vote Tokens</bold></gradient>'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>Balance: <gradient:#D8B4FE:#9333EA>{points}</gradient> <gray>points'
+      - ''
+      - '<dark_gray>┃ <gray>Earn points by voting daily.'
+      - '<dark_gray>┃ <gray>Spend them on the rewards below.'
+      - ''
+
+  # ── Shop tile — one per listing ─────────────────────────────────────────
+  # Placeholders: {item} {reward} {cost} {balance} {missing}
+  # The {reward} placeholder is rendered by VoteRewardDescriber, so it carries
+  # full styling for items (with translatable names), commands ("Dragon Crate
+  # Key"), currency, XP, etc.
+  tile:
+    name: '<gradient:#D8B4FE:#9333EA><bold>{item}</bold></gradient>'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>You get:'
+      - '<dark_gray>┕ {reward}'
+      - ''
+      - '<dark_gray>┃ <gray>Cost: <gradient:#D8B4FE:#9333EA>{cost}</gradient> <gray>points'
+      - '<dark_gray>┃ <gray>Your balance: <#C084FC>{balance}'
+      - ''
+    # Footer appended depending on affordability.
+    footer-buy: '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to buy</gradient>'
+    footer-need: '<dark_gray>┕ <gradient:#FCA5A5:#DC2626>» Need {missing} more points</gradient>'
+
+  # ── Empty-shop placeholder ───────────────────────────────────────────────
+  # Shown when no items are configured. Door, not barrier — see V-00 design.
+  empty:
+    name: '<gradient:#A5F3FC:#06B6D4><bold>✦ Shop being restocked</bold></gradient>'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>No items are listed right now.'
+      - '<dark_gray>┃ <gray>Check back soon!'
+      - ''
+
+  # ── Pagination ──────────────────────────────────────────────────────────
+  # Placeholders: {page} {total}
+  page-prev:
+    name: '<gradient:#D8B4FE:#9333EA>« Previous page</gradient>'
+    lore: '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
+  page-next:
+    name: '<gradient:#D8B4FE:#9333EA>Next page »</gradient>'
+    lore: '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
+
+  # ── Purchase feedback (chat receipt + title) ────────────────────────────
+  # Placeholders: {item} {reward} {cost} {balance}
+  purchase:
+    chat-header: '<dark_gray>━━━━ <gradient:#86EFAC:#22C55E:#16A34A><bold>✦ Vote Shop Purchase</bold></gradient> <dark_gray>━━━━'
+    chat-item:    '<dark_gray>┃ <gray>Item: <gradient:#D8B4FE:#9333EA>{item}</gradient>'
+    chat-reward:  '<dark_gray>┃ <gray>Reward: {reward}'
+    chat-cost:    '<dark_gray>┃ <gray>Paid: <gradient:#D8B4FE:#9333EA>{cost}</gradient> <gray>points'
+    chat-balance: '<dark_gray>┕ <gray>Balance: <#C084FC>{balance}<gray> points'
+    title:    '<gradient:#86EFAC:#22C55E:#16A34A><bold>✦ Purchased!</bold></gradient>'
+    subtitle: '<gradient:#D8B4FE:#9333EA>{item}</gradient>'
+
+  # ── Error toasts ────────────────────────────────────────────────────────
+  not-enough: '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>You need <white>{missing}</white> more vote points for that.</red>'
+  no-profile: '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>Vote at least once first.</red>'
+  error:      '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>Purchase failed. Try again.</red>'
+  players-only: '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>Only players can use the Vote Shop.</red>'
+  unavailable:  '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>The Vote Shop is unavailable right now.</red>'
+
+# ── Reward label templates (VoteRewardDescriber) ──────────────────────────────
+# Editable label fragments embedded into reward lists (lucky vote, streak tiles,
+# vote-party loot). {amount}/{material}/{unit}/{crate} are substituted in code;
+# {material} is a Minecraft translation key rendered via <lang:…> per client.
+reward_describe:
+  item: '<gradient:#93c5fd:#2563eb>{amount}× <lang:{material}></gradient>'
+  currency: '<gradient:#FFD700:#FFA500>◆ {amount} {unit}</gradient>'
+  experience-points: '<gradient:#86efac:#16a34a>✦ {amount} XP</gradient>'
+  experience-levels: '<gradient:#86efac:#16a34a>✦ {amount} levels</gradient>'
+  crate-key: '<gradient:#a5f3fc:#06b6d4>{amount}× {crate} Key</gradient>'
+  special: '<gradient:#d8b4fe:#9333ea>✦ Special Reward</gradient>'
+
+# ── /vote help ──────────────────────────────────────────────────────────────
+# Rendered by HelpRenderer. Placeholders:
+#   banner             : (none)
+#   entry              : {command}, {args}, {description}  ({args} can be empty)
+#   entry-args         : {args}                            (the raw signature)
+#   hover-base         : {full}, {description}
+#   hover-aliases      : {aliases}
+#   hover-action-*     : (none)
+vote_help:
+  banner: '<dark_gray>━━━━━━ <gradient:#86EFAC:#22C55E:#16A34A><bold>Vote Commands</bold></gradient> <dark_gray>━━━━━━'
+  entry: '  <dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>{command}</gradient> {args}<dark_gray> ┃ <gray>{description}</gray>'
+  entry-args: '<dark_gray>⟨</dark_gray><white>{args}</white><dark_gray>⟩</dark_gray>'
+  hover-base: '<gradient:#86EFAC:#22C55E:#16A34A><bold>{full}</bold></gradient><newline><gray>{description}</gray>'
+  hover-aliases: '<dark_gray>Aliases: </dark_gray><gray>{aliases}</gray>'
+  hover-action-run: '<dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>Click to run</gradient>'
+  hover-action-suggest: '<dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>Click to fill</gradient>'
+
+# ── /jexvote help (admin) ────────────────────────────────────────────────────
+# Same shape as vote_help; deliberate red gradient + [ADMIN] badge so the two
+# helps don't look near-identical (the previous green vs red was too subtle).
+vote_admin:
+  banner: '<dark_gray>━━━━ <gradient:#FCA5A5:#DC2626><bold>JExVote Admin</bold></gradient> <dark_gray>┃</dark_gray> <gradient:#FBBF24:#F59E0B><bold>[ADMIN]</bold></gradient> <dark_gray>━━━━'
+  entry: '  <dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>{command}</gradient> {args}<dark_gray> ┃ <gray>{description}</gray>'
+  entry-args: '<dark_gray>⟨</dark_gray><white>{args}</white><dark_gray>⟩</dark_gray>'
+  hover-base: '<gradient:#FCA5A5:#DC2626><bold>{full}</bold></gradient> <gradient:#FBBF24:#F59E0B>[ADMIN]</gradient><newline><gray>{description}</gray>'
+  hover-aliases: '<dark_gray>Aliases: </dark_gray><gray>{aliases}</gray>'
+  hover-action-run: '<dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>Click to run</gradient>'
+  hover-action-suggest: '<dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>Click to fill</gradient>'
 
 # ── Built-in JExCommand keys ──────────────────────────────────────────────────
 

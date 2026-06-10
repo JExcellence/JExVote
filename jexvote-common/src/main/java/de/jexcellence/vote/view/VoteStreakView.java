@@ -4,6 +4,7 @@ import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jexplatform.utility.item.ItemBuilder;
 import de.jexcellence.jexplatform.view.RewardViewHelper;
+import de.jexcellence.vote.gui.style.VoteRarityStyle;
 import de.jexcellence.vote.service.StreakClaimService;
 import de.jexcellence.vote.service.VoteRewardService;
 import de.jexcellence.vote.service.VoteService;
@@ -140,9 +141,8 @@ public class VoteStreakView extends VoteBaseView {
 
     private void renderTrack(@NotNull Inventory inv, @NotNull Player viewer,
                               @NotNull ViewerState state) {
-        // Row 0: Header
-        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 0, 2, 6, 8);
-        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 1, 7);
+        // 1-wide frame; header, info row and milestone grid sit in the interior
+        frame(inv, Material.ORANGE_STAINED_GLASS_PANE);
         inv.setItem(4, ItemBuilder.of(Material.MAGMA_CREAM)
                 .name(ic("vote_streak.header.name", viewer))
                 .glow(true)
@@ -150,7 +150,6 @@ public class VoteStreakView extends VoteBaseView {
                 .build());
 
         // Row 1: Info placeholders (loading)
-        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 9, 17);
         inv.setItem(11, ItemBuilder.of(Material.BLAZE_POWDER)
                 .name(ic("vote_streak.your_streak.name", viewer))
                 .lore(List.of(Component.empty(), ic("vote_streak.loading", viewer), Component.empty()))
@@ -164,16 +163,8 @@ public class VoteStreakView extends VoteBaseView {
                 .lore(List.of(Component.empty(), ic("vote_streak.loading", viewer), Component.empty()))
                 .build());
 
-        // Row 2: Separator
-        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 18, 22, 26);
-
-        // Row 3-4: Milestone grid edges
-        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 27, 35, 36, 44);
-
-        // Row 5: Bottom bar + back
-        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 46, 52);
-        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 47, 53);
-        inv.setItem(45, backButton());
+        // Row 5: Bottom bar (back top-left, close bottom-left)
+        navBar(inv, true);
 
         // Async: load stats + claimed days
         UUID uuid = viewer.getUniqueId();
@@ -216,8 +207,8 @@ public class VoteStreakView extends VoteBaseView {
         boolean claimed = state.claimedDays.contains(day);
         boolean claimable = manualMode && reached && !claimed;
 
-        // Row 0: Header
-        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 0, 1, 2, 6, 7, 8);
+        // 1-wide frame; header + reward tiles sit in the interior
+        frame(inv, Material.ORANGE_STAINED_GLASS_PANE);
         String statusGradient = resolveStatusGradient(claimed, claimable, reached);
         String statusLabel = resolveStatusLabel(viewer, claimed, claimable, reached);
 
@@ -234,9 +225,6 @@ public class VoteStreakView extends VoteBaseView {
                         Component.empty()))
                 .build());
 
-        // Row 1: Separator
-        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 9, 17);
-
         // Rows 2-3: Reward tiles
         List<AbstractReward> flatRewards = rewards.stream()
                 .flatMap(r -> RewardViewHelper.flatten(r).stream())
@@ -249,18 +237,13 @@ public class VoteStreakView extends VoteBaseView {
             }
         }
 
-        // Row 4: Separator
-        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 36, 44);
-
         // Row 5: Navigation
-        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 46, 52);
-        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 47, 53);
-
         ItemStack backBtn = ItemBuilder.of(Material.ARROW)
                 .name(ic("vote_streak.detail.back_button", viewer))
                 .build();
         tag(backBtn, TAG_DETAIL_BACK);
-        inv.setItem(45, backBtn);
+        inv.setItem(0, backBtn);
+        inv.setItem(45, closeButton());
 
         if (claimable) {
             ItemStack claimBtn = ItemBuilder.of(Material.LIME_DYE)
@@ -280,7 +263,9 @@ public class VoteStreakView extends VoteBaseView {
             String daysLabel = remaining == 1
                     ? msg(I18N_DAY_LABEL).text(viewer)
                     : msg(I18N_DAYS_LABEL).text(viewer);
-            inv.setItem(49, ItemBuilder.of(Material.RED_STAINED_GLASS_PANE)
+            // GRAY_DYE for locked, per the V-06 convention ("locked but visible
+            // tier" reads better than the harsh red-pane "error" tone).
+            inv.setItem(49, ItemBuilder.of(Material.GRAY_DYE)
                     .name(ic("vote_streak.detail.locked_status.name", viewer))
                     .lore(icsLocked("vote_streak.detail.locked_status.lore", viewer, day, remaining, daysLabel))
                     .build());
@@ -371,11 +356,12 @@ public class VoteStreakView extends VoteBaseView {
         List<Integer> days = new ArrayList<>(milestones.keySet());
         Collections.sort(days);
         int[] slots = centeredMilestoneSlots(days.size());
+        int totalTiers = days.size();
         for (int i = 0; i < slots.length; i++) {
             int day = days.get(i);
             inv.setItem(slots[i], buildMilestoneItem(
                     day, milestones.get(day), viewer, highest,
-                    nextMs, claimed, manualMode));
+                    nextMs, claimed, manualMode, i, totalTiers));
         }
     }
 
@@ -394,7 +380,8 @@ public class VoteStreakView extends VoteBaseView {
                                                     @NotNull Player viewer,
                                                     int highest, int nextMs,
                                                     @NotNull Set<Integer> claimed,
-                                                    boolean manualMode) {
+                                                    boolean manualMode,
+                                                    int tierIndex, int totalTiers) {
         boolean reached = highest >= day;
         boolean isClaimed = claimed.contains(day);
         boolean claimable = manualMode && reached && !isClaimed;
@@ -407,6 +394,14 @@ public class VoteStreakView extends VoteBaseView {
         List<Component> itemLore = new ArrayList<>();
         itemLore.add(Component.empty());
         itemLore.add(resolveMilestoneStatus(viewer, isClaimed, claimable, reached, manualMode, isNext));
+
+        // Rarity badge — only on locked tiers so the player can read at a
+        // glance how prestigious the locked one is. Reached/claimable tiles
+        // already communicate that with their bright gradient + glow.
+        if (!reached && !isNext) {
+            VoteRarityStyle rarity = tierRarity(tierIndex, totalTiers);
+            itemLore.add(lore("<dark_gray>┃ <gray>Rarity: " + rarity.display(rarity.name())));
+        }
 
         if (!reached) {
             int remaining = day - highest;
@@ -425,7 +420,7 @@ public class VoteStreakView extends VoteBaseView {
         for (AbstractReward reward : rewards) {
             List<AbstractReward> flat = RewardViewHelper.flatten(reward);
             for (AbstractReward atomic : flat) {
-                itemLore.add(lore("  <dark_gray>▸</dark_gray> " + VoteRewardDescriber.describe(atomic)));
+                itemLore.add(lore("<dark_gray>┃ " + VoteRewardDescriber.describe(atomic)));
             }
         }
         itemLore.add(Component.empty());
@@ -508,10 +503,30 @@ public class VoteStreakView extends VoteBaseView {
         return msg("vote_streak.milestone.locked.status").text(viewer);
     }
 
+    /**
+     * Maps a milestone tier's position to a {@link VoteRarityStyle} bucket so
+     * locked tiles can show "how prestigious is this one?" at a glance.
+     * Spreads tiers across the six rarity tiers evenly: the lowest tier is
+     * JUNK, the highest is SECRET (with a fallback to DIVINE when there are
+     * exactly six tiers so SECRET isn't always exposed).
+     */
+    private static @NotNull VoteRarityStyle tierRarity(int tierIndex, int totalTiers) {
+        if (totalTiers <= 0) {
+            return VoteRarityStyle.COMMON;
+        }
+        VoteRarityStyle[] tiers = VoteRarityStyle.values();
+        // Map index to the [0, tiers.length-1] range proportionally.
+        int idx = (int) Math.round((tierIndex / (double) Math.max(1, totalTiers - 1)) * (tiers.length - 1));
+        return tiers[Math.max(0, Math.min(tiers.length - 1, idx))];
+    }
+
     private static @NotNull Material resolvePrimaryRewardMaterial(
             @NotNull List<AbstractReward> rewards, boolean showRewardIcon) {
         if (!showRewardIcon || rewards.isEmpty()) {
-            return rewards.isEmpty() ? Material.GRAY_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE;
+            // Locked tier: use GRAY_DYE (not RED_STAINED_GLASS_PANE) — gray
+            // reads as "not yet" without the harsh "error" tone. The rarity
+            // glyph in the lore tells the player how high-value this tier is.
+            return rewards.isEmpty() ? Material.GRAY_STAINED_GLASS_PANE : Material.GRAY_DYE;
         }
 
         List<AbstractReward> flat = rewards.stream()

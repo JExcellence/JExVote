@@ -4,10 +4,10 @@ import com.raindropcentral.commands.v2.CommandContext;
 import com.raindropcentral.commands.v2.CommandHandler;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.model.VoteSnapshot;
+import de.jexcellence.vote.command.help.HelpRenderer;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.StreakFreezeService;
-import de.jexcellence.vote.service.VoteFlyService;
 import de.jexcellence.vote.service.VoteGiftService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteService;
@@ -16,8 +16,6 @@ import de.jexcellence.vote.view.VoteOverviewView;
 import de.jexcellence.vote.view.VoteRewardsView;
 import de.jexcellence.vote.view.VoteShopView;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -40,7 +38,6 @@ public final class VoteCommandHandler {
     private final VoteLeaderboardView leaderboardView;
     private final StreakFreezeService streakFreezeService;
     private final VoteGiftService voteGiftService;
-    private final VoteFlyService voteFlyService;
     private VoteShopView shopView;
 
     @SuppressWarnings({"unused", "java:S107"}) // voteConfig kept for caller compatibility; handled separately in JExVote
@@ -51,8 +48,7 @@ public final class VoteCommandHandler {
                               @NotNull VoteRewardsView rewardsView,
                               @NotNull VoteLeaderboardView leaderboardView,
                               @NotNull StreakFreezeService streakFreezeService,
-                              @NotNull VoteGiftService voteGiftService,
-                              @NotNull VoteFlyService voteFlyService) {
+                              @NotNull VoteGiftService voteGiftService) {
         this.voteService = voteService;
         this.leaderboardService = leaderboardService;
         this.overviewView = overviewView;
@@ -60,7 +56,6 @@ public final class VoteCommandHandler {
         this.leaderboardView = leaderboardView;
         this.streakFreezeService = streakFreezeService;
         this.voteGiftService = voteGiftService;
-        this.voteFlyService = voteFlyService;
     }
 
     public @NotNull Map<String, CommandHandler> handlerMap() {
@@ -73,8 +68,6 @@ public final class VoteCommandHandler {
                 Map.entry("vote.rewards", this::onRewards),
                 Map.entry("vote.freeze", this::onFreeze),
                 Map.entry("vote.gift", this::onGift),
-                Map.entry("vote.fly", this::onFly),
-                Map.entry("vote.eventfly", this::onEventFly),
                 Map.entry("vote.shop", this::onShop)
         );
     }
@@ -93,47 +86,6 @@ public final class VoteCommandHandler {
             return;
         }
         shopView.open(player);
-    }
-
-    private void onFly(@NotNull CommandContext ctx) {
-        Player player = ctx.asPlayer().orElseThrow();
-        int cost = voteFlyService.costPoints();
-        int minutes = voteFlyService.minutes();
-        voteFlyService.redeem(player).thenAccept(result -> {
-            switch (result) {
-                case SUCCESS -> r18n().msg("vote.fly.granted").prefix()
-                        .with("minutes", String.valueOf(minutes))
-                        .with("cost", String.valueOf(cost))
-                        .send(player);
-                case DISABLED -> r18n().msg("vote.fly.disabled").prefix().send(player);
-                case NOT_ENOUGH_POINTS -> r18n().msg("vote.fly.not_enough").prefix()
-                        .with("cost", String.valueOf(cost))
-                        .send(player);
-                case NO_PROFILE -> r18n().msg("vote.fly.no_profile").prefix().send(player);
-                case UNAVAILABLE -> r18n().msg("vote.fly.unavailable").prefix().send(player);
-                default -> r18n().msg("vote.fly.error").prefix().send(player);
-            }
-        });
-    }
-
-    private void onEventFly(@NotNull CommandContext ctx) {
-        Player player = ctx.asPlayer().orElseThrow();
-        int cost = voteFlyService.eventFlyCost();
-        voteFlyService.redeemEventFly(player).thenAccept(result -> {
-            switch (result) {
-                case SUCCESS -> r18n().msg("vote.eventfly.granted").prefix()
-                        .with("cost", String.valueOf(cost))
-                        .send(player);
-                case ALREADY_OWNED -> r18n().msg("vote.eventfly.already_owned").prefix().send(player);
-                case DISABLED -> r18n().msg("vote.fly.disabled").prefix().send(player);
-                case NOT_ENOUGH_POINTS -> r18n().msg("vote.eventfly.not_enough").prefix()
-                        .with("cost", String.valueOf(cost))
-                        .send(player);
-                case NO_PROFILE -> r18n().msg("vote.fly.no_profile").prefix().send(player);
-                case UNAVAILABLE -> r18n().msg("vote.fly.unavailable").prefix().send(player);
-                default -> r18n().msg("vote.fly.error").prefix().send(player);
-            }
-        });
     }
 
     private void onRewards(@NotNull CommandContext ctx) {
@@ -228,47 +180,30 @@ public final class VoteCommandHandler {
     }
 
     private void onHelp(@NotNull CommandContext ctx) {
-        var sender = ctx.sender();
-
-        sender.sendMessage(MM.deserialize(
-                "<dark_gray>━━━━ <gradient:#86efac:#16a34a><bold>Vote Help</bold></gradient> <dark_gray>━━━━"));
-
-        record HelpEntry(String command, String args, String description, boolean suggest) {}
-
-        List<HelpEntry> entries = List.of(
-                new HelpEntry("/vote", "", "Open the vote GUI", false),
-                new HelpEntry("/vote sites", "", "List all vote sites with links", false),
-                new HelpEntry("/vote stats", "[player]", "View vote statistics", true),
-                new HelpEntry("/vote top", "[count]", "View the vote leaderboard", true),
-                new HelpEntry("/vote rewards", "", "View rewards, multiplier & drop odds", false),
-                new HelpEntry("/vote freeze", "", "Buy a Streak Freeze (you start with 1 free!) to protect your streak", false),
-                new HelpEntry("/vote gift", "<player|random>", "Gift a streak advance to a friend", true),
-                new HelpEntry("/vote help", "", "Show this help", false)
+        // Styling lives entirely in the vote_help.* i18n keys; entries only
+        // contribute the command, args, description and aliases. New subcommands
+        // get one line here — no MiniMessage to hand-paint.
+        List<HelpRenderer.Entry> entries = List.of(
+                HelpRenderer.Entry.of("/vote", "", "Open the vote menu",
+                        List.of("v"), HelpRenderer.Action.RUN),
+                HelpRenderer.Entry.of("/vote sites", "", "List all vote sites with links",
+                        HelpRenderer.Action.RUN),
+                HelpRenderer.Entry.of("/vote stats", "[player]", "View vote statistics (opens the menu for yourself)",
+                        List.of("info"), HelpRenderer.Action.SUGGEST),
+                HelpRenderer.Entry.of("/vote top", "[count]", "Open the all-time leaderboard",
+                        List.of("leaderboard", "lb"), HelpRenderer.Action.SUGGEST),
+                HelpRenderer.Entry.of("/vote rewards", "", "Jackpot odds, multiplier, freeze, gift, points",
+                        List.of("economy", "eco"), HelpRenderer.Action.RUN),
+                HelpRenderer.Entry.of("/vote shop", "", "Spend vote points on rewards",
+                        List.of("store", "tokens"), HelpRenderer.Action.RUN),
+                HelpRenderer.Entry.of("/vote freeze", "", "Buy a Streak Freeze (you start with one free)",
+                        List.of("freezes"), HelpRenderer.Action.RUN),
+                HelpRenderer.Entry.of("/vote gift", "<player|random>", "Gift a streak day to a friend",
+                        HelpRenderer.Action.SUGGEST),
+                HelpRenderer.Entry.of("/vote help", "", "Show this help",
+                        HelpRenderer.Action.RUN)
         );
-
-        for (HelpEntry e : entries) {
-            String full = e.command() + (e.args().isEmpty() ? "" : " " + e.args());
-            Component line = MM.deserialize(
-                    "  <dark_gray>▸</dark_gray> <gradient:#86efac:#16a34a>" + e.command() + "</gradient>"
-                            + (e.args().isEmpty() ? "" : " <dark_gray>⟨</dark_gray><white>" + e.args() + "</white><dark_gray>⟩</dark_gray>")
-                            + " <dark_gray>—</dark_gray> <gray>" + e.description() + "</gray>");
-
-            if (e.suggest()) {
-                line = line.clickEvent(ClickEvent.suggestCommand(e.command() + " "))
-                        .hoverEvent(HoverEvent.showText(MM.deserialize(
-                                "<gradient:#86efac:#16a34a>" + full + "</gradient>\n"
-                                        + "<gray>" + e.description() + "</gray>\n"
-                                        + "<dark_gray>Click to suggest</dark_gray>")));
-            } else {
-                line = line.clickEvent(ClickEvent.runCommand(e.command()))
-                        .hoverEvent(HoverEvent.showText(MM.deserialize(
-                                "<gradient:#86efac:#16a34a>" + full + "</gradient>\n"
-                                        + "<gray>" + e.description() + "</gray>\n"
-                                        + "<dark_gray>Click to run</dark_gray>")));
-            }
-
-            sender.sendMessage(line);
-        }
+        new HelpRenderer("vote_help").render(ctx.sender(), entries);
     }
 
     private void onSites(@NotNull CommandContext ctx) {
