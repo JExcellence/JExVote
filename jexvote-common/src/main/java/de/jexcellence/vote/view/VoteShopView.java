@@ -5,7 +5,6 @@ import de.jexcellence.jexplatform.utility.item.ItemBuilder;
 import de.jexcellence.vote.config.VoteShopItem;
 import de.jexcellence.vote.service.VoteShopService;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -322,15 +321,6 @@ public final class VoteShopView extends VoteBaseView {
             return min;
         }
         return Math.min(value, max);
-    }
-
-    /**
-     * Static accessor used by views that need to render a reward fragment in
-     * MiniMessage form without taking a hard dependency on the package layout.
-     */
-    @SuppressWarnings("unused")
-    private static @NotNull MiniMessage mm() {
-        return MiniMessage.miniMessage();
     }
 
     private static final class Holder implements InventoryHolder {

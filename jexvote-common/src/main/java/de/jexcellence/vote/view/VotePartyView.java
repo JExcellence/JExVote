@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
+import java.util.WeakHashMap;
 
 /**
  * Dedicated Vote-Party reward catalog: lists every entry in the weighted party
@@ -33,20 +35,23 @@ import java.util.Locale;
  */
 public final class VotePartyView extends VoteBaseView {
 
-    private static final String TAG_BACK = "back";
+    private static final String TAG_PAGE_PREV = "page-prev";
+    private static final String TAG_PAGE_NEXT = "page-next";
 
-    /** Body slots (rows 2–5, edges excluded) — fits up to 21 pool entries. */
+    /** Body slots (rows 2–4, edges excluded) — one page holds 21 pool entries. */
     private static final int[] BODY_SLOTS = {
             19, 20, 21, 22, 23, 24, 25,
             28, 29, 30, 31, 32, 33, 34,
             37, 38, 39, 40, 41, 42, 43
     };
+    private static final int PAGE_SIZE = BODY_SLOTS.length;
 
     private final Holder holder = new Holder();
     private final VoteRewardConfig rewardConfig;
     private final @Nullable VotePartyService party;
     private final RewardStatsService stats;
     private @Nullable VoteRewardsView rewardsView;
+    private final WeakHashMap<UUID, Integer> pageByViewer = new WeakHashMap<>();
 
     public VotePartyView(@NotNull VoteRewardConfig rewardConfig,
                          @Nullable VotePartyService party,
@@ -65,27 +70,67 @@ public final class VotePartyView extends VoteBaseView {
 
     @Override
     protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
-        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 0, 8, 45, 53);
+        frame(inv, Material.YELLOW_STAINED_GLASS_PANE);
         inv.setItem(4, headerIcon(viewer));
 
         LuckyReward pool = rewardConfig.getVotePartyPool();
-        if (pool == null || pool.getEntries().isEmpty()) {
-            inv.setItem(22, ItemBuilder.of(Material.BARRIER)
-                    .name(ic("vote_party.empty", viewer))
+        List<LuckyReward.Entry> entries = pool == null ? List.of() : pool.getEntries();
+
+        if (entries.isEmpty()) {
+            pageByViewer.remove(viewer.getUniqueId());
+            // OAK_DOOR (not BARRIER): empty pool is a configuration state, not
+            // an error. The door + explanatory lore reads "nothing to show
+            // here yet" rather than the harsh red "not allowed" tone.
+            inv.setItem(22, ItemBuilder.of(Material.OAK_DOOR)
+                    .name(ic("vote_party.empty.name", viewer))
+                    .lore(ics("vote_party.empty.lore", viewer))
                     .build());
-        } else {
-            double total = pool.getEntries().stream().mapToDouble(LuckyReward.Entry::weight).sum();
-            int idx = 0;
-            for (LuckyReward.Entry entry : pool.getEntries()) {
-                if (idx >= BODY_SLOTS.length) {
-                    break;
-                }
-                inv.setItem(BODY_SLOTS[idx++], entryIcon(viewer, entry, total));
+            navBar(inv, rewardsView != null);
+            return;
+        }
+
+        double total = entries.stream().mapToDouble(LuckyReward.Entry::weight).sum();
+        int totalPages = Math.max(1, (int) Math.ceil((double) entries.size() / PAGE_SIZE));
+        int page = Math.max(0, Math.min(pageByViewer.getOrDefault(viewer.getUniqueId(), 0), totalPages - 1));
+        pageByViewer.put(viewer.getUniqueId(), page);
+
+        int from = page * PAGE_SIZE;
+        int to = Math.min(entries.size(), from + PAGE_SIZE);
+        for (int i = 0; i < BODY_SLOTS.length; i++) {
+            int dataIdx = from + i;
+            if (dataIdx < to) {
+                inv.setItem(BODY_SLOTS[i], entryIcon(viewer, entries.get(dataIdx), total));
             }
         }
 
-        if (rewardsView != null) {
-            inv.setItem(49, backButton());
+        renderPagination(inv, viewer, page, totalPages, from, to, entries.size());
+        navBar(inv, rewardsView != null);
+    }
+
+    private void renderPagination(@NotNull Inventory inv, @NotNull Player viewer,
+                                  int page, int totalPages, int from, int to, int size) {
+        if (totalPages <= 1) {
+            return;
+        }
+        if (page > 0) {
+            ItemStack prev = ItemBuilder.of(Material.ARROW)
+                    .name(ic("vote_party.page.prev", viewer))
+                    .build();
+            tag(prev, TAG_PAGE_PREV);
+            inv.setItem(48, prev);
+        }
+        inv.setItem(49, ItemBuilder.of(Material.PAPER)
+                .name(msg("vote_party.page.indicator")
+                        .with("page", page + 1).with("pages", totalPages).itemComponent(viewer))
+                .lore(List.of(msg("vote_party.page.showing")
+                        .with("from", from + 1).with("to", to).with("total", size).itemComponent(viewer)))
+                .build());
+        if (page + 1 < totalPages) {
+            ItemStack next = ItemBuilder.of(Material.ARROW)
+                    .name(ic("vote_party.page.next", viewer))
+                    .build();
+            tag(next, TAG_PAGE_NEXT);
+            inv.setItem(50, next);
         }
     }
 
@@ -148,8 +193,19 @@ public final class VotePartyView extends VoteBaseView {
 
     @Override
     protected void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked) {
-        if (TAG_BACK.equals(tagOf(clicked)) && rewardsView != null) {
+        String tag = tagOf(clicked);
+        if (TAG_BACK.equals(tag) && rewardsView != null) {
             rewardsView.open(viewer);
+            return;
+        }
+        if (TAG_PAGE_PREV.equals(tag)) {
+            pageByViewer.merge(viewer.getUniqueId(), -1, Integer::sum);
+            open(viewer);
+            return;
+        }
+        if (TAG_PAGE_NEXT.equals(tag)) {
+            pageByViewer.merge(viewer.getUniqueId(), 1, Integer::sum);
+            open(viewer);
         }
     }
 

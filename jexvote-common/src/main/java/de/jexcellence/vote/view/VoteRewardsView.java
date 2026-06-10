@@ -45,6 +45,8 @@ public final class VoteRewardsView extends VoteBaseView {
     private static final int SLOT_GIFT = 32;
     private static final String TAG_BUY_FREEZE = "buy_freeze";
     private static final String TAG_OPEN_PARTY = "open_party";
+    private static final String TAG_OPEN_SHOP = "open_shop";
+    private static final int SLOT_SHOP = 34;
 
     private final Holder holder = new Holder();
     private final JavaPlugin plugin;
@@ -59,6 +61,7 @@ public final class VoteRewardsView extends VoteBaseView {
 
     private VoteOverviewView overviewView;
     private @Nullable VotePartyView partyView;
+    private @Nullable VoteShopView shopView;
 
     @SuppressWarnings("java:S107")
     public VoteRewardsView(@NotNull JavaPlugin plugin,
@@ -85,14 +88,16 @@ public final class VoteRewardsView extends VoteBaseView {
     /** Wires the clickable party icon to the dedicated party reward catalog. */
     public void setPartyView(@NotNull VotePartyView view) { this.partyView = view; }
 
+    /** Wires the clickable shop icon to the vote-token shop. */
+    public void setShopView(@NotNull VoteShopView view) { this.shopView = view; }
+
     @Override protected @NotNull String title()          { return "vote_rewards.title"; }
     @Override protected int rows()                        { return 6; }
     @Override protected @NotNull InventoryHolder holder() { return holder; }
 
     @Override
     protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
-        glass(inv, Material.LIME_STAINED_GLASS_PANE, 0, 2, 6, 8);
-        glass(inv, Material.GREEN_STAINED_GLASS_PANE, 1, 7);
+        frame(inv, Material.LIME_STAINED_GLASS_PANE);
         inv.setItem(4, ItemBuilder.of(Material.EMERALD)
                 .name(ic("vote_rewards.header.name", viewer))
                 .glow(true)
@@ -109,9 +114,21 @@ public final class VoteRewardsView extends VoteBaseView {
         inv.setItem(SLOT_FREEZE, freezeIcon(viewer, -1));
         inv.setItem(SLOT_GIFT, giftIcon(viewer, -1));
 
-        if (overviewView != null) {
-            inv.setItem(49, backButton());
+        if (shopView != null) {
+            inv.setItem(SLOT_SHOP, shopIcon(viewer));
         }
+
+        navBar(inv, overviewView != null);
+    }
+
+    private @NotNull ItemStack shopIcon(@NotNull Player viewer) {
+        ItemStack icon = ItemBuilder.of(Material.EMERALD_BLOCK)
+                .name(ic("vote_rewards.shop.name", viewer))
+                .glow(true)
+                .lore(ics("vote_rewards.shop.lore", viewer))
+                .build();
+        tag(icon, TAG_OPEN_SHOP);
+        return icon;
     }
 
     @Override
@@ -344,6 +361,10 @@ public final class VoteRewardsView extends VoteBaseView {
         }
         if (TAG_OPEN_PARTY.equals(tag) && partyView != null) {
             partyView.open(viewer);
+            return;
+        }
+        if (TAG_OPEN_SHOP.equals(tag) && shopView != null) {
+            shopView.open(viewer);
             return;
         }
         if (TAG_BUY_FREEZE.equals(tag)) {

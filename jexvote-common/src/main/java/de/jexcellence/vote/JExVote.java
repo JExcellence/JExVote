@@ -14,7 +14,6 @@ import de.jexcellence.vote.api.JExVoteAPI;
 import de.jexcellence.vote.command.R18nCommandMessages;
 import de.jexcellence.vote.command.VoteAdminHandler;
 import de.jexcellence.vote.command.VoteCommandHandler;
-import de.jexcellence.vote.config.FlyServiceConfig;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VotePartyConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
@@ -41,8 +40,6 @@ import de.jexcellence.vote.service.StreakClaimService;
 import de.jexcellence.vote.service.StreakFreezeService;
 import de.jexcellence.vote.service.VoteBroadcastService;
 import de.jexcellence.vote.service.VoteGiftService;
-import de.jexcellence.vote.service.FlyBridge;
-import de.jexcellence.vote.service.VoteFlyService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteRewardService;
 import de.jexcellence.vote.service.VoteService;
@@ -89,7 +86,6 @@ public abstract class JExVote {
     private VoteConfig voteConfig;
     private VoteRewardConfig rewardConfig;
     private VotePartyConfig partyConfig;
-    private FlyServiceConfig flyServiceConfig;
 
     private VotePlayerRepository playerRepository;
     private VoteRecordRepository recordRepository;
@@ -105,7 +101,6 @@ public abstract class JExVote {
     private StreakClaimService streakClaimService;
     private StreakFreezeService streakFreezeService;
     private VoteGiftService voteGiftService;
-    private VoteFlyService voteFlyService;
     private VotePartyService votePartyService;
     private RewardStatsService rewardStatsService;
     private MultiplierService multiplierService;
@@ -270,9 +265,6 @@ public abstract class JExVote {
         partyConfig = new VotePartyConfig(plugin);
         partyConfig.load();
 
-        flyServiceConfig = new FlyServiceConfig(plugin);
-        flyServiceConfig.load();
-
         multiplierService = new MultiplierService(
                 edition().weekendMultiplierEnabled(),
                 new MultiplierService.Settings(
@@ -328,12 +320,6 @@ public abstract class JExVote {
 
         streakFreezeService = new StreakFreezeService(playerRepository, voteConfig);
         voteGiftService = new VoteGiftService(playerRepository, voteConfig);
-        // Vote-token → temporary flight redemption
-        // and the one-time event auto-fly perk purchase.
-        voteFlyService = new VoteFlyService(playerRepository,
-                new FlyBridge(logger, flyServiceConfig),
-                PlatformScheduler.of(plugin),
-                flyServiceConfig);
 
         // Purge old vote records on startup
         voteService.purgeOldRecords();
@@ -450,7 +436,7 @@ public abstract class JExVote {
         saveDefaultResource("commands/jexvote.yml");
 
         var voteCommandHandler = new VoteCommandHandler(voteService, leaderboardService, voteConfig, overviewView,
-                rewardsView, leaderboardView, streakFreezeService, voteGiftService, voteFlyService);
+                rewardsView, leaderboardView, streakFreezeService, voteGiftService);
         voteCommandHandler.setShopView(shopView);
         factory.registerTree(new File(plugin.getDataFolder(), "commands/vote.yml"),
                 voteCommandHandler.handlerMap(),
@@ -484,6 +470,8 @@ public abstract class JExVote {
         streakView.setOverviewView(overviewView);
         rewardsView.setOverviewView(overviewView);
         rewardsView.setPartyView(partyView);
+        rewardsView.setShopView(shopView);
+        overviewView.setShopView(shopView);
         partyView.setRewardsView(rewardsView);
         shopView.setRewardsView(rewardsView);
 

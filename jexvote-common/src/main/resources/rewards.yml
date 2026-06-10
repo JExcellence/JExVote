@@ -437,6 +437,26 @@ vote-shop:
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
     purchase-volume: 1.0
     purchase-pitch: 1.0
+  # Flight is delivered as a plain COMMAND reward — no built-in fly coupling.
+  # Adjust the command to whatever your flight/permission plugin exposes.
+  temp-fly:
+    name: "10 Minutes of Flight"
+    icon: FEATHER
+    cost: 8
+    # Example uses an Essentials-style timed-fly command; swap for your own.
+    reward: { type: command, command: 'fly add {player} 600', asConsole: true }
+    purchase-sound: ITEM_ELYTRA_FLYING
+    purchase-volume: 1.0
+    purchase-pitch: 1.0
+  event-fly:
+    name: "Event Auto-Fly Perk"
+    icon: PHANTOM_MEMBRANE
+    cost: 40
+    # Grants the permission JExOneblock honours to auto-fly during island events.
+    reward: { type: command, command: 'lp user {player} permission set jexoneblock.eventfly true', asConsole: true }
+    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
+    purchase-volume: 1.0
+    purchase-pitch: 1.0
 
 # ═════════════════════════════════════════════════════════════════
 # REWARD TYPE REFERENCE

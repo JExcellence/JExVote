@@ -363,7 +363,15 @@ vote_party:
   remaining: '  <dark_gray>▸</dark_gray> <gray>Verbleibend:</gray> <white>{remaining}</white>'
   entry-chance: '  <dark_gray>▸</dark_gray> <gray>Chance:</gray> <gradient:#86efac:#16a34a>{chance}%</gradient>'
   entry-won: '  <dark_gray>▸</dark_gray> <gray>Gezogen:</gray> <white>{won}×</white>'
-  empty: '<gray>Kein Party-Pool konfiguriert.</gray>'
+  empty:
+    name: '<gradient:#A5F3FC:#06B6D4>✦ Kein Party-Pool konfiguriert</gradient>'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>Der Server hat noch keine'
+      - '<dark_gray>┃ <gray>Party-Belohnungen eingerichtet.'
+      - ''
+      - '<dark_gray>┕ <dark_gray>Operatoren: bearbeite <#C084FC>rewards.yml<dark_gray>.'
+      - ''
   page:
     prev: '<gradient:#fde047:#f59e0b>← Vorherige Seite</gradient>'
     next: '<gradient:#fde047:#f59e0b>Nächste Seite →</gradient>'

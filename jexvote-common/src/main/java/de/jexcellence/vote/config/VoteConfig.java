@@ -83,7 +83,7 @@ public final class VoteConfig {
 
     private boolean offlineVoteQueue = true;
     private int streakTimeoutHours = 36;
-    private StreakClaimMode streakClaimMode = StreakClaimMode.AUTO;
+    private StreakClaimMode streakClaimMode = StreakClaimMode.MANUAL;
     private int recordRetentionDays = 90;
 
     private List<String> commandsOnVote = Collections.emptyList();
@@ -134,12 +134,12 @@ public final class VoteConfig {
         offlineVoteQueue = config.getBoolean("offline-vote-queue", true);
         streakTimeoutHours = config.getInt("streak.timeout-hours", 36);
 
-        String claimModeStr = config.getString("streak.claim-mode", "auto").trim().toUpperCase(Locale.ROOT);
+        String claimModeStr = config.getString("streak.claim-mode", "manual").trim().toUpperCase(Locale.ROOT);
         try {
             streakClaimMode = StreakClaimMode.valueOf(claimModeStr);
         } catch (IllegalArgumentException e) {
-            logger.warning(String.format("Invalid streak.claim-mode '%s', using AUTO", claimModeStr));
-            streakClaimMode = StreakClaimMode.AUTO;
+            logger.warning(String.format("Invalid streak.claim-mode '%s', using MANUAL", claimModeStr));
+            streakClaimMode = StreakClaimMode.MANUAL;
         }
 
         recordRetentionDays = config.getInt("records.retention-days", 90);

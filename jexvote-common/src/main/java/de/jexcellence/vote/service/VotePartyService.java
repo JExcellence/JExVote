@@ -2,6 +2,7 @@ package de.jexcellence.vote.service;
 
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
+import de.jexcellence.jexplatform.view.RewardViewHelper;
 import de.jexcellence.vote.config.VotePartyConfig;
 import de.jexcellence.vote.database.entity.PendingVoteRewardEntity;
 import de.jexcellence.vote.database.entity.VotePartyContributorEntity;
@@ -172,12 +173,46 @@ public class VotePartyService {
         Player online = Bukkit.getPlayer(uuid);
         if (online != null && online.isOnline()) {
             if (picks.isEmpty()) {
-                scheduler.runAtEntity(online, () -> rewardService.grantRewardList(online, rewards));
+                // No pool picks → no slot-machine animation; still give audible
+                // feedback and a chat summary so the player sees what they got.
+                scheduler.runAtEntity(online, () -> {
+                    rewardService.grantRewardList(online, rewards);
+                    playRewardSound(online);
+                    sendRewardSummary(online, rewards);
+                });
             } else {
                 animateThenGrant(uuid, picks, rewards, 0);
             }
         } else {
             queuePending(uuid, rewards);
+        }
+    }
+
+    /**
+     * Sends an itemized chat summary of every reward a contributor received,
+     * flattening composite rewards so each atomic reward is listed.
+     */
+    private void sendRewardSummary(@NotNull Player player, @NotNull List<AbstractReward> rewards) {
+        R18nManager r18n = R18nManager.getInstance();
+        r18n.msg("vote_party.rewarded.header").prefix().send(player);
+        for (AbstractReward reward : rewards) {
+            for (AbstractReward atomic : RewardViewHelper.flatten(reward)) {
+                r18n.msg("vote_party.rewarded.entry")
+                        .with("reward", VoteRewardDescriber.describe(atomic))
+                        .send(player);
+            }
+        }
+    }
+
+    /** Plays the configured reveal sound as generic reward feedback. */
+    private void playRewardSound(@NotNull Player player) {
+        var soundSettings = partyConfig.getSoundSettings();
+        try {
+            Sound sound = Sound.valueOf(soundSettings.revealSound());
+            player.playSound(player, sound, soundSettings.revealVolume(), soundSettings.revealPitch());
+        } catch (IllegalArgumentException ex) {
+            // Invalid configured sound name — skip audible feedback rather than throw.
+            logger.log(Level.FINE, () -> "Invalid vote-party reveal sound: " + soundSettings.revealSound());
         }
     }
 
@@ -242,6 +277,7 @@ public class VotePartyService {
             scheduler.runAtEntity(player, () -> {
                 showReveal(player, picks);
                 rewardService.grantRewardList(player, rewards);
+                sendRewardSummary(player, rewards);
             });
             return;
         }

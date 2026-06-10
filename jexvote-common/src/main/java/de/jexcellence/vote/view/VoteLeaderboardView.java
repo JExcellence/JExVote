@@ -55,39 +55,34 @@ public class VoteLeaderboardView extends VoteBaseView {
     @Override
     protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
 
-        // ── Row 0: Header ───────────────────────────────────────
-        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 0, 8);
-        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 1, 3, 5, 7);
+        // ── 1-wide frame; podium + leaderboard sit in the interior ──
+        frame(inv, Material.YELLOW_STAINED_GLASS_PANE);
 
+        // Podium tile names use the brand glyph (no <bold>) so they stay in
+        // visual harmony with the rest of the V-00-styled GUI. The leaderboard
+        // entries below remain bold for emphasis on the top-3 player names.
         inv.setItem(2, ItemBuilder.of(Material.DIAMOND)
-                .name(name("<gradient:#FFD700:#FFA500><bold>1st Place</bold></gradient>"))
-                .lore(List.of(lore("<gray>Diamond rank")))
+                .name(name("<gradient:#FFD700:#FFA500>★ 1st Place</gradient>"))
+                .lore(List.of(lore("<dark_gray>┃ <gray>Diamond rank")))
                 .build());
 
         inv.setItem(4, ItemBuilder.of(Material.GOLDEN_APPLE)
-                .name(name("<gradient:#fde047:#f59e0b><bold>⭐ Top Voters</bold></gradient>"))
+                .name(name("<gradient:#FDE047:#F59E0B>❖ Top Voters</gradient>"))
                 .glow(true)
                 .lore(List.of(
                         Component.empty(),
-                        lore("  <gray>All-time vote leaderboard"),
-                        lore("  <gray>Vote daily to climb!"),
+                        lore("<dark_gray>┃ <gray>All-time vote leaderboard"),
+                        lore("<dark_gray>┃ <gray>Vote daily to climb!"),
                         Component.empty()))
                 .build());
 
         inv.setItem(6, ItemBuilder.of(Material.GOLD_INGOT)
-                .name(name("<gradient:#C0C0C0:#A8A8A8><bold>2nd Place</bold></gradient>"))
-                .lore(List.of(lore("<gray>Gold rank")))
+                .name(name("<gradient:#C0C0C0:#A8A8A8>★ 2nd Place</gradient>"))
+                .lore(List.of(lore("<dark_gray>┃ <gray>Gold rank")))
                 .build());
 
-        // ── Row 1–3: Content area edges ─────────────────────────
-        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 9, 17, 18, 26, 27, 35);
-
-        // ── Row 4: Bottom border ────────────────────────────────
-        glass(inv, Material.ORANGE_STAINED_GLASS_PANE, 36, 37, 38, 39, 40, 41, 42, 43, 44);
-
-        // ── Row 5: Navigation ───────────────────────────────────
-        glass(inv, Material.YELLOW_STAINED_GLASS_PANE, 46, 52);
-        inv.setItem(45, backButton());
+        // ── Row 5: Navigation (back top-left, close bottom-left) ──
+        navBar(inv, overviewView != null);
 
         // ── Loading indicator ───────────────────────────────────
         inv.setItem(22, ItemBuilder.of(Material.CLOCK)
