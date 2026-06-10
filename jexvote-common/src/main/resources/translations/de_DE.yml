@@ -182,9 +182,6 @@ vote_streak:
     not_reached: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Du hast diesen Meilenstein noch nicht erreicht.'
     failed: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Abholen fehlgeschlagen. Bitte versuche es erneut.'
 
-vote_shop:
-  title: '<dark_gray>Vote-Shop'
-
 vote_rewards:
   title: '<dark_gray>Vote-Economy'
   header:
