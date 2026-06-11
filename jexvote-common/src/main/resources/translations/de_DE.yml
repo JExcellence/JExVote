@@ -80,7 +80,7 @@ gui:
 vote_overview:
   title: '<dark_gray>Vote-Übersicht'
   header:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A><bold>✦ Vote-Übersicht</bold></gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote-Übersicht</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Vote täglich, sammle Belohnungen.'
@@ -88,7 +88,7 @@ vote_overview:
       - ''
 
   identity:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A><bold>{player}</bold></gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>{player}</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Gesamt-Votes: <#C084FC>{total}'
@@ -97,7 +97,7 @@ vote_overview:
       - ''
 
   points:
-    name: '<gradient:#D8B4FE:#9333EA><bold>✦ Vote-Punkte</bold></gradient>'
+    name: '<gradient:#D8B4FE:#9333EA>✦ Vote-Punkte</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Guthaben: <gradient:#D8B4FE:#9333EA>{points}</gradient>'
@@ -109,7 +109,7 @@ vote_overview:
   points-never: '<gray>noch nie'
 
   streak:
-    name: '<gradient:#FDE047:#F59E0B><bold>★ Vote-Serie</bold></gradient>'
+    name: '<gradient:#FDE047:#F59E0B>★ Vote-Serie</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Aktuell: <gradient:#86EFAC:#22C55E>{streak} Tag(e)</gradient>'
@@ -120,7 +120,7 @@ vote_overview:
       - ''
 
   site:
-    name: '<gradient:#A5F3FC:#06B6D4><bold>{site}</bold></gradient>'
+    name: '<gradient:#A5F3FC:#06B6D4>{site}</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Dienst: <#C084FC>{service}'
@@ -145,7 +145,7 @@ vote_overview:
 
   nav:
     leaderboard:
-      name: '<gradient:#FDE047:#F59E0B><bold>❖ Bestenliste</bold></gradient>'
+      name: '<gradient:#FDE047:#F59E0B>❖ Bestenliste</gradient>'
       lore:
         - ''
         - '<dark_gray>┃ <gray>Wer am meisten gevotet hat.'
@@ -153,7 +153,7 @@ vote_overview:
         - '<dark_gray>┕ <gradient:#FDE047:#F59E0B>» Klicke zum Öffnen</gradient>'
         - ''
     streaks:
-      name: '<gradient:#FCA5A5:#DC2626><bold>★ Serien-Belohnungen</bold></gradient>'
+      name: '<gradient:#FCA5A5:#DC2626>★ Serien-Belohnungen</gradient>'
       lore:
         - ''
         - '<dark_gray>┃ <gray>Hole deine Meilenstein-Belohnungen.'
@@ -161,7 +161,7 @@ vote_overview:
         - '<dark_gray>┕ <gradient:#FCA5A5:#DC2626>» Klicke zum Öffnen</gradient>'
         - ''
     rewards:
-      name: '<gradient:#D8B4FE:#9333EA><bold>✦ Vote-Economy</bold></gradient>'
+      name: '<gradient:#D8B4FE:#9333EA>✦ Vote-Economy</gradient>'
       lore:
         - ''
         - '<dark_gray>┃ <gray>Jackpot-Quoten, Multiplikator, Party,'
@@ -170,7 +170,7 @@ vote_overview:
         - '<dark_gray>┕ <gradient:#D8B4FE:#9333EA>» Klicke zum Öffnen</gradient>'
         - ''
     shop:
-      name: '<gradient:#86EFAC:#22C55E:#16A34A><bold>✦ Vote-Shop</bold></gradient>'
+      name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote-Shop</gradient>'
       lore:
         - ''
         - '<dark_gray>┃ <gray>Vote-Punkte gegen Belohnungen eintauschen.'
@@ -197,8 +197,8 @@ vote_streak:
     name: '<gradient:#fde047:#f59e0b><bold>🔥 Dein Streak</bold></gradient>'
     lore:
       - ''
-      - '  <dark_gray>▸</dark_gray> <gray>Aktuell:</gray> <gradient:#86efac:#16a34a><bold>{current}</bold></gradient> <gray>{current_label}'
-      - '  <dark_gray>▸</dark_gray> <gray>Höchster:</gray> <gradient:#fde047:#f59e0b><bold>{highest}</bold></gradient> <gray>{highest_label}'
+      - '<dark_gray>┃ <gray>Aktuell:</gray> <gradient:#86efac:#16a34a><bold>{current}</bold></gradient> <gray>{current_label}'
+      - '<dark_gray>┃ <gray>Höchster:</gray> <gradient:#fde047:#f59e0b><bold>{highest}</bold></gradient> <gray>{highest_label}'
       - ''
       - '  <gray>Vote täglich, um ihn zu halten!'
       - ''
@@ -357,12 +357,12 @@ vote_party:
   title: '<gradient:#fde047:#f59e0b>Vote-Party Belohnungen</gradient>'
   disabled: '  <dark_gray>Vote-Partys sind deaktiviert.'
   header:
-    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote-Party ✦</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>✦ Vote-Party ✦</gradient>'
     lore: '<gray>3 garantierte Ziehungen + Bonus-Würfe pro Party.</gray>'
-  progress: '  <dark_gray>▸</dark_gray> <gray>Fortschritt:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
-  remaining: '  <dark_gray>▸</dark_gray> <gray>Verbleibend:</gray> <white>{remaining}</white>'
-  entry-chance: '  <dark_gray>▸</dark_gray> <gray>Chance:</gray> <gradient:#86efac:#16a34a>{chance}%</gradient>'
-  entry-won: '  <dark_gray>▸</dark_gray> <gray>Gezogen:</gray> <white>{won}×</white>'
+  progress: '<dark_gray>┃ <gray>Fortschritt:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
+  remaining: '<dark_gray>┃ <gray>Verbleibend:</gray> <white>{remaining}</white>'
+  entry-chance: '<dark_gray>┃ <gray>Chance:</gray> <gradient:#86efac:#16a34a>{chance}%</gradient>'
+  entry-won: '<dark_gray>┃ <gray>Gezogen:</gray> <white>{won}×</white>'
   empty:
     name: '<gradient:#A5F3FC:#06B6D4>✦ Kein Party-Pool konfiguriert</gradient>'
     lore:
@@ -379,13 +379,13 @@ vote_party:
     showing: '  <gray>Zeige {from}–{to} von {total}</gray>'
   rewarded:
     header: '<gradient:#fde047:#f59e0b>✦ Vote-Party!</gradient> <gray>Du hast erhalten:</gray>'
-    entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray>'
+    entry: '<dark_gray>┕ <gray>{reward}</gray>'
 
 # ── Vote-Token Shop (VoteShopView) ────────────────────────────────────────────
 vote_shop:
   title: '<gradient:#D8B4FE:#9333EA>Vote-Shop</gradient>'
   header:
-    name: '<gradient:#D8B4FE:#9333EA><bold>✦ Vote-Tokens</bold></gradient>'
+    name: '<gradient:#D8B4FE:#9333EA>✦ Vote-Tokens</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Guthaben: <gradient:#D8B4FE:#9333EA>{points}</gradient> <gray>Punkte'
@@ -395,7 +395,7 @@ vote_shop:
       - ''
 
   tile:
-    name: '<gradient:#D8B4FE:#9333EA><bold>{item}</bold></gradient>'
+    name: '<gradient:#D8B4FE:#9333EA>{item}</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Du erhältst:'
@@ -408,7 +408,7 @@ vote_shop:
     footer-need: '<dark_gray>┕ <gradient:#FCA5A5:#DC2626>» Noch {missing} Punkte fehlen</gradient>'
 
   empty:
-    name: '<gradient:#A5F3FC:#06B6D4><bold>✦ Shop wird aufgefüllt</bold></gradient>'
+    name: '<gradient:#A5F3FC:#06B6D4>✦ Shop wird aufgefüllt</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Gerade sind keine Artikel verfügbar.'

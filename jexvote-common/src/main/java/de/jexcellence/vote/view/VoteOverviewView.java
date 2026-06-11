@@ -180,23 +180,23 @@ public class VoteOverviewView extends VoteBaseView {
         String totalText = loaded ? String.valueOf(total) : "…";
         String monthlyText = loaded ? String.valueOf(monthly) : "…";
         String lastVoted = loaded ? formatLastVoted(viewer, lastVoteAt) : "…";
-        List<Component> lore = new ArrayList<>(msg("vote_overview.identity.lore")
+        List<Component> lore = new ArrayList<>(plain(msg("vote_overview.identity.lore")
                 .with("total", totalText)
                 .with("monthly", monthlyText)
                 .with("last_voted", lastVoted)
-                .toComponents(viewer));
+                .toComponents(viewer)));
         appendLoreExtra(lore, "vote_overview.identity", viewer);
         return HeadBuilder.fromPlayer(viewer)
-                .name(msg("vote_overview.identity.name")
-                        .with("player", viewer.getName()).itemComponent(viewer))
+                .name(plain(msg("vote_overview.identity.name")
+                        .with("player", viewer.getName()).itemComponent(viewer)))
                 .lore(lore)
                 .build();
     }
 
     private @NotNull ItemStack pointsTile(@NotNull Player viewer, int points) {
         String pointsText = points < 0 ? "…" : String.valueOf(points);
-        List<Component> lore = new ArrayList<>(msg("vote_overview.points.lore")
-                .with("points", pointsText).toComponents(viewer));
+        List<Component> lore = new ArrayList<>(plain(msg("vote_overview.points.lore")
+                .with("points", pointsText).toComponents(viewer)));
         appendLoreExtra(lore, "vote_overview.points", viewer);
         return ItemBuilder.of(Material.NETHER_STAR)
                 .name(ic("vote_overview.points.name", viewer))
@@ -211,12 +211,12 @@ public class VoteOverviewView extends VoteBaseView {
         String highestText = loaded ? String.valueOf(highest) : "…";
         String nextText = loaded ? String.valueOf(next) : "…";
         String bar = loaded ? progressBar(streak, next, 10) : "";
-        List<Component> lore = new ArrayList<>(msg("vote_overview.streak.lore")
+        List<Component> lore = new ArrayList<>(plain(msg("vote_overview.streak.lore")
                 .with("streak", streakText)
                 .with("highest", highestText)
                 .with("next", nextText)
                 .with("bar", bar)
-                .toComponents(viewer));
+                .toComponents(viewer)));
         appendLoreExtra(lore, "vote_overview.streak", viewer);
         return ItemBuilder.of(Material.BLAZE_POWDER)
                 .name(ic("vote_overview.streak.name", viewer))
@@ -270,13 +270,13 @@ public class VoteOverviewView extends VoteBaseView {
         // Single material across every site so the gradient title does the
         // visual differentiation (was a cycling array of arbitrary materials).
         ItemStack tile = ItemBuilder.of(Material.PAPER)
-                .name(msg("vote_overview.site.name")
-                        .with("site", site.displayName()).itemComponent(viewer))
-                .lore(msg("vote_overview.site.lore")
+                .name(plain(msg("vote_overview.site.name")
+                        .with("site", site.displayName()).itemComponent(viewer)))
+                .lore(plain(msg("vote_overview.site.lore")
                         .with("site", site.displayName())
                         .with("service", site.serviceName())
                         .with("points", String.valueOf(site.pointsPerVote()))
-                        .toComponents(viewer))
+                        .toComponents(viewer)))
                 .build();
         tag(tile, TAG_SITE_PREFIX + site.serviceName());
         return tile;
@@ -293,10 +293,10 @@ public class VoteOverviewView extends VoteBaseView {
                                           @NotNull String navTag, int page, int totalPages) {
         ItemStack btn = ItemBuilder.of(Material.ARROW)
                 .name(ic(keyBase + ".name", viewer))
-                .lore(msg(keyBase + ".lore")
+                .lore(plain(msg(keyBase + ".lore")
                         .with("page", String.valueOf(page + 1))
                         .with("total", String.valueOf(totalPages))
-                        .toComponents(viewer))
+                        .toComponents(viewer)))
                 .build();
         tag(btn, navTag);
         return btn;

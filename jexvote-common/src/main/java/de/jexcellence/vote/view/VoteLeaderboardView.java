@@ -193,9 +193,12 @@ public class VoteLeaderboardView extends VoteBaseView {
         );
 
         if (rank <= 3) {
+            // HeadBuilder (unlike ItemBuilder) doesn't strip the default
+            // item-meta italic; wrap explicitly so the top-3 names + lore
+            // don't render cursive.
             return HeadBuilder.fromPlayer(Bukkit.getOfflinePlayer(entry.playerUuid()))
-                    .name(displayName)
-                    .lore(itemLore)
+                    .name(plain(displayName))
+                    .lore(plain(itemLore))
                     .build();
         }
         return ItemBuilder.of(rankMaterial(rank))

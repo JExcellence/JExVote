@@ -131,14 +131,20 @@ public abstract class VoteBaseView implements Listener {
     }
 
     /**
-     * Creates a component from a translation key for the specified player.
+     * Creates a non-italic component from a translation key for the specified
+     * player — ready to drop directly into item names or lore lines without
+     * inheriting Minecraft's default item-meta italic.
+     *
+     * <p>The italic-strip happens here (mirroring what {@link #ics(String, Player)}
+     * does for multi-line lore) so every name/lore line built via {@code ic()}
+     * stays in visual harmony with the rest of the GUI vocabulary.</p>
      *
      * @param key    the translation key
      * @param viewer the player context (may be null)
-     * @return the translated component
+     * @return the translated, italic-stripped component
      */
     protected @NotNull Component ic(@NotNull String key, @Nullable Player viewer) {
-        return msg(key).itemComponent(viewer);
+        return msg(key).itemComponent(viewer).decoration(TextDecoration.ITALIC, false);
     }
 
     /**
@@ -150,6 +156,34 @@ public abstract class VoteBaseView implements Listener {
      */
     protected @NotNull List<Component> ics(@NotNull String key, @Nullable Player viewer) {
         return msg(key).toComponents(viewer).stream()
+                .map(c -> c.decoration(TextDecoration.ITALIC, false))
+                .toList();
+    }
+
+    /**
+     * Strips Minecraft's default item-meta italic from a single component.
+     * Use whenever a name/lore is built via a direct
+     * {@code msg(...).with(...).itemComponent(viewer)} chain instead of going
+     * through {@link #ic(String, Player)} — names with substituted placeholders
+     * cannot use {@code ic()} since it does not take the placeholder map.
+     *
+     * @param component the component to render plainly
+     * @return the same component with italic forced off
+     */
+    protected @NotNull Component plain(@NotNull Component component) {
+        return component.decoration(TextDecoration.ITALIC, false);
+    }
+
+    /**
+     * Strips Minecraft's default item-meta italic from each line in a
+     * placeholder-substituted lore list. Mirrors what {@link #ics(String, Player)}
+     * does for static keys.
+     *
+     * @param lore the lore components to render plainly
+     * @return a new list with italic forced off on every line
+     */
+    protected @NotNull List<Component> plain(@NotNull List<Component> lore) {
+        return lore.stream()
                 .map(c -> c.decoration(TextDecoration.ITALIC, false))
                 .toList();
     }

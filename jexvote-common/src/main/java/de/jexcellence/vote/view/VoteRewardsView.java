@@ -122,10 +122,12 @@ public final class VoteRewardsView extends VoteBaseView {
     }
 
     private @NotNull ItemStack shopIcon(@NotNull Player viewer) {
+        List<Component> lore = new ArrayList<>(ics("vote_rewards.shop.lore", viewer));
+        appendLoreExtra(lore, "vote_rewards.shop", viewer);
         ItemStack icon = ItemBuilder.of(Material.EMERALD_BLOCK)
                 .name(ic("vote_rewards.shop.name", viewer))
                 .glow(true)
-                .lore(ics("vote_rewards.shop.lore", viewer))
+                .lore(lore)
                 .build();
         tag(icon, TAG_OPEN_SHOP);
         return icon;
@@ -170,6 +172,7 @@ public final class VoteRewardsView extends VoteBaseView {
                 .with("points", points < 0 ? "…" : String.valueOf(points)).itemComponent(viewer));
         lore.add(Component.empty());
         lore.add(ic("vote_rewards.points.hint", viewer));
+        appendLoreExtra(lore, "vote_rewards.points", viewer);
         return ItemBuilder.of(Material.NETHER_STAR)
                 .name(ic("vote_rewards.points.name", viewer))
                 .glow(points > 0)
@@ -210,6 +213,7 @@ public final class VoteRewardsView extends VoteBaseView {
             }
         }
         lore.add(Component.empty());
+        appendLoreExtra(lore, "vote_rewards.lucky", viewer);
         return ItemBuilder.of(Material.SPONGE)
                 .name(ic("vote_rewards.lucky.name", viewer))
                 .glow(!chances.isEmpty() || !luckies.isEmpty())
@@ -234,6 +238,7 @@ public final class VoteRewardsView extends VoteBaseView {
                 .reduce((a, b) -> a + ", " + b).orElse("—");
         lore.add(msg("vote_rewards.multiplier.days").with("days", days).itemComponent(viewer));
         lore.add(Component.empty());
+        appendLoreExtra(lore, "vote_rewards.multiplier", viewer);
         return ItemBuilder.of(Material.CLOCK)
                 .name(ic("vote_rewards.multiplier.name", viewer))
                 .glow(active)
@@ -274,6 +279,7 @@ public final class VoteRewardsView extends VoteBaseView {
             lore.add(ic("vote_rewards.party.view-all", viewer));
         }
         lore.add(Component.empty());
+        appendLoreExtra(lore, "vote_rewards.party", viewer);
         ItemStack icon = ItemBuilder.of(Material.TOTEM_OF_UNDYING)
                 .name(ic("vote_rewards.party.name", viewer))
                 .glow(party != null)
@@ -293,6 +299,7 @@ public final class VoteRewardsView extends VoteBaseView {
         if (!fs.enabled()) {
             lore.add(ic("vote_rewards.freeze.disabled", viewer));
             lore.add(Component.empty());
+            appendLoreExtra(lore, "vote_rewards.freeze", viewer);
             return ItemBuilder.of(Material.PACKED_ICE)
                     .name(ic("vote_rewards.freeze.name", viewer))
                     .lore(lore)
@@ -310,6 +317,7 @@ public final class VoteRewardsView extends VoteBaseView {
                 .with("duration", String.valueOf(fs.durationHours())).itemComponent(viewer));
         lore.add(Component.empty());
         lore.add(ic("vote_rewards.freeze.buy-hint", viewer));
+        appendLoreExtra(lore, "vote_rewards.freeze", viewer);
 
         ItemStack icon = ItemBuilder.of(Material.BLUE_ICE)
                 .name(ic("vote_rewards.freeze.name", viewer))
@@ -328,6 +336,7 @@ public final class VoteRewardsView extends VoteBaseView {
         if (!gs.enabled()) {
             lore.add(ic("vote_rewards.gift.disabled", viewer));
             lore.add(Component.empty());
+            appendLoreExtra(lore, "vote_rewards.gift", viewer);
             return ItemBuilder.of(Material.NAME_TAG)
                     .name(ic("vote_rewards.gift.name", viewer))
                     .lore(lore)
@@ -344,6 +353,7 @@ public final class VoteRewardsView extends VoteBaseView {
         }
         lore.add(Component.empty());
         lore.add(ic("vote_rewards.gift.usage", viewer));
+        appendLoreExtra(lore, "vote_rewards.gift", viewer);
 
         return ItemBuilder.of(Material.PLAYER_HEAD)
                 .name(ic("vote_rewards.gift.name", viewer))
