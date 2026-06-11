@@ -40,13 +40,18 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class VoteRewardsView extends VoteBaseView {
 
-    private static final int SLOT_POINTS = 13;
+    // ── Slot layout (V-11.3/V-11.4) ──────────────────────────────────────
+    // Slot 4 (the header EMERALD) now also shows the live points balance,
+    // so the separate NETHER_STAR Points tile is gone. Shop nav moved to
+    // the bottom-row centre (slot 49) so it sits next to the close button.
+    private static final int SLOT_HEADER = 4;
     private static final int SLOT_FREEZE = 30;
-    private static final int SLOT_GIFT = 32;
+    private static final int SLOT_GIFT   = 32;
+    private static final int SLOT_SHOP   = 49;
     private static final String TAG_BUY_FREEZE = "buy_freeze";
     private static final String TAG_OPEN_PARTY = "open_party";
-    private static final String TAG_OPEN_SHOP = "open_shop";
-    private static final int SLOT_SHOP = 34;
+    private static final String TAG_OPEN_SHOP  = "open_shop";
+    private static final String TAG_OPEN_LUCKY = "open_lucky";
 
     private final Holder holder = new Holder();
     private final JavaPlugin plugin;
@@ -62,6 +67,7 @@ public final class VoteRewardsView extends VoteBaseView {
     private VoteOverviewView overviewView;
     private @Nullable VotePartyView partyView;
     private @Nullable VoteShopView shopView;
+    private @Nullable VoteLuckyView luckyView;
 
     @SuppressWarnings("java:S107")
     public VoteRewardsView(@NotNull JavaPlugin plugin,
@@ -91,6 +97,9 @@ public final class VoteRewardsView extends VoteBaseView {
     /** Wires the clickable shop icon to the vote-token shop. */
     public void setShopView(@NotNull VoteShopView view) { this.shopView = view; }
 
+    /** Wires the clickable Lucky Vote icon to the dedicated outcomes sub-view. */
+    public void setLuckyView(@NotNull VoteLuckyView view) { this.luckyView = view; }
+
     @Override protected @NotNull String title()          { return "vote_rewards.title"; }
     @Override protected int rows()                        { return 6; }
     @Override protected @NotNull InventoryHolder holder() { return holder; }
@@ -98,27 +107,43 @@ public final class VoteRewardsView extends VoteBaseView {
     @Override
     protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
         frame(inv, Material.LIME_STAINED_GLASS_PANE);
-        inv.setItem(4, ItemBuilder.of(Material.EMERALD)
-                .name(ic("vote_rewards.header.name", viewer))
-                .glow(true)
-                .lore(ics("vote_rewards.header.lore", viewer))
-                .build());
+
+        // Header (slot 4) — also carries the live Points balance now (V-11.3).
+        // The old NETHER_STAR Points tile at slot 13 is gone.
+        inv.setItem(SLOT_HEADER, headerTile(viewer, -1));
 
         inv.setItem(20, luckyIcon(viewer));
         inv.setItem(22, multiplierIcon(viewer));
         inv.setItem(24, partyIcon(viewer));
 
-        // Live owned/remaining/points are filled in asynchronously by
+        // Live owned/remaining are filled in asynchronously by
         // refreshLiveCounts(); these are the immediate placeholders.
-        inv.setItem(SLOT_POINTS, pointsIcon(viewer, -1));
         inv.setItem(SLOT_FREEZE, freezeIcon(viewer, -1));
         inv.setItem(SLOT_GIFT, giftIcon(viewer, -1));
 
+        // Shop nav at the bottom-row centre (V-11.4) — sits beside the close
+        // button rather than tucked into row 3.
         if (shopView != null) {
             inv.setItem(SLOT_SHOP, shopIcon(viewer));
         }
 
         navBar(inv, overviewView != null);
+    }
+
+    /**
+     * Merged header (slot 4): brand title + the live Vote Points balance +
+     * the spending hint that used to live on the separate Points tile.
+     */
+    private @NotNull ItemStack headerTile(@NotNull Player viewer, int points) {
+        String pointsText = points < 0 ? "…" : String.valueOf(points);
+        List<Component> lore = new ArrayList<>(plain(msg("vote_rewards.header.lore")
+                .with("points", pointsText).toComponents(viewer)));
+        appendLoreExtra(lore, "vote_rewards.header", viewer);
+        return ItemBuilder.of(Material.EMERALD)
+                .name(ic("vote_rewards.header.name", viewer))
+                .glow(true)
+                .lore(lore)
+                .build();
     }
 
     private @NotNull ItemStack shopIcon(@NotNull Player viewer) {
@@ -156,7 +181,7 @@ public final class VoteRewardsView extends VoteBaseView {
                     if (top.getHolder() != holder) {
                         return;
                     }
-                    top.setItem(SLOT_POINTS, pointsIcon(viewer, pointsFuture.join()));
+                    top.setItem(SLOT_HEADER, headerTile(viewer, pointsFuture.join()));
                     top.setItem(SLOT_FREEZE, freezeIcon(viewer, ownedFuture.join()));
                     top.setItem(SLOT_GIFT, giftIcon(viewer, remainingFuture.join()));
                 })).exceptionally(ex -> {
@@ -165,60 +190,43 @@ public final class VoteRewardsView extends VoteBaseView {
         });
     }
 
-    private @NotNull ItemStack pointsIcon(@NotNull Player viewer, int points) {
-        List<Component> lore = new ArrayList<>();
-        lore.add(Component.empty());
-        lore.add(msg("vote_rewards.points.balance")
-                .with("points", points < 0 ? "…" : String.valueOf(points)).itemComponent(viewer));
-        lore.add(Component.empty());
-        lore.add(ic("vote_rewards.points.hint", viewer));
-        appendLoreExtra(lore, "vote_rewards.points", viewer);
-        return ItemBuilder.of(Material.NETHER_STAR)
-                .name(ic("vote_rewards.points.name", viewer))
-                .glow(points > 0)
-                .lore(lore)
-                .build();
-    }
-
     // ── Section icons ───────────────────────────────────────────────
 
+    /**
+     * Lucky Vote summary tile (V-11.7). Previously crammed every outcome into
+     * its own lore line, producing a long unreadable list. Now shows just a
+     * compact summary + a "click to open" prompt; the full per-outcome catalog
+     * lives in {@link VoteLuckyView}.
+     */
     private @NotNull ItemStack luckyIcon(@NotNull Player viewer) {
         List<ChanceReward> chances = collect(ChanceReward.class);
         List<LuckyReward> luckies = collect(LuckyReward.class);
 
-        List<Component> lore = new ArrayList<>();
-        lore.add(Component.empty());
-        if (chances.isEmpty() && luckies.isEmpty()) {
-            lore.add(ic("vote_rewards.lucky.empty", viewer));
+        // Total number of player-visible outcomes across every reward list:
+        // one row per ChanceReward, one row per LuckyReward.Entry.
+        int outcomes = chances.size()
+                + luckies.stream().mapToInt(lr -> lr.getEntries().size()).sum();
+        boolean configured = outcomes > 0;
+
+        List<Component> lore;
+        if (!configured) {
+            lore = new ArrayList<>(ics("vote_rewards.lucky.empty-lore", viewer));
         } else {
-            for (ChanceReward cr : chances) {
-                lore.add(msg("vote_rewards.lucky.entry")
-                        .with("reward", VoteRewardDescriber.describe(cr.getReward()))
-                        .with("chance", percent(cr.getChance()))
-                        .with("won", String.valueOf(countFor(cr.getId())))
-                        .itemComponent(viewer));
-            }
-            for (LuckyReward lr : luckies) {
-                lore.add(msg("vote_rewards.lucky.pool")
-                        .with("count", String.valueOf(lr.getEntries().size())).itemComponent(viewer));
-                double total = lr.getEntries().stream().mapToDouble(LuckyReward.Entry::weight).sum();
-                for (LuckyReward.Entry e : lr.getEntries()) {
-                    double chance = total > 0 ? (e.weight() / total) * 100.0 : 0.0;
-                    lore.add(msg("vote_rewards.lucky.pool-entry")
-                            .with("reward", VoteRewardDescriber.describe(e.reward()))
-                            .with("chance", fmt(chance))
-                            .with("won", String.valueOf(countFor(e.id())))
-                            .itemComponent(viewer));
-                }
-            }
+            lore = new ArrayList<>(plain(msg("vote_rewards.lucky.summary-lore")
+                    .with("outcomes", String.valueOf(outcomes))
+                    .toComponents(viewer)));
         }
-        lore.add(Component.empty());
         appendLoreExtra(lore, "vote_rewards.lucky", viewer);
-        return ItemBuilder.of(Material.SPONGE)
+
+        ItemStack tile = ItemBuilder.of(Material.SPONGE)
                 .name(ic("vote_rewards.lucky.name", viewer))
-                .glow(!chances.isEmpty() || !luckies.isEmpty())
+                .glow(configured)
                 .lore(lore)
                 .build();
+        if (configured && luckyView != null) {
+            tag(tile, TAG_OPEN_LUCKY);
+        }
+        return tile;
     }
 
     private @NotNull ItemStack multiplierIcon(@NotNull Player viewer) {
@@ -371,6 +379,10 @@ public final class VoteRewardsView extends VoteBaseView {
         }
         if (TAG_OPEN_PARTY.equals(tag) && partyView != null) {
             partyView.open(viewer);
+            return;
+        }
+        if (TAG_OPEN_LUCKY.equals(tag) && luckyView != null) {
+            luckyView.open(viewer);
             return;
         }
         if (TAG_OPEN_SHOP.equals(tag) && shopView != null) {

@@ -47,6 +47,7 @@ import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.view.VoteLeaderboardView;
 import de.jexcellence.vote.service.VoteShopService;
 import de.jexcellence.vote.view.VoteOverviewView;
+import de.jexcellence.vote.view.VoteLuckyView;
 import de.jexcellence.vote.view.VotePartyView;
 import de.jexcellence.vote.view.VoteRewardsView;
 import de.jexcellence.vote.view.VoteShopView;
@@ -461,6 +462,7 @@ public abstract class JExVote {
         var partyView = new VotePartyView(rewardConfig, votePartyService, rewardStatsService);
         var shopService = new VoteShopService(plugin, playerRepository, rewardService, rewardConfig);
         shopView = new VoteShopView(plugin, shopService);
+        var luckyView = new VoteLuckyView(rewardConfig, rewardStatsService);
 
         // Wire cross-navigation references
         overviewView.setLeaderboardView(leaderboardView);
@@ -471,9 +473,11 @@ public abstract class JExVote {
         rewardsView.setOverviewView(overviewView);
         rewardsView.setPartyView(partyView);
         rewardsView.setShopView(shopView);
+        rewardsView.setLuckyView(luckyView);
         overviewView.setShopView(shopView);
         partyView.setRewardsView(rewardsView);
         shopView.setRewardsView(rewardsView);
+        luckyView.setRewardsView(rewardsView);
 
         // Register as Bukkit listeners (raw inventory click handling)
         pm.registerEvents(overviewView, plugin);
@@ -482,6 +486,7 @@ public abstract class JExVote {
         pm.registerEvents(rewardsView, plugin);
         pm.registerEvents(partyView, plugin);
         pm.registerEvents(shopView, plugin);
+        pm.registerEvents(luckyView, plugin);
     }
 
     private void registerPlaceholders() {

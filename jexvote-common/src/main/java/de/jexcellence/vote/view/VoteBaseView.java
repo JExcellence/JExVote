@@ -405,11 +405,23 @@ public abstract class VoteBaseView implements Listener {
      */
     protected static @NotNull String progressBar(int current, int target, int bars) {
         int filled = target > 0 ? Math.min(bars, (int) ((double) current / target * bars)) : 0;
-        var sb = new StringBuilder("<dark_gray>[</dark_gray>");
-        for (int i = 0; i < bars; i++) {
-            sb.append(i < filled ? "<gradient:#86efac:#16a34a>|</gradient>" : "<dark_gray>|</dark_gray>");
+        // Solid block glyphs (▰/▱) read cleaner than the old `[ |||||  ]`
+        // pipe-and-bracket bar. Filled segments share one gradient run so the
+        // colour interpolates smoothly across the whole bar; unfilled segments
+        // are faint dark-gray. No brackets — the contiguous block is its own
+        // visual frame.
+        var sb = new StringBuilder();
+        if (filled > 0) {
+            sb.append("<gradient:#86EFAC:#22C55E:#16A34A>");
+            sb.append("▰".repeat(filled));
+            sb.append("</gradient>");
         }
-        sb.append("<dark_gray>]</dark_gray>");
+        int empty = bars - filled;
+        if (empty > 0) {
+            sb.append("<dark_gray>");
+            sb.append("▱".repeat(empty));
+            sb.append("</dark_gray>");
+        }
         return sb.toString();
     }
 

@@ -119,7 +119,7 @@ vote_overview:
   # ── Points tile (slot 13): balance + what to spend it on ─────────────────
   # Placeholders: {points}
   points:
-    name: '<gradient:#D8B4FE:#9333EA>✦ Vote Points</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Points</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Balance: <gradient:#D8B4FE:#9333EA>{points}</gradient>'
@@ -133,7 +133,7 @@ vote_overview:
   # ── Streak tile (slot 15): current/highest, progress bar, next milestone ─
   # Placeholders: {streak} {highest} {next} {bar}
   streak:
-    name: '<gradient:#FDE047:#F59E0B>★ Vote Streak</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>★ Vote Streak</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Current: <gradient:#86EFAC:#22C55E>{streak} day(s)</gradient>'
@@ -146,7 +146,7 @@ vote_overview:
   # ── Vote site tile (slots 29-33) ─────────────────────────────────────────
   # Placeholders: {site} {service} {points}
   site:
-    name: '<gradient:#A5F3FC:#06B6D4>{site}</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>{site}</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Service: <#C084FC>{service}'
@@ -161,18 +161,18 @@ vote_overview:
       - '<dark_gray>┃ <gray>No site configured.'
       - ''
   page-prev:
-    name: '<gradient:#A5F3FC:#06B6D4>« Previous page</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>« Previous page</gradient>'
     lore:
       - '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
   page-next:
-    name: '<gradient:#A5F3FC:#06B6D4>Next page »</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>Next page »</gradient>'
     lore:
       - '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
 
   # ── Bottom nav (slots 46, 48, 50, 52) ────────────────────────────────────
   nav:
     leaderboard:
-      name: '<gradient:#FDE047:#F59E0B>❖ Leaderboard</gradient>'
+      name: '<gradient:#86EFAC:#22C55E:#16A34A>❖ Leaderboard</gradient>'
       lore:
         - ''
         - '<dark_gray>┃ <gray>See who voted the most.'
@@ -180,7 +180,7 @@ vote_overview:
         - '<dark_gray>┕ <gradient:#FDE047:#F59E0B>» Click to open</gradient>'
         - ''
     streaks:
-      name: '<gradient:#FCA5A5:#DC2626>★ Streak Rewards</gradient>'
+      name: '<gradient:#86EFAC:#22C55E:#16A34A>★ Streak Rewards</gradient>'
       lore:
         - ''
         - '<dark_gray>┃ <gray>Claim your milestone rewards.'
@@ -188,7 +188,7 @@ vote_overview:
         - '<dark_gray>┕ <gradient:#FCA5A5:#DC2626>» Click to open</gradient>'
         - ''
     rewards:
-      name: '<gradient:#D8B4FE:#9333EA>✦ Vote Economy</gradient>'
+      name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Economy</gradient>'
       lore:
         - ''
         - '<dark_gray>┃ <gray>Jackpot odds, multiplier, party,'
@@ -213,7 +213,7 @@ vote_streak:
 
   # ── Track view ──
   header:
-    name: '<gradient:#fca5a5:#dc2626>🔥 Streak Rewards</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>🔥 Streak Rewards</gradient>'
     lore:
       - ''
       - '  <gray>Vote daily to build your streak!'
@@ -221,7 +221,7 @@ vote_streak:
       - ''
 
   your_streak:
-    name: '<gradient:#fde047:#f59e0b>🔥 Your Streak</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>🔥 Your Streak</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Current:</gray> <gradient:#86efac:#16a34a>{current}</gradient> <gray>{current_label}'
@@ -243,7 +243,7 @@ vote_streak:
       - ''
 
   progress:
-    name: '<gradient:#a5f3fc:#06b6d4>Progress</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>Progress</gradient>'
     lore:
       - ''
       - '  <gray>Next milestone:</gray> <white>Day {next}'
@@ -253,7 +253,7 @@ vote_streak:
       - ''
 
   rewards_summary:
-    name: '<gradient:#fde047:#f59e0b>Rewards</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>Rewards</gradient>'
 
   loading: '  <gray>Loading...'
   day_label: 'day'
@@ -299,7 +299,7 @@ vote_streak:
         - '  <gray>You already collected these rewards.'
         - ''
     locked_status:
-      name: '<gradient:#fca5a5:#dc2626>✘ Locked</gradient>'
+      name: '<gradient:#86EFAC:#22C55E:#16A34A>✘ Locked</gradient>'
       lore:
         - ''
         - '  <gray>Reach a {day}-day streak to unlock.'
@@ -316,29 +316,45 @@ vote_streak:
 vote_rewards:
   title: '<dark_gray>Vote Economy'
   # Every panel below also accepts `lore_extra` for server-specific notes.
+  # ── Header (slot 4) — merged with the live Points balance (V-11.3) ────────
+  # Placeholders: {points}
   header:
-    name: '<gradient:#FDE047:#F59E0B>✦ Vote Economy</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Economy</gradient>'
     lore:
       - ''
-      - '<dark_gray>┃ <gray>Lucky Vote odds & drop stats,'
-      - '<dark_gray>┃ <gray>weekend multiplier, vote party,'
-      - '<dark_gray>┃ <gray>Streak Freezes and Vote Gifts.'
+      - '<dark_gray>┃ <gray>Vote Points: <gradient:#86EFAC:#22C55E:#16A34A>{points}</gradient>'
       - ''
+      - '<dark_gray>┃ <gray>Spend points on:'
+      - '<dark_gray>┕ <gray>❄ Streak Freezes <dark_gray>/vote freeze'
+      - '<dark_gray>┕ <gray>✦ Reward shop <dark_gray>/vote shop'
+      - ''
+  # Lucky Vote summary tile — full per-outcome catalog lives in VoteLuckyView
+  # under the vote_lucky.* keys further down.
+  # Placeholders for summary-lore: {outcomes}
   lucky:
-    name: '<gradient:#FDE047:#F59E0B>★ Lucky Vote</gradient>'
-    empty: '<dark_gray>┃ <gray>No lucky rewards configured.'
-    entry: '<dark_gray>┃ <gray>{reward} <yellow>{chance}%</yellow> <dark_gray>({won}× won)'
-    pool: '<dark_gray>┃ <gradient:#FDE047:#F59E0B>Jackpot pool</gradient> <dark_gray>({count} outcomes)'
-    pool-entry: '<dark_gray>┕ <gray>{reward} <yellow>{chance}%</yellow> <dark_gray>({won}×)'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>★ Lucky Vote</gradient>'
+    empty-lore:
+      - ''
+      - '<dark_gray>┃ <gray>No lucky rewards configured.'
+      - ''
+    summary-lore:
+      - ''
+      - '<dark_gray>┃ <gray>Every vote rolls one prize from'
+      - '<dark_gray>┃ <gray>a weighted jackpot pool.'
+      - ''
+      - '<dark_gray>┃ <gray>Outcomes available: <gradient:#86EFAC:#22C55E:#16A34A>{outcomes}</gradient>'
+      - ''
+      - '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to see every odds + drop count</gradient>'
+      - ''
   multiplier:
-    name: '<gradient:#FDE047:#F59E0B>⚡ Weekend Multiplier</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>⚡ Weekend Multiplier</gradient>'
     status-active:   '<dark_gray>┃ <gray>Status: <gradient:#86EFAC:#22C55E>ACTIVE</gradient>'
     status-inactive: '<dark_gray>┃ <gray>Status: <dark_gray>inactive</dark_gray>'
     current: '<dark_gray>┃ <gray>Current: <yellow>{factor}×</yellow>'
     weekend: '<dark_gray>┃ <gray>Weekend factor: <yellow>{factor}×</yellow>'
     days:    '<dark_gray>┃ <gray>Days: <#C084FC>{days}'
   party:
-    name: '<gradient:#FDE047:#F59E0B>✦ Vote Party</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Party</gradient>'
     disabled: '<dark_gray>┃ <gray>Vote parties are disabled.'
     progress: '<dark_gray>┃ <gray>Progress: <gradient:#86EFAC:#22C55E>{current}</gradient><dark_gray>/<#C084FC>{target}'
     remaining: '<dark_gray>┃ <gray>Remaining: <#C084FC>{remaining}'
@@ -347,11 +363,11 @@ vote_rewards:
     none: '<dark_gray>┃ <gray>No party rewards configured.'
     view-all: '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to view all party rewards</gradient>'
   points:
-    name: '<gradient:#D8B4FE:#9333EA>✦ Vote Points</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Points</gradient>'
     balance: '<dark_gray>┃ <gray>Balance: <gradient:#D8B4FE:#9333EA>{points}</gradient>'
     hint: '<dark_gray>┃ <gray>Earn by voting; spend on Freezes or Shop.'
   freeze:
-    name: '<gradient:#A5F3FC:#06B6D4>❄ Streak Freeze</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>❄ Streak Freeze</gradient>'
     disabled: '<dark_gray>┃ <gray>Streak Freezes are disabled.'
     how:      '<dark_gray>┃ <gray>Protects your streak when you miss a vote.'
     owned:    '<dark_gray>┃ <gray>Owned: <gradient:#A5F3FC:#06B6D4>{owned}</gradient><dark_gray>/<#C084FC>{max}'
@@ -380,19 +396,58 @@ vote_rewards:
     multiplier: '<dark_gray>┃ <gray>Multiplier: <yellow>{factor}×</yellow> <dark_gray>({status})'
     party: '<dark_gray>┃ <gray>Vote Party: <green>{current}</green><dark_gray>/<#C084FC>{target} <dark_gray>({remaining} left)'
 
+# ── Lucky Vote sub-GUI (VoteLuckyView, V-11.7) ────────────────────────────────
+# Per-outcome detail view opened from the Lucky Vote summary tile in /vote rewards.
+# Every chance/lucky-pool entry across default + streak + site + party reward
+# lists is rendered as its own tile (sorted highest chance first).
+vote_lucky:
+  title: '<dark_gray>Lucky Vote Outcomes'
+  # Header tile (slot 4)
+  # Placeholders: {count}
+  header:
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>★ Lucky Vote</gradient>'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>Outcomes across every reward list.'
+      - '<dark_gray>┃ <gray>Total: <gradient:#86EFAC:#22C55E:#16A34A>{count}</gradient>'
+      - ''
+      - '<dark_gray>┃ <gray>Higher chance = sorted first.'
+      - ''
+  empty:
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>★ No outcomes configured</gradient>'
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>No chance or lucky rewards are set up.'
+      - '<dark_gray>┕ <dark_gray>Operators: edit <#C084FC>rewards.yml<dark_gray>.'
+      - ''
+  # Per-entry tile.
+  # Placeholders: {reward} {chance} {won} {rarity}
+  entry:
+    lore:
+      - ''
+      - '<dark_gray>┃ <gray>Chance: <gradient:#86EFAC:#22C55E:#16A34A>{chance}%</gradient>'
+      - '<dark_gray>┃ <gray>Lifetime drops: <#C084FC>{won}'
+      - '<dark_gray>┃ <gray>Rarity: {rarity}'
+      - ''
+  page-prev: '<gradient:#86EFAC:#22C55E:#16A34A>« Previous</gradient>'
+  page-next: '<gradient:#86EFAC:#22C55E:#16A34A>Next »</gradient>'
+  page-indicator:
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>Page {page} / {total}</gradient>'
+    lore: '<dark_gray>┃ <gray>Showing <#C084FC>{from}<gray>-<#C084FC>{to}<gray> of <#C084FC>{count}'
+
 # ── Vote Party reward catalog (VotePartyView) ─────────────────────────────────
 vote_party:
-  title: '<gradient:#fde047:#f59e0b>Vote Party Rewards</gradient>'
+  title: '<gradient:#86EFAC:#22C55E:#16A34A>Vote Party Rewards</gradient>'
   disabled: '  <dark_gray>Vote parties are disabled.'
   header:
-    name: '<gradient:#fde047:#f59e0b>✦ Vote Party ✦</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Party ✦</gradient>'
     lore: '<gray>3 guaranteed draws + bonus rolls per party.</gray>'
   progress: '<dark_gray>┃ <gray>Progress:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
   remaining: '<dark_gray>┃ <gray>Remaining:</gray> <white>{remaining}</white>'
   entry-chance: '<dark_gray>┃ <gray>Chance:</gray> <gradient:#86efac:#16a34a>{chance}%</gradient>'
   entry-won: '<dark_gray>┃ <gray>Pulled:</gray> <white>{won}×</white>'
   empty:
-    name: '<gradient:#A5F3FC:#06B6D4>✦ No party pool configured</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ No party pool configured</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>The server has not set up any'
@@ -411,12 +466,12 @@ vote_party:
 
 # ── Vote-Token Shop (VoteShopView) ────────────────────────────────────────────
 vote_shop:
-  title: '<gradient:#D8B4FE:#9333EA>Vote Shop</gradient>'
+  title: '<gradient:#86EFAC:#22C55E:#16A34A>Vote Shop</gradient>'
   # Every tile here also accepts `lore_extra` for server-specific notes.
   # ── Header tile (slot 4) — live points balance ───────────────────────────
   # Placeholders: {points}
   header:
-    name: '<gradient:#D8B4FE:#9333EA>✦ Vote Tokens</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Tokens</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>Balance: <gradient:#D8B4FE:#9333EA>{points}</gradient> <gray>points'
@@ -431,7 +486,7 @@ vote_shop:
   # full styling for items (with translatable names), commands ("Dragon Crate
   # Key"), currency, XP, etc.
   tile:
-    name: '<gradient:#D8B4FE:#9333EA>{item}</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>{item}</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>You get:'
@@ -447,7 +502,7 @@ vote_shop:
   # ── Empty-shop placeholder ───────────────────────────────────────────────
   # Shown when no items are configured. Door, not barrier — see V-00 design.
   empty:
-    name: '<gradient:#A5F3FC:#06B6D4>✦ Shop being restocked</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Shop being restocked</gradient>'
     lore:
       - ''
       - '<dark_gray>┃ <gray>No items are listed right now.'
@@ -457,15 +512,15 @@ vote_shop:
   # ── Pagination ──────────────────────────────────────────────────────────
   # Placeholders: {page} {total}
   page-prev:
-    name: '<gradient:#D8B4FE:#9333EA>« Previous page</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>« Previous page</gradient>'
     lore: '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
   page-next:
-    name: '<gradient:#D8B4FE:#9333EA>Next page »</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>Next page »</gradient>'
     lore: '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
   # ── Centre-of-bottom-row page indicator (V-10) ──────────────────────────
   # Placeholders: {page} {total} {from} {to} {count}
   page-indicator:
-    name: '<gradient:#A5F3FC:#06B6D4>Page {page} / {total}</gradient>'
+    name: '<gradient:#86EFAC:#22C55E:#16A34A>Page {page} / {total}</gradient>'
     lore: '<dark_gray>┃ <gray>Showing <#C084FC>{from}<gray>-<#C084FC>{to}<gray> of <#C084FC>{count}'
 
   # ── Purchase feedback (chat receipt + title) ────────────────────────────
@@ -509,7 +564,7 @@ reward_describe:
 vote_help:
   banner: '<dark_gray>━━━━━━ <gradient:#86EFAC:#22C55E:#16A34A>Vote Commands</gradient> <dark_gray>━━━━━━'
   entry: '  <dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>{command}</gradient> {args}<dark_gray> ┃ <gray>{description}</gray>'
-  entry-args: '<dark_gray>⟨</dark_gray><white>{args}</white><dark_gray>⟩</dark_gray>'
+  entry-args: '<dark_gray><white>{args}</white></dark_gray>'
   hover-base: '<gradient:#86EFAC:#22C55E:#16A34A>{full}</gradient><newline><gray>{description}</gray>'
   hover-aliases: '<dark_gray>Aliases: </dark_gray><gray>{aliases}</gray>'
   hover-action-run: '<dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>Click to run</gradient>'
@@ -521,7 +576,7 @@ vote_help:
 vote_admin:
   banner: '<dark_gray>━━━━ <gradient:#FCA5A5:#DC2626>JExVote Admin</gradient> <dark_gray>┃</dark_gray> <gradient:#FBBF24:#F59E0B>[ADMIN]</gradient> <dark_gray>━━━━'
   entry: '  <dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>{command}</gradient> {args}<dark_gray> ┃ <gray>{description}</gray>'
-  entry-args: '<dark_gray>⟨</dark_gray><white>{args}</white><dark_gray>⟩</dark_gray>'
+  entry-args: '<dark_gray><white>{args}</white></dark_gray>'
   hover-base: '<gradient:#FCA5A5:#DC2626>{full}</gradient> <gradient:#FBBF24:#F59E0B>[ADMIN]</gradient><newline><gray>{description}</gray>'
   hover-aliases: '<dark_gray>Aliases: </dark_gray><gray>{aliases}</gray>'
   hover-action-run: '<dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>Click to run</gradient>'

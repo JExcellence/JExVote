@@ -51,6 +51,8 @@ public final class VoteShopView extends VoteBaseView {
     private static final int SLOT_PAGE_PREV      = 47;
     private static final int SLOT_PAGE_INDICATOR = 49;
     private static final int SLOT_PAGE_NEXT      = 53;
+    /** The material used by {@link #frame(Inventory, Material)} for this view. */
+    private static final Material FRAME_MATERIAL = Material.PURPLE_STAINED_GLASS_PANE;
 
     /**
      * Body slot grid: 3 inner rows × 7 inner cols = 21 tiles per page.
@@ -90,7 +92,7 @@ public final class VoteShopView extends VoteBaseView {
 
     @Override
     protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
-        frame(inv, Material.PURPLE_STAINED_GLASS_PANE);
+        frame(inv, FRAME_MATERIAL);
 
         Integer balance = cachedBalance.get(viewer.getUniqueId());
         inv.setItem(SLOT_POINTS, headerTile(viewer, balance == null ? -1 : balance));
@@ -143,9 +145,14 @@ public final class VoteShopView extends VoteBaseView {
             inv.setItem(SLOT_PAGE_INDICATOR, pageIndicator(viewer, page, totalPages, items.size()));
             inv.setItem(SLOT_PAGE_NEXT, pageButton(viewer, "vote_shop.page-next", TAG_PAGE_NEXT, page, totalPages));
         } else {
-            inv.setItem(SLOT_PAGE_PREV, null);
-            inv.setItem(SLOT_PAGE_INDICATOR, null);
-            inv.setItem(SLOT_PAGE_NEXT, null);
+            // Restore the frame pane in the pagination slots so the bottom
+            // border stays unbroken when there's only one page. Setting to
+            // null would let the base view fill them with BLACK_STAINED_GLASS_PANE
+            // (the generic filler), creating a visible gap in the purple frame.
+            ItemStack framePane = ItemBuilder.of(FRAME_MATERIAL).name(Component.empty()).build();
+            inv.setItem(SLOT_PAGE_PREV, framePane);
+            inv.setItem(SLOT_PAGE_INDICATOR, framePane);
+            inv.setItem(SLOT_PAGE_NEXT, framePane);
         }
     }
 
