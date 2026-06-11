@@ -421,6 +421,9 @@ vote_shop:
   page-next:
     name: '<gradient:#D8B4FE:#9333EA>Nächste Seite »</gradient>'
     lore: '<dark_gray>┃ <gray>Seite <#C084FC>{page}<gray>/<#C084FC>{total}'
+  page-indicator:
+    name: '<gradient:#A5F3FC:#06B6D4>Seite {page} / {total}</gradient>'
+    lore: '<dark_gray>┃ <gray>Zeige <#C084FC>{from}<gray>-<#C084FC>{to}<gray> von <#C084FC>{count}'
 
   purchase:
     chat-header: '<dark_gray>━━━━ <gradient:#86EFAC:#22C55E:#16A34A>✦ Vote-Shop-Kauf</gradient> <dark_gray>━━━━'

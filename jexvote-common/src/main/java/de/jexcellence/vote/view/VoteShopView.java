@@ -46,9 +46,11 @@ public final class VoteShopView extends VoteBaseView {
     private static final String TAG_PAGE_PREV  = "page-prev";
     private static final String TAG_PAGE_NEXT  = "page-next";
 
-    private static final int SLOT_POINTS    = 4;
-    private static final int SLOT_PAGE_PREV = 47;
-    private static final int SLOT_PAGE_NEXT = 53;
+    private static final int SLOT_POINTS         = 4;
+    // Canonical pagination slots (V-10): prev=47, indicator=49, next=53.
+    private static final int SLOT_PAGE_PREV      = 47;
+    private static final int SLOT_PAGE_INDICATOR = 49;
+    private static final int SLOT_PAGE_NEXT      = 53;
 
     /**
      * Body slot grid: 3 inner rows × 7 inner cols = 21 tiles per page.
@@ -138,11 +140,34 @@ public final class VoteShopView extends VoteBaseView {
 
         if (totalPages > 1) {
             inv.setItem(SLOT_PAGE_PREV, pageButton(viewer, "vote_shop.page-prev", TAG_PAGE_PREV, page, totalPages));
+            inv.setItem(SLOT_PAGE_INDICATOR, pageIndicator(viewer, page, totalPages, items.size()));
             inv.setItem(SLOT_PAGE_NEXT, pageButton(viewer, "vote_shop.page-next", TAG_PAGE_NEXT, page, totalPages));
         } else {
             inv.setItem(SLOT_PAGE_PREV, null);
+            inv.setItem(SLOT_PAGE_INDICATOR, null);
             inv.setItem(SLOT_PAGE_NEXT, null);
         }
+    }
+
+    /**
+     * Builds the centre-of-bottom-row page indicator: a non-interactive
+     * {@code Material.PAPER} tile that says "Page X / Y" with a "showing N–M of K"
+     * sub-line. Mirrors the indicator used by Leaderboard + Party views.
+     */
+    private @NotNull ItemStack pageIndicator(@NotNull Player viewer, int page, int totalPages, int total) {
+        int from = page * PAGE_SIZE;
+        int to = Math.min(total, from + PAGE_SIZE);
+        return ItemBuilder.of(Material.PAPER)
+                .name(msg("vote_shop.page-indicator.name")
+                        .with("page", String.valueOf(page + 1))
+                        .with("total", String.valueOf(totalPages))
+                        .itemComponent(viewer))
+                .lore(plain(List.of(msg("vote_shop.page-indicator.lore")
+                        .with("from", String.valueOf(from + 1))
+                        .with("to", String.valueOf(to))
+                        .with("count", String.valueOf(total))
+                        .itemComponent(viewer))))
+                .build();
     }
 
     private @NotNull List<Component> emptyLore(@NotNull Player viewer) {

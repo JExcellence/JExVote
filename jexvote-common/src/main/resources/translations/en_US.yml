@@ -462,6 +462,11 @@ vote_shop:
   page-next:
     name: '<gradient:#D8B4FE:#9333EA>Next page »</gradient>'
     lore: '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
+  # ── Centre-of-bottom-row page indicator (V-10) ──────────────────────────
+  # Placeholders: {page} {total} {from} {to} {count}
+  page-indicator:
+    name: '<gradient:#A5F3FC:#06B6D4>Page {page} / {total}</gradient>'
+    lore: '<dark_gray>┃ <gray>Showing <#C084FC>{from}<gray>-<#C084FC>{to}<gray> of <#C084FC>{count}'
 
   # ── Purchase feedback (chat receipt + title) ────────────────────────────
   # Placeholders: {item} {reward} {cost} {balance}

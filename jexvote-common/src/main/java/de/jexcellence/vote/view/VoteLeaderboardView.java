@@ -131,35 +131,37 @@ public class VoteLeaderboardView extends VoteBaseView {
             }
         }
 
-        // Pagination
+        // ── Canonical pagination slots (V-10) ────────────────────────
+        // prev=47, indicator=49, next=53 — same across Leaderboard, Party
+        // and Shop so players never have to relearn where the arrows are.
         if (page > 0) {
             ItemStack prev = ItemBuilder.of(Material.ARROW)
-                    .name(name("<gradient:#fde047:#f59e0b>← Previous Page</gradient>"))
-                    .lore(List.of(lore("<gray>Page " + page + " / " + totalPages)))
+                    .name(name("<gradient:#fde047:#f59e0b>« Previous Page</gradient>"))
+                    .lore(List.of(lore("<dark_gray>┃ <gray>Page " + page + " / " + totalPages)))
                     .build();
             tag(prev, "page-prev");
-            inv.setItem(48, prev);
+            inv.setItem(47, prev);
         } else {
-            inv.setItem(48, filler());
+            inv.setItem(47, filler());
         }
 
         inv.setItem(49, ItemBuilder.of(Material.PAPER)
                 .name(name("<gradient:#a5f3fc:#06b6d4>Page " + (page + 1) + " / " + totalPages + "</gradient>"))
                 .lore(List.of(
                         Component.empty(),
-                        lore("  <gray>Showing " + (from + 1) + "–" + to + " of " + data.size()),
+                        lore("<dark_gray>┃ <gray>Showing " + (from + 1) + "–" + to + " of " + data.size()),
                         Component.empty()))
                 .build());
 
         if (page + 1 < totalPages) {
             ItemStack next = ItemBuilder.of(Material.ARROW)
-                    .name(name("<gradient:#fde047:#f59e0b>Next Page →</gradient>"))
-                    .lore(List.of(lore("<gray>Page " + (page + 2) + " / " + totalPages)))
+                    .name(name("<gradient:#fde047:#f59e0b>Next Page »</gradient>"))
+                    .lore(List.of(lore("<dark_gray>┃ <gray>Page " + (page + 2) + " / " + totalPages)))
                     .build();
             tag(next, "page-next");
-            inv.setItem(50, next);
+            inv.setItem(53, next);
         } else {
-            inv.setItem(50, filler());
+            inv.setItem(53, filler());
         }
     }
 

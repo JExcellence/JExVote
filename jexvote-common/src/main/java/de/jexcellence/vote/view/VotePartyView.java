@@ -112,25 +112,27 @@ public final class VotePartyView extends VoteBaseView {
         if (totalPages <= 1) {
             return;
         }
+        // Canonical pagination slots (V-10): prev=47, indicator=49, next=53.
+        // Identical to Leaderboard + Shop so players don't have to relearn.
         if (page > 0) {
             ItemStack prev = ItemBuilder.of(Material.ARROW)
                     .name(ic("vote_party.page.prev", viewer))
                     .build();
             tag(prev, TAG_PAGE_PREV);
-            inv.setItem(48, prev);
+            inv.setItem(47, prev);
         }
         inv.setItem(49, ItemBuilder.of(Material.PAPER)
                 .name(msg("vote_party.page.indicator")
                         .with("page", page + 1).with("pages", totalPages).itemComponent(viewer))
-                .lore(List.of(msg("vote_party.page.showing")
-                        .with("from", from + 1).with("to", to).with("total", size).itemComponent(viewer)))
+                .lore(plain(List.of(msg("vote_party.page.showing")
+                        .with("from", from + 1).with("to", to).with("total", size).itemComponent(viewer))))
                 .build());
         if (page + 1 < totalPages) {
             ItemStack next = ItemBuilder.of(Material.ARROW)
                     .name(ic("vote_party.page.next", viewer))
                     .build();
             tag(next, TAG_PAGE_NEXT);
-            inv.setItem(50, next);
+            inv.setItem(53, next);
         }
     }
 
