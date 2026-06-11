@@ -43,8 +43,8 @@ vote:
   party:
     progress: '<gray>Vote Party:</gray> <green>{current}</green><gray>/</gray><white>{target}</white>'
     reached: '<dark_gray>[<gradient:#86efac:#16a34a>Vote</gradient><dark_gray>]</dark_gray> <gradient:#fde047:#f59e0b>★ Vote Party #{party} complete!</gradient> <gray>All contributors have been rewarded!</gray>'
-    slot-title: '<gradient:#fde047:#f59e0b><bold>★ VOTE PARTY ★</bold></gradient>'
-    reveal-title: '<gradient:#86efac:#16a34a><bold>✦ REWARDS! ✦</bold></gradient>'
+    slot-title: '<gradient:#fde047:#f59e0b>★ VOTE PARTY ★</gradient>'
+    reveal-title: '<gradient:#86efac:#16a34a>✦ REWARDS! ✦</gradient>'
     reveal-subtitle: '<gray>You won <gradient:#fde047:#f59e0b>{count}</gradient> rewards!</gray>'
   shop:
     players_only: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Only players can open the vote shop.</red>'
@@ -52,14 +52,14 @@ vote:
   no_permission: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You do not have permission to do this.</red>'
   player_not_found: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Player not found:</red> <white>{player}</white>'
   stats:
-    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Vote Stats</bold></gradient> <dark_gray>━━━━'
+    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b>Vote Stats</gradient> <dark_gray>━━━━'
     total: '<dark_gray>▸</dark_gray> <gray>Total Votes:</gray> <white>{total}</white>'
     monthly: '<dark_gray>▸</dark_gray> <gray>Monthly Votes:</gray> <white>{monthly}</white>'
     streak: '<dark_gray>▸</dark_gray> <gray>Current Streak:</gray> <gradient:#86efac:#16a34a>{streak}</gradient>'
     highest: '<dark_gray>▸</dark_gray> <gray>Highest Streak:</gray> <gradient:#fde047:#f59e0b>{highest}</gradient>'
     points: '<dark_gray>▸</dark_gray> <gray>Vote Points:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient>'
   leaderboard:
-    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Top Voters</bold></gradient> <dark_gray>━━━━'
+    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b>Top Voters</gradient> <dark_gray>━━━━'
     entry: '<dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>{rank}.</gradient> <white>{player}</white> <dark_gray>—</dark_gray> <gradient:#86efac:#16a34a>{votes} votes</gradient>'
     empty: '<dark_gray>▸</dark_gray> <gray>No votes recorded yet.</gray>'
   reload: '<gradient:#86efac:#16a34a>✔</gradient> <gray>JExVote configuration reloaded.</gray>'
@@ -67,7 +67,7 @@ vote:
     success: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Reset vote stats for</gray> <white>{player}</white><gray>.</gray>'
     all_success: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Reset monthly votes for all players.</gray>'
   sites:
-    header: '<dark_gray>━━━━ <gradient:#a5f3fc:#06b6d4><bold>Vote Sites</bold></gradient> <dark_gray>━━━━'
+    header: '<dark_gray>━━━━ <gradient:#a5f3fc:#06b6d4>Vote Sites</gradient> <dark_gray>━━━━'
     entry: '<dark_gray>▸</dark_gray> <gradient:#86efac:#16a34a>{name}</gradient> <dark_gray>—</dark_gray> <gradient:#a5f3fc:#06b6d4>Click to vote</gradient>'
     no_sites: '<dark_gray>▸</dark_gray> <gray>No vote sites configured.</gray>'
 
@@ -86,27 +86,27 @@ vote_shop:
 vote_rewards:
   title: '<dark_gray>Vote Economy'
   header:
-    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Economy</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>✦ Vote Economy</gradient>'
     lore:
       - ''
       - '  <gray>Lucky Vote, weekend multiplier,'
       - '  <gray>vote party & reward drop stats.'
       - ''
   lucky:
-    name: '<gradient:#fde047:#f59e0b><bold>★ Lucky Vote</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>★ Lucky Vote</gradient>'
     empty: '  <gray>No lucky rewards configured.'
     entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}× won)</dark_gray>'
     pool: '  <dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>Jackpot pool</gradient> <dark_gray>({count} outcomes)</dark_gray>'
     pool-entry: '     <dark_gray>•</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}×)</dark_gray>'
   multiplier:
-    name: '<gradient:#fde047:#f59e0b><bold>⚡ Weekend Multiplier</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>⚡ Weekend Multiplier</gradient>'
     status-active: '  <dark_gray>▸</dark_gray> <gray>Status:</gray> <gradient:#86efac:#16a34a>ACTIVE</gradient>'
     status-inactive: '  <dark_gray>▸</dark_gray> <gray>Status:</gray> <dark_gray>inactive</dark_gray>'
     current: '  <dark_gray>▸</dark_gray> <gray>Current:</gray> <yellow>{factor}×</yellow>'
     weekend: '  <dark_gray>▸</dark_gray> <gray>Weekend factor:</gray> <yellow>{factor}×</yellow>'
     days: '  <dark_gray>▸</dark_gray> <gray>Days:</gray> <white>{days}</white>'
   party:
-    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Party</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>✦ Vote Party</gradient>'
     disabled: '  <dark_gray>Vote parties are disabled.'
     progress: '  <dark_gray>▸</dark_gray> <gray>Progress:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
     remaining: '  <dark_gray>▸</dark_gray> <gray>Remaining:</gray> <white>{remaining}</white>'
@@ -114,7 +114,7 @@ vote_rewards:
     reward-entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray>'
     none: '  <dark_gray>No party rewards configured.'
   freeze:
-    name: '<gradient:#a5f3fc:#06b6d4><bold>❄ Streak Freeze</bold></gradient>'
+    name: '<gradient:#a5f3fc:#06b6d4>❄ Streak Freeze</gradient>'
     disabled: '  <dark_gray>Streak Freezes are disabled.'
     how: '  <gray>Protects your streak when you miss a vote.'
     owned: '  <dark_gray>▸</dark_gray> <gray>Owned:</gray> <gradient:#a5f3fc:#06b6d4>{owned}</gradient><dark_gray>/</dark_gray><white>{max}</white>'
@@ -122,14 +122,14 @@ vote_rewards:
     duration: '  <dark_gray>▸</dark_gray> <gray>Covers:</gray> <white>{duration}h per freeze</white>'
     buy-hint: '  <gradient:#86efac:#16a34a>Click to buy</gradient> <dark_gray>(or /vote freeze)</dark_gray>'
   gift:
-    name: '<gradient:#86efac:#16a34a><bold>✦ Vote Gift</bold></gradient>'
+    name: '<gradient:#86efac:#16a34a>✦ Vote Gift</gradient>'
     disabled: '  <dark_gray>Vote gifting is disabled.'
     how: '  <gray>Keep a friend''s streak alive — advances'
     limit: '  <dark_gray>▸</dark_gray> <gray>Gifts left today:</gray> <gradient:#86efac:#16a34a>{remaining}</gradient><dark_gray>/</dark_gray><white>{limit}</white>'
     require-vote: '  <dark_gray>▸</dark_gray> <gray>Requires:</gray> <white>you voted today</white>'
     usage: '  <gray>Use</gray> <gradient:#86efac:#16a34a>/vote gift <player|random></gradient>'
   text:
-    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Vote Economy</bold></gradient> <dark_gray>━━━━'
+    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b>Vote Economy</gradient> <dark_gray>━━━━'
     lucky-entry: '<dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow> <dark_gray>({won}× won)</dark_gray>'
     multiplier: '<dark_gray>▸</dark_gray> <gray>Multiplier:</gray> <yellow>{factor}×</yellow> <dark_gray>({status})</dark_gray>'
     party: '<dark_gray>▸</dark_gray> <gray>Vote Party:</gray> <green>{current}</green><dark_gray>/</dark_gray><white>{target}</white> <dark_gray>({remaining} left)</dark_gray>'

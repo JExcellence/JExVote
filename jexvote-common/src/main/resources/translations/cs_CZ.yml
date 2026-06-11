@@ -43,7 +43,7 @@ vote_streak:
 
   # ── Zobrazení dráhy ──
   header:
-    name: '<gradient:#fca5a5:#dc2626><bold>🔥 Odměny za sérii</bold></gradient>'
+    name: '<gradient:#fca5a5:#dc2626>🔥 Odměny za sérii</gradient>'
     lore:
       - ''
       - '  <gray>Hlasuj denně a buduj svou sérii!'
@@ -51,17 +51,17 @@ vote_streak:
       - ''
 
   your_streak:
-    name: '<gradient:#fde047:#f59e0b><bold>🔥 Tvoje série</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>🔥 Tvoje série</gradient>'
     lore:
       - ''
-      - '  <dark_gray>▸</dark_gray> <gray>Aktuální:</gray> <gradient:#86efac:#16a34a><bold>{current}</bold></gradient> <gray>{current_label}'
-      - '  <dark_gray>▸</dark_gray> <gray>Nejvyšší:</gray> <gradient:#fde047:#f59e0b><bold>{highest}</bold></gradient> <gray>{highest_label}'
+      - '  <dark_gray>▸</dark_gray> <gray>Aktuální:</gray> <gradient:#86efac:#16a34a>{current}</gradient> <gray>{current_label}'
+      - '  <dark_gray>▸</dark_gray> <gray>Nejvyšší:</gray> <gradient:#fde047:#f59e0b>{highest}</gradient> <gray>{highest_label}'
       - ''
       - '  <gray>Hlasuj denně, ať série pokračuje!'
       - ''
 
   how_it_works:
-    name: '<gradient:#86efac:#16a34a><bold>Jak to funguje</bold></gradient>'
+    name: '<gradient:#86efac:#16a34a>Jak to funguje</gradient>'
     lore:
       - ''
       - '  <gray>Hlasuj každý den a buduj'
@@ -73,7 +73,7 @@ vote_streak:
       - ''
 
   progress:
-    name: '<gradient:#a5f3fc:#06b6d4><bold>Postup</bold></gradient>'
+    name: '<gradient:#a5f3fc:#06b6d4>Postup</gradient>'
     lore:
       - ''
       - '  <gray>Další milník:</gray> <white>Den {next}'
@@ -83,7 +83,7 @@ vote_streak:
       - ''
 
   rewards_summary:
-    name: '<gradient:#fde047:#f59e0b><bold>Odměny</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>Odměny</gradient>'
 
   loading: '  <gray>Načítání...'
   day_label: 'den'
@@ -97,7 +97,7 @@ vote_streak:
 
   # ── Stavy milníků ──
   milestone:
-    name: '<bold>Den {day}</bold>'
+    name: 'Den {day}'
     claimed:
       status: '  <gradient:#86efac:#16a34a>✔ Vyzvednuto!</gradient>'
     claimable:
@@ -111,25 +111,25 @@ vote_streak:
 
   # ── Detailní zobrazení ──
   detail:
-    header: '<bold>{status_gradient}Den {day} — {status}</bold>'
+    header: '{status_gradient}Den {day} — {status}'
     subtitle: '  <gray>Odměny za milník série pro den <white>{day}'
     reward_type: '  <gray>Typ: <white>{type}'
     back_button: '<gray>← Zpět na série'
     claim_button:
-      name: '<gradient:#86efac:#16a34a><bold>✔ Vyzvednout odměny</bold></gradient>'
+      name: '<gradient:#86efac:#16a34a>✔ Vyzvednout odměny</gradient>'
       lore:
         - ''
         - '  <gray>Klikni pro vyzvednutí'
         - '  <gray>odměn za milník dne {day}!'
         - ''
     already_claimed:
-      name: '<gradient:#86efac:#16a34a><bold>✔ Již vyzvednuto</bold></gradient>'
+      name: '<gradient:#86efac:#16a34a>✔ Již vyzvednuto</gradient>'
       lore:
         - ''
         - '  <gray>Tyto odměny jsi již vyzvedl.'
         - ''
     locked_status:
-      name: '<gradient:#fca5a5:#dc2626><bold>✘ Zamčeno</bold></gradient>'
+      name: '<gradient:#fca5a5:#dc2626>✘ Zamčeno</gradient>'
       lore:
         - ''
         - '  <gray>Dosáhni {day}denní série k odemčení.'

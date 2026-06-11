@@ -315,9 +315,9 @@ vote-party:
   # Title settings (MiniMessage format)
   titles:
     # Title shown during spin animation
-    spin: '<gradient:#fde047:#f59e0b><bold>★ VOTE PARTY ★</bold></gradient>'
+    spin: '<gradient:#fde047:#f59e0b>★ VOTE PARTY ★</gradient>'
     # Title shown on reveal
-    reveal: '<gradient:#86efac:#16a34a><bold>✦ REWARDS! ✦</bold></gradient>'
+    reveal: '<gradient:#86efac:#16a34a>✦ REWARDS! ✦</gradient>'
     # Subtitle shown on reveal (supports {count} placeholder)
     reveal-subtitle: '<gray>You won <gradient:#fde047:#f59e0b>{count}</gradient> rewards!</gray>'
     # Title timing (milliseconds)

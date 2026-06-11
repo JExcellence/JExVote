@@ -45,7 +45,7 @@ public final class VoteEffectsConfig {
                 "ENTITY_PLAYER_LEVELUP", 1.0f, 1.0f,
                 "ENTITY_PLAYER_LEVELUP", 1.0f, 1.2f,
                 "UI_TOAST_CHALLENGE_COMPLETE", 1.0f, 1.0f,
-                "<gradient:#86efac:#16a34a><bold>Vote Streak!</bold></gradient>",
+                "<gradient:#86efac:#16a34a>Vote Streak!</gradient>",
                 "<gray>You reached a new milestone!</gray>",
                 Duration.ofMillis(10),
                 Duration.ofMillis(40),

@@ -144,7 +144,7 @@ public class VoteLeaderboardView extends VoteBaseView {
         }
 
         inv.setItem(49, ItemBuilder.of(Material.PAPER)
-                .name(name("<gradient:#a5f3fc:#06b6d4><bold>Page " + (page + 1) + " / " + totalPages + "</bold></gradient>"))
+                .name(name("<gradient:#a5f3fc:#06b6d4>Page " + (page + 1) + " / " + totalPages + "</gradient>"))
                 .lore(List.of(
                         Component.empty(),
                         lore("  <gray>Showing " + (from + 1) + "–" + to + " of " + data.size()),
@@ -177,7 +177,7 @@ public class VoteLeaderboardView extends VoteBaseView {
         String rankSym = rankSymbol(rank);
 
         Component displayName = name(
-                rankGrad + "<bold>" + rankSym + " #" + rank + "</bold></gradient> <white>" + playerName);
+                rankGrad + rankSym + " #" + rank + "</gradient> <white>" + playerName);
 
         String voteBar = buildVoteBar(entry.totalVotes());
 

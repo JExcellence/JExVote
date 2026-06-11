@@ -186,7 +186,7 @@ vote_streak:
 
   # ── Track-Ansicht ──
   header:
-    name: '<gradient:#fca5a5:#dc2626><bold>🔥 Streak-Belohnungen</bold></gradient>'
+    name: '<gradient:#fca5a5:#dc2626>🔥 Streak-Belohnungen</gradient>'
     lore:
       - ''
       - '  <gray>Vote täglich, um deinen Streak aufzubauen!'
@@ -194,17 +194,17 @@ vote_streak:
       - ''
 
   your_streak:
-    name: '<gradient:#fde047:#f59e0b><bold>🔥 Dein Streak</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>🔥 Dein Streak</gradient>'
     lore:
       - ''
-      - '<dark_gray>┃ <gray>Aktuell:</gray> <gradient:#86efac:#16a34a><bold>{current}</bold></gradient> <gray>{current_label}'
-      - '<dark_gray>┃ <gray>Höchster:</gray> <gradient:#fde047:#f59e0b><bold>{highest}</bold></gradient> <gray>{highest_label}'
+      - '<dark_gray>┃ <gray>Aktuell:</gray> <gradient:#86efac:#16a34a>{current}</gradient> <gray>{current_label}'
+      - '<dark_gray>┃ <gray>Höchster:</gray> <gradient:#fde047:#f59e0b>{highest}</gradient> <gray>{highest_label}'
       - ''
       - '  <gray>Vote täglich, um ihn zu halten!'
       - ''
 
   how_it_works:
-    name: '<gradient:#86efac:#16a34a><bold>So funktioniert''s</bold></gradient>'
+    name: '<gradient:#86efac:#16a34a>So funktioniert''s</gradient>'
     lore:
       - ''
       - '  <gray>Vote jeden Tag, um deinen'
@@ -216,7 +216,7 @@ vote_streak:
       - ''
 
   progress:
-    name: '<gradient:#a5f3fc:#06b6d4><bold>Fortschritt</bold></gradient>'
+    name: '<gradient:#a5f3fc:#06b6d4>Fortschritt</gradient>'
     lore:
       - ''
       - '  <gray>Nächster Meilenstein:</gray> <white>Tag {next}'
@@ -226,7 +226,7 @@ vote_streak:
       - ''
 
   rewards_summary:
-    name: '<gradient:#fde047:#f59e0b><bold>Belohnungen</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>Belohnungen</gradient>'
 
   loading: '  <gray>Laden...'
   day_label: 'Tag'
@@ -240,7 +240,7 @@ vote_streak:
 
   # ── Meilenstein-Status ──
   milestone:
-    name: '<bold>Tag {day}</bold>'
+    name: 'Tag {day}'
     claimed:
       status: '  <gradient:#86efac:#16a34a>✔ Abgeholt!</gradient>'
     claimable:
@@ -254,25 +254,25 @@ vote_streak:
 
   # ── Detail-Ansicht ──
   detail:
-    header: '<bold>{status_gradient}Tag {day} — {status}</bold>'
+    header: '{status_gradient}Tag {day} — {status}'
     subtitle: '  <gray>Streak-Meilenstein-Belohnungen für Tag <white>{day}'
     reward_type: '  <gray>Typ: <white>{type}'
     back_button: '<gray>← Zurück zu Streaks'
     claim_button:
-      name: '<gradient:#86efac:#16a34a><bold>✔ Belohnungen abholen</bold></gradient>'
+      name: '<gradient:#86efac:#16a34a>✔ Belohnungen abholen</gradient>'
       lore:
         - ''
         - '  <gray>Klicke, um deine'
         - '  <gray>Tag-{day}-Meilenstein-Belohnungen abzuholen!'
         - ''
     already_claimed:
-      name: '<gradient:#86efac:#16a34a><bold>✔ Bereits abgeholt</bold></gradient>'
+      name: '<gradient:#86efac:#16a34a>✔ Bereits abgeholt</gradient>'
       lore:
         - ''
         - '  <gray>Du hast diese Belohnungen bereits abgeholt.'
         - ''
     locked_status:
-      name: '<gradient:#fca5a5:#dc2626><bold>✘ Gesperrt</bold></gradient>'
+      name: '<gradient:#fca5a5:#dc2626>✘ Gesperrt</gradient>'
       lore:
         - ''
         - '  <gray>Erreiche einen {day}-Tage-Streak zum Freischalten.'
@@ -347,7 +347,7 @@ vote_rewards:
       - '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Klicke zum Öffnen des Shops</gradient>'
       - ''
   text:
-    header: '<dark_gray>━━━━ <gradient:#FDE047:#F59E0B><bold>Vote-Economy</bold></gradient> <dark_gray>━━━━'
+    header: '<dark_gray>━━━━ <gradient:#FDE047:#F59E0B>Vote-Economy</gradient> <dark_gray>━━━━'
     lucky-entry: '<dark_gray>┃ <gray>{reward} <yellow>{chance}%</yellow> <dark_gray>({won}× gewonnen)'
     multiplier: '<dark_gray>┃ <gray>Multiplikator: <yellow>{factor}×</yellow> <dark_gray>({status})'
     party: '<dark_gray>┃ <gray>Vote-Party: <green>{current}</green><dark_gray>/<#C084FC>{target} <dark_gray>(noch {remaining})'
@@ -375,7 +375,7 @@ vote_party:
   page:
     prev: '<gradient:#fde047:#f59e0b>← Vorherige Seite</gradient>'
     next: '<gradient:#fde047:#f59e0b>Nächste Seite →</gradient>'
-    indicator: '<gradient:#a5f3fc:#06b6d4><bold>Seite {page} / {pages}</bold></gradient>'
+    indicator: '<gradient:#a5f3fc:#06b6d4>Seite {page} / {pages}</gradient>'
     showing: '  <gray>Zeige {from}–{to} von {total}</gray>'
   rewarded:
     header: '<gradient:#fde047:#f59e0b>✦ Vote-Party!</gradient> <gray>Du hast erhalten:</gray>'
@@ -423,12 +423,12 @@ vote_shop:
     lore: '<dark_gray>┃ <gray>Seite <#C084FC>{page}<gray>/<#C084FC>{total}'
 
   purchase:
-    chat-header: '<dark_gray>━━━━ <gradient:#86EFAC:#22C55E:#16A34A><bold>✦ Vote-Shop-Kauf</bold></gradient> <dark_gray>━━━━'
+    chat-header: '<dark_gray>━━━━ <gradient:#86EFAC:#22C55E:#16A34A>✦ Vote-Shop-Kauf</gradient> <dark_gray>━━━━'
     chat-item:    '<dark_gray>┃ <gray>Artikel: <gradient:#D8B4FE:#9333EA>{item}</gradient>'
     chat-reward:  '<dark_gray>┃ <gray>Belohnung: {reward}'
     chat-cost:    '<dark_gray>┃ <gray>Bezahlt: <gradient:#D8B4FE:#9333EA>{cost}</gradient> <gray>Punkte'
     chat-balance: '<dark_gray>┕ <gray>Guthaben: <#C084FC>{balance}<gray> Punkte'
-    title:    '<gradient:#86EFAC:#22C55E:#16A34A><bold>✦ Gekauft!</bold></gradient>'
+    title:    '<gradient:#86EFAC:#22C55E:#16A34A>✦ Gekauft!</gradient>'
     subtitle: '<gradient:#D8B4FE:#9333EA>{item}</gradient>'
 
   not-enough: '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>Dir fehlen <white>{missing}</white> Vote-Punkte dafür.</red>'
@@ -451,20 +451,20 @@ reward_describe:
 
 # ── /vote help ──────────────────────────────────────────────────────────────
 vote_help:
-  banner: '<dark_gray>━━━━━━ <gradient:#86EFAC:#22C55E:#16A34A><bold>Vote-Befehle</bold></gradient> <dark_gray>━━━━━━'
+  banner: '<dark_gray>━━━━━━ <gradient:#86EFAC:#22C55E:#16A34A>Vote-Befehle</gradient> <dark_gray>━━━━━━'
   entry: '  <dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>{command}</gradient> {args}<dark_gray> ┃ <gray>{description}</gray>'
   entry-args: '<dark_gray>⟨</dark_gray><white>{args}</white><dark_gray>⟩</dark_gray>'
-  hover-base: '<gradient:#86EFAC:#22C55E:#16A34A><bold>{full}</bold></gradient><newline><gray>{description}</gray>'
+  hover-base: '<gradient:#86EFAC:#22C55E:#16A34A>{full}</gradient><newline><gray>{description}</gray>'
   hover-aliases: '<dark_gray>Aliasse: </dark_gray><gray>{aliases}</gray>'
   hover-action-run: '<dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>Zum Ausführen klicken</gradient>'
   hover-action-suggest: '<dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>Zum Vervollständigen klicken</gradient>'
 
 # ── /jexvote help (admin) ────────────────────────────────────────────────────
 vote_admin:
-  banner: '<dark_gray>━━━━ <gradient:#FCA5A5:#DC2626><bold>JExVote Admin</bold></gradient> <dark_gray>┃</dark_gray> <gradient:#FBBF24:#F59E0B><bold>[ADMIN]</bold></gradient> <dark_gray>━━━━'
+  banner: '<dark_gray>━━━━ <gradient:#FCA5A5:#DC2626>JExVote Admin</gradient> <dark_gray>┃</dark_gray> <gradient:#FBBF24:#F59E0B>[ADMIN]</gradient> <dark_gray>━━━━'
   entry: '  <dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>{command}</gradient> {args}<dark_gray> ┃ <gray>{description}</gray>'
   entry-args: '<dark_gray>⟨</dark_gray><white>{args}</white><dark_gray>⟩</dark_gray>'
-  hover-base: '<gradient:#FCA5A5:#DC2626><bold>{full}</bold></gradient> <gradient:#FBBF24:#F59E0B>[ADMIN]</gradient><newline><gray>{description}</gray>'
+  hover-base: '<gradient:#FCA5A5:#DC2626>{full}</gradient> <gradient:#FBBF24:#F59E0B>[ADMIN]</gradient><newline><gray>{description}</gray>'
   hover-aliases: '<dark_gray>Aliasse: </dark_gray><gray>{aliases}</gray>'
   hover-action-run: '<dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>Zum Ausführen klicken</gradient>'
   hover-action-suggest: '<dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>Zum Vervollständigen klicken</gradient>'

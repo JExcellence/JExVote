@@ -68,8 +68,8 @@ public final class VotePartyConfig {
             @NotNull Duration fadeOut
     ) {
         public static final TitleSettings DEFAULTS = new TitleSettings(
-                "<gradient:#fde047:#f59e0b><bold>★ VOTE PARTY ★</bold></gradient>",
-                "<gradient:#86efac:#16a34a><bold>✦ REWARDS! ✦</bold></gradient>",
+                "<gradient:#fde047:#f59e0b>★ VOTE PARTY ★</gradient>",
+                "<gradient:#86efac:#16a34a>✦ REWARDS! ✦</gradient>",
                 "<gray>You won <gradient:#fde047:#f59e0b>{count}</gradient> rewards!</gray>",
                 Duration.ofMillis(0),
                 Duration.ofMillis(200),

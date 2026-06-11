@@ -207,7 +207,7 @@ vote-effects:
     sound: UI_TOAST_CHALLENGE_COMPLETE
     volume: 1.0
     pitch: 1.0
-    title: "<gradient:#86efac:#16a34a><bold>Vote Streak!</bold></gradient>"
+    title: "<gradient:#86efac:#16a34a>Vote Streak!</gradient>"
     subtitle: "<gray>You reached a new milestone!</gray>"
     fade-in: 10
     stay: 40

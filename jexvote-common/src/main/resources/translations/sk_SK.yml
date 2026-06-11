@@ -85,7 +85,7 @@ vote_streak:
 
   # ── Track view ──
   header:
-    name: '<gradient:#fca5a5:#dc2626><bold>🔥 Streak Rewards</bold></gradient>'
+    name: '<gradient:#fca5a5:#dc2626>🔥 Streak Rewards</gradient>'
     lore:
       - ''
       - '  <gray>Vote daily to build your streak!'
@@ -93,17 +93,17 @@ vote_streak:
       - ''
 
   your_streak:
-    name: '<gradient:#fde047:#f59e0b><bold>🔥 Your Streak</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>🔥 Your Streak</gradient>'
     lore:
       - ''
-      - '  <dark_gray>▸</dark_gray> <gray>Current:</gray> <gradient:#86efac:#16a34a><bold>{current}</bold></gradient> <gray>{current_label}'
-      - '  <dark_gray>▸</dark_gray> <gray>Highest:</gray> <gradient:#fde047:#f59e0b><bold>{highest}</bold></gradient> <gray>{highest_label}'
+      - '  <dark_gray>▸</dark_gray> <gray>Current:</gray> <gradient:#86efac:#16a34a>{current}</gradient> <gray>{current_label}'
+      - '  <dark_gray>▸</dark_gray> <gray>Highest:</gray> <gradient:#fde047:#f59e0b>{highest}</gradient> <gray>{highest_label}'
       - ''
       - '  <gray>Vote daily to keep it going!'
       - ''
 
   how_it_works:
-    name: '<gradient:#86efac:#16a34a><bold>How It Works</bold></gradient>'
+    name: '<gradient:#86efac:#16a34a>How It Works</gradient>'
     lore:
       - ''
       - '  <gray>Vote every day to build'
@@ -115,7 +115,7 @@ vote_streak:
       - ''
 
   progress:
-    name: '<gradient:#a5f3fc:#06b6d4><bold>Progress</bold></gradient>'
+    name: '<gradient:#a5f3fc:#06b6d4>Progress</gradient>'
     lore:
       - ''
       - '  <gray>Next milestone:</gray> <white>Day {next}'
@@ -125,7 +125,7 @@ vote_streak:
       - ''
 
   rewards_summary:
-    name: '<gradient:#fde047:#f59e0b><bold>Rewards</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>Rewards</gradient>'
 
   loading: '  <gray>Loading...'
   day_label: 'day'
@@ -139,7 +139,7 @@ vote_streak:
 
   # ── Milestone states ──
   milestone:
-    name: '<bold>Day {day}</bold>'
+    name: 'Day {day}'
     claimed:
       status: '  <gradient:#86efac:#16a34a>✔ Claimed!</gradient>'
     claimable:
@@ -153,25 +153,25 @@ vote_streak:
 
   # ── Detail view ──
   detail:
-    header: '<bold>{status_gradient}Day {day} — {status}</bold>'
+    header: '{status_gradient}Day {day} — {status}'
     subtitle: '  <gray>Streak milestone rewards for day <white>{day}'
     reward_type: '  <gray>Type: <white>{type}'
     back_button: '<gray>← Back to Streaks'
     claim_button:
-      name: '<gradient:#86efac:#16a34a><bold>✔ Claim Rewards</bold></gradient>'
+      name: '<gradient:#86efac:#16a34a>✔ Claim Rewards</gradient>'
       lore:
         - ''
         - '  <gray>Click to claim your'
         - '  <gray>Day {day} milestone rewards!'
         - ''
     already_claimed:
-      name: '<gradient:#86efac:#16a34a><bold>✔ Already Claimed</bold></gradient>'
+      name: '<gradient:#86efac:#16a34a>✔ Already Claimed</gradient>'
       lore:
         - ''
         - '  <gray>You already collected these rewards.'
         - ''
     locked_status:
-      name: '<gradient:#fca5a5:#dc2626><bold>✘ Locked</bold></gradient>'
+      name: '<gradient:#fca5a5:#dc2626>✘ Locked</gradient>'
       lore:
         - ''
         - '  <gray>Reach a {day}-day streak to unlock.'
@@ -188,27 +188,27 @@ vote_streak:
 vote_rewards:
   title: '<dark_gray>Vote Economy'
   header:
-    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Economy</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>✦ Vote Economy</gradient>'
     lore:
       - ''
       - '  <gray>Lucky Vote, weekend multiplier,'
       - '  <gray>vote party & reward drop stats.'
       - ''
   lucky:
-    name: '<gradient:#fde047:#f59e0b><bold>★ Lucky Vote</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>★ Lucky Vote</gradient>'
     empty: '  <gray>No lucky rewards configured.'
     entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}× won)</dark_gray>'
     pool: '  <dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>Jackpot pool</gradient> <dark_gray>({count} outcomes)</dark_gray>'
     pool-entry: '     <dark_gray>•</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}×)</dark_gray>'
   multiplier:
-    name: '<gradient:#fde047:#f59e0b><bold>⚡ Weekend Multiplier</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>⚡ Weekend Multiplier</gradient>'
     status-active: '  <dark_gray>▸</dark_gray> <gray>Status:</gray> <gradient:#86efac:#16a34a>ACTIVE</gradient>'
     status-inactive: '  <dark_gray>▸</dark_gray> <gray>Status:</gray> <dark_gray>inactive</dark_gray>'
     current: '  <dark_gray>▸</dark_gray> <gray>Current:</gray> <yellow>{factor}×</yellow>'
     weekend: '  <dark_gray>▸</dark_gray> <gray>Weekend factor:</gray> <yellow>{factor}×</yellow>'
     days: '  <dark_gray>▸</dark_gray> <gray>Days:</gray> <white>{days}</white>'
   party:
-    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Party</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>✦ Vote Party</gradient>'
     disabled: '  <dark_gray>Vote parties are disabled.'
     progress: '  <dark_gray>▸</dark_gray> <gray>Progress:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
     remaining: '  <dark_gray>▸</dark_gray> <gray>Remaining:</gray> <white>{remaining}</white>'
@@ -217,11 +217,11 @@ vote_rewards:
     none: '  <dark_gray>No party rewards configured.'
     view-all: '  <gradient:#86efac:#16a34a>Click to view all party rewards</gradient>'
   points:
-    name: '<gradient:#d8b4fe:#9333ea><bold>✦ Vote Points</bold></gradient>'
+    name: '<gradient:#d8b4fe:#9333ea>✦ Vote Points</gradient>'
     balance: '  <dark_gray>▸</dark_gray> <gray>Balance:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient>'
     hint: '  <dark_gray>Earn points by voting; spend them on Streak Freezes.'
   freeze:
-    name: '<gradient:#a5f3fc:#06b6d4><bold>❄ Streak Freeze</bold></gradient>'
+    name: '<gradient:#a5f3fc:#06b6d4>❄ Streak Freeze</gradient>'
     disabled: '  <dark_gray>Streak Freezes are disabled.'
     how: '  <gray>Protects your streak when you miss a vote.'
     owned: '  <dark_gray>▸</dark_gray> <gray>Owned:</gray> <gradient:#a5f3fc:#06b6d4>{owned}</gradient><dark_gray>/</dark_gray><white>{max}</white>'
@@ -229,14 +229,14 @@ vote_rewards:
     duration: '  <dark_gray>▸</dark_gray> <gray>Covers:</gray> <white>{duration}h per freeze</white>'
     buy-hint: '  <gradient:#86efac:#16a34a>Click to buy</gradient> <dark_gray>(or /vote freeze)</dark_gray>'
   gift:
-    name: '<gradient:#86efac:#16a34a><bold>✦ Vote Gift</bold></gradient>'
+    name: '<gradient:#86efac:#16a34a>✦ Vote Gift</gradient>'
     disabled: '  <dark_gray>Vote gifting is disabled.'
     how: '  <gray>Keep a friend''s streak alive — advances'
     limit: '  <dark_gray>▸</dark_gray> <gray>Gifts left today:</gray> <gradient:#86efac:#16a34a>{remaining}</gradient><dark_gray>/</dark_gray><white>{limit}</white>'
     require-vote: '  <dark_gray>▸</dark_gray> <gray>Requires:</gray> <white>you voted today</white>'
     usage: '  <gray>Use</gray> <gradient:#86efac:#16a34a>/vote gift <player|random></gradient>'
   text:
-    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Vote Economy</bold></gradient> <dark_gray>━━━━'
+    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b>Vote Economy</gradient> <dark_gray>━━━━'
     lucky-entry: '<dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow> <dark_gray>({won}× won)</dark_gray>'
     multiplier: '<dark_gray>▸</dark_gray> <gray>Multiplier:</gray> <yellow>{factor}×</yellow> <dark_gray>({status})</dark_gray>'
     party: '<dark_gray>▸</dark_gray> <gray>Vote Party:</gray> <green>{current}</green><dark_gray>/</dark_gray><white>{target}</white> <dark_gray>({remaining} left)</dark_gray>'
@@ -246,7 +246,7 @@ vote_party:
   title: '<gradient:#fde047:#f59e0b>Vote Party Rewards</gradient>'
   disabled: '  <dark_gray>Vote parties are disabled.'
   header:
-    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Party ✦</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>✦ Vote Party ✦</gradient>'
     lore: '<gray>3 guaranteed draws + bonus rolls per party.</gray>'
   progress: '  <dark_gray>▸</dark_gray> <gray>Progress:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
   remaining: '  <dark_gray>▸</dark_gray> <gray>Remaining:</gray> <white>{remaining}</white>'
@@ -257,7 +257,7 @@ vote_party:
 # ── Vote-Token Shop (VoteShopView) ────────────────────────────────────────────
 vote_shop:
   title: '<gradient:#d8b4fe:#9333ea>Vote Shop</gradient>'
-  header-name: '<gradient:#d8b4fe:#9333ea><bold>✦ Vote Tokens</bold></gradient>'
+  header-name: '<gradient:#d8b4fe:#9333ea>✦ Vote Tokens</gradient>'
   points: '  <dark_gray>▸</dark_gray> <gray>Balance:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient> <gray>points</gray>'
   hint: '  <dark_gray>Earn points by voting; spend them here.'
   cost: '  <dark_gray>▸</dark_gray> <gray>Cost:</gray> <gradient:#d8b4fe:#9333ea>{cost}</gradient> <gray>points</gray>'

@@ -25,14 +25,14 @@ vote:
   no_permission: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Na toto nemáte oprávnění.</red>'
   player_not_found: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Hráč nenalezen:</red> <white>{player}</white>'
   stats:
-    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Statistiky hlasování</bold></gradient> <dark_gray>━━━━'
+    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b>Statistiky hlasování</gradient> <dark_gray>━━━━'
     total: '<dark_gray>▸</dark_gray> <gray>Celkem hlasů:</gray> <white>{total}</white>'
     monthly: '<dark_gray>▸</dark_gray> <gray>Měsíční hlasy:</gray> <white>{monthly}</white>'
     streak: '<dark_gray>▸</dark_gray> <gray>Aktuální série:</gray> <gradient:#86efac:#16a34a>{streak}</gradient>'
     highest: '<dark_gray>▸</dark_gray> <gray>Nejvyšší série:</gray> <gradient:#fde047:#f59e0b>{highest}</gradient>'
     points: '<dark_gray>▸</dark_gray> <gray>Body za hlasování:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient>'
   leaderboard:
-    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Top hlasující</bold></gradient> <dark_gray>━━━━'
+    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b>Top hlasující</gradient> <dark_gray>━━━━'
     entry: '<dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>{rank}.</gradient> <white>{player}</white> <dark_gray>—</dark_gray> <gradient:#86efac:#16a34a>{votes} hlasů</gradient>'
     empty: '<dark_gray>▸</dark_gray> <gray>Zatím žádné hlasy.</gray>'
   reload: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Konfigurace JExVote znovu načtena.</gray>'
@@ -40,7 +40,7 @@ vote:
     success: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Statistiky hlasování pro</gray> <white>{player}</white> <gray>resetovány.</gray>'
     all_success: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Měsíční hlasy pro všechny hráče resetovány.</gray>'
   sites:
-    header: '<dark_gray>━━━━ <gradient:#a5f3fc:#06b6d4><bold>Hlasovací stránky</bold></gradient> <dark_gray>━━━━'
+    header: '<dark_gray>━━━━ <gradient:#a5f3fc:#06b6d4>Hlasovací stránky</gradient> <dark_gray>━━━━'
     entry: '<dark_gray>▸</dark_gray> <gradient:#86efac:#16a34a>{name}</gradient> <dark_gray>—</dark_gray> <gradient:#a5f3fc:#06b6d4>Klikni pro hlasování</gradient>'
     no_sites: '<dark_gray>▸</dark_gray> <gray>Žádné hlasovací stránky nakonfigurovány.</gray>'
 
@@ -59,27 +59,27 @@ vote_shop:
 vote_rewards:
   title: '<dark_gray>Vote Ekonomika'
   header:
-    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Ekonomika</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>✦ Vote Ekonomika</gradient>'
     lore:
       - ''
       - '  <gray>Lucky Vote, víkendový násobitel,'
       - '  <gray>vote party & statistiky odměn.'
       - ''
   lucky:
-    name: '<gradient:#fde047:#f59e0b><bold>★ Lucky Vote</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>★ Lucky Vote</gradient>'
     empty: '  <gray>Žádné lucky odměny nakonfigurovány.'
     entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}× vyhráno)</dark_gray>'
     pool: '  <dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>Jackpot pool</gradient> <dark_gray>({count} výsledků)</dark_gray>'
     pool-entry: '     <dark_gray>•</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow>  <dark_gray>({won}×)</dark_gray>'
   multiplier:
-    name: '<gradient:#fde047:#f59e0b><bold>⚡ Víkendový násobitel</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>⚡ Víkendový násobitel</gradient>'
     status-active: '  <dark_gray>▸</dark_gray> <gray>Stav:</gray> <gradient:#86efac:#16a34a>AKTIVNÍ</gradient>'
     status-inactive: '  <dark_gray>▸</dark_gray> <gray>Stav:</gray> <dark_gray>neaktivní</dark_gray>'
     current: '  <dark_gray>▸</dark_gray> <gray>Aktuální:</gray> <yellow>{factor}×</yellow>'
     weekend: '  <dark_gray>▸</dark_gray> <gray>Víkendový faktor:</gray> <yellow>{factor}×</yellow>'
     days: '  <dark_gray>▸</dark_gray> <gray>Dny:</gray> <white>{days}</white>'
   party:
-    name: '<gradient:#fde047:#f59e0b><bold>✦ Vote Party</bold></gradient>'
+    name: '<gradient:#fde047:#f59e0b>✦ Vote Party</gradient>'
     disabled: '  <dark_gray>Vote party jsou vypnuté.'
     progress: '  <dark_gray>▸</dark_gray> <gray>Postup:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
     remaining: '  <dark_gray>▸</dark_gray> <gray>Zbývá:</gray> <white>{remaining}</white>'
@@ -87,7 +87,7 @@ vote_rewards:
     reward-entry: '  <dark_gray>▸</dark_gray> <gray>{reward}</gray>'
     none: '  <dark_gray>Žádné party odměny nakonfigurovány.'
   text:
-    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>Vote Ekonomika</bold></gradient> <dark_gray>━━━━'
+    header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b>Vote Ekonomika</gradient> <dark_gray>━━━━'
     lucky-entry: '<dark_gray>▸</dark_gray> <gray>{reward}</gray> <yellow>{chance}%</yellow> <dark_gray>({won}× vyhráno)</dark_gray>'
     multiplier: '<dark_gray>▸</dark_gray> <gray>Násobitel:</gray> <yellow>{factor}×</yellow> <dark_gray>({status})</dark_gray>'
     party: '<dark_gray>▸</dark_gray> <gray>Vote Party:</gray> <green>{current}</green><dark_gray>/</dark_gray><white>{target}</white> <dark_gray>(zbývá {remaining})</dark_gray>'

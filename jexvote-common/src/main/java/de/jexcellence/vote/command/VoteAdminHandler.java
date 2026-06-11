@@ -81,7 +81,7 @@ public final class VoteAdminHandler {
         var sender = ctx.sender();
 
         sender.sendMessage(MM.deserialize(
-                "<dark_gray>━━━━ <gradient:#fde047:#f59e0b><bold>JExVote</bold></gradient> <dark_gray>━━━━"));
+                "<dark_gray>━━━━ <gradient:#fde047:#f59e0b>JExVote</gradient> <dark_gray>━━━━"));
         sender.sendMessage(MM.deserialize(
                 "  <gray>Edition:</gray> <gradient:#86efac:#16a34a>" + editionName + "</gradient>"));
         sender.sendMessage(MM.deserialize(
