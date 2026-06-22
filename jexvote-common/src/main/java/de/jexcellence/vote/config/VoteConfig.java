@@ -1,6 +1,7 @@
 package de.jexcellence.vote.config;
 
 import de.jexcellence.vote.model.VoteSite;
+import de.jexcellence.vote.rest.VoteRestApiConfig;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -103,6 +104,8 @@ public final class VoteConfig {
     private GiftSettings giftSettings =
             new GiftSettings(true, 1, true, ZoneId.of("UTC"));
 
+    private VoteRestApiConfig restApiConfig = VoteRestApiConfig.DISABLED;
+
     public VoteConfig(@NotNull JavaPlugin plugin) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
@@ -151,7 +154,37 @@ public final class VoteConfig {
         loadStreakCommands(config);
         loadStreakFreeze(config);
         loadVoteGift(config);
+        loadRestApi(config);
         loadVoteSites();
+    }
+
+    /**
+     * Loads the {@code api:} section that powers the embedded REST API
+     * consumed by the Mythblock web backend. Disabled by default. The
+     * secret supports {@code $ENV:VAR_NAME} so the shared HMAC secret can
+     * be supplied via the environment (same value as JExOneblock's API).
+     */
+    private void loadRestApi(@NotNull YamlConfiguration config) {
+        ConfigurationSection api = config.getConfigurationSection("api");
+        if (api == null) {
+            restApiConfig = VoteRestApiConfig.DISABLED;
+            return;
+        }
+        boolean enabled = api.getBoolean("enabled", false);
+        int port = api.getInt("port", 8096);
+        String secret = resolveSecret(api.getString("secret", ""));
+        String corsOrigin = api.getString("cors-origin", "*");
+        int rateLimit = api.getInt("rate-limit-per-minute", 60);
+        restApiConfig = new VoteRestApiConfig(enabled, port, secret, corsOrigin, rateLimit);
+    }
+
+    /** Resolves a {@code $ENV:VAR_NAME} placeholder against the environment. */
+    private @NotNull String resolveSecret(@NotNull String raw) {
+        if (raw.startsWith("$ENV:")) {
+            String envValue = System.getenv(raw.substring("$ENV:".length()).trim());
+            return envValue != null ? envValue : "";
+        }
+        return raw;
     }
 
     private void loadStreakFreeze(@NotNull YamlConfiguration config) {
@@ -315,6 +348,7 @@ public final class VoteConfig {
     public int getRecordRetentionDays() { return recordRetentionDays; }
     public @NotNull List<String> getCommandsOnVote() { return commandsOnVote; }
     public @NotNull Map<String, VoteSite> getVoteSites() { return voteSites; }
+    public @NotNull VoteRestApiConfig getRestApiConfig() { return restApiConfig; }
     public @NotNull Map<Integer, List<String>> getStreakCommands() { return streakCommands; }
     public boolean isWeekendMultiplierEnabled() { return weekendMultiplierEnabled; }
     public double getWeekendMultiplierFactor() { return weekendMultiplierFactor; }

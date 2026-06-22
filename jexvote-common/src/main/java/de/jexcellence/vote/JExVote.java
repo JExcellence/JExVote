@@ -17,6 +17,7 @@ import de.jexcellence.vote.command.VoteCommandHandler;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VotePartyConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
+import de.jexcellence.vote.rest.VoteRestApiServer;
 import de.jexcellence.vote.reward.ChanceReward;
 import de.jexcellence.vote.reward.LuckyReward;
 import de.jexcellence.jexplatform.reward.impl.CurrencyReward;
@@ -107,6 +108,7 @@ public abstract class JExVote {
     private MultiplierService multiplierService;
 
     private VotifierServer votifierServer;
+    private VoteRestApiServer restApiServer;
     private VotePlaceholderExpansion placeholders;
     private VoteProviderImpl voteProvider;
     private VoteOverviewView overviewView;
@@ -166,6 +168,7 @@ public abstract class JExVote {
             registerCommands();
             registerPlaceholders();
             registerApiProvider();
+            initializeRestApiServer();
 
             logger.log(Level.INFO, () -> String.format("JExVote %s enabled — Votifier on port %d", edition, voteConfig.getServerPort()));
         } catch (Exception e) {
@@ -177,6 +180,9 @@ public abstract class JExVote {
     public void onDisable() {
         RewardStats.reset();
         CurrencyReward.clearDepositor();
+        if (restApiServer != null) {
+            restApiServer.stop();
+        }
         if (votifierServer != null) {
             votifierServer.shutdown();
         }
@@ -195,6 +201,20 @@ public abstract class JExVote {
             platform.shutdown();
         }
         logger.info("JExVote disabled");
+    }
+
+    /**
+     * Starts the embedded REST API (consumed by the Mythblock web backend)
+     * if enabled in config. No-op when {@code api.enabled} is false.
+     */
+    private void initializeRestApiServer() {
+        restApiServer = new VoteRestApiServer(
+                voteConfig.getRestApiConfig(),
+                voteConfig,
+                playerRepository,
+                recordRepository,
+                logger);
+        restApiServer.start();
     }
 
     private void initializeDatabase() {
