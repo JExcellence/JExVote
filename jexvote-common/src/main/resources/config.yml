@@ -212,3 +212,15 @@ vote-effects:
     fade-in: 10
     stay: 40
     fade-out: 10
+
+# Embedded REST API consumed by the Mythblock web backend (vote proxy).
+# Shares the HMAC scheme with JExOneblock; the secret must match the web
+# stack's JEXONE_API_SECRET. NEVER hardcode the secret here — this repo is
+# public. Set JEXONE_API_SECRET in the server process's environment and the
+# "$ENV:" prefix resolves it at load time.
+api:
+  enabled: true
+  port: 8096
+  secret: "$ENV:JEXONE_API_SECRET"
+  cors-origin: "https://mythblock.me"
+  rate-limit-per-minute: 60
