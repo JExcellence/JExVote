@@ -602,6 +602,8 @@ jexcommand:
     player-not-online:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Player <white>{value}</white> is not online."
     player-unknown:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Unknown player <white>{value}</white>."
     internal:             "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Internal error: <white>{message}</white></red>"
+    unknown-subcommand:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Unknown subcommand <white>{name}</white>."
+    unknown-type:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Unknown argument type <white>{type}</white>."
   usage: "<gradient:#a5f3fc:#06b6d4>▸</gradient> <gray>Usage: <white>{usage}</white>"
 
 command:
