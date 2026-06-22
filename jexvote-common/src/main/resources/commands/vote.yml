@@ -57,3 +57,6 @@ subcommands:
     senders: [player]
     argumentSchema:
       - { name: target, type: vote_gift_target, required: true, description: "Player name or 'random'" }
+
+# Player-safe: every player holds this by default (op-only otherwise).
+default: true

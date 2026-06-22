@@ -14,50 +14,47 @@
 # Granted every time a player votes, regardless of site or streak.
 default-rewards:
   # Oneblock-relevant baseline: a little XP + coins into the economy every vote.
-  vote-xp:    { type: xp,       amount: 50 }
-  vote-coins: { type: currency, currency: coins, amount: 2500.0 }
+  vote-xp:    { type: xp,       amount: 35 }
+  vote-coins: { type: currency, currency: coins, amount: 800.0 }
   # Vote Jackpot (live): every vote also rolls exactly ONE prize from this
   # weighted pool. Weights sum to 100, so each weight IS its drop chance in %.
   # Shown in /vote rewards with per-entry odds + drop counts (id drives the
-  # stat). Ten oneblock-themed outcomes from common coins up to a Dragon Key.
+  # stat). Nerf pass: coin amounts trimmed and the Dragon Key dropped entirely —
+  # the dragon_crate is now ONLY a vote-party legendary, not a per-vote outcome.
   vote-jackpot:
     type: lucky
     entries:
-      - weight: 28          # 28% — pocket change
+      - weight: 29.5        # 29.5% — pocket change
         id: 'jackpot-coins-small'
-        reward: { type: currency, currency: coins, amount: 1000.0 }
+        reward: { type: currency, currency: coins, amount: 750.0 }
       - weight: 20          # 20% — a little XP
         id: 'jackpot-xp'
-        reward: { type: xp, amount: 150 }
+        reward: { type: xp, amount: 120 }
       - weight: 15          # 15% — a handful of diamonds
         id: 'jackpot-diamonds'
-        reward: { type: item, material: DIAMOND, amount: 8 }
+        reward: { type: item, material: DIAMOND, amount: 6 }
       - weight: 12          # 12% — a tidy coin stack
         id: 'jackpot-coins-medium'
-        reward: { type: currency, currency: coins, amount: 5000.0 }
+        reward: { type: currency, currency: coins, amount: 3000.0 }
       - weight: 8           # 8% — netherite for the grind
         id: 'jackpot-netherite'
         reward: { type: item, material: NETHERITE_INGOT, amount: 2 }
       - weight: 6           # 6% — a Vote Crate key
         id: 'jackpot-vote-crate'
         announce: 'vote.lucky.jackpot'
-        reward: { type: command, command: 'crate give key {player} vote_crate 1', asConsole: true }
-      - weight: 4           # 4% — the coin jackpot (trimmed 25k→8k per "voting ≠ big money")
+        reward: { type: command, command: 'ac key give {player} VoteCrate 1', asConsole: true }
+      - weight: 4           # 4% — the coin jackpot (trimmed 8k→6k)
         id: 'jackpot-coins-large'
         announce: 'vote.lucky.jackpot'
-        reward: { type: currency, currency: coins, amount: 8000.0 }
+        reward: { type: currency, currency: coins, amount: 6000.0 }
       - weight: 3.5         # 3.5% — a Season Crate key
         id: 'jackpot-season-crate'
         announce: 'vote.lucky.jackpot'
-        reward: { type: command, command: 'crate give key {player} season_crate 1', asConsole: true }
-      - weight: 2           # 2% — a Shadow Crate key
+        reward: { type: command, command: 'ac key give {player} SeasonCrate 1', asConsole: true }
+      - weight: 2           # 2% — the grand prize: a Shadow Crate key
         id: 'jackpot-shadow-crate'
         announce: 'vote.lucky.jackpot'
-        reward: { type: command, command: 'crate give key {player} shadow_crate 1', asConsole: true }
-      - weight: 1.5         # 1.5% — the grand prize: a Dragon Crate key
-        id: 'jackpot-dragon-crate'
-        announce: 'vote.lucky.jackpot'
-        reward: { type: command, command: 'crate give key {player} dragon_crate 1', asConsole: true }
+        reward: { type: command, command: 'ac key give {player} ShadowCrate 1', asConsole: true }
 
 # ── Streak Rewards ──────────────────────────────────────────────
 # Bonus rewards when a player reaches a specific streak day. IN ADDITION to
@@ -79,7 +76,7 @@ default-rewards:
 #
 # Crate ladder is deliberately toned down: dragon_crate is NOT a streak prize
 # (only via the rarer jackpot/party). Crate keys use
-# 'crate give key <player> <crate> <amount>' as console.
+# 'ac key give <player> <Crate> <amount>' as console (AdvancedCrates).
 streak-rewards:
 
   # ── Day 1 · Spark ───────────────────────────────────────────────
@@ -98,7 +95,10 @@ streak-rewards:
   3:
     streak-3-xp:        { type: xp,       amount: 100 }
     streak-3-coins:     { type: currency, currency: coins, amount: 5000.0 }
-    streak-3-crate:     { type: command,  command: 'crate give key {player} vote_crate 1', asConsole: true }
+    streak-3-crate:     { type: command,  command: 'ac key give {player} VoteCrate 1', asConsole: true }
+    # Island flight time — granted via the JExOneblock flytime command (clamped to
+    # the player's flytime cap). The recipient must be online when the streak fires.
+    streak-3-flytime:   { type: command,  command: 'jexoneblock flytime {player} 45', asConsole: true }
     streak-3-hoppers:
       type: item
       material: HOPPER
@@ -112,7 +112,7 @@ streak-rewards:
   7:
     streak-7-xp:        { type: xp,       amount: 250 }
     streak-7-coins:     { type: currency, currency: coins, amount: 15000.0 }
-    streak-7-crate:     { type: command,  command: 'crate give key {player} season_crate 1', asConsole: true }
+    streak-7-crate:     { type: command,  command: 'ac key give {player} SeasonCrate 1', asConsole: true }
     streak-7-pickaxe:
       type: item
       material: DIAMOND_PICKAXE
@@ -132,7 +132,7 @@ streak-rewards:
   14:
     streak-14-xp:       { type: xp,       amount: 500 }
     streak-14-coins:    { type: currency, currency: coins, amount: 50000.0 }
-    streak-14-crate:    { type: command,  command: 'crate give key {player} vote_crate 2', asConsole: true }
+    streak-14-crate:    { type: command,  command: 'ac key give {player} VoteCrate 2', asConsole: true }
     streak-14-sword:
       type: item
       material: NETHERITE_SWORD
@@ -146,17 +146,17 @@ streak-rewards:
         unbreaking: 3
         mending: 1
       glow: true
-    streak-14-netherite: { type: item, material: NETHERITE_INGOT, amount: 2 }
+    streak-14-diamonds:  { type: item, material: DIAMOND, amount: 8 }
     streak-14-hoppers:   { type: item, material: HOPPER, amount: 32 }
 
   # ── Day 21 · Champion ───────────────────────────────────────────
   21:
     streak-21-xp:       { type: xp,       amount: 1000 }
     streak-21-coins:    { type: currency, currency: coins, amount: 75000.0 }
-    streak-21-crate:    { type: command,  command: 'crate give key {player} void_crate 1', asConsole: true }
+    streak-21-crate:    { type: command,  command: 'ac key give {player} VoidCrate 1', asConsole: true }
     streak-21-pickaxe:
       type: item
-      material: NETHERITE_PICKAXE
+      material: DIAMOND_PICKAXE
       amount: 1
       name: "<gradient:#aa55ff:#6c3483>Champion's Drill</gradient>"
       lore:
@@ -168,25 +168,24 @@ streak-rewards:
         mending: 1
       glow: true
     streak-21-shulkers:  { type: item, material: SHULKER_BOX, amount: 2 }
-    streak-21-netherite: { type: item, material: NETHERITE_INGOT, amount: 4 }
+    streak-21-void-key:  { type: command, command: 'ac key give {player} VoidCrate 1', asConsole: true }
 
   # ── Day 30 · Legend ─────────────────────────────────────────────
   30:
     streak-30-xp:       { type: xp,       amount: 2000 }
     streak-30-coins:    { type: currency, currency: coins, amount: 100000.0 }
-    streak-30-crate:    { type: command,  command: 'crate give key {player} shadow_crate 1', asConsole: true }
-    # No elytra (free flight is too OP for a vote reward). Capstone is a Beacon
-    # — a build/status flex, not a power item.
-    streak-30-beacon:
+    streak-30-crate:    { type: command,  command: 'ac key give {player} ShadowCrate 1', asConsole: true }
+    # Strict no-OP: capstone is a cosmetic trophy + a season key, not beacon/netherite.
+    streak-30-trophy:
       type: item
-      material: BEACON
+      material: DRAGON_HEAD
       amount: 1
-      name: "<gradient:#ffd700:#e67e22>Streak Master's Beacon</gradient>"
+      name: "<gradient:#ffd700:#e67e22>Streak Master's Trophy</gradient>"
       lore:
         - "<gray>30 days of unbroken devotion."
         - "<dark_gray>A monument to your loyalty."
       glow: true
-    streak-30-netherite: { type: item, material: NETHERITE_BLOCK, amount: 1 }
+    streak-30-season-key: { type: command, command: 'ac key give {player} SeasonCrate 1', asConsole: true }
     # Value shifted off coins (350k→100k) onto items per the "voting ≠ big money" call.
     streak-30-diamond-blocks: { type: item, material: DIAMOND_BLOCK, amount: 8 }
 
@@ -244,7 +243,7 @@ vote-party-pool:
     - { weight: 2.5, id: 'party-rails',        reward: { type: item, material: RAIL,             amount: 32 } }
     - { weight: 2.5, id: 'party-torches',      reward: { type: item, material: TORCH,            amount: 64 } }
     # ── Uncommon — chase mats, QoL, cosmetics, a vote key ──
-    - { weight: 4,   id: 'party-vote-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} vote_crate 1', asConsole: true } }
+    - { weight: 4,   id: 'party-vote-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'ac key give {player} VoteCrate 1', asConsole: true } }
     - { weight: 3.5, id: 'party-diamonds',     reward: { type: item, material: DIAMOND,          amount: 12 } }
     - { weight: 2.5, id: 'party-emerald',      reward: { type: item, material: EMERALD,          amount: 16 } }
     - { weight: 2.5, id: 'party-quartz',       reward: { type: item, material: QUARTZ,           amount: 64 } }
@@ -266,20 +265,20 @@ vote-party-pool:
     - { weight: 1.5, id: 'party-banner',       reward: { type: item, material: PURPLE_BANNER,    amount: 4 } }
     - { weight: 1,   id: 'party-skull',        reward: { type: item, material: SKELETON_SKULL,   amount: 1 } }
     # ── Rare — netherite mats, season key, larger coin ──
-    - { weight: 2.5, id: 'party-season-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} season_crate 1', asConsole: true } }
+    - { weight: 2.5, id: 'party-season-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'ac key give {player} SeasonCrate 1', asConsole: true } }
     - { weight: 2,   id: 'party-netherite-scrap', reward: { type: item, material: NETHERITE_SCRAP, amount: 3 } }
-    - { weight: 1.5, id: 'party-vote-keys-2',  announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} vote_crate 2', asConsole: true } }
+    - { weight: 1.5, id: 'party-vote-keys-2',  announce: 'vote.lucky.jackpot', reward: { type: command, command: 'ac key give {player} VoteCrate 2', asConsole: true } }
     - { weight: 1.5, id: 'party-netherite-ingot', reward: { type: item, material: NETHERITE_INGOT, amount: 2 } }
     - { weight: 1.5, id: 'party-coins-large',  reward: { type: currency, currency: coins, amount: 12000.0 } }
     - { weight: 1.5, id: 'party-shulker-3',    reward: { type: item, material: SHULKER_BOX,      amount: 3 } }
     - { weight: 1,   id: 'party-diamond-blocks', reward: { type: item, material: DIAMOND_BLOCK,  amount: 2 } }
     # ── Epic — shadow key, build flex ──
-    - { weight: 1.5, id: 'party-shadow-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} shadow_crate 1', asConsole: true } }
+    - { weight: 1.5, id: 'party-shadow-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'ac key give {player} ShadowCrate 1', asConsole: true } }
     - { weight: 1,   id: 'party-beacon',       reward: { type: item, material: BEACON,           amount: 1 } }
     - { weight: 1,   id: 'party-netherite-block', reward: { type: item, material: NETHERITE_BLOCK, amount: 1 } }
     # ── Legendary — void & dragon keys (the grand prizes) ──
-    - { weight: 1,   id: 'party-void-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} void_crate 1', asConsole: true } }
-    - { weight: 0.5, id: 'party-dragon-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} dragon_crate 1', asConsole: true } }
+    - { weight: 1,   id: 'party-void-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'ac key give {player} VoidCrate 1', asConsole: true } }
+    - { weight: 0.5, id: 'party-dragon-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'ac key give {player} DragonCrate 1', asConsole: true } }
 
 # ── Vote Party Animation & Sound Configuration ───────────────────
 # Customize the slot-machine reveal animation when a vote party completes.
@@ -336,7 +335,7 @@ vote-shop:
   iron-block:
     name: "Iron Blocks"
     icon: IRON_BLOCK
-    cost: 4
+    cost: 10
     reward: { type: item, material: IRON_BLOCK, amount: 4 }
     purchase-sound: ENTITY_PLAYER_LEVELUP
     purchase-volume: 1.0
@@ -344,7 +343,7 @@ vote-shop:
   hoppers:
     name: "Hoppers"
     icon: HOPPER
-    cost: 4
+    cost: 10
     reward: { type: item, material: HOPPER, amount: 16 }
     purchase-sound: ENTITY_PLAYER_LEVELUP
     purchase-volume: 1.0
@@ -352,7 +351,7 @@ vote-shop:
   fireworks:
     name: "Fireworks"
     icon: FIREWORK_ROCKET
-    cost: 3
+    cost: 8
     reward: { type: item, material: FIREWORK_ROCKET, amount: 16 }
     purchase-sound: ENTITY_FIREWORK_ROCKET_LAUNCH
     purchase-volume: 1.0
@@ -360,7 +359,7 @@ vote-shop:
   xp-bottles:
     name: "Experience Bottles"
     icon: EXPERIENCE_BOTTLE
-    cost: 5
+    cost: 12
     reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 32 }
     purchase-sound: ENTITY_PLAYER_LEVELUP
     purchase-volume: 1.0
@@ -368,7 +367,7 @@ vote-shop:
   nametags:
     name: "Name Tags"
     icon: NAME_TAG
-    cost: 5
+    cost: 12
     reward: { type: item, material: NAME_TAG, amount: 4 }
     purchase-sound: ENTITY_PLAYER_LEVELUP
     purchase-volume: 1.0
@@ -376,7 +375,7 @@ vote-shop:
   music-disc:
     name: "Music Disc"
     icon: MUSIC_DISC_BLOCKS
-    cost: 6
+    cost: 15
     reward: { type: item, material: MUSIC_DISC_BLOCKS, amount: 1 }
     purchase-sound: BLOCK_NOTE_BLOCK_PLING
     purchase-volume: 1.0
@@ -384,7 +383,7 @@ vote-shop:
   diamonds:
     name: "Diamond Bundle"
     icon: DIAMOND
-    cost: 8
+    cost: 18
     reward: { type: item, material: DIAMOND, amount: 8 }
     purchase-sound: ENTITY_PLAYER_LEVELUP
     purchase-volume: 1.0
@@ -392,7 +391,7 @@ vote-shop:
   shulker:
     name: "Shulker Boxes"
     icon: SHULKER_BOX
-    cost: 10
+    cost: 25
     reward: { type: item, material: SHULKER_BOX, amount: 2 }
     purchase-sound: ENTITY_PLAYER_LEVELUP
     purchase-volume: 1.0
@@ -400,40 +399,40 @@ vote-shop:
   vote-key:
     name: "Vote Crate Key"
     icon: TRIPWIRE_HOOK
-    cost: 6
-    reward: { type: command, command: 'crate give key {player} vote_crate 1', asConsole: true }
+    cost: 15
+    reward: { type: command, command: 'ac key give {player} VoteCrate 1', asConsole: true }
     purchase-sound: ENTITY_PLAYER_LEVELUP
     purchase-volume: 1.0
     purchase-pitch: 1.0
   season-key:
     name: "Season Crate Key"
     icon: TRIPWIRE_HOOK
-    cost: 12
-    reward: { type: command, command: 'crate give key {player} season_crate 1', asConsole: true }
+    cost: 30
+    reward: { type: command, command: 'ac key give {player} SeasonCrate 1', asConsole: true }
     purchase-sound: ENTITY_PLAYER_LEVELUP
     purchase-volume: 1.0
     purchase-pitch: 1.0
-  netherite:
-    name: "Netherite Ingots"
-    icon: NETHERITE_INGOT
-    cost: 30
-    reward: { type: item, material: NETHERITE_INGOT, amount: 2 }
+  void-key:
+    name: "Void Crate Key"
+    icon: TRIPWIRE_HOOK
+    cost: 60
+    reward: { type: command, command: 'ac key give {player} VoidCrate 1', asConsole: true }
     purchase-sound: ENTITY_PLAYER_LEVELUP
     purchase-volume: 1.0
     purchase-pitch: 1.0
   shadow-key:
     name: "Shadow Crate Key"
     icon: TRIPWIRE_HOOK
-    cost: 25
-    reward: { type: command, command: 'crate give key {player} shadow_crate 1', asConsole: true }
+    cost: 55
+    reward: { type: command, command: 'ac key give {player} ShadowCrate 1', asConsole: true }
     purchase-sound: ENTITY_PLAYER_LEVELUP
     purchase-volume: 1.0
     purchase-pitch: 1.0
-  beacon:
-    name: "Beacon"
-    icon: BEACON
-    cost: 50
-    reward: { type: item, material: BEACON, amount: 1 }
+  dragon-key:
+    name: "Dragon Crate Key"
+    icon: TRIPWIRE_HOOK
+    cost: 110
+    reward: { type: command, command: 'ac key give {player} DragonCrate 1', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
     purchase-volume: 1.0
     purchase-pitch: 1.0
@@ -442,7 +441,7 @@ vote-shop:
   temp-fly:
     name: "10 Minutes of Flight"
     icon: FEATHER
-    cost: 8
+    cost: 20
     # Example uses an Essentials-style timed-fly command; swap for your own.
     reward: { type: command, command: 'fly add {player} 600', asConsole: true }
     purchase-sound: ITEM_ELYTRA_FLYING
@@ -451,9 +450,28 @@ vote-shop:
   event-fly:
     name: "Event Auto-Fly Perk"
     icon: PHANTOM_MEMBRANE
-    cost: 40
+    # Permanent perk — priced high so it's a long-term goal, not a quick buy.
+    cost: 250
     # Grants the permission JExOneblock honours to auto-fly during island events.
     reward: { type: command, command: 'lp user {player} permission set jexoneblock.eventfly true', asConsole: true }
+    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
+    purchase-volume: 1.0
+    purchase-pitch: 1.0
+  # Island region expansion (capped server-side at the max size). Region is
+  # auto-resolved to the player's island, so no region arg is needed.
+  island-radius-small:
+    name: "Island Expansion (+5)"
+    icon: GRASS_BLOCK
+    cost: 10
+    reward: { type: command, command: 'jexoneblock grant-radius {player} 5', asConsole: true }
+    purchase-sound: ENTITY_PLAYER_LEVELUP
+    purchase-volume: 1.0
+    purchase-pitch: 1.0
+  island-radius-large:
+    name: "Island Expansion (+25)"
+    icon: GRASS_BLOCK
+    cost: 40
+    reward: { type: command, command: 'jexoneblock grant-radius {player} 25', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
     purchase-volume: 1.0
     purchase-pitch: 1.0
