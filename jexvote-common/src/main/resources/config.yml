@@ -76,17 +76,16 @@ streak:
     # one window consumes multiple freezes.
     duration-hours: 24
 
-  # Bonus commands executed at specific streak milestones.
+  # Bonus commands executed at specific streak milestones — IN ADDITION to
+  # rewards.yml's streak-rewards, unconditionally (not gated by claim-mode).
+  # Left empty by default: the day 7/14/30 milestones already grant diamonds
+  # via rewards.yml, and having both here too was a double-grant left over
+  # from before rewards.yml had a streak-rewards section. Only add entries
+  # here for something rewards.yml genuinely can't express (e.g. a raw
+  # server-specific command) — anything expressible as an AbstractReward
+  # belongs in rewards.yml so it's styled, tracked, and shown in /vote.
   # Placeholders: {player}, {service}, {streak}
-  bonus-commands:
-    7:
-      - 'give {player} diamond 3'
-      - 'say {player} reached a 7-day vote streak!'
-    14:
-      - 'give {player} diamond 5'
-    30:
-      - 'give {player} diamond_block 1'
-      - 'say {player} reached a 30-day vote streak!'
+  bonus-commands: {}
 
 # ── Commands on Vote ────────────────────────────────────────────
 # Commands executed every time a vote is received.

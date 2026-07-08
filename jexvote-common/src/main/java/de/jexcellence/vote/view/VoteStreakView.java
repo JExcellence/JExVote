@@ -55,8 +55,14 @@ public class VoteStreakView extends VoteBaseView {
     private static final String GRADIENT_CLAIMED = "<gradient:#86efac:#16a34a>";
     private static final String GRADIENT_CLAIMABLE = "<gradient:#fde047:#f59e0b>";
 
-    /** Milestone band lives on row 3 (slots 27..35); tiles are centered to the count. */
-    private static final int GRID_ROW_BASE = 27;
+    /**
+     * Milestone band starts on row 3 (slots 27..35), tiles centered to the
+     * count. Once a config grows past 9 milestones (rewards.yml's ladder now
+     * reaches day 365) the overflow spills onto row 4 (slots 36..44, also
+     * centered) — up to 18 milestones total across the two rows.
+     */
+    private static final int GRID_ROW1_BASE = 27;
+    private static final int GRID_ROW2_BASE = 36;
     private static final int GRID_ROW_COLS = 9;
 
     private final Holder holder = new Holder();
@@ -365,12 +371,30 @@ public class VoteStreakView extends VoteBaseView {
         }
     }
 
-    /** Computes centered slots on the milestone row for {@code count} tiles. */
+    /**
+     * Computes centered slots for {@code count} tiles, spilling onto a second
+     * milestone row once the first row's 9 columns are full.
+     */
     private int[] centeredMilestoneSlots(int count) {
-        int n = Math.min(Math.max(count, 0), GRID_ROW_COLS);
-        int start = GRID_ROW_BASE + (GRID_ROW_COLS - n) / 2;
-        int[] slots = new int[n];
-        for (int i = 0; i < n; i++) {
+        int total = Math.max(count, 0);
+        if (total <= GRID_ROW_COLS) {
+            return centeredRowSlots(GRID_ROW1_BASE, total);
+        }
+        int overflow = Math.min(total - GRID_ROW_COLS, GRID_ROW_COLS);
+        int[] row1 = centeredRowSlots(GRID_ROW1_BASE, GRID_ROW_COLS);
+        int[] row2 = centeredRowSlots(GRID_ROW2_BASE, overflow);
+        int[] slots = new int[row1.length + row2.length];
+        System.arraycopy(row1, 0, slots, 0, row1.length);
+        System.arraycopy(row2, 0, slots, row1.length, row2.length);
+        return slots;
+    }
+
+    /** Centers {@code n} tiles (capped to a row's width) within a single milestone row. */
+    private static int[] centeredRowSlots(int rowBase, int n) {
+        int clamped = Math.min(Math.max(n, 0), GRID_ROW_COLS);
+        int start = rowBase + (GRID_ROW_COLS - clamped) / 2;
+        int[] slots = new int[clamped];
+        for (int i = 0; i < clamped; i++) {
             slots[i] = start + i;
         }
         return slots;
