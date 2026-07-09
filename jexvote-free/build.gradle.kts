@@ -32,7 +32,7 @@ dependencies {
     compileOnly(platform(libs.hibernate.platform))
     compileOnly(libs.bundles.hibernate)
     compileOnly(libs.adventure.platform.bukkit)
-    compileOnly(libs.jexplatform)
+    compileOnly(project(":JExPlatform"))
     compileOnly(libs.bundles.inventory)
 
     // test

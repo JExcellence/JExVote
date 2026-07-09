@@ -48,6 +48,7 @@ dependencies {
     compileOnly(libs.jackson.jsr310)
 
     // ── JExcellence Platform ──
+    compileOnly(project(":JExPlatform"))
     compileOnly(libs.bundles.jexcellence) {
         exclude(group = "de.jexcellence.hibernate")
         isTransitive = false
