@@ -78,21 +78,36 @@ streak:
 
   # Bonus commands executed at specific streak milestones — IN ADDITION to
   # rewards.yml's streak-rewards, unconditionally (not gated by claim-mode).
-  # Left empty by default: the day 7/14/30 milestones already grant diamonds
-  # via rewards.yml, and having both here too was a double-grant left over
-  # from before rewards.yml had a streak-rewards section. Only add entries
-  # here for something rewards.yml genuinely can't express (e.g. a raw
-  # server-specific command) — anything expressible as an AbstractReward
-  # belongs in rewards.yml so it's styled, tracked, and shown in /vote.
+  #
+  # Left empty by default. Every "reward" belongs in rewards.yml's
+  # `streak-rewards:` block (typed, i18n-shown in `/vote streak`, sound-
+  # tracked, MythStyle-rendered). This block only exists for RAW server-
+  # specific commands that don't fit AbstractReward — e.g. running a
+  # per-region `region addmember` grant on day 30. Don't put `give diamond`
+  # or `say "…"` here: streak milestones already grant items via rewards.yml
+  # and fire a themed broadcast; vanilla `say` output would clash with the
+  # MythStyle brand and duplicate the already-granted items.
+  #
+  # If you're upgrading and your live config still has stale day-7/14/30
+  # diamond commands from an older ship, delete them — the streak rewards
+  # already cover them.
   # Placeholders: {player}, {service}, {streak}
   bonus-commands: {}
 
 # ── Commands on Vote ────────────────────────────────────────────
-# Commands executed every time a vote is received.
+# Raw console commands executed on EVERY vote (in addition to the typed
+# rewards in rewards.yml → default-rewards).
+#
+# Prefer rewards.yml for anything expressible as an AbstractReward
+# (currency, xp, item, command, permission, sound, title, composite, chance,
+# lucky). Only put strings here for raw commands that don't fit that model
+# — e.g. a Discord-webhook curl, a WorldGuard region tag, a custom plugin
+# CLI. Every entry runs UNCONDITIONALLY on every vote, so a bad line spams.
+#
 # Placeholders: {player}, {service}, {streak}
 commands-on-vote: []
-#  - 'give {player} diamond 1'
-#  - 'eco give {player} 100'
+#  - 'give {player} diamond 1'                # prefer: rewards.yml → item
+#  - 'economy give {player} coins 100'        # prefer: rewards.yml → currency
 
 # ── Vote Records ────────────────────────────────────────────────
 records:
@@ -212,14 +227,32 @@ vote-effects:
     stay: 40
     fade-out: 10
 
-# Embedded REST API consumed by the Mythblock web backend (vote proxy).
-# Shares the HMAC scheme with JExOneblock; the secret must match the web
-# stack's JEXONE_API_SECRET. NEVER hardcode the secret here — this repo is
-# public. Set JEXONE_API_SECRET in the server process's environment and the
-# "$ENV:" prefix resolves it at load time.
+# ── Embedded REST API (consumed by the Mythblock web backend) ────────────────
+# Read-only HTTP endpoints for the vote proxy on mythblock.me. Shares the
+# HMAC-SHA256 scheme with JExOneblock's REST API; the secret must match the
+# web stack's JEXONE_API_SECRET env var.
+#
+# Endpoints (all GET, all HMAC-authenticated):
+#   /sites                          — vote sites configured in sites.yml
+#   /players/{uuid}/cooldown        — per-site cooldowns until next vote
+#   /players/{uuid}/stats           — vote count / streak / lifetime totals
+# Wrong-method → 405. Rate-limit hit → 429 + Retry-After. Bad HMAC → 401.
+#
+# ⚠ NEVER hardcode the secret here — this repo is public. Set the env var
+# on the server process (systemd: `Environment=JEXONE_API_SECRET=…` under
+# the unit's [Service] section) and the `$ENV:` prefix resolves it at
+# load time. If the env var is unset / empty, the API silently refuses to
+# start ("[rest-api] api.secret is empty — refusing to start") — check
+# `/plugins/JExVote` in the server console output to confirm it bound the
+# port.
 api:
   enabled: true
+  # HTTP port. Nothing else on the server may bind this.
   port: 8096
+  # HMAC-SHA256 shared secret. MUST match the web backend's JEXONE_API_SECRET.
   secret: "$ENV:JEXONE_API_SECRET"
+  # Access-Control-Allow-Origin for browser calls. Set to your actual public
+  # domain in production; wildcards (`*`) are rejected for security.
   cors-origin: "https://mythblock.me"
+  # Simple per-IP token bucket. 60 = plenty for a live-status dashboard.
   rate-limit-per-minute: 60
