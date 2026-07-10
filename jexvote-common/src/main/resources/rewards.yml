@@ -16,45 +16,78 @@ default-rewards:
   # Oneblock-relevant baseline: a little XP + coins into the economy every vote.
   vote-xp:    { type: xp,       amount: 35 }
   vote-coins: { type: currency, currency: coins, amount: 800.0 }
-  # Vote Jackpot (live): every vote also rolls exactly ONE prize from this
-  # weighted pool. Weights sum to 100, so each weight IS its drop chance in %.
-  # Shown in /vote rewards with per-entry odds + drop counts (id drives the
-  # stat). Nerf pass: coin amounts trimmed and the Dragon Key dropped entirely —
-  # the dragon_crate is now ONLY a vote-party legendary, not a per-vote outcome.
+  # Vote Jackpot / "Lucky Vote" (live): every vote also rolls exactly ONE prize
+  # from this weighted pool. Weights sum to EXACTLY 100, so each weight IS its
+  # drop chance in %. Shown in /vote rewards with per-entry odds + drop counts
+  # (id drives the stat).
+  #
+  # Design (2026-07-10 rework): voting is a casual daily habit, so ~78% of rolls
+  # are pocket-change (small coins / XP / a couple diamonds) — a pleasant "thanks
+  # for voting", never a payout. The middle band (~17%) is a nice hit (coin stack,
+  # Vote key, a small +2 island expansion). The rare band (~4%) is real value
+  # (10k coins, 1 netherite scrap, Shadow key). The ultra band (<0.6%) is the
+  # dream: a Void key, a sliver of premium Crystals, and the two real-money-tier
+  # keys pushed to lottery odds — a Dragon key at 0.05% and a Season key at just
+  # 0.01% (~1 in 10 000 votes). Strict rules honoured: no 2× netherite ever
+  # (scrap, x1, rare), Crystals granted sparingly (premium currency), and the
+  # $20-tier keys are practically unreachable here — they live in the shop/ranks.
   vote-jackpot:
     type: lucky
     entries:
-      - weight: 29.5        # 29.5% — pocket change
+      # -- Common (~78%) — casual "thanks for voting" --
+      - weight: 30          # 30% — pocket change
         id: 'jackpot-coins-small'
-        reward: { type: currency, currency: coins, amount: 750.0 }
+        reward: { type: currency, currency: coins, amount: 600.0 }
       - weight: 20          # 20% — a little XP
         id: 'jackpot-xp'
-        reward: { type: xp, amount: 120 }
-      - weight: 15          # 15% — a handful of diamonds
+        reward: { type: xp, amount: 100 }
+      - weight: 15          # 15% — a couple diamonds
         id: 'jackpot-diamonds'
-        reward: { type: item, material: DIAMOND, amount: 6 }
-      - weight: 12          # 12% — a tidy coin stack
+        reward: { type: item, material: DIAMOND, amount: 2 }
+      - weight: 13          # 13% — a tidy coin stack
         id: 'jackpot-coins-medium'
-        reward: { type: currency, currency: coins, amount: 3000.0 }
-      - weight: 8           # 8% — netherite for the grind
-        id: 'jackpot-netherite'
-        reward: { type: item, material: NETHERITE_INGOT, amount: 2 }
-      - weight: 6           # 6% — a Vote Crate key
+        reward: { type: currency, currency: coins, amount: 2500.0 }
+      # -- Uncommon (~17%) — a nice little hit --
+      - weight: 8           # 8% — a fat coin stack
+        id: 'jackpot-coins-large'
+        reward: { type: currency, currency: coins, amount: 5000.0 }
+      - weight: 5           # 5% — a Vote Crate key
         id: 'jackpot-vote-crate'
         announce: 'vote.lucky.jackpot'
         reward: { type: command, command: 'ac virtualkey give {player} VoteCrate 1', asConsole: true }
-      - weight: 4           # 4% — the coin jackpot (trimmed 8k→6k)
-        id: 'jackpot-coins-large'
+      - weight: 4           # 4% — a small island expansion (+2 radius, server-capped)
+        id: 'jackpot-region'
         announce: 'vote.lucky.jackpot'
-        reward: { type: currency, currency: coins, amount: 6000.0 }
-      - weight: 0.3         # 0.3% — Season Crate key (premium-tier: kept ultra-rare)
-        id: 'jackpot-season-crate'
+        reward: { type: command, command: 'jexoneblock grant-radius {player} 2', asConsole: true }
+      # -- Rare (~4%) — genuine value --
+      - weight: 2           # 2% — the coin jackpot
+        id: 'jackpot-coins-huge'
         announce: 'vote.lucky.jackpot'
-        reward: { type: command, command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
-      - weight: 2           # 2% — the grand prize: a Shadow Crate key
+        reward: { type: currency, currency: coins, amount: 10000.0 }
+      - weight: 1.5         # 1.5% — 1 netherite scrap (never 2 ingots)
+        id: 'jackpot-netherite-scrap'
+        reward: { type: item, material: NETHERITE_SCRAP, amount: 1 }
+      - weight: 0.9         # 0.9% — a Shadow Crate key
         id: 'jackpot-shadow-crate'
         announce: 'vote.lucky.jackpot'
         reward: { type: command, command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true }
+      # -- Ultra-rare (<0.6%) — the dream pulls --
+      - weight: 0.4         # 0.4% — a Void Crate key
+        id: 'jackpot-void-crate'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
+      - weight: 0.14        # 0.14% — a sliver of premium Crystals (granted sparingly)
+        id: 'jackpot-crystals'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: currency, currency: crystals, amount: 3.0 }
+      - weight: 0.05        # 0.05% — Dragon Crate key ($20-tier: lottery odds)
+        id: 'jackpot-dragon-crate'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true }
+      - weight: 0.01        # 0.01% — Season Crate key (~1 in 10 000 votes; the rarest prize)
+        id: 'jackpot-season-crate'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
 
 # ── Streak Rewards ──────────────────────────────────────────────
 # Bonus rewards when a player reaches a specific streak day. IN ADDITION to
