@@ -45,6 +45,8 @@ public class VoteStreakView extends VoteBaseView {
     private static final String TAG_PREFIX_MILESTONE = "milestone:";
     private static final String TAG_PREFIX_CLAIM = "claim:";
     private static final String TAG_DETAIL_BACK = "detail-back";
+    private static final String TAG_PAGE_PREV = "streak-page-prev";
+    private static final String TAG_PAGE_NEXT = "streak-page-next";
 
     // String constants for i18n keys
     private static final String I18N_DAY_LABEL = "vote_streak.day_label";
@@ -56,14 +58,16 @@ public class VoteStreakView extends VoteBaseView {
     private static final String GRADIENT_CLAIMABLE = "<gradient:#fde047:#f59e0b>";
 
     /**
-     * Milestone band starts on row 3 (slots 27..35), tiles centered to the
-     * count. Once a config grows past 9 milestones (rewards.yml's ladder now
-     * reaches day 365) the overflow spills onto row 4 (slots 36..44, also
-     * centered) — up to 18 milestones total across the two rows.
+     * Milestones render on ONE centered interior row (slots 28..34, 7 columns)
+     * and PAGINATE rather than spilling into a cramped second row. Prev/next
+     * buttons sit on the bottom bar (slots 48/50) with a page indicator at 49.
      */
-    private static final int GRID_ROW1_BASE = 27;
-    private static final int GRID_ROW2_BASE = 36;
-    private static final int GRID_ROW_COLS = 9;
+    private static final int GRID_ROW_BASE = 28;
+    private static final int GRID_ROW_COLS = 7;
+    private static final int PER_PAGE = GRID_ROW_COLS;
+    private static final int SLOT_PAGE_PREV = 48;
+    private static final int SLOT_PAGE_INFO = 49;
+    private static final int SLOT_PAGE_NEXT = 50;
 
     private final Holder holder = new Holder();
     private final VoteService voteService;
@@ -122,6 +126,18 @@ public class VoteStreakView extends VoteBaseView {
 
         if (TAG_DETAIL_BACK.equals(id)) {
             state.detailMilestone = 0;
+            open(viewer);
+            return;
+        }
+
+        if (TAG_PAGE_PREV.equals(id)) {
+            state.page = Math.max(0, state.page - 1);
+            open(viewer);
+            return;
+        }
+
+        if (TAG_PAGE_NEXT.equals(id)) {
+            state.page++;
             open(viewer);
             return;
         }
@@ -194,7 +210,7 @@ public class VoteStreakView extends VoteBaseView {
                 renderStreakInfo(top, viewer, streak, highest);
                 renderRewardsSummary(top, viewer, highest, milestones, claimed, manualMode);
                 renderProgress(top, viewer, streak, nextMs);
-                renderMilestoneGrid(top, viewer, highest, nextMs, milestones, claimed, manualMode);
+                renderMilestoneGrid(top, viewer, highest, nextMs, milestones, claimed, manualMode, state);
             });
             return null;
         });
@@ -355,49 +371,56 @@ public class VoteStreakView extends VoteBaseView {
     private void renderMilestoneGrid(@NotNull Inventory inv, @NotNull Player viewer,
                                       int highest, int nextMs,
                                       @NotNull Map<Integer, List<AbstractReward>> milestones,
-                                      @NotNull Set<Integer> claimed, boolean manualMode) {
-        // Render milestones in ascending day order, centered to the count so
-        // there are no off-looking trailing filler panes (the old fixed 14-slot
-        // grid left gray panes whenever fewer milestones were configured).
+                                      @NotNull Set<Integer> claimed, boolean manualMode,
+                                      @NotNull ViewerState state) {
         List<Integer> days = new ArrayList<>(milestones.keySet());
         Collections.sort(days);
-        int[] slots = centeredMilestoneSlots(days.size());
         int totalTiers = days.size();
-        for (int i = 0; i < slots.length; i++) {
-            int day = days.get(i);
-            inv.setItem(slots[i], buildMilestoneItem(
+        int pages = Math.max(1, (totalTiers + PER_PAGE - 1) / PER_PAGE);
+
+        // Clamp the current page into range (config can shrink between opens).
+        state.page = Math.max(0, Math.min(state.page, pages - 1));
+
+        int from = state.page * PER_PAGE;
+        int to = Math.min(from + PER_PAGE, totalTiers);
+        int count = to - from;
+        int start = GRID_ROW_BASE + (GRID_ROW_COLS - count) / 2; // center the page's tiles
+
+        for (int i = 0; i < count; i++) {
+            int globalIndex = from + i;
+            int day = days.get(globalIndex);
+            inv.setItem(start + i, buildMilestoneItem(
                     day, milestones.get(day), viewer, highest,
-                    nextMs, claimed, manualMode, i, totalTiers));
+                    nextMs, claimed, manualMode, globalIndex, totalTiers));
         }
+
+        renderPager(inv, viewer, state.page, pages);
     }
 
-    /**
-     * Computes centered slots for {@code count} tiles, spilling onto a second
-     * milestone row once the first row's 9 columns are full.
-     */
-    private int[] centeredMilestoneSlots(int count) {
-        int total = Math.max(count, 0);
-        if (total <= GRID_ROW_COLS) {
-            return centeredRowSlots(GRID_ROW1_BASE, total);
+    /** Prev/next arrows + a page indicator on the bottom bar; arrows only when needed. */
+    private void renderPager(@NotNull Inventory inv, @NotNull Player viewer, int page, int pages) {
+        if (page > 0) {
+            ItemStack prev = ItemBuilder.of(Material.ARROW)
+                    .name(ic("vote_streak.pager.prev", viewer))
+                    .build();
+            tag(prev, TAG_PAGE_PREV);
+            inv.setItem(SLOT_PAGE_PREV, prev);
         }
-        int overflow = Math.min(total - GRID_ROW_COLS, GRID_ROW_COLS);
-        int[] row1 = centeredRowSlots(GRID_ROW1_BASE, GRID_ROW_COLS);
-        int[] row2 = centeredRowSlots(GRID_ROW2_BASE, overflow);
-        int[] slots = new int[row1.length + row2.length];
-        System.arraycopy(row1, 0, slots, 0, row1.length);
-        System.arraycopy(row2, 0, slots, row1.length, row2.length);
-        return slots;
-    }
-
-    /** Centers {@code n} tiles (capped to a row's width) within a single milestone row. */
-    private static int[] centeredRowSlots(int rowBase, int n) {
-        int clamped = Math.min(Math.max(n, 0), GRID_ROW_COLS);
-        int start = rowBase + (GRID_ROW_COLS - clamped) / 2;
-        int[] slots = new int[clamped];
-        for (int i = 0; i < clamped; i++) {
-            slots[i] = start + i;
+        if (page < pages - 1) {
+            ItemStack next = ItemBuilder.of(Material.ARROW)
+                    .name(ic("vote_streak.pager.next", viewer))
+                    .build();
+            tag(next, TAG_PAGE_NEXT);
+            inv.setItem(SLOT_PAGE_NEXT, next);
         }
-        return slots;
+        if (pages > 1) {
+            inv.setItem(SLOT_PAGE_INFO, ItemBuilder.of(Material.PAPER)
+                    .name(msg("vote_streak.pager.info")
+                            .with("page", page + 1)
+                            .with("pages", pages)
+                            .itemComponent(viewer))
+                    .build());
+        }
     }
 
     private @NotNull ItemStack buildMilestoneItem(int day, @NotNull List<AbstractReward> rewards,
@@ -699,6 +722,7 @@ public class VoteStreakView extends VoteBaseView {
     private static final class ViewerState {
         int detailMilestone;
         int highestStreak;
+        int page;
         Set<Integer> claimedDays = Set.of();
     }
 

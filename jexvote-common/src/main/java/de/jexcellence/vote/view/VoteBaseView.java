@@ -292,16 +292,15 @@ public abstract class VoteBaseView implements Listener {
      * Creates a close button with the {@value #TAG_CLOSE} tag (bottom-left nav
      * slot). Closing is routed centrally in {@link #onInventoryClick}.
      *
-     * <p>Uses {@link Material#OAK_DOOR} (deliberately a different wood than the
-     * back button) as a "leave the building" metaphor. We avoid
-     * {@link Material#BARRIER} here on purpose: the red barrier reads as
-     * "error / not allowed" which is the wrong message for a normal close
-     * action. Name/lore are read from the {@code gui.common.close} i18n keys.</p>
+     * <p>Uses {@link Material#BARRIER} — the universal "close / exit" glyph
+     * players expect at the bottom-left of a menu (matches the rest of the
+     * suite's GUIs). Name/lore are read from the {@code gui.common.close} i18n
+     * keys.</p>
      *
      * @return the close button ItemStack
      */
     protected @NotNull ItemStack closeButton() {
-        ItemStack btn = ItemBuilder.of(Material.OAK_DOOR)
+        ItemStack btn = ItemBuilder.of(Material.BARRIER)
                 .name(ic("gui.common.close-name", null))
                 .lore(List.of(ic("gui.common.close-lore", null)))
                 .flags(ItemFlag.HIDE_ATTRIBUTES)

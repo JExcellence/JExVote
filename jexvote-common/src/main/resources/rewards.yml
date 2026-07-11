@@ -94,44 +94,46 @@ default-rewards:
 # the default rewards, shown in /vote (Streak Rewards): the milestone grid
 # lists every tier, and clicking one opens its full reward list.
 #
-# Ten oneblock-themed milestones form an escalating-then-flat ladder, aligned
-# to the "next milestone" countdown VoteOverviewView already shows players
-# (7/14/30/60/90/120/180/365) — that UI used to promise streak days this file
-# had no rewards for at all; the ladder now actually reaches every one of them.
-# Every tier grants the SAME shape — Experience + Coins + a Crate Key + useful
-# item(s) — so each streak day clearly steps up and stays worth voting for.
-# Gear tops out at day 21 (diamond, no Mending, no netherite — see the
-# no-OP rule below); day 30+ scales resources/currency/keys/cosmetics only,
-# so long streaks stay rewarding WITHOUT the ladder ever escalating power:
+# Eleven oneblock-themed milestones (1/3/7/14/21/30/60/90/120/180/365) form a
+# loyalty ladder. Rebalanced 2026-07-11 for oneblock reality: voting is a light
+# daily habit, so EARLY days are modest (a starter server key + coins + a small
+# useful item), the MID ladder adds a decent — never OP — enchanted tool and the
+# first Void/Shadow keys, and DAY 30 is a UNIQUE prestige milestone. Long-tail
+# capstones (60+) reward the grind with keys/coins/region/cosmetics.
 #
-#   Day  Tier        Crate key                    Headline item
-#   ──── ─────────── ──────────────────────────── ───────────────────────────
-#    1   Spark       —                            Voter's Iron (8 ingots, warm-up)
-#    3   Sprout      vote_crate                   Voter's Hoppers (automation)
-#    7   Settler     season_crate                 Voter's Pickaxe (Eff IV / Fortune II)
-#   14   Veteran     2× vote_crate                Voter's Blade (Sharp V / Looting III, diamond)
-#   21   Champion    void_crate                   Champion's Drill (Eff V / Fortune III)
-#   30   Legend      shadow_crate+season          Streak Master's Trophy (cosmetic, no stats)
-#   60   Eternal     dragon_crate+season          — (resources/QoL only, no new gear)
-#   90   Immortal    dragon_crate+shadow          2× Totem of Undying (vanilla-balanced, no armor)
-#  120   Ascended    dragon_crate+void            — (resources/QoL only, no new gear)
-#  180   Devoted     dragon_crate+void+shadow     1× Beacon (cosmetic flex, no stat bonus by itself)
-#  365   Undying     dragon_crate+void+shadow+season  Undying Voter's Heart (cosmetic, no stats)
+# Hard rules (matches the suite reward-design + econ audit):
+#   - NO real-money-tier keys as streak prizes. Season & Dragon crates (~$20)
+#     are reserved for the shop, the final rank, and the 0.01% lucky-vote pull.
+#     Streaks grant only VoteCrate / VoidCrate / ShadowCrate (earned server keys).
+#   - Gear: diamond only, Unbreaking (never Mending), no netherite, tops out
+#     mid-ladder. No block-of-X handouts, no beacons/nether-stars as loot.
+#   - Coins stay modest early ("voting ≠ big money"); capstones scale because
+#     they represent months of unbroken voting.
+#   - Region expansion (jexoneblock grant-radius, server-capped) is the mid/late
+#     "feels great" reward instead of raw diamonds.
 #
-# Strict no-OP rule for this ladder: NO Mending (Unbreaking only), NO
-# netherite gear, NO new power past day 21 — day 30+ milestones are
-# currency/resources/crate-keys/cosmetics so a long streak stays worth
-# grinding without ever becoming an equipment escalation. dragon_crate is
-# otherwise NOT a streak prize (only via the rarer jackpot/party) — day 60+
-# is the sole exception, since a 60+ day unbroken streak is a rarer feat
-# than any single vote-party contribution. Crate keys use
-# 'ac virtualkey give <player> <Crate> <amount>' as console (AdvancedCrates).
+#   Day  Tier      Server key(s)            Headline
+#   ──── ───────── ──────────────────────── ──────────────────────────────
+#    1   Spark     —                        Voter's Iron (8 ingots, warm-up)
+#    3   Sprout    VoteCrate                45m flytime + 16 iron (no diamonds)
+#    7   Settler   VoteCrate ×2             Voter's Pickaxe (Eff III/Unbr III) + 4💎
+#   14   Veteran   VoidCrate                +5 island radius + 8💎
+#   21   Champion  VoidCrate + ShadowCrate  Champion's Drill (Eff IV/Unbr III) + 12💎
+#   30   Legend    ShadowCrate              ★ UNIQUE: Devoted Voter's Crown + +15 radius
+#   60   Eternal   ShadowCrate + VoidCrate  +10 radius, resources
+#   90   Immortal  ShadowCrate ×2           2× Totem, +10 radius
+#  120   Ascended  VoidCrate ×2             +15 radius, resources
+#  180   Devoted   ShadowCrate ×2+VoidCrate +20 radius, cosmetic
+#  365   Undying   ShadowCrate ×2+VoidCrate ×2  ★ UNIQUE: Undying Voter's Heart + +25 radius
+#
+# Crate keys use 'ac virtualkey give <player> <Crate> <amount>' as console
+# (AdvancedCrates). Region uses 'jexoneblock grant-radius <player> <n>'.
 streak-rewards:
 
   # ── Day 1 · Spark ───────────────────────────────────────────────
   1:
     streak-1-xp:        { type: xp,       amount: 50 }
-    streak-1-coins:     { type: currency, currency: coins, amount: 2500.0 }
+    streak-1-coins:     { type: currency, currency: coins, amount: 1500.0 }
     streak-1-iron:
       type: item
       material: IRON_INGOT
@@ -141,27 +143,29 @@ streak-rewards:
         - "<gray>A warm-up reward for showing up."
 
   # ── Day 3 · Sprout ──────────────────────────────────────────────
+  # No diamonds this early — a starter key, a little coin, some iron, and a
+  # taste of flight. A 3-day habit, not a jackpot.
   3:
-    streak-3-xp:        { type: xp,       amount: 100 }
-    streak-3-coins:     { type: currency, currency: coins, amount: 5000.0 }
+    streak-3-xp:        { type: xp,       amount: 80 }
+    streak-3-coins:     { type: currency, currency: coins, amount: 2000.0 }
     streak-3-crate:     { type: command,  command: 'ac virtualkey give {player} VoteCrate 1', asConsole: true }
     # Island flight time — granted via the JExOneblock flytime command (clamped to
     # the player's flytime cap). The recipient must be online when the streak fires.
     streak-3-flytime:   { type: command,  command: 'jexoneblock flytime {player} 45', asConsole: true }
-    streak-3-hoppers:
+    streak-3-iron:
       type: item
-      material: HOPPER
+      material: IRON_INGOT
       amount: 16
-      name: "<gradient:#ffffff:#bdc3c7>Voter's Hoppers</gradient>"
+      name: "<gradient:#ffffff:#bdc3c7>Voter's Ingots</gradient>"
       lore:
-        - "<gray>Automate your one block."
-    streak-3-diamonds:  { type: item, material: DIAMOND, amount: 6 }
+        - "<gray>Three days in — keep it going."
 
   # ── Day 7 · Settler ─────────────────────────────────────────────
+  # A week earns a decent (not OP) tool + a couple diamonds. NO real-money key.
   7:
-    streak-7-xp:        { type: xp,       amount: 250 }
-    streak-7-coins:     { type: currency, currency: coins, amount: 15000.0 }
-    streak-7-crate:     { type: command,  command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
+    streak-7-xp:        { type: xp,       amount: 150 }
+    streak-7-coins:     { type: currency, currency: coins, amount: 4000.0 }
+    streak-7-crate:     { type: command,  command: 'ac virtualkey give {player} VoteCrate 2', asConsole: true }
     streak-7-pickaxe:
       type: item
       material: DIAMOND_PICKAXE
@@ -170,37 +174,27 @@ streak-rewards:
       lore:
         - "<gray>Forged from a week of devotion."
       enchantments:
-        efficiency: 4
-        fortune: 2
+        efficiency: 3
         unbreaking: 3
       glow: true
-    streak-7-diamonds:  { type: item, material: DIAMOND, amount: 16 }
+    streak-7-diamonds:  { type: item, material: DIAMOND, amount: 4 }
 
   # ── Day 14 · Veteran ────────────────────────────────────────────
   14:
-    streak-14-xp:       { type: xp,       amount: 500 }
-    streak-14-coins:    { type: currency, currency: coins, amount: 50000.0 }
-    streak-14-crate:    { type: command,  command: 'ac virtualkey give {player} VoteCrate 2', asConsole: true }
-    streak-14-sword:
-      type: item
-      material: DIAMOND_SWORD
-      amount: 1
-      name: "<gradient:#5dade2:#2980b9>Voter's Blade</gradient>"
-      lore:
-        - "<gray>Loyalty sharpened to an edge."
-      enchantments:
-        sharpness: 5
-        looting: 3
-        unbreaking: 3
-      glow: true
-    streak-14-diamonds:  { type: item, material: DIAMOND, amount: 8 }
-    streak-14-hoppers:   { type: item, material: HOPPER, amount: 32 }
+    streak-14-xp:       { type: xp,       amount: 250 }
+    streak-14-coins:    { type: currency, currency: coins, amount: 8000.0 }
+    streak-14-crate:    { type: command,  command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
+    # First taste of island expansion — feels great, server-capped.
+    streak-14-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 5', asConsole: true }
+    streak-14-diamonds: { type: item, material: DIAMOND, amount: 8 }
 
   # ── Day 21 · Champion ───────────────────────────────────────────
+  # Top of the gear chain: a strong Unbreaking drill (no Mending, no netherite).
   21:
-    streak-21-xp:       { type: xp,       amount: 1000 }
-    streak-21-coins:    { type: currency, currency: coins, amount: 75000.0 }
+    streak-21-xp:       { type: xp,       amount: 400 }
+    streak-21-coins:    { type: currency, currency: coins, amount: 12000.0 }
     streak-21-crate:    { type: command,  command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
+    streak-21-shadow-key: { type: command, command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true }
     streak-21-pickaxe:
       type: item
       material: DIAMOND_PICKAXE
@@ -209,88 +203,82 @@ streak-rewards:
       lore:
         - "<gray>Carves through the void itself."
       enchantments:
-        efficiency: 5
-        fortune: 3
+        efficiency: 4
         unbreaking: 3
       glow: true
-    streak-21-shulkers:  { type: item, material: SHULKER_BOX, amount: 2 }
-    streak-21-void-key:  { type: command, command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
+    streak-21-diamonds: { type: item, material: DIAMOND, amount: 12 }
 
-  # ── Day 30 · Legend ─────────────────────────────────────────────
+  # ── Day 30 · Legend ★ UNIQUE ────────────────────────────────────
+  # The signature milestone. A one-of-a-kind cosmetic crown you can ONLY get by
+  # holding a 30-day streak, a Shadow key, a big island expansion, and coins.
+  # No gear power, no real-money key — the prestige IS the crown.
   30:
-    streak-30-xp:       { type: xp,       amount: 2000 }
-    streak-30-coins:    { type: currency, currency: coins, amount: 100000.0 }
+    streak-30-xp:       { type: xp,       amount: 800 }
+    streak-30-coins:    { type: currency, currency: coins, amount: 25000.0 }
     streak-30-crate:    { type: command,  command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true }
-    # Strict no-OP: capstone is a cosmetic trophy + a season key, not beacon/netherite.
-    streak-30-trophy:
+    # Big, memorable island expansion — the "feels legendary" reward.
+    streak-30-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 15', asConsole: true }
+    streak-30-crown:
       type: item
-      material: DRAGON_HEAD
+      material: GOLDEN_HELMET
       amount: 1
-      name: "<gradient:#ffd700:#e67e22>Streak Master's Trophy</gradient>"
+      name: "<gradient:#ffd700:#e67e22>Devoted Voter's Crown</gradient>"
       lore:
-        - "<gray>30 days of unbroken devotion."
-        - "<dark_gray>A monument to your loyalty."
+        - "<gray>30 days. Not one vote missed."
+        - "<dark_gray>A cosmetic crown — worn only by the truly devoted."
+        - ""
+        - "<gradient:#fde047:#f59e0b>✦ Streak Milestone — Day 30 ✦</gradient>"
+      enchantments:
+        unbreaking: 3
       glow: true
-    streak-30-season-key: { type: command, command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
-    # Value shifted off coins (350k→100k) onto items per the "voting ≠ big money" call.
-    streak-30-diamond-blocks: { type: item, material: DIAMOND_BLOCK, amount: 8 }
 
   # ── Day 60 · Eternal ────────────────────────────────────────────
-  # Streak is uncapped, so the ladder continues past the day-30 capstone —
-  # resources/currency/keys only, deliberately NO new gear (day 21 is the
-  # top of the equipment chain; longer streaks reward the grind, not power).
-  # dragon_crate is otherwise reserved for the rare jackpot/vote-party pull —
-  # a 60-day unbroken streak is a rarer feat than either, so it earns the
-  # first guaranteed exception.
+  # Long-tail: keys + coins + region + resources. No new gear, no $20 keys.
   60:
-    streak-60-xp:       { type: xp,       amount: 3000 }
-    streak-60-coins:    { type: currency, currency: coins, amount: 80000.0 }
-    streak-60-crate:    { type: command,  command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true }
-    streak-60-season-key: { type: command, command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
-    streak-60-diamond-blocks: { type: item, material: DIAMOND_BLOCK, amount: 16 }
+    streak-60-xp:       { type: xp,       amount: 1200 }
+    streak-60-coins:    { type: currency, currency: coins, amount: 40000.0 }
+    streak-60-crate:    { type: command,  command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true }
+    streak-60-void-key: { type: command,  command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
+    streak-60-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
+    streak-60-diamonds: { type: item, material: DIAMOND, amount: 16 }
 
   # ── Day 90 · Immortal ───────────────────────────────────────────
   90:
-    streak-90-xp:       { type: xp,       amount: 4000 }
-    streak-90-coins:    { type: currency, currency: coins, amount: 100000.0 }
-    streak-90-crate:    { type: command,  command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true }
-    streak-90-shadow-key: { type: command, command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true }
-    streak-90-diamond-blocks: { type: item, material: DIAMOND_BLOCK, amount: 20 }
+    streak-90-xp:       { type: xp,       amount: 1500 }
+    streak-90-coins:    { type: currency, currency: coins, amount: 60000.0 }
+    streak-90-crate:    { type: command,  command: 'ac virtualkey give {player} ShadowCrate 2', asConsole: true }
+    streak-90-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
     # Vanilla-balanced safety item, not gear — no stat/damage/mining bonus.
     streak-90-totems:   { type: item, material: TOTEM_OF_UNDYING, amount: 2 }
 
   # ── Day 120 · Ascended ──────────────────────────────────────────
   120:
-    streak-120-xp:      { type: xp,       amount: 5000 }
-    streak-120-coins:   { type: currency, currency: coins, amount: 120000.0 }
-    streak-120-crate:   { type: command,  command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true }
-    streak-120-void-key: { type: command, command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
-    streak-120-diamond-blocks: { type: item, material: DIAMOND_BLOCK, amount: 24 }
+    streak-120-xp:      { type: xp,       amount: 2000 }
+    streak-120-coins:   { type: currency, currency: coins, amount: 80000.0 }
+    streak-120-crate:   { type: command,  command: 'ac virtualkey give {player} VoidCrate 2', asConsole: true }
+    streak-120-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 15', asConsole: true }
+    streak-120-diamonds: { type: item, material: DIAMOND, amount: 24 }
 
   # ── Day 180 · Devoted ───────────────────────────────────────────
-  # Beacon is a cosmetic flex here — it grants no bonus by itself without a
-  # player separately building the pyramid base; same non-OP spirit as the
-  # existing rare 'party-beacon' pull in the vote-party pool.
   180:
-    streak-180-xp:      { type: xp,       amount: 6000 }
-    streak-180-coins:   { type: currency, currency: coins, amount: 150000.0 }
-    streak-180-crate:   { type: command,  command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true }
+    streak-180-xp:      { type: xp,       amount: 3000 }
+    streak-180-coins:   { type: currency, currency: coins, amount: 120000.0 }
+    streak-180-crate:   { type: command,  command: 'ac virtualkey give {player} ShadowCrate 2', asConsole: true }
     streak-180-void-key: { type: command, command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
-    streak-180-shadow-key: { type: command, command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true }
-    streak-180-diamond-blocks: { type: item, material: DIAMOND_BLOCK, amount: 32 }
-    streak-180-beacon:  { type: item, material: BEACON, amount: 1 }
+    streak-180-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 20', asConsole: true }
+    streak-180-diamonds: { type: item, material: DIAMOND, amount: 32 }
 
-  # ── Day 365 · Undying ───────────────────────────────────────────
-  # A full unbroken year of voting — the true ceiling of this ladder.
+  # ── Day 365 · Undying ★ UNIQUE ──────────────────────────────────
+  # A full unbroken year — the ceiling. A second unique cosmetic, the biggest
+  # region grant, keys and coins. Still no real-money-tier key: a year-long
+  # streak is prestige, not a shortcut to the $20 crates.
   365:
-    streak-365-xp:      { type: xp,       amount: 10000 }
-    streak-365-coins:   { type: currency, currency: coins, amount: 250000.0 }
-    streak-365-crate:   { type: command,  command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true }
-    streak-365-void-key: { type: command, command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
-    streak-365-shadow-key: { type: command, command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true }
-    streak-365-season-key: { type: command, command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
-    streak-365-diamond-blocks: { type: item, material: DIAMOND_BLOCK, amount: 48 }
-    # Cosmetic capstone, no stats — same "no-OP" rule as the day-30 trophy.
+    streak-365-xp:      { type: xp,       amount: 5000 }
+    streak-365-coins:   { type: currency, currency: coins, amount: 200000.0 }
+    streak-365-crate:   { type: command,  command: 'ac virtualkey give {player} ShadowCrate 2', asConsole: true }
+    streak-365-void-key: { type: command, command: 'ac virtualkey give {player} VoidCrate 2', asConsole: true }
+    streak-365-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 25', asConsole: true }
+    # Cosmetic capstone, no stats — same "no-OP" rule as the day-30 crown.
     streak-365-heart:
       type: item
       material: NETHER_STAR
@@ -299,6 +287,8 @@ streak-rewards:
       lore:
         - "<gray>365 days. Not one vote missed."
         - "<dark_gray>There is no higher tier than this."
+        - ""
+        - "<gradient:#fde047:#f59e0b>✦ Streak Milestone — Day 365 ✦</gradient>"
       glow: true
 
 # ── Site-Specific Rewards ───────────────────────────────────────

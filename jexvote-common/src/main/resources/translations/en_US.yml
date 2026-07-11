@@ -211,6 +211,11 @@ vote_leaderboard:
 vote_streak:
   title: '<dark_gray>Vote Streaks'
 
+  pager:
+    prev: '<gradient:#86efac:#16a34a>◄ Previous Page</gradient>'
+    next: '<gradient:#86efac:#16a34a>Next Page ►</gradient>'
+    info: '<gray>Page <white>{page}</white><dark_gray>/</dark_gray><white>{pages}</white>'
+
   # ── Track view ──
   header:
     name: '<gradient:#86EFAC:#22C55E:#16A34A>🔥 Streak Rewards</gradient>'
