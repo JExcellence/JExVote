@@ -206,7 +206,17 @@ public final class VoteShopView extends VoteBaseView {
         boolean canAfford = balance >= item.cost();
         int missing = Math.max(0, item.cost() - balance);
 
-        List<Component> lore = new ArrayList<>(msg("vote_shop.tile.lore")
+        List<Component> lore = new ArrayList<>();
+        // Per-item description preview (config `description:` lines) at the top,
+        // so the player reads what the reward actually is before the You-get/cost
+        // block. Falls back to just the reward line when no description is set.
+        if (!item.description().isEmpty()) {
+            lore.add(Component.empty());
+            for (String line : item.description()) {
+                lore.add(lore(line));
+            }
+        }
+        lore.addAll(msg("vote_shop.tile.lore")
                 .with("item", item.name())
                 .with("reward", rewardDesc)
                 .with("cost", String.valueOf(item.cost()))

@@ -22,6 +22,7 @@ public record VoteShopItem(
         @NotNull Material icon,
         int cost,
         @NotNull AbstractReward reward,
+        @NotNull List<String> description,
         @NotNull ShopEffects effects
 ) {
 
@@ -52,7 +53,7 @@ public record VoteShopItem(
             int cost,
             @NotNull AbstractReward reward
     ) {
-        return new VoteShopItem(id, name, icon, cost, reward, ShopEffects.DEFAULTS);
+        return new VoteShopItem(id, name, icon, cost, reward, Collections.emptyList(), ShopEffects.DEFAULTS);
     }
 
     /**
@@ -66,6 +67,6 @@ public record VoteShopItem(
             @NotNull AbstractReward reward,
             @NotNull ShopEffects effects
     ) {
-        return new VoteShopItem(id, name, icon, cost, reward, effects);
+        return new VoteShopItem(id, name, icon, cost, reward, Collections.emptyList(), effects);
     }
 }

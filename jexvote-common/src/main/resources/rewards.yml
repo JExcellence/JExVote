@@ -430,156 +430,201 @@ vote-party:
     fade-out: 0
 
 # ── Vote-Token Shop (/vote shop) ────────────────────────────────
-# A proper sink for vote points (earned ~1 per vote). Each entry costs a
-# number of points and grants a reward. Non-OP: materials, resources, crate
-# keys, cosmetics. 'cost' is in vote points; 'icon' is the GUI material.
+# The primary sink for vote points (earned ~1 per vote). Rebuilt 2026-07-11:
+# a curated, oneblock-relevant catalog with a per-item `description:` (the
+# MiniMessage lore preview the GUI shows), thematic icons, and fair non-OP
+# pricing. Fields per entry:
+#   name        — display name (MiniMessage-safe plain text)
+#   icon        — GUI material (pick one that PREVIEWS the reward)
+#   cost        — price in vote points
+#   description — lore lines shown on the tile (what you're actually buying)
+#   reward      — the granted reward (item / currency / command)
+#   purchase-*  — optional sound/volume/pitch/messages (defaults are fine)
 #
-# Optional effects (purchase-sound, purchase-volume, purchase-pitch, purchase-messages)
-# can be added to customize the purchase experience.
+# Curation rules: useful oneblock resources, island expansion, flight time,
+# crate keys, and a little cosmetic flavour. The $20-tier Season/Dragon keys
+# are here as LONG-TERM goals (priced high). Removed the odd Shulker/NameTag
+# fillers. Crate keys use 'ac virtualkey give'; region uses grant-radius;
+# flight uses the island fly-time bank (jexoneblock flytime) so it matches the
+# in-game "Out of fly time?" hint that points here.
 vote-shop:
-  iron-block:
-    name: "Iron Blocks"
-    icon: IRON_BLOCK
+
+  # ── Resources & automation ──────────────────────────────────────
+  iron-bundle:
+    name: "Iron Bundle"
+    icon: IRON_INGOT
     cost: 10
-    reward: { type: item, material: IRON_BLOCK, amount: 4 }
-    purchase-sound: ENTITY_PLAYER_LEVELUP
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  hoppers:
-    name: "Hoppers"
-    icon: HOPPER
-    cost: 10
-    reward: { type: item, material: HOPPER, amount: 16 }
-    purchase-sound: ENTITY_PLAYER_LEVELUP
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  fireworks:
-    name: "Fireworks"
-    icon: FIREWORK_ROCKET
-    cost: 8
-    reward: { type: item, material: FIREWORK_ROCKET, amount: 16 }
-    purchase-sound: ENTITY_FIREWORK_ROCKET_LAUNCH
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  xp-bottles:
-    name: "Experience Bottles"
-    icon: EXPERIENCE_BOTTLE
+    description:
+      - "<gray>A stack of refined iron — hoppers, rails,"
+      - "<gray>anvils, and the backbone of any build."
+      - "<dark_gray>Grants: <white>32× Iron Ingot"
+    reward: { type: item, material: IRON_INGOT, amount: 32 }
+  gold-bundle:
+    name: "Gold Bundle"
+    icon: GOLD_INGOT
     cost: 12
-    reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 32 }
-    purchase-sound: ENTITY_PLAYER_LEVELUP
-    purchase-volume: 1.0
-    purchase-pitch: 1.2
-  nametags:
-    name: "Name Tags"
-    icon: NAME_TAG
-    cost: 12
-    reward: { type: item, material: NAME_TAG, amount: 4 }
-    purchase-sound: ENTITY_PLAYER_LEVELUP
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  music-disc:
-    name: "Music Disc"
-    icon: MUSIC_DISC_BLOCKS
-    cost: 15
-    reward: { type: item, material: MUSIC_DISC_BLOCKS, amount: 1 }
-    purchase-sound: BLOCK_NOTE_BLOCK_PLING
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  diamonds:
+    description:
+      - "<gray>Gold for powered rails, clocks,"
+      - "<gray>and the finer redstone contraptions."
+      - "<dark_gray>Grants: <white>32× Gold Ingot"
+    reward: { type: item, material: GOLD_INGOT, amount: 32 }
+  diamond-bundle:
     name: "Diamond Bundle"
     icon: DIAMOND
     cost: 18
+    description:
+      - "<gray>Eight diamonds — a full set of tools,"
+      - "<gray>or a head start on enchanting."
+      - "<dark_gray>Grants: <white>8× Diamond"
     reward: { type: item, material: DIAMOND, amount: 8 }
-    purchase-sound: ENTITY_PLAYER_LEVELUP
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  shulker:
-    name: "Shulker Boxes"
-    icon: SHULKER_BOX
-    cost: 25
-    reward: { type: item, material: SHULKER_BOX, amount: 2 }
-    purchase-sound: ENTITY_PLAYER_LEVELUP
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  vote-key:
-    name: "Vote Crate Key"
-    icon: TRIPWIRE_HOOK
+  xp-bundle:
+    name: "Experience Bundle"
+    icon: EXPERIENCE_BOTTLE
+    cost: 12
+    description:
+      - "<gray>Skip the grind — pop these for"
+      - "<gray>instant enchanting levels."
+      - "<dark_gray>Grants: <white>32× Bottle o' Enchanting"
+    reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 32 }
+    purchase-pitch: 1.2
+  hopper-bundle:
+    name: "Hopper Bundle"
+    icon: HOPPER
+    cost: 10
+    description:
+      - "<gray>Automate your one block — pipe drops"
+      - "<gray>straight into your storage."
+      - "<dark_gray>Grants: <white>16× Hopper"
+    reward: { type: item, material: HOPPER, amount: 16 }
+  obsidian-bundle:
+    name: "Obsidian Bundle"
+    icon: OBSIDIAN
+    cost: 12
+    description:
+      - "<gray>Portals, blast-proofing, and the"
+      - "<gray>foundations that never break."
+      - "<dark_gray>Grants: <white>16× Obsidian"
+    reward: { type: item, material: OBSIDIAN, amount: 16 }
+  coin-pouch:
+    name: "Coin Pouch"
+    icon: GOLD_NUGGET
     cost: 15
-    reward: { type: command, command: 'ac virtualkey give {player} VoteCrate 1', asConsole: true }
-    purchase-sound: ENTITY_PLAYER_LEVELUP
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  season-key:
-    name: "Season Crate Key"
-    icon: TRIPWIRE_HOOK
-    cost: 30
-    reward: { type: command, command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
-    purchase-sound: ENTITY_PLAYER_LEVELUP
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  void-key:
-    name: "Void Crate Key"
-    icon: TRIPWIRE_HOOK
-    cost: 60
-    reward: { type: command, command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
-    purchase-sound: ENTITY_PLAYER_LEVELUP
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  shadow-key:
-    name: "Shadow Crate Key"
-    icon: TRIPWIRE_HOOK
-    cost: 55
-    reward: { type: command, command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true }
-    purchase-sound: ENTITY_PLAYER_LEVELUP
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  dragon-key:
-    name: "Dragon Crate Key"
-    icon: TRIPWIRE_HOOK
-    cost: 110
-    reward: { type: command, command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true }
-    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  # Flight is delivered as a plain COMMAND reward — no built-in fly coupling.
-  # Adjust the command to whatever your flight/permission plugin exposes.
-  temp-fly:
-    name: "10 Minutes of Flight"
+    description:
+      - "<gray>Turn your loyalty into spending money."
+      - "<gray>Straight into your island bank."
+      - "<dark_gray>Grants: <gold>20,000 coins"
+    reward: { type: currency, currency: coins, amount: 20000.0 }
+
+  # ── Island & flight ─────────────────────────────────────────────
+  # Region auto-resolves to the player's island (capped server-side).
+  fly-voucher:
+    name: "Flight Voucher"
     icon: FEATHER
-    cost: 20
-    # Example uses an Essentials-style timed-fly command; swap for your own.
-    reward: { type: command, command: 'fly add {player} 600', asConsole: true }
+    cost: 18
+    description:
+      - "<gray>Top up your island fly-time bank."
+      - "<gray>Perfect for a long build session."
+      - "<dark_gray>Grants: <white>30 minutes of flight"
+    reward: { type: command, command: 'jexoneblock flytime {player} 30', asConsole: true }
     purchase-sound: ITEM_ELYTRA_FLYING
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
+  island-radius-small:
+    name: "Island Expansion +5"
+    icon: GRASS_BLOCK
+    cost: 10
+    description:
+      - "<gray>Push your island border out by 5 blocks"
+      - "<gray>on every side. Room to grow."
+      - "<dark_gray>Grants: <white>+5 island radius"
+    reward: { type: command, command: 'jexoneblock grant-radius {player} 5', asConsole: true }
+  island-radius-large:
+    name: "Island Expansion +25"
+    icon: GRASS_BLOCK
+    cost: 40
+    description:
+      - "<gray>A big leap — +25 blocks on every side."
+      - "<gray>For the ambitious builder."
+      - "<dark_gray>Grants: <white>+25 island radius"
+    reward: { type: command, command: 'jexoneblock grant-radius {player} 25', asConsole: true }
+    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
   event-fly:
     name: "Event Auto-Fly Perk"
     icon: PHANTOM_MEMBRANE
-    # Permanent perk — priced high so it's a long-term goal, not a quick buy.
     cost: 250
-    # Grants the permission JExOneblock honours to auto-fly during island events.
+    description:
+      - "<gray>A <gold>permanent</gold> perk — fly automatically"
+      - "<gray>whenever an island event is running."
+      - "<dark_gray>A long-term goal for the devoted voter."
     reward: { type: command, command: 'lp user {player} permission set jexoneblock.eventfly true', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  # Island region expansion (capped server-side at the max size). Region is
-  # auto-resolved to the player's island, so no region arg is needed.
-  island-radius-small:
-    name: "Island Expansion (+5)"
-    icon: GRASS_BLOCK
-    cost: 10
-    reward: { type: command, command: 'jexoneblock grant-radius {player} 5', asConsole: true }
-    purchase-sound: ENTITY_PLAYER_LEVELUP
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
-  island-radius-large:
-    name: "Island Expansion (+25)"
-    icon: GRASS_BLOCK
-    cost: 40
-    reward: { type: command, command: 'jexoneblock grant-radius {player} 25', asConsole: true }
+
+  # ── Crate keys (the chase) ──────────────────────────────────────
+  vote-key:
+    name: "Vote Crate Key"
+    icon: TRIPWIRE_HOOK
+    cost: 12
+    description:
+      - "<gray>Opens a <#7dd3fc>Vote Crate</#7dd3fc> — the everyday"
+      - "<gray>crate full of handy loot."
+      - "<dark_gray>Grants: <white>1× Vote Crate Key"
+    reward: { type: command, command: 'ac virtualkey give {player} VoteCrate 1', asConsole: true }
+  void-key:
+    name: "Void Crate Key"
+    icon: ENDER_EYE
+    cost: 45
+    description:
+      - "<gray>Opens a <#a855f7>Void Crate</#a855f7> — rarer loot"
+      - "<gray>pulled from the edge of the world."
+      - "<dark_gray>Grants: <white>1× Void Crate Key"
+    reward: { type: command, command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
+  shadow-key:
+    name: "Shadow Crate Key"
+    icon: ECHO_SHARD
+    cost: 55
+    description:
+      - "<gray>Opens a <#6c3483>Shadow Crate</#6c3483> — high-tier"
+      - "<gray>rewards for the dedicated."
+      - "<dark_gray>Grants: <white>1× Shadow Crate Key"
+    reward: { type: command, command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true }
+  season-key:
+    name: "Season Crate Key"
+    icon: NETHER_STAR
+    cost: 90
+    description:
+      - "<gray>Opens a <gold>Season Crate</gold> — a premium,"
+      - "<gray>real-money-tier crate. A serious goal."
+      - "<dark_gray>Grants: <white>1× Season Crate Key"
+    reward: { type: command, command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
-    purchase-volume: 1.0
-    purchase-pitch: 1.0
+  dragon-key:
+    name: "Dragon Crate Key"
+    icon: DRAGON_HEAD
+    cost: 150
+    description:
+      - "<gray>Opens a <#e74c3c>Dragon Crate</#e74c3c> — the rarest,"
+      - "<gray>most prestigious crate on the server."
+      - "<dark_gray>Grants: <white>1× Dragon Crate Key"
+    reward: { type: command, command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true }
+    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
+
+  # ── Cosmetic flavour ────────────────────────────────────────────
+  fireworks:
+    name: "Celebration Fireworks"
+    icon: FIREWORK_ROCKET
+    cost: 6
+    description:
+      - "<gray>Light up the sky over your island."
+      - "<dark_gray>Grants: <white>32× Firework Rocket"
+    reward: { type: item, material: FIREWORK_ROCKET, amount: 32 }
+    purchase-sound: ENTITY_FIREWORK_ROCKET_LAUNCH
+  music-disc:
+    name: "Music Disc"
+    icon: MUSIC_DISC_BLOCKS
+    cost: 10
+    description:
+      - "<gray>A tune for your island jukebox."
+      - "<dark_gray>Grants: <white>1× Music Disc"
+    reward: { type: item, material: MUSIC_DISC_BLOCKS, amount: 1 }
+    purchase-sound: BLOCK_NOTE_BLOCK_PLING
 
 # ═════════════════════════════════════════════════════════════════
 # REWARD TYPE REFERENCE

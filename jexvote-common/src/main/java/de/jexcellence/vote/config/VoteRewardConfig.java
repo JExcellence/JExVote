@@ -243,8 +243,11 @@ public final class VoteRewardConfig {
 
                 // Load optional effects
                 VoteShopItem.ShopEffects effects = loadShopEffects(entry);
+                // Optional per-item description (MiniMessage lore lines) — the
+                // "preview" shown on the tile so players know exactly what they buy.
+                List<String> description = entry.getStringList("description");
 
-                items.add(new VoteShopItem(key, name, icon, cost, reward, effects));
+                items.add(new VoteShopItem(key, name, icon, cost, reward, description, effects));
             } catch (Exception e) {
                 logger.log(Level.WARNING, String.format("Failed to load vote-shop item '%s'", key), e);
             }
