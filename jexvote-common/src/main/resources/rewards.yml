@@ -529,8 +529,9 @@ vote-shop:
     icon: PHANTOM_MEMBRANE
     cost: 250
     description:
-      - "<gray>A <gold>permanent</gold> perk — fly automatically"
-      - "<gray>whenever an island event is running."
+      - "<gray>A <gold>permanent</gold> perk — you fly automatically"
+      - "<gray>but <white>only while an island event is running</white>."
+      - "<dark_gray>Not free-flight; it switches on for events."
       - "<dark_gray>A long-term goal for the devoted voter."
     reward: { type: command, command: 'lp user {player} permission set jexoneblock.eventfly true', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
@@ -566,7 +567,7 @@ vote-shop:
   season-key:
     name: "Season Crate Key"
     icon: NETHER_STAR
-    cost: 90
+    cost: 75
     description:
       - "<gray>Opens a <gold>Season Crate</gold> — a premium,"
       - "<gray>real-money-tier crate. A serious goal."
@@ -576,7 +577,7 @@ vote-shop:
   dragon-key:
     name: "Dragon Crate Key"
     icon: DRAGON_HEAD
-    cost: 150
+    cost: 65
     description:
       - "<gray>Opens a <#e74c3c>Dragon Crate</#e74c3c> — the rarest,"
       - "<gray>most prestigious crate on the server."
@@ -603,6 +604,36 @@ vote-shop:
       - "<dark_gray>Grants: <white>1× Music Disc"
     reward: { type: item, material: MUSIC_DISC_BLOCKS, amount: 1 }
     purchase-sound: BLOCK_NOTE_BLOCK_PLING
+  # Permanent cosmetic particle trail — unlocks the GATED trail tier in /trail
+  # (ParticleTrailService). Pure cosmetic, no stats.
+  particle-trail:
+    name: "Particle Trail"
+    icon: FIREWORK_STAR
+    cost: 60
+    description:
+      - "<gray>Unlock a <#f0abfc>permanent</#f0abfc> cosmetic trail that"
+      - "<gray>follows you wherever you walk."
+      - "<gray>Pick your effect in <white>/trail</white>."
+      - "<dark_gray>Cosmetic only — no stats."
+    reward: { type: command, command: 'lp user {player} permission set jexoneblock.cosmetic.trail true', asConsole: true }
+    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
+  decorative-lanterns:
+    name: "Decorative Lanterns"
+    icon: SEA_LANTERN
+    cost: 8
+    description:
+      - "<gray>Clean, glowing light for your builds."
+      - "<dark_gray>Grants: <white>16× Sea Lantern"
+    reward: { type: item, material: SEA_LANTERN, amount: 16 }
+  froglight-set:
+    name: "Froglight Set"
+    icon: PEARLESCENT_FROGLIGHT
+    cost: 12
+    description:
+      - "<gray>Rare, colourful light blocks — a proper"
+      - "<gray>flex for any island centrepiece."
+      - "<dark_gray>Grants: <white>16× Pearlescent Froglight"
+    reward: { type: item, material: PEARLESCENT_FROGLIGHT, amount: 16 }
 
 # ═════════════════════════════════════════════════════════════════
 # REWARD TYPE REFERENCE
