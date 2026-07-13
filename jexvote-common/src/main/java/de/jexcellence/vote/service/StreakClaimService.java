@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,11 +37,14 @@ public class StreakClaimService {
         GRANT_FAILED
     }
 
+    private static final String MIGRATION_MARKER = "streak-claim-migrated.done";
+
     private final Logger logger;
     private final ClaimedStreakRewardRepository claimedRepository;
     private final VotePlayerRepository playerRepository;
     private final VoteRewardService rewardService;
     private final PlatformScheduler scheduler;
+    private final File dataFolder;
 
     public StreakClaimService(@NotNull JavaPlugin plugin,
                               @NotNull ClaimedStreakRewardRepository claimedRepository,
@@ -49,6 +55,7 @@ public class StreakClaimService {
         this.playerRepository = playerRepository;
         this.rewardService = rewardService;
         this.scheduler = PlatformScheduler.of(plugin);
+        this.dataFolder = plugin.getDataFolder();
     }
 
     /**
@@ -107,6 +114,12 @@ public class StreakClaimService {
      * auto-claimed for every existing player. Idempotent — skips already-claimed rows.
      */
     public void runMigration() {
+        // Run-once guard: a marker file in the data folder. Without it the
+        // migration re-ran every startup and re-inserted existing rows, throwing
+        // unique-constraint (23505) warnings on jexvote_claimed_streaks.
+        if (migrationMarker().exists()) {
+            return;
+        }
         logger.info("Running streak claim migration for existing players...");
         Map<Integer, ?> milestones = rewardService.getStreakRewards();
         if (milestones.isEmpty()) {
@@ -120,14 +133,18 @@ public class StreakClaimService {
                 int highest = player.getHighestStreak();
                 if (highest <= 0) continue;
 
+                // Idempotent: only create claims for milestones the player hasn't
+                // already got — never blindly re-insert (avoids the 23505 violation).
+                Set<Integer> alreadyClaimed = claimedRepository.findClaimedDays(player.getPlayerUuid()).join();
                 for (int day : milestones.keySet()) {
-                    if (day <= highest) {
+                    if (day <= highest && !alreadyClaimed.contains(day)) {
                         claimedRepository.createClaim(player.getPlayerUuid(), day, true);
                         migrated++;
                     }
                 }
             }
 
+            writeMigrationMarker();
             final int count = migrated;
             logger.log(Level.INFO, () -> String.format(
                     "Streak claim migration complete — %d claim record(s) created", count));
@@ -135,6 +152,25 @@ public class StreakClaimService {
             logger.log(Level.SEVERE, "Streak claim migration failed", ex);
             return null;
         });
+    }
+
+    private @NotNull File migrationMarker() {
+        return new File(dataFolder, MIGRATION_MARKER);
+    }
+
+    /** Writes the run-once marker so the migration never repeats (idempotent commands aside). */
+    private void writeMigrationMarker() {
+        try {
+            if (!dataFolder.exists() && !dataFolder.mkdirs()) {
+                logger.warning("[streak-migration] could not create data folder for the marker");
+                return;
+            }
+            Files.writeString(migrationMarker().toPath(),
+                    "Streak-claim migration done. Delete this file to re-run it.\n");
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, ex,
+                    () -> "[streak-migration] ran but the marker could not be written (may re-run next start)");
+        }
     }
 
     /**
