@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -53,6 +54,7 @@ public class VoteService {
     // volatile is sufficient: single-write / multi-read
     private volatile int recordRetentionDays;
     private final AtomicReference<VoteConfig.FreezeSettings> freezeSettings;
+    private final VoteConfig.BedrockSettings bedrockSettings;
 
     // Configuration group — suppressed (S107)
     @SuppressWarnings("java:S107")
@@ -68,7 +70,8 @@ public class VoteService {
                        int streakTimeoutHours,
                        @NotNull Map<Integer, List<String>> streakCommands,
                        int recordRetentionDays,
-                       @NotNull VoteConfig.FreezeSettings freezeSettings) {
+                       @NotNull VoteConfig.FreezeSettings freezeSettings,
+                       @NotNull VoteConfig.BedrockSettings bedrockSettings) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
         this.scheduler = PlatformScheduler.of(plugin);
@@ -84,6 +87,7 @@ public class VoteService {
         this.streakCommands = new AtomicReference<>(streakCommands);
         this.recordRetentionDays = recordRetentionDays;
         this.freezeSettings = new AtomicReference<>(freezeSettings);
+        this.bedrockSettings = bedrockSettings;
     }
 
     /**
@@ -465,11 +469,46 @@ public class VoteService {
     }
 
     private @Nullable UUID resolveUuid(@NotNull String username) {
-        Player online = Bukkit.getPlayerExact(username);
-        if (online != null) return online.getUniqueId();
+        // Try the raw name first (Java accounts), then the Bedrock (Geyser/
+        // Floodgate) name variants — a voter types their gamertag on the list,
+        // but their in-game name carries the Floodgate prefix (and spaces may
+        // be replaced), so an exact match on the raw name misses Bedrock voters.
+        for (String candidate : nameCandidates(username)) {
+            UUID resolved = resolveExact(candidate);
+            if (resolved != null) {
+                return resolved;
+            }
+        }
+        return null;
+    }
 
-        OfflinePlayer offline = Bukkit.getOfflinePlayer(username);
+    /** Online-exact then offline (played-before) resolution for one exact name. */
+    private @Nullable UUID resolveExact(@NotNull String name) {
+        Player online = Bukkit.getPlayerExact(name);
+        if (online != null) {
+            return online.getUniqueId();
+        }
+        OfflinePlayer offline = Bukkit.getOfflinePlayer(name);
         return offline.hasPlayedBefore() || offline.isOnline() ? offline.getUniqueId() : null;
+    }
+
+    /**
+     * The names to try for a vote username, in order: the raw name, then the
+     * Floodgate-prefixed forms (with and without space→underscore replacement).
+     * Skips prefix variants when the name already carries the prefix, and
+     * de-duplicates so a blank-prefix config just yields the raw name.
+     */
+    private @NotNull List<String> nameCandidates(@NotNull String username) {
+        List<String> candidates = new ArrayList<>();
+        candidates.add(username);
+        String prefix = bedrockSettings.namePrefix();
+        if (!prefix.isEmpty() && !username.startsWith(prefix)) {
+            candidates.add(prefix + username);
+            if (bedrockSettings.replaceSpaces() && username.indexOf(' ') >= 0) {
+                candidates.add(prefix + username.replace(' ', '_'));
+            }
+        }
+        return candidates.stream().distinct().toList();
     }
 
     private @NotNull VoteSnapshot toSnapshot(@NotNull VotePlayerEntity entity) {

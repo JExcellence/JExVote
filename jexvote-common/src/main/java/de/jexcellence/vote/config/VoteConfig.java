@@ -71,6 +71,16 @@ public final class VoteConfig {
     public record GiftSettings(boolean enabled, int dailyLimit,
                                boolean requireVoteToday, ZoneId timezone) {}
 
+    /**
+     * How Bedrock (Geyser/Floodgate) player names map to vote-site usernames.
+     * A voter types their gamertag on the list, but their in-game name carries
+     * the Floodgate {@code namePrefix} (default {@code "."}) and, when
+     * {@code replaceSpaces} is on, spaces become {@code _}. Vote resolution tries
+     * these variants so Bedrock votes credit the right player. Mirror your
+     * Floodgate {@code username-prefix} / {@code replace-spaces} settings here.
+     */
+    public record BedrockSettings(@NotNull String namePrefix, boolean replaceSpaces) {}
+
     private final JavaPlugin plugin;
     private final Logger logger;
 
@@ -103,6 +113,7 @@ public final class VoteConfig {
             new FreezeSettings(true, 1, 5, 3, 24L);
     private GiftSettings giftSettings =
             new GiftSettings(true, 1, true, ZoneId.of("UTC"));
+    private BedrockSettings bedrockSettings = new BedrockSettings(".", true);
 
     private VoteRestApiConfig restApiConfig = VoteRestApiConfig.DISABLED;
 
@@ -154,6 +165,7 @@ public final class VoteConfig {
         loadStreakCommands(config);
         loadStreakFreeze(config);
         loadVoteGift(config);
+        loadBedrock(config);
         loadRestApi(config);
         loadVoteSites();
     }
@@ -198,6 +210,12 @@ public final class VoteConfig {
             durationHours = 24L;
         }
         freezeSettings = new FreezeSettings(enabled, freeAmount, costPoints, defaultMax, durationHours);
+    }
+
+    private void loadBedrock(@NotNull YamlConfiguration config) {
+        String prefix = config.getString("bedrock.name-prefix", ".");
+        boolean replaceSpaces = config.getBoolean("bedrock.replace-spaces", true);
+        bedrockSettings = new BedrockSettings(prefix == null ? "" : prefix, replaceSpaces);
     }
 
     private void loadVoteGift(@NotNull YamlConfiguration config) {
@@ -356,6 +374,7 @@ public final class VoteConfig {
     public @NotNull ZoneId getWeekendMultiplierTimezone() { return weekendMultiplierTimezone; }
     public boolean isVotePartyEnabled() { return votePartyEnabled; }
     public int getVotePartyTarget() { return votePartyTarget; }
+    public @NotNull BedrockSettings getBedrockSettings() { return bedrockSettings; }
     public @NotNull FreezeSettings getFreezeSettings() { return freezeSettings; }
     public @NotNull GiftSettings getGiftSettings() { return giftSettings; }
 }

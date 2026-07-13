@@ -155,6 +155,17 @@ vote-party:
 # move, and the gifter keeps their own vote and rewards in full.
 #   /vote gift <player>  — gift a specific player
 #   /vote gift random    — gift a random online player (never yourself)
+# ── Bedrock (Geyser/Floodgate) vote matching ─────────────────────────────────
+# Bedrock players vote with their gamertag, but join through Floodgate with a
+# prefixed in-game name (and spaces may be swapped for '_'). Vote resolution
+# tries the prefixed/normalized variants so their votes credit the right player.
+# Match these to your Floodgate config (username-prefix / replace-spaces).
+bedrock:
+  # The Floodgate username prefix (default "."). Set to "" if you run no prefix.
+  name-prefix: "."
+  # Also try a variant with spaces replaced by '_' (Floodgate replace-spaces).
+  replace-spaces: true
+
 vote-gift:
   # Master switch.
   enabled: true
