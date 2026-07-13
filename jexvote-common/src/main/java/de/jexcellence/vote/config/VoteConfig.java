@@ -74,7 +74,7 @@ public final class VoteConfig {
     /**
      * How Bedrock (Geyser/Floodgate) player names map to vote-site usernames.
      * A voter types their gamertag on the list, but their in-game name carries
-     * the Floodgate {@code namePrefix} (default {@code "."}) and, when
+     * the Floodgate {@code namePrefix} (default {@code "!"}) and, when
      * {@code replaceSpaces} is on, spaces become {@code _}. Vote resolution tries
      * these variants so Bedrock votes credit the right player. Mirror your
      * Floodgate {@code username-prefix} / {@code replace-spaces} settings here.
@@ -113,7 +113,7 @@ public final class VoteConfig {
             new FreezeSettings(true, 1, 5, 3, 24L);
     private GiftSettings giftSettings =
             new GiftSettings(true, 1, true, ZoneId.of("UTC"));
-    private BedrockSettings bedrockSettings = new BedrockSettings(".", true);
+    private BedrockSettings bedrockSettings = new BedrockSettings("!", true);
 
     private VoteRestApiConfig restApiConfig = VoteRestApiConfig.DISABLED;
 
@@ -213,7 +213,7 @@ public final class VoteConfig {
     }
 
     private void loadBedrock(@NotNull YamlConfiguration config) {
-        String prefix = config.getString("bedrock.name-prefix", ".");
+        String prefix = config.getString("bedrock.name-prefix", "!");
         boolean replaceSpaces = config.getBoolean("bedrock.replace-spaces", true);
         bedrockSettings = new BedrockSettings(prefix == null ? "" : prefix, replaceSpaces);
     }

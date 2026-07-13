@@ -161,8 +161,8 @@ vote-party:
 # tries the prefixed/normalized variants so their votes credit the right player.
 # Match these to your Floodgate config (username-prefix / replace-spaces).
 bedrock:
-  # The Floodgate username prefix (default "."). Set to "" if you run no prefix.
-  name-prefix: "."
+  # The Floodgate username prefix (default "!"). Set to "" if you run no prefix.
+  name-prefix: "!"
   # Also try a variant with spaces replaced by '_' (Floodgate replace-spaces).
   replace-spaces: true
 
