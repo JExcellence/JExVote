@@ -357,7 +357,18 @@ public class VoteService {
             return;
         }
 
-        Duration gap = Duration.between(lastVote, Instant.now());
+        // The streak advances at most once per calendar day: if the previous
+        // processed vote already fell on today, the day is counted, so leave
+        // currentStreak untouched (keys/rewards still process — only the streak
+        // number is capped). No per-config vote timezone exists, so the server's
+        // local zone is used, consistent with the monthly-reset logic.
+        Instant now = Instant.now();
+        ZoneId zone = ZoneId.systemDefault();
+        if (lastVote.atZone(zone).toLocalDate().equals(now.atZone(zone).toLocalDate())) {
+            return;
+        }
+
+        Duration gap = Duration.between(lastVote, now);
         if (gap.compareTo(streakTimeout) <= 0) {
             player.setCurrentStreak(player.getCurrentStreak() + 1);
             recordHighestStreak(player);
