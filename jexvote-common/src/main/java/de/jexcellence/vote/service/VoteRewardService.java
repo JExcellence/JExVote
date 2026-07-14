@@ -29,6 +29,7 @@ public class VoteRewardService {
     private final ObjectMapper objectMapper;
 
     private final List<AbstractReward> defaultRewards;
+    private final List<AbstractReward> guaranteedRewards;
     private final Map<Integer, List<AbstractReward>> streakRewards;
     private final Map<String, List<AbstractReward>> siteRewards;
     private final List<String> commandsOnVote;
@@ -39,6 +40,7 @@ public class VoteRewardService {
     public VoteRewardService(@NotNull Logger logger,
                              @NotNull RewardRegistry rewardRegistry,
                              @NotNull List<AbstractReward> defaultRewards,
+                             @NotNull List<AbstractReward> guaranteedRewards,
                              @NotNull Map<Integer, List<AbstractReward>> streakRewards,
                              @NotNull Map<String, List<AbstractReward>> siteRewards,
                              @NotNull List<String> commandsOnVote,
@@ -46,6 +48,7 @@ public class VoteRewardService {
         this.logger = logger;
         this.objectMapper = buildRewardMapper(rewardRegistry);
         this.defaultRewards = defaultRewards;
+        this.guaranteedRewards = guaranteedRewards;
         this.streakRewards = streakRewards;
         this.siteRewards = siteRewards;
         this.commandsOnVote = commandsOnVote;
@@ -71,6 +74,8 @@ public class VoteRewardService {
         double multiplier = multiplierService.current();
 
         grantAll(defaultRewards, player, multiplier);
+        // Granted on EVERY vote, in addition to the weighted default-pool pick above.
+        grantAll(guaranteedRewards, player, multiplier);
         grantAll(siteRewards.getOrDefault(serviceName.toLowerCase(), List.of()), player, multiplier);
 
         if (!manualStreakClaim) {
@@ -140,6 +145,8 @@ public class VoteRewardService {
             List<Map<String, Object>> rewardList = new ArrayList<>();
 
             defaultRewards.forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
+            // Queue the guaranteed rewards too, so offline voters get them on next login.
+            guaranteedRewards.forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
 
             siteRewards.getOrDefault(serviceName.toLowerCase(), List.of())
                     .forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
@@ -258,6 +265,14 @@ public class VoteRewardService {
 
     public @NotNull List<AbstractReward> getDefaultRewards() {
         return defaultRewards;
+    }
+
+    /**
+     * @return {@code true} when at least one guaranteed reward is configured
+     * (used to decide whether to send the guaranteed-reward notification).
+     */
+    public boolean hasGuaranteedRewards() {
+        return !guaranteedRewards.isEmpty();
     }
 
     public @NotNull Map<Integer, List<AbstractReward>> getStreakRewards() {

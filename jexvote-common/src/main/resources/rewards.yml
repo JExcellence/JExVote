@@ -89,6 +89,21 @@ default-rewards:
         announce: 'vote.lucky.jackpot'
         reward: { type: command, command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
 
+# ── Guaranteed Rewards ──────────────────────────────────────────
+# Granted on EVERY vote, IN ADDITION to the single weighted pick from the
+# 'vote-jackpot' pool above and the flat default-rewards. Unlike the jackpot
+# pool (which rolls exactly ONE prize), EVERY entry in this LIST is granted on
+# every single vote — online voters receive it immediately, offline voters get
+# it queued and delivered on next login (exactly once per vote).
+#
+# Ships with one guaranteed prize: a Vote Crate key, so a vote ALWAYS yields a
+# key regardless of the jackpot roll. Admins can add more lines below — each is
+# a universal reward spec (the same shape as a pool entry's 'reward:' block, but
+# with no 'chance'/'weight'). Examples: an item, a currency grant, or another
+# command. See the REWARD TYPE REFERENCE at the bottom of this file.
+guaranteed-rewards:
+  - { type: command, command: 'ac virtualkey give {player} VoteCrate 1', asConsole: true }
+
 # ── Streak Rewards ──────────────────────────────────────────────
 # Bonus rewards when a player reaches a specific streak day. IN ADDITION to
 # the default rewards, shown in /vote (Streak Rewards): the milestone grid

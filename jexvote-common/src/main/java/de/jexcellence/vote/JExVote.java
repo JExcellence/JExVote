@@ -297,6 +297,7 @@ public abstract class JExVote {
         rewardService = new VoteRewardService(
                 logger, rewardRegistry,
                 rewardConfig.getDefaultRewards(),
+                rewardConfig.getGuaranteedRewards(),
                 rewardConfig.getStreakRewards(),
                 rewardConfig.getSiteRewards(),
                 voteConfig.getCommandsOnVote(),

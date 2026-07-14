@@ -9,6 +9,7 @@ _defaults:
 vote:
   broadcast: '<dark_gray>[<green>Vote<dark_gray>] <green>{player} <gray>hat auf <aqua>{service} <gray>gevotet!'
   received: '<green>Danke für deine Stimme auf <aqua>{service}<green>! Streak: <yellow>{streak}'
+  guaranteed_reward: '<gradient:#7dd3fc:#38bdf8>✦ Vote-Key!</gradient> <gray>Du hast außerdem einen garantierten</gray> <#7dd3fc>Vote-Crate-Key</#7dd3fc> <gray>fürs Voten erhalten!</gray>'
   pending_rewards: '<green>Du hast <yellow>{count} <green>ausstehende Vote-Belohnung(en)! Wird jetzt zugestellt...'
   shop:
     players_only: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Nur Spieler können den Vote-Shop öffnen.</red>'

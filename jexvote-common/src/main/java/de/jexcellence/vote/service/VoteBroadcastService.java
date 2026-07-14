@@ -73,6 +73,17 @@ public class VoteBroadcastService {
     }
 
     /**
+     * Notifies the voter that they received the guaranteed reward (granted on
+     * every vote, in addition to the weighted pool). Respects the private-message
+     * toggle so it stays silent when personal vote messages are disabled.
+     */
+    public void notifyGuaranteedReward(@NotNull Player player) {
+        if (!config.isPrivateMessageEnabled()) return;
+
+        r18n().msg("vote.guaranteed_reward").send(player);
+    }
+
+    /**
      * Broadcasts to all online players that a vote party has completed.
      */
     public void broadcastPartyReached(int partyNumber) {

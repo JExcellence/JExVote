@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 public final class VoteRewardConfig {
 
     private static final String REWARDS_FILE = "rewards.yml";
+    private static final String TYPE_FIELD = "type";
 
     private final JavaPlugin plugin;
     private final Logger logger;
@@ -31,6 +32,7 @@ public final class VoteRewardConfig {
     private final ObjectMapper rewardMapper;
 
     private List<AbstractReward> defaultRewards = Collections.emptyList();
+    private List<AbstractReward> guaranteedRewards = Collections.emptyList();
     private Map<Integer, List<AbstractReward>> streakRewards = Collections.emptyMap();
     private Map<String, List<AbstractReward>> siteRewards = Collections.emptyMap();
     private List<AbstractReward> votePartyRewards = Collections.emptyList();
@@ -56,6 +58,7 @@ public final class VoteRewardConfig {
         YamlConfiguration config = ConfigMigrator.loadAndMigrate(plugin, REWARDS_FILE);
 
         defaultRewards = loadRewardList(config.getConfigurationSection("default-rewards"));
+        guaranteedRewards = loadRewardArray(config, "guaranteed-rewards");
         streakRewards = loadStreakRewards(config.getConfigurationSection("streak-rewards"));
         siteRewards = loadSiteRewards(config.getConfigurationSection("site-rewards"));
         votePartyRewards = loadRewardList(config.getConfigurationSection("vote-party-rewards"));
@@ -63,8 +66,8 @@ public final class VoteRewardConfig {
         voteShopItems = loadVoteShop(config.getConfigurationSection("vote-shop"));
 
         final int poolSize = votePartyPool != null ? votePartyPool.getEntries().size() : 0;
-        logger.log(Level.INFO, () -> String.format("Loaded %d default reward(s), %d streak tier(s), %d site-specific reward set(s), %d vote-party baseline reward(s), %d party-pool entr(y/ies)",
-                defaultRewards.size(), streakRewards.size(), siteRewards.size(), votePartyRewards.size(), poolSize));
+        logger.log(Level.INFO, () -> String.format("Loaded %d default reward(s), %d guaranteed reward(s), %d streak tier(s), %d site-specific reward set(s), %d vote-party baseline reward(s), %d party-pool entr(y/ies)",
+                defaultRewards.size(), guaranteedRewards.size(), streakRewards.size(), siteRewards.size(), votePartyRewards.size(), poolSize));
     }
 
     /**
@@ -77,7 +80,7 @@ public final class VoteRewardConfig {
             return null;
         }
         try {
-            String type = section.getString("type");
+            String type = section.getString(TYPE_FIELD);
             if (type == null || rewardRegistry.find(type).isEmpty()) {
                 logger.log(Level.WARNING, () -> String.format("vote-party-pool has missing/unknown type: %s", type));
                 return null;
@@ -104,23 +107,70 @@ public final class VoteRewardConfig {
             ConfigurationSection rewardSection = section.getConfigurationSection(key);
             if (rewardSection == null) continue;
 
-            try {
-                String type = rewardSection.getString("type");
-                if (type == null) {
-                    logger.log(Level.WARNING, () -> String.format("Reward '%s' missing 'type' field", key));
-                } else if (rewardRegistry.find(type).isEmpty()) {
-                    logger.log(Level.WARNING, () -> String.format("Unknown reward type: %s", type));
-                } else {
-                    Map<String, Object> data = toDeepMap(rewardSection);
-                    String json = rewardMapper.writeValueAsString(data);
-                    AbstractReward reward = rewardMapper.readValue(json, AbstractReward.class);
-                    rewards.add(reward);
-                }
-            } catch (Exception e) {
-                logger.log(Level.WARNING, String.format("Failed to load reward '%s'", key), e);
+            AbstractReward reward = parseReward(toDeepMap(rewardSection), "Reward '" + key + "'");
+            if (reward != null) {
+                rewards.add(reward);
             }
         }
         return Collections.unmodifiableList(rewards);
+    }
+
+    /**
+     * Parses a top-level YAML <em>list</em> of universal reward specs (each entry
+     * carries {@code type:} directly), such as {@code guaranteed-rewards}. Unlike
+     * {@link #loadRewardList(ConfigurationSection)}, which reads a keyed mapping,
+     * this reads a sequence — Bukkit surfaces it via {@code getMapList}.
+     */
+    private @NotNull List<AbstractReward> loadRewardArray(@NotNull YamlConfiguration config,
+                                                          @NotNull String path) {
+        List<Map<?, ?>> rawList = config.getMapList(path);
+        if (rawList.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<AbstractReward> rewards = new ArrayList<>();
+        int index = 0;
+        for (Map<?, ?> raw : rawList) {
+            index++;
+            AbstractReward reward = parseReward(normalizeMap(raw), path + " #" + index);
+            if (reward != null) {
+                rewards.add(reward);
+            }
+        }
+        return Collections.unmodifiableList(rewards);
+    }
+
+    /**
+     * Parses a normalized reward map into an {@link AbstractReward}, validating the
+     * {@code type} field against the {@link RewardRegistry}. Returns {@code null}
+     * (and logs) when the type is missing, unknown, or deserialization fails.
+     *
+     * @param data     the normalized reward spec
+     * @param describe a human-readable label for log messages
+     */
+    private @Nullable AbstractReward parseReward(@NotNull Map<String, Object> data,
+                                                 @NotNull String describe) {
+        Object typeValue = data.get(TYPE_FIELD);
+        String type = typeValue != null ? typeValue.toString() : null;
+        if (type == null) {
+            logger.log(Level.WARNING, () -> String.format("%s missing '%s' field", describe, TYPE_FIELD));
+            return null;
+        }
+        if (rewardRegistry.find(type).isEmpty()) {
+            logger.log(Level.WARNING, () -> String.format("%s has unknown reward type: %s", describe, type));
+            return null;
+        }
+        try {
+            String json = rewardMapper.writeValueAsString(data);
+            return rewardMapper.readValue(json, AbstractReward.class);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, String.format("Failed to load %s", describe), e);
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static @NotNull Map<String, Object> normalizeMap(@NotNull Map<?, ?> raw) {
+        return (Map<String, Object>) normalizeValue(raw);
     }
 
     /**
@@ -200,6 +250,10 @@ public final class VoteRewardConfig {
     }
 
     public @NotNull List<AbstractReward> getDefaultRewards() { return defaultRewards; }
+
+    /** Rewards granted on EVERY vote, in addition to {@link #getDefaultRewards()}. */
+    public @NotNull List<AbstractReward> getGuaranteedRewards() { return guaranteedRewards; }
+
     public @NotNull Map<Integer, List<AbstractReward>> getStreakRewards() { return streakRewards; }
     public @NotNull Map<String, List<AbstractReward>> getSiteRewards() { return siteRewards; }
     public @NotNull List<AbstractReward> getVotePartyRewards() { return votePartyRewards; }

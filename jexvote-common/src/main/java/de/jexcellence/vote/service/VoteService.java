@@ -212,6 +212,9 @@ public class VoteService {
                 rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
                 executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
                 broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
+                if (rewardService.hasGuaranteedRewards()) {
+                    broadcastService.notifyGuaranteedReward(onlinePlayer);
+                }
                 if (freshFreezeGrant > 0) {
                     R18nManager.getInstance().msg("vote.freeze.granted").prefix()
                             .with("amount", String.valueOf(freshFreezeGrant))
