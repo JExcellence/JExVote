@@ -33,3 +33,6 @@ subcommands:
     argumentSchema:
       - { name: player, type: online_player, required: true, description: "Player name" }
       - { name: service, type: vote_service, required: false, defaultValue: "TestService", description: "Vote service name" }
+
+  - name: key
+    description: "Show the Votifier public key, PEM, port and token"

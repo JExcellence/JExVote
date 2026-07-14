@@ -16,6 +16,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +55,8 @@ public final class VoteAdminHandler {
                 Map.entry("jexvote.reload", this::onReload),
                 Map.entry("jexvote.reset", this::onReset),
                 Map.entry("jexvote.resetmonthly", this::onResetMonthly),
-                Map.entry("jexvote.fakevote", this::onFakeVote)
+                Map.entry("jexvote.fakevote", this::onFakeVote),
+                Map.entry("jexvote.key", this::onKey)
         );
     }
 
@@ -68,6 +72,8 @@ public final class VoteAdminHandler {
                         HelpRenderer.Action.RUN),
                 HelpRenderer.Entry.of("/jexvote fakevote", "<player> [service]", "Simulate a vote for testing",
                         HelpRenderer.Action.SUGGEST),
+                HelpRenderer.Entry.of("/jexvote key", "", "Show the Votifier public key, PEM, port and token",
+                        HelpRenderer.Action.RUN),
                 HelpRenderer.Entry.of("/jexvote help", "", "Show this help",
                         HelpRenderer.Action.RUN)
         );
@@ -90,6 +96,50 @@ public final class VoteAdminHandler {
                 "  <gray>Vote sites:</gray> <white>" + voteService.getVoteSites().size() + C_WHITE));
         sender.sendMessage(MM.deserialize(
                 "  <gray>Votifier port:</gray> <white>" + voteConfig.getServerPort() + C_WHITE));
+    }
+
+    /**
+     * Prints the Votifier connection details a vote site needs: port, v2 token, and the
+     * RSA public key in both one-line (X.509 base64) and PEM form. The key is read from
+     * {@code rsa/public.key}, generated on first server start.
+     */
+    private void onKey(@NotNull CommandContext ctx) {
+        var sender = ctx.sender();
+        Path keyFile = plugin.getDataFolder().toPath().resolve("rsa/public.key");
+        String raw;
+        try {
+            raw = Files.readString(keyFile).replaceAll("\\s+", "");
+        } catch (IOException e) {
+            sender.sendMessage(MM.deserialize(
+                    "<red>Could not read the public key — the Votifier server must start at least once to generate it."));
+            return;
+        }
+
+        String token = voteConfig.getServerToken();
+        sender.sendMessage(MM.deserialize(
+                "<dark_gray>━━━━ <gradient:#fde047:#f59e0b>Votifier Setup</gradient> <dark_gray>━━━━"));
+        sender.sendMessage(MM.deserialize(
+                "  <gray>Port:</gray> <white>" + voteConfig.getServerPort() + C_WHITE));
+        sender.sendMessage(MM.deserialize(
+                "  <gray>v2 token:</gray> <white>" + (token.isEmpty() ? "(none)" : token) + C_WHITE));
+        sender.sendMessage(MM.deserialize(
+                "  <gray>Public key (one line — most sites): "
+                        + "<click:copy_to_clipboard:'" + raw + "'><hover:show_text:'Click to copy'><green>[copy]</green></hover></click>"));
+        sender.sendMessage(MM.deserialize("<white>" + raw + C_WHITE));
+        sender.sendMessage(MM.deserialize(
+                "  <gray>Public key (PEM — if the site wants BEGIN/END headers):"));
+        sender.sendMessage(MM.deserialize("<white>" + toPem(raw).replace("\n", "<newline>") + C_WHITE));
+        sender.sendMessage(MM.deserialize(
+                "  <dark_gray>Paste one of these into the site's Votifier public-key field."));
+    }
+
+    /** Wraps a base64 X.509 key in PEM armor with 64-char lines. */
+    private static @NotNull String toPem(@NotNull String base64) {
+        StringBuilder sb = new StringBuilder("-----BEGIN PUBLIC KEY-----\n");
+        for (int offset = 0; offset < base64.length(); offset += 64) {
+            sb.append(base64, offset, Math.min(offset + 64, base64.length())).append('\n');
+        }
+        return sb.append("-----END PUBLIC KEY-----").toString();
     }
 
     private void onReload(@NotNull CommandContext ctx) {
