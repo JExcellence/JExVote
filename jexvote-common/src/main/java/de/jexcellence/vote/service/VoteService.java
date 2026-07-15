@@ -216,7 +216,7 @@ public class VoteService {
                 broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
                 if (flyGranted) {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                            "jexoneblock flytime " + onlinePlayer.getName() + " 15");
+                            "jexoneblock flycoupon " + onlinePlayer.getName() + " 15");
                     R18nManager.getInstance().msg("vote.daily-fly").prefix()
                             .send(onlinePlayer);
                 }
