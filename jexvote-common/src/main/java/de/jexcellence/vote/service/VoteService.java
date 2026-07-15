@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -208,10 +209,15 @@ public class VoteService {
         int freshFreezeGrant = player.getFreshFreezeGrant();
 
         if (onlinePlayer != null && onlinePlayer.isOnline()) {
+            boolean flyGranted = grantDailyFlyIfEligible(player);
             scheduler.runAtEntity(onlinePlayer, () -> {
                 rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
                 executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
                 broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
+                if (flyGranted) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                            "jexoneblock flytime " + onlinePlayer.getName() + " 15");
+                }
                 if (rewardService.hasGuaranteedRewards()) {
                     broadcastService.notifyGuaranteedReward(onlinePlayer);
                 }
@@ -459,6 +465,16 @@ public class VoteService {
             logger.log(Level.WARNING, "Free Streak Freeze back-fill failed", ex);
             return null;
         });
+    }
+
+    private boolean grantDailyFlyIfEligible(@NotNull VotePlayerEntity player) {
+        String today = LocalDate.now(ZoneId.systemDefault()).toString();
+        if (today.equals(player.getDailyFlyDate())) {
+            return false;
+        }
+        player.setDailyFlyDate(today);
+        playerRepository.update(player);
+        return true;
     }
 
     private void executeStreakCommands(@NotNull Player player, @NotNull String serviceName, int streak) {

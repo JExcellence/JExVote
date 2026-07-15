@@ -96,6 +96,10 @@ public class VotePlayerEntity {
     @ColumnDefault("0")
     private int giftsToday;
 
+    /** Day (ISO yyyy-MM-dd) of the last daily fly coupon grant. */
+    @Column(name = "daily_fly_date", length = 10)
+    private String dailyFlyDate;
+
     /**
      * Number of Streak Freezes auto-consumed during the vote currently being
      * processed. Not persisted — read once by the delivery step to notify the
@@ -163,6 +167,9 @@ public class VotePlayerEntity {
 
     public int getGiftsToday() { return giftsToday; }
     public void setGiftsToday(int giftsToday) { this.giftsToday = giftsToday; }
+
+    public String getDailyFlyDate() { return dailyFlyDate; }
+    public void setDailyFlyDate(String dailyFlyDate) { this.dailyFlyDate = dailyFlyDate; }
 
     public int getConsumedFreezesThisVote() { return consumedFreezesThisVote; }
     public void setConsumedFreezesThisVote(int consumedFreezesThisVote) { this.consumedFreezesThisVote = consumedFreezesThisVote; }
