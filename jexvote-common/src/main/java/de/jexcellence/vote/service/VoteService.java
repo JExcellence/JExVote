@@ -217,6 +217,8 @@ public class VoteService {
                 if (flyGranted) {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
                             "jexoneblock flytime " + onlinePlayer.getName() + " 15");
+                    R18nManager.getInstance().msg("vote.daily-fly").prefix()
+                            .send(onlinePlayer);
                 }
                 if (rewardService.hasGuaranteedRewards()) {
                     broadcastService.notifyGuaranteedReward(onlinePlayer);

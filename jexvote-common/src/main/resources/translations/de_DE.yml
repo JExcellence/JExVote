@@ -26,6 +26,7 @@ vote:
     not_enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Du brauchst</red> <gradient:#d8b4fe:#9333ea>{cost} Vote-Punkte</gradient><red>, um einen Streak-Freeze zu kaufen.</red>'
     no_profile: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote mindestens einmal, bevor du einen Streak-Freeze kaufst.</red>'
     error: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Kauf konnte nicht abgeschlossen werden. Versuche es erneut.</red>'
+  daily-fly: '<gradient:#7CFFCB:#2DD4BF>✈ Täglicher Flug!</gradient> <gray>Du hast</gray> <white>15 Min</white> <gray>Flugzeit fürs Voten heute erhalten.</gray>'
   gift:
     usage: '<dark_gray>▸</dark_gray> <gray>Verwendung:</gray> <gradient:#86efac:#16a34a>/vote gift <white><Spieler|random></white></gradient>'
     sent: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Du hast</gray> <gradient:#86efac:#16a34a>{target}</gradient> <gray>einen Serien-Fortschritt geschenkt! Serie:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient> <dark_gray>(</dark_gray><white>{remaining} Geschenk(e) heute übrig</white><dark_gray>)</dark_gray>'

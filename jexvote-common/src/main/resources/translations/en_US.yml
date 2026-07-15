@@ -26,6 +26,7 @@ vote:
     not_enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You need</red> <gradient:#d8b4fe:#9333ea>{cost} vote points</gradient> <red>to buy a Streak Freeze.</red>'
     no_profile: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote at least once before buying a Streak Freeze.</red>'
     error: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Could not complete the purchase. Try again.</red>'
+  daily-fly: '<gradient:#7CFFCB:#2DD4BF>✈ Daily Flight!</gradient> <gray>You received</gray> <white>15 min</white> <gray>fly time for voting today.</gray>'
   gift:
     usage: '<dark_gray>▸</dark_gray> <gray>Usage:</gray> <gradient:#86efac:#16a34a>/vote gift <white><player|random></white></gradient>'
     sent: '<gradient:#86efac:#16a34a>✔</gradient> <gray>You gifted a streak advance to</gray> <gradient:#86efac:#16a34a>{target}</gradient><gray>! Their streak:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient> <dark_gray>(</dark_gray><white>{remaining} gift(s) left today</white><dark_gray>)</dark_gray>'
