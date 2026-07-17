@@ -20,4 +20,13 @@ public interface VoteProvider {
     CompletableFuture<List<VoteSnapshot>> getTopVoters(int limit);
 
     CompletableFuture<List<VoteSnapshot>> getMonthlyTopVoters(int limit);
+
+    /**
+     * Live vote-party progress as {@code {current, target}}. Returns {@code {0, 0}}
+     * when no party is active or the feature is disabled. Synchronous — reads an
+     * in-memory counter, so it's safe to call from a render/tick.
+     */
+    default int[] getVotePartyProgress() {
+        return new int[]{0, 0};
+    }
 }

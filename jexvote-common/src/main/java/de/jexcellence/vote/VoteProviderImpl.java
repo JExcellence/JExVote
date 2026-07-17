@@ -34,6 +34,11 @@ public class VoteProviderImpl implements VoteProvider {
     }
 
     @Override
+    public int[] getVotePartyProgress() {
+        return voteService.votePartyProgress();
+    }
+
+    @Override
     public CompletableFuture<Boolean> submitVote(@NotNull String playerName, @NotNull String serviceName) {
         Vote vote = new Vote(playerName, serviceName, "api", Instant.now());
         return voteService.processVote(vote);

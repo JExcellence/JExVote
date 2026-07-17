@@ -111,6 +111,13 @@ public class VoteService {
         this.freezeSettings.set(freezeSettings);
     }
 
+    /** Live vote-party progress as {@code {current, target}}; {@code {0,0}} when no party service. */
+    public int[] votePartyProgress() {
+        return votePartyService == null
+                ? new int[]{0, 0}
+                : new int[]{votePartyService.currentVotes(), votePartyService.targetVotes()};
+    }
+
     public @NotNull CompletableFuture<Boolean> processVote(@NotNull Vote vote) {
         return CompletableFuture.supplyAsync(() -> {
             try {

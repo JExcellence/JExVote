@@ -74,6 +74,12 @@ public class VotePartyService {
     private final AtomicInteger currentVotes = new AtomicInteger(0);
     private final AtomicInteger targetVotes = new AtomicInteger(0);
 
+    /** Current votes toward the active party. */
+    public int currentVotes() { return currentVotes.get(); }
+
+    /** Target votes for the active party (0 when none). */
+    public int targetVotes() { return targetVotes.get(); }
+
     @SuppressWarnings("java:S107")
     public VotePartyService(@NotNull JavaPlugin plugin,
                             @NotNull VotePartyRepository partyRepository,
