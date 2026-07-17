@@ -35,6 +35,7 @@ public class VoteRewardService {
     private final List<String> commandsOnVote;
     private final MultiplierService multiplierService;
     private volatile boolean manualStreakClaim;
+    private volatile boolean streaksEnabled = true;
 
     @SuppressWarnings("java:S107")
     public VoteRewardService(@NotNull Logger logger,
@@ -78,7 +79,7 @@ public class VoteRewardService {
         grantAll(guaranteedRewards, player, multiplier);
         grantAll(siteRewards.getOrDefault(serviceName.toLowerCase(), List.of()), player, multiplier);
 
-        if (!manualStreakClaim) {
+        if (streaksEnabled && !manualStreakClaim) {
             grantAll(streakRewards.getOrDefault(currentStreak, List.of()), player, multiplier);
         }
 
@@ -151,7 +152,7 @@ public class VoteRewardService {
             siteRewards.getOrDefault(serviceName.toLowerCase(), List.of())
                     .forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
 
-            if (!manualStreakClaim) {
+            if (streaksEnabled && !manualStreakClaim) {
                 streakRewards.getOrDefault(currentStreak, List.of())
                         .forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
             }
@@ -285,6 +286,10 @@ public class VoteRewardService {
 
     public void setManualStreakClaim(boolean manualStreakClaim) {
         this.manualStreakClaim = manualStreakClaim;
+    }
+
+    public void setStreaksEnabled(boolean streaksEnabled) {
+        this.streaksEnabled = streaksEnabled;
     }
 
     /**

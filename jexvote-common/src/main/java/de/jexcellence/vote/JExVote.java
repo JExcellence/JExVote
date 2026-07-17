@@ -305,6 +305,7 @@ public abstract class JExVote {
 
         boolean manualClaim = voteConfig.getStreakClaimMode() == VoteConfig.StreakClaimMode.MANUAL;
         rewardService.setManualStreakClaim(manualClaim);
+        rewardService.setStreaksEnabled(voteConfig.isFeatureStreaks());
 
         streakClaimService = new StreakClaimService(
                 plugin, claimedStreakRepository, playerRepository, rewardService);
@@ -475,7 +476,7 @@ public abstract class JExVote {
     private void registerViews() {
         var pm = Bukkit.getPluginManager();
 
-        overviewView = new VoteOverviewView(plugin, voteService);
+        overviewView = new VoteOverviewView(plugin, voteService, voteConfig);
         leaderboardView = new VoteLeaderboardView(plugin, leaderboardService);
         var streakView = new VoteStreakView(plugin, voteService, rewardService, streakClaimService);
         rewardsView = new VoteRewardsView(plugin, voteConfig, rewardConfig,

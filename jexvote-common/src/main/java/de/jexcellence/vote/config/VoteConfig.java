@@ -117,6 +117,11 @@ public final class VoteConfig {
 
     private VoteRestApiConfig restApiConfig = VoteRestApiConfig.DISABLED;
 
+    private boolean featureStreaks = true;
+    private boolean featureShop = true;
+    private boolean featureLeaderboard = true;
+    private boolean featureEffects = true;
+
     public VoteConfig(@NotNull JavaPlugin plugin) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
@@ -167,7 +172,15 @@ public final class VoteConfig {
         loadVoteGift(config);
         loadBedrock(config);
         loadRestApi(config);
+        loadFeatureToggles(config);
         loadVoteSites();
+    }
+
+    private void loadFeatureToggles(@NotNull YamlConfiguration config) {
+        featureStreaks = config.getBoolean("features.streaks", true);
+        featureShop = config.getBoolean("features.shop", true);
+        featureLeaderboard = config.getBoolean("features.leaderboard", true);
+        featureEffects = config.getBoolean("features.effects", true);
     }
 
     /**
@@ -377,4 +390,8 @@ public final class VoteConfig {
     public @NotNull BedrockSettings getBedrockSettings() { return bedrockSettings; }
     public @NotNull FreezeSettings getFreezeSettings() { return freezeSettings; }
     public @NotNull GiftSettings getGiftSettings() { return giftSettings; }
+    public boolean isFeatureStreaks() { return featureStreaks; }
+    public boolean isFeatureShop() { return featureShop; }
+    public boolean isFeatureLeaderboard() { return featureLeaderboard; }
+    public boolean isFeatureEffects() { return featureEffects; }
 }

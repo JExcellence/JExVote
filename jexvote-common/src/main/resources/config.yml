@@ -5,6 +5,23 @@
 # ║  support (v1 RSA + v2 HMAC). No NuVotifier needed.          ║
 # ╚═══════════════════════════════════════════════════════════════╝
 
+# ── Feature Toggles ─────────────────────────────────────────────
+# Master switches for optional subsystems. Disable a feature to hide
+# its GUI navigation and stop its processing entirely. Edition-level
+# gates (Free vs Premium) still apply on top of these.
+features:
+  # Vote streak tracking (streak counter, milestone rewards, streak
+  # GUI tab). When disabled: votes still count and grant default
+  # rewards, but no streak counter is maintained, the streak nav
+  # button is hidden, and streak-rewards in rewards.yml are ignored.
+  streaks: true
+  # Vote-token shop (/vote shop, shop nav button in overview GUI).
+  shop: true
+  # Leaderboard GUI (/vote top opens a GUI instead of text-only).
+  leaderboard: true
+  # Vote effects (sounds and titles on vote / streak / milestone).
+  effects: true
+
 # ── Votifier Server ─────────────────────────────────────────────
 # The built-in vote receiver. Compatible with all vote sites
 # that support the Votifier or NuVotifier protocol.

@@ -3,6 +3,7 @@ package de.jexcellence.vote.view;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jexplatform.utility.item.HeadBuilder;
 import de.jexcellence.jexplatform.utility.item.ItemBuilder;
+import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.VoteService;
 import net.kyori.adventure.text.Component;
@@ -79,6 +80,7 @@ public class VoteOverviewView extends VoteBaseView {
     private final Holder holder = new Holder();
     private final VoteService voteService;
     private final PlatformScheduler scheduler;
+    private final VoteConfig voteConfig;
 
     private VoteLeaderboardView leaderboardView;
     private VoteStreakView streakView;
@@ -86,8 +88,10 @@ public class VoteOverviewView extends VoteBaseView {
     private VoteShopView shopView;
 
     public VoteOverviewView(@NotNull JavaPlugin plugin,
-                            @NotNull VoteService voteService) {
+                            @NotNull VoteService voteService,
+                            @NotNull VoteConfig voteConfig) {
         this.voteService = voteService;
+        this.voteConfig = voteConfig;
         this.scheduler = PlatformScheduler.of(plugin);
     }
 
@@ -161,10 +165,16 @@ public class VoteOverviewView extends VoteBaseView {
 
         // ── Bottom nav (slots 45/46/48/50/52) ──────────────────────
         inv.setItem(SLOT_CLOSE, closeButton());
-        inv.setItem(SLOT_NAV_LB, navTile(viewer, Material.GOLD_BLOCK, "vote_overview.nav.leaderboard", TAG_LEADERBOARD));
-        inv.setItem(SLOT_NAV_STREAKS, navTile(viewer, Material.MAGMA_CREAM, "vote_overview.nav.streaks", TAG_STREAKS));
+        if (voteConfig.isFeatureLeaderboard()) {
+            inv.setItem(SLOT_NAV_LB, navTile(viewer, Material.GOLD_BLOCK, "vote_overview.nav.leaderboard", TAG_LEADERBOARD));
+        }
+        if (voteConfig.isFeatureStreaks()) {
+            inv.setItem(SLOT_NAV_STREAKS, navTile(viewer, Material.MAGMA_CREAM, "vote_overview.nav.streaks", TAG_STREAKS));
+        }
         inv.setItem(SLOT_NAV_REWARDS, navTile(viewer, Material.SPONGE, "vote_overview.nav.rewards", TAG_REWARDS));
-        inv.setItem(SLOT_NAV_SHOP, navTile(viewer, Material.EMERALD_BLOCK, "vote_overview.nav.shop", TAG_SHOP));
+        if (voteConfig.isFeatureShop()) {
+            inv.setItem(SLOT_NAV_SHOP, navTile(viewer, Material.EMERALD_BLOCK, "vote_overview.nav.shop", TAG_SHOP));
+        }
     }
 
     // ── Tile builders ────────────────────────────────────────────────

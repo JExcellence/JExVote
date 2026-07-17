@@ -16,47 +16,81 @@
 # ╚═══════════════════════════════════════════════════════════════╝
 
 sites:
-  # ── Example: minecraft-server-list.com ────────────────────────
-  # This site sends "MCSL" as service-name, NOT the full URL.
-  # It resets votes daily at 00:00 UTC.
   minecraft-server-list:
     display-name: 'Minecraft Server List'
     service-name: 'MCSL'
     vote-url: 'https://minecraft-server-list.com/server/520312/vote/'
-    # This site resets at midnight UTC
     daily-reset: '00:00'
     timezone: 'UTC'
     points-per-vote: 1
 
-  # ── Example: rolling cooldown site ────────────────────────────
-  # Some sites use a 24h rolling window from your last vote.
-  # topg:
-  #   display-name: 'TopG'
-  #   service-name: 'TopG.org'
-  #   vote-url: 'https://topg.org/minecraft-servers/server-YOUR_ID'
-  #   cooldown-minutes: 1440
-  #   points-per-vote: 1
+  minecraft-pocket-servers:
+    display-name: 'MinecraftPocket Servers'
+    service-name: 'MinecraftPocket-Servers.com'
+    vote-url: 'https://minecraftpocket-servers.com/server/133747/'
+    daily-reset: '00:00'
+    timezone: 'UTC'
+    points-per-vote: 1
 
-  # planet-minecraft:
-  #   display-name: 'Planet Minecraft'
-  #   service-name: 'PlanetMinecraft'
-  #   vote-url: 'https://www.planetminecraft.com/server/YOUR_SERVER/vote/'
-  #   cooldown-minutes: 1440
-  #   points-per-vote: 1
+  topg:
+    display-name: 'TopG'
+    service-name: 'TopG.org'
+    vote-url: 'https://topg.org/minecraft-servers/server-684134'
+    cooldown-minutes: 1440
+    points-per-vote: 1
 
-  # ── Czech/Slovak vote sites ───────────────────────────────────
-  # mcservery:
-  #   display-name: 'MC Servery'
-  #   service-name: 'mcservery.one'
-  #   vote-url: 'https://mcservery.one/vote/your-server'
-  #   daily-reset: '00:00'
-  #   timezone: 'Europe/Prague'
-  #   points-per-vote: 1
+  minecraft-mp:
+    display-name: 'Minecraft-MP'
+    service-name: 'Minecraft-MP.com'
+    vote-url: 'https://minecraft-mp.com/server/360836/vote/'
+    cooldown-minutes: 1440
+    points-per-vote: 1
 
-  # minecraft-list:
-  #   display-name: 'Minecraft List'
-  #   service-name: 'minecraft-list.cz'
-  #   vote-url: 'https://minecraft-list.cz/server/your-server/vote'
-  #   daily-reset: '00:00'
-  #   timezone: 'Europe/Prague'
-  #   points-per-vote: 1
+  minecraft-serverlist:
+    display-name: 'Minecraft Serverlist'
+    service-name: 'Minecraft-Serverlist.com'
+    vote-url: 'https://minecraft-serverlist.com/server/5753/vote'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  serverliste:
+    display-name: 'Serverliste'
+    service-name: 'Serverliste.net'
+    vote-url: 'https://serverliste.net/vote/5621'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  minecraftservery:
+    display-name: 'MinecraftSevery'
+    service-name: 'MinecraftSevery.eu'
+    vote-url: 'https://minecraftservery.eu/server/mythblockme/vote'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  minecraft-server:
+    display-name: 'Minecraft-Serverliste'
+    service-name: 'Minecraft-Serverliste.eu'
+    vote-url: 'https://minecraft-server.eu/vote/index/239F1'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  minecraft-servers:
+    display-name: 'Minecraft-Servers'
+    service-name: 'Minecraft-Servers.de'
+    vote-url: 'https://minecraft-servers.de/server/mythblock/vote'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  findmcserver:
+    display-name: 'FindMCServer'
+    service-name: 'FindMCServer.com'
+    vote-url: 'https://findmcserver.com/server/ttQ1PVlRNY'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  mcstat:
+    display-name: 'MCStat'
+    service-name: 'MCStat'
+    vote-url: 'https://mcstat.org/de/servers/mythblockme'
+    cooldown-minutes: 1440
+    points-per-vote: 1

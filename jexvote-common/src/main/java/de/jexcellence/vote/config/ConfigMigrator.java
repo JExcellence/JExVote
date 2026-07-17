@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -89,18 +90,25 @@ public final class ConfigMigrator {
     }
 
     /**
-     * Copies every default key absent from {@code user}. Values are written in a
-     * first pass (which implicitly creates parent sections); comments are copied
-     * in a second pass once those sections exist.
+     * Copies every default key absent from {@code user}, but only under
+     * top-level sections that already exist in the user's file. If the
+     * operator intentionally removed an entire top-level section (e.g.
+     * {@code streak-rewards} from {@code rewards.yml}), its keys will
+     * NOT be re-injected.
      *
      * @return the number of leaf values added
      */
     private static int mergeMissingKeys(@NotNull YamlConfiguration user,
                                         @NotNull YamlConfiguration defaults) {
+        Set<String> userTopLevel = user.getKeys(false);
+
         List<String> missing = new ArrayList<>();
         for (String key : defaults.getKeys(true)) {
             if (!user.contains(key)) {
-                missing.add(key);
+                String topLevel = key.contains(".") ? key.substring(0, key.indexOf('.')) : key;
+                if (userTopLevel.contains(topLevel)) {
+                    missing.add(key);
+                }
             }
         }
 

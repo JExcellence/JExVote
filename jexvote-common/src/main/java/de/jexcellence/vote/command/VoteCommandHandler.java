@@ -33,6 +33,7 @@ public final class VoteCommandHandler {
 
     private final VoteService voteService;
     private final VoteLeaderboardService leaderboardService;
+    private final VoteConfig voteConfig;
     private final VoteOverviewView overviewView;
     private final VoteRewardsView rewardsView;
     private final VoteLeaderboardView leaderboardView;
@@ -40,7 +41,7 @@ public final class VoteCommandHandler {
     private final VoteGiftService voteGiftService;
     private VoteShopView shopView;
 
-    @SuppressWarnings({"unused", "java:S107"}) // voteConfig kept for caller compatibility; handled separately in JExVote
+    @SuppressWarnings("java:S107")
     public VoteCommandHandler(@NotNull VoteService voteService,
                               @NotNull VoteLeaderboardService leaderboardService,
                               @NotNull VoteConfig voteConfig,
@@ -51,6 +52,7 @@ public final class VoteCommandHandler {
                               @NotNull VoteGiftService voteGiftService) {
         this.voteService = voteService;
         this.leaderboardService = leaderboardService;
+        this.voteConfig = voteConfig;
         this.overviewView = overviewView;
         this.rewardsView = rewardsView;
         this.leaderboardView = leaderboardView;
@@ -81,7 +83,7 @@ public final class VoteCommandHandler {
             r18n().msg("vote.shop.players_only").prefix().send(ctx.sender());
             return;
         }
-        if (shopView == null) {
+        if (!voteConfig.isFeatureShop() || shopView == null) {
             r18n().msg("vote.shop.unavailable").prefix().send(player);
             return;
         }
@@ -261,8 +263,7 @@ public final class VoteCommandHandler {
 
     private void onTop(@NotNull CommandContext ctx) {
         Player self = ctx.asPlayer().orElse(null);
-        // Players get the leaderboard GUI; console falls back to the text list.
-        if (self != null) {
+        if (self != null && voteConfig.isFeatureLeaderboard()) {
             leaderboardView.open(self);
             return;
         }
