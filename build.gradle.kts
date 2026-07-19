@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "de.jexcellence.vote"
-version = "3.1.1"
+version = "3.2.5"
 description = "JExVote - All-in-one vote listener, reward & leaderboard system"
 
 ext["vendor"] = "JExcellence"

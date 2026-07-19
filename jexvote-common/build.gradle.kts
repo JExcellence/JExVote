@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "de.jexcellence.vote"
-version = "3.1.1"
+version = "3.2.5"
 description = "JExVote Common - Shared library for JExVote"
 
 dependenciesYml {
