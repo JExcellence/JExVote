@@ -56,6 +56,7 @@ public class VoteService {
     private volatile int recordRetentionDays;
     private final AtomicReference<VoteConfig.FreezeSettings> freezeSettings;
     private final VoteConfig.BedrockSettings bedrockSettings;
+    private final VoteConfig.DailyFlySettings dailyFly;
 
     // Configuration group — suppressed (S107)
     @SuppressWarnings("java:S107")
@@ -72,7 +73,8 @@ public class VoteService {
                        @NotNull Map<Integer, List<String>> streakCommands,
                        int recordRetentionDays,
                        @NotNull VoteConfig.FreezeSettings freezeSettings,
-                       @NotNull VoteConfig.BedrockSettings bedrockSettings) {
+                       @NotNull VoteConfig.BedrockSettings bedrockSettings,
+                       @NotNull VoteConfig.DailyFlySettings dailyFly) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
         this.scheduler = PlatformScheduler.of(plugin);
@@ -89,6 +91,7 @@ public class VoteService {
         this.recordRetentionDays = recordRetentionDays;
         this.freezeSettings = new AtomicReference<>(freezeSettings);
         this.bedrockSettings = bedrockSettings;
+        this.dailyFly = dailyFly;
     }
 
     /**
@@ -223,7 +226,7 @@ public class VoteService {
                 broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
                 if (flyGranted) {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                            "jexoneblock flycoupon " + onlinePlayer.getName() + " 15");
+                            "jexoneblock flycoupon " + onlinePlayer.getName() + " " + dailyFly.minutes());
                     R18nManager.getInstance().msg("vote.daily-fly").prefix()
                             .send(onlinePlayer);
                 }
@@ -477,6 +480,9 @@ public class VoteService {
     }
 
     private boolean grantDailyFlyIfEligible(@NotNull VotePlayerEntity player) {
+        if (!dailyFly.enabled()) {
+            return false;
+        }
         String today = LocalDate.now(ZoneId.systemDefault()).toString();
         if (today.equals(player.getDailyFlyDate())) {
             return false;

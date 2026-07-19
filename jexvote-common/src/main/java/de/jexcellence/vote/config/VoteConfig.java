@@ -81,6 +81,14 @@ public final class VoteConfig {
      */
     public record BedrockSettings(@NotNull String namePrefix, boolean replaceSpaces) {}
 
+    /**
+     * Daily first-vote flight reward.
+     *
+     * @param enabled whether the first vote of the day grants a fly coupon
+     * @param minutes flight minutes the coupon grants
+     */
+    public record DailyFlySettings(boolean enabled, int minutes) {}
+
     private final JavaPlugin plugin;
     private final Logger logger;
 
@@ -114,6 +122,7 @@ public final class VoteConfig {
     private GiftSettings giftSettings =
             new GiftSettings(true, 1, true, ZoneId.of("UTC"));
     private BedrockSettings bedrockSettings = new BedrockSettings("!", true);
+    private DailyFlySettings dailyFlySettings = new DailyFlySettings(true, 15);
 
     private VoteRestApiConfig restApiConfig = VoteRestApiConfig.DISABLED;
 
@@ -229,6 +238,9 @@ public final class VoteConfig {
         String prefix = config.getString("bedrock.name-prefix", "!");
         boolean replaceSpaces = config.getBoolean("bedrock.replace-spaces", true);
         bedrockSettings = new BedrockSettings(prefix == null ? "" : prefix, replaceSpaces);
+        dailyFlySettings = new DailyFlySettings(
+                config.getBoolean("vote-gift.daily-fly.enabled", true),
+                Math.max(1, config.getInt("vote-gift.daily-fly.minutes", 15)));
     }
 
     private void loadVoteGift(@NotNull YamlConfiguration config) {
@@ -388,6 +400,7 @@ public final class VoteConfig {
     public boolean isVotePartyEnabled() { return votePartyEnabled; }
     public int getVotePartyTarget() { return votePartyTarget; }
     public @NotNull BedrockSettings getBedrockSettings() { return bedrockSettings; }
+    public @NotNull DailyFlySettings getDailyFlySettings() { return dailyFlySettings; }
     public @NotNull FreezeSettings getFreezeSettings() { return freezeSettings; }
     public @NotNull GiftSettings getGiftSettings() { return giftSettings; }
     public boolean isFeatureStreaks() { return featureStreaks; }

@@ -184,7 +184,12 @@ bedrock:
   replace-spaces: true
 
 vote-gift:
-  # Master switch.
+  # Daily first-vote flight reward: the first vote of each day grants a
+  # fly-time coupon (delivered as a dupe-proof item, redeemed for island flight).
+  daily-fly:
+    enabled: true
+    minutes: 15
+  # Master switch (player-to-player gifting below).
   enabled: true
   # Gifts a player may send per day. A player with 'jexvote.gift.daily.<n>'
   # may send up to <n> instead (the highest matching node wins).

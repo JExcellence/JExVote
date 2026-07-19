@@ -340,7 +340,8 @@ public abstract class JExVote {
                 voteConfig.getStreakCommands(),
                 voteConfig.getRecordRetentionDays(),
                 voteConfig.getFreezeSettings(),
-                voteConfig.getBedrockSettings());
+                voteConfig.getBedrockSettings(),
+                voteConfig.getDailyFlySettings());
 
         streakFreezeService = new StreakFreezeService(playerRepository, voteConfig);
         voteGiftService = new VoteGiftService(playerRepository, voteConfig);
