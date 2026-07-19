@@ -123,6 +123,7 @@ public final class VoteConfig {
             new GiftSettings(true, 1, true, ZoneId.of("UTC"));
     private BedrockSettings bedrockSettings = new BedrockSettings("!", true);
     private DailyFlySettings dailyFlySettings = new DailyFlySettings(true, 15);
+    private List<String> dailyRewardCommands = List.of();
 
     private VoteRestApiConfig restApiConfig = VoteRestApiConfig.DISABLED;
 
@@ -241,6 +242,7 @@ public final class VoteConfig {
         dailyFlySettings = new DailyFlySettings(
                 config.getBoolean("vote-gift.daily-fly.enabled", true),
                 Math.max(1, config.getInt("vote-gift.daily-fly.minutes", 15)));
+        dailyRewardCommands = List.copyOf(config.getStringList("vote-gift.daily-reward.commands"));
     }
 
     private void loadVoteGift(@NotNull YamlConfiguration config) {
@@ -401,6 +403,7 @@ public final class VoteConfig {
     public int getVotePartyTarget() { return votePartyTarget; }
     public @NotNull BedrockSettings getBedrockSettings() { return bedrockSettings; }
     public @NotNull DailyFlySettings getDailyFlySettings() { return dailyFlySettings; }
+    public @NotNull List<String> getDailyRewardCommands() { return dailyRewardCommands; }
     public @NotNull FreezeSettings getFreezeSettings() { return freezeSettings; }
     public @NotNull GiftSettings getGiftSettings() { return giftSettings; }
     public boolean isFeatureStreaks() { return featureStreaks; }

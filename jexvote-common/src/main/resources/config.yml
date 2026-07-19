@@ -189,6 +189,15 @@ vote-gift:
   daily-fly:
     enabled: true
     minutes: 15
+  # Optional daily first-vote reward: console commands run once on the first vote
+  # of the day (alongside daily-fly). {player} is replaced with the voter's name.
+  # Leave the list empty to disable — nothing runs when unset.
+  daily-reward:
+    commands: []
+    # Example:
+    # commands:
+    #   - "crates givekey {player} VoteCrate 1"
+    #   - "eco give {player} 500"
   # Master switch (player-to-player gifting below).
   enabled: true
   # Gifts a player may send per day. A player with 'jexvote.gift.daily.<n>'

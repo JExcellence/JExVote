@@ -57,6 +57,7 @@ public class VoteService {
     private final AtomicReference<VoteConfig.FreezeSettings> freezeSettings;
     private final VoteConfig.BedrockSettings bedrockSettings;
     private final VoteConfig.DailyFlySettings dailyFly;
+    private final List<String> dailyRewardCommands;
 
     // Configuration group — suppressed (S107)
     @SuppressWarnings("java:S107")
@@ -74,7 +75,8 @@ public class VoteService {
                        int recordRetentionDays,
                        @NotNull VoteConfig.FreezeSettings freezeSettings,
                        @NotNull VoteConfig.BedrockSettings bedrockSettings,
-                       @NotNull VoteConfig.DailyFlySettings dailyFly) {
+                       @NotNull VoteConfig.DailyFlySettings dailyFly,
+                       @NotNull List<String> dailyRewardCommands) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
         this.scheduler = PlatformScheduler.of(plugin);
@@ -92,6 +94,7 @@ public class VoteService {
         this.freezeSettings = new AtomicReference<>(freezeSettings);
         this.bedrockSettings = bedrockSettings;
         this.dailyFly = dailyFly;
+        this.dailyRewardCommands = dailyRewardCommands;
     }
 
     /**
@@ -219,16 +222,22 @@ public class VoteService {
         int freshFreezeGrant = player.getFreshFreezeGrant();
 
         if (onlinePlayer != null && onlinePlayer.isOnline()) {
-            boolean flyGranted = grantDailyFlyIfEligible(player);
+            boolean firstDailyBonus = claimDailyBonusIfFirstToday(player);
             scheduler.runAtEntity(onlinePlayer, () -> {
                 rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
                 executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
                 broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
-                if (flyGranted) {
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                            "jexoneblock flycoupon " + onlinePlayer.getName() + " " + dailyFly.minutes());
-                    R18nManager.getInstance().msg("vote.daily-fly").prefix()
-                            .send(onlinePlayer);
+                if (firstDailyBonus) {
+                    if (dailyFly.enabled()) {
+                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                                "jexoneblock flycoupon " + onlinePlayer.getName() + " " + dailyFly.minutes());
+                        R18nManager.getInstance().msg("vote.daily-fly").prefix()
+                                .send(onlinePlayer);
+                    }
+                    for (String command : dailyRewardCommands) {
+                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                                command.replace("{player}", onlinePlayer.getName()));
+                    }
                 }
                 if (rewardService.hasGuaranteedRewards()) {
                     broadcastService.notifyGuaranteedReward(onlinePlayer);
@@ -479,8 +488,14 @@ public class VoteService {
         });
     }
 
-    private boolean grantDailyFlyIfEligible(@NotNull VotePlayerEntity player) {
-        if (!dailyFly.enabled()) {
+    /**
+     * Marks (once per day) and returns whether this is the player's first vote of
+     * the day AND at least one daily bonus is configured — the fly coupon or the
+     * daily-reward commands. Shared gate for both: the date is only claimed when
+     * there's something to grant, so nothing fires when both are unset.
+     */
+    private boolean claimDailyBonusIfFirstToday(@NotNull VotePlayerEntity player) {
+        if (!dailyFly.enabled() && dailyRewardCommands.isEmpty()) {
             return false;
         }
         String today = LocalDate.now(ZoneId.systemDefault()).toString();
