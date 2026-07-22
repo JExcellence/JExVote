@@ -8,7 +8,6 @@ import de.jexcellence.jexplatform.JExPlatform;
 import de.jexcellence.jexplatform.logging.LogLevel;
 import de.jexcellence.jexplatform.reward.RewardRegistry;
 import de.jexcellence.jexplatform.reward.RewardType;
-import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.JExVoteAPI;
 import de.jexcellence.vote.command.R18nCommandMessages;
@@ -394,21 +393,13 @@ public abstract class JExVote {
                         voteService.processVote(result.vote()).whenComplete((success, error) -> {
                             if (error != null) {
                                 logger.log(Level.SEVERE, error, () -> String.format("Error processing vote for %s", result.vote().username()));
-                                return;
-                            }
-                            if (Boolean.TRUE.equals(success)) {
-                                PlatformScheduler.of(plugin).runSync(() -> {
-                                    var voter = Bukkit.getPlayerExact(result.vote().username());
-                                    voteService.getBroadcastService().broadcastVote(
-                                            result.vote().username(),
-                                            result.vote().serviceName(),
-                                            voter != null ? voter.getUniqueId() : null);
-                                });
-                            } else {
+                            } else if (!Boolean.TRUE.equals(success)) {
                                 logger.warning("Vote processing returned false for "
                                         + result.vote().username()
                                         + " on " + result.vote().serviceName());
                             }
+                            // The "{player} voted" broadcast now fires inside processVote,
+                            // so every ingestion path announces the voter — not just this one.
                         });
                     });
 

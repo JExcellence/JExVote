@@ -155,12 +155,26 @@ public class VoteService {
                 }
 
                 deliverOrQueueRewards(vote, uuid, player);
+                announceVote(vote, uuid);
                 return true;
             } catch (Exception e) {
                 logger.log(Level.SEVERE, e, () -> String.format("Failed to process vote for %s", vote.username()));
                 return false;
             }
         });
+    }
+
+    /**
+     * Fires the public "{player} voted" broadcast. Done here inside the shared
+     * {@code processVote} flow — not in a single ingestion callback — so every
+     * vote path announces the voter: the embedded Votifier server, the API
+     * provider (external NuVotifier / website), and the admin test command.
+     * Previously only the embedded server broadcast, so votes delivered through
+     * the provider granted rewards (the crate) but nobody saw who voted.
+     */
+    private void announceVote(@NotNull Vote vote, @NotNull UUID uuid) {
+        scheduler.runSync(() -> broadcastService.broadcastVote(
+                vote.username(), vote.serviceName(), uuid));
     }
 
     private boolean fireVoteReceivedEvent(@NotNull Vote vote, @NotNull UUID uuid) {
