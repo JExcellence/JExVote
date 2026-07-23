@@ -55,6 +55,8 @@ public class VotePartyService {
 
     private static final String PARTY_SERVICE_NAME = "VoteParty";
     private static final int ROLL_GUARD = 200;
+    /** Each party trigger drops this fraction fewer rewards (probabilistic extras shed first). */
+    private static final double PARTY_DROP_REDUCTION = 0.12;
 
     private final Logger logger;
     private final PlatformScheduler scheduler;
@@ -261,6 +263,14 @@ public class VotePartyService {
                 picks.add(pool.pick());
             }
             chance -= settings.extraStep();
+        }
+        // Trim the total by PARTY_DROP_REDUCTION so a party drops meaningfully fewer
+        // rewards per trigger (the live config tends to max the extras out). The
+        // probabilistic extras — appended after the guaranteed distinct picks — are
+        // shed first; guaranteed picks are only touched if the whole roll is tiny.
+        int keep = Math.max(1, (int) Math.round(picks.size() * (1.0 - PARTY_DROP_REDUCTION)));
+        if (keep < picks.size()) {
+            return new ArrayList<>(picks.subList(0, keep));
         }
         return picks;
     }
