@@ -130,6 +130,9 @@ vote_overview:
       - ''
       - '<dark_gray>┕ <gradient:#A5F3FC:#06B6D4>» Klicke für den Vote-Link</gradient>'
       - ''
+    status-checking: '<dark_gray>┃ <gray>Verfügbarkeit wird geprüft…</gray>'
+    status-ready: '<dark_gray>┃ <gradient:#86EFAC:#22C55E>✔ Jetzt abstimmbar!</gradient>'
+    status-cooldown: '<dark_gray>┃ <gradient:#F59E0B:#D97706>⏳ Wieder abstimmbar in {time}</gradient>'
   site-empty:
     name: '<dark_gray>· Leerer Platz'
     lore:

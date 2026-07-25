@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -340,6 +341,31 @@ public class VoteService {
 
     public @NotNull Map<String, VoteSite> getVoteSites() {
         return voteSites.get();
+    }
+
+    /**
+     * Seconds until each configured site is votable again for {@code uuid} (0 = votable
+     * now), keyed by service name. Computed from the player's last vote per site and each
+     * site's cooldown / daily-reset rule. One async query; used by the vote-list GUI to
+     * show a per-site "ready / available in …" status.
+     */
+    public @NotNull CompletableFuture<Map<String, Long>> voteCooldownsSeconds(@NotNull UUID uuid) {
+        Map<String, VoteSite> sites = getVoteSites();
+        return recordRepository.findByPlayer(uuid).thenApply(records -> {
+            Map<String, Long> latestEpoch = new HashMap<>();
+            for (VoteRecordEntity record : records) {
+                if (record.getServiceName() == null || record.getVotedAt() == null) {
+                    continue;
+                }
+                latestEpoch.merge(record.getServiceName(), record.getVotedAt().getEpochSecond(), Math::max);
+            }
+            Map<String, Long> remaining = new HashMap<>();
+            for (VoteSite site : sites.values()) {
+                long lastEpoch = latestEpoch.getOrDefault(site.serviceName(), 0L);
+                remaining.put(site.serviceName(), site.secondsUntilNextVote(lastEpoch));
+            }
+            return remaining;
+        });
     }
 
     public @NotNull VoteBroadcastService getBroadcastService() {

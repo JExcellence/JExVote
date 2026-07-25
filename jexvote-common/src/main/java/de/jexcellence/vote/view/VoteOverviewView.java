@@ -261,7 +261,7 @@ public class VoteOverviewView extends VoteBaseView {
             int siteIdx = start + i;
             int slot = SITE_SLOTS[i];
             if (siteIdx < sites.size()) {
-                inv.setItem(slot, siteTile(viewer, sites.get(siteIdx)));
+                inv.setItem(slot, siteTile(viewer, sites.get(siteIdx), -1L)); // -1 = loading
             } else {
                 inv.setItem(slot, emptySiteTile(viewer));
             }
@@ -274,22 +274,74 @@ public class VoteOverviewView extends VoteBaseView {
             inv.setItem(SLOT_PAGE_PREV, null);
             inv.setItem(SLOT_PAGE_NEXT, null);
         }
+
+        // Async: fill in each site's votable / "available again in …" status.
+        final int fPage = page;
+        final int fStart = start;
+        final int fTotalPages = totalPages;
+        voteService.voteCooldownsSeconds(viewer.getUniqueId()).thenAccept(cooldowns ->
+                scheduler.runAtEntity(viewer, () -> {
+                    Inventory top = viewer.getOpenInventory().getTopInventory();
+                    if (top.getHolder() != holder) {
+                        return; // GUI closed
+                    }
+                    if (clampPage(sitePage.getOrDefault(viewer.getUniqueId(), 0), fTotalPages) != fPage) {
+                        return; // player paged away before async returned
+                    }
+                    for (int i = 0; i < SITES_PER_PAGE; i++) {
+                        int siteIdx = fStart + i;
+                        if (siteIdx < sites.size()) {
+                            VoteSite site = sites.get(siteIdx);
+                            long secs = cooldowns.getOrDefault(site.serviceName(), 0L);
+                            top.setItem(SITE_SLOTS[i], siteTile(viewer, site, secs));
+                        }
+                    }
+                }));
     }
 
-    private @NotNull ItemStack siteTile(@NotNull Player viewer, @NotNull VoteSite site) {
-        // Single material across every site so the gradient title does the
-        // visual differentiation (was a cycling array of arbitrary materials).
-        ItemStack tile = ItemBuilder.of(Material.PAPER)
+    /**
+     * @param secondsUntilNext -1 = still loading, 0 = votable now, &gt;0 = cooldown seconds.
+     *                         Drives the votable/cooldown status line + a green ready icon.
+     */
+    private @NotNull ItemStack siteTile(@NotNull Player viewer, @NotNull VoteSite site, long secondsUntilNext) {
+        boolean ready = secondsUntilNext == 0;
+        List<Component> lore = new ArrayList<>(plain(msg("vote_overview.site.lore")
+                .with("site", site.displayName())
+                .with("service", site.serviceName())
+                .with("points", String.valueOf(site.pointsPerVote()))
+                .toComponents(viewer)));
+        if (secondsUntilNext < 0) {
+            lore.add(plain(ic("vote_overview.site.status-checking", viewer)));
+        } else if (ready) {
+            lore.add(plain(ic("vote_overview.site.status-ready", viewer)));
+        } else {
+            lore.add(plain(msg("vote_overview.site.status-cooldown")
+                    .with("time", formatCooldown(secondsUntilNext)).itemComponent(viewer)));
+        }
+        // Green when ready to vote, plain paper while on cooldown (title gradient still
+        // differentiates each site).
+        ItemStack tile = ItemBuilder.of(ready ? Material.LIME_DYE : Material.PAPER)
                 .name(plain(msg("vote_overview.site.name")
                         .with("site", site.displayName()).itemComponent(viewer)))
-                .lore(plain(msg("vote_overview.site.lore")
-                        .with("site", site.displayName())
-                        .with("service", site.serviceName())
-                        .with("points", String.valueOf(site.pointsPerVote()))
-                        .toComponents(viewer)))
+                .glow(ready)
+                .lore(lore)
                 .build();
         tag(tile, TAG_SITE_PREFIX + site.serviceName());
         return tile;
+    }
+
+    /** Compact "2h 5m" / "45m" / "30s" cooldown display. */
+    private static @NotNull String formatCooldown(long seconds) {
+        long s = Math.max(0L, seconds);
+        long hours = s / 3600L;
+        long minutes = (s % 3600L) / 60L;
+        if (hours > 0) {
+            return minutes > 0 ? hours + "h " + minutes + "m" : hours + "h";
+        }
+        if (minutes > 0) {
+            return minutes + "m";
+        }
+        return s + "s";
     }
 
     private @NotNull ItemStack emptySiteTile(@NotNull Player viewer) {

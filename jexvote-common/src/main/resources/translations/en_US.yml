@@ -156,6 +156,9 @@ vote_overview:
       - ''
       - '<dark_gray>┕ <gradient:#A5F3FC:#06B6D4>» Click to open the vote link</gradient>'
       - ''
+    status-checking: '<dark_gray>┃ <gray>Checking availability…</gray>'
+    status-ready: '<dark_gray>┃ <gradient:#86EFAC:#22C55E>✔ Ready to vote now!</gradient>'
+    status-cooldown: '<dark_gray>┃ <gradient:#F59E0B:#D97706>⏳ Votable again in {time}</gradient>'
   site-empty:
     name: '<dark_gray>· Empty slot'
     lore:
