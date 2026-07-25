@@ -28,9 +28,11 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -58,6 +60,10 @@ public class VoteService {
     private final VoteConfig.BedrockSettings bedrockSettings;
     private final VoteConfig.DailyFlySettings dailyFly;
     private final List<String> dailyRewardCommands;
+
+    /** Duplicate-vote guard: same voter+service delivered again within this window is ignored. */
+    private static final long DEDUP_WINDOW_MS = 5_000L;
+    private final Map<String, Long> recentVotes = new ConcurrentHashMap<>();
 
     // Configuration group — suppressed (S107)
     @SuppressWarnings("java:S107")
@@ -128,6 +134,21 @@ public class VoteService {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 logger.info(String.format("Processing vote: %s / %s", vote.username(), vote.serviceName()));
+
+                // Duplicate-vote guard: some setups deliver the same vote twice (a second
+                // vote plugin also listening, a relay, or a site that re-sends). Without
+                // this every reward doubles — points, streak, and the first-of-day fly
+                // bonus (the reported 2×15m fly). ConcurrentHashMap.put is atomic, so of
+                // two racing duplicates exactly one proceeds.
+                String dedupeKey = vote.username().toLowerCase(Locale.ROOT) + '|'
+                        + vote.serviceName().toLowerCase(Locale.ROOT);
+                long nowMs = System.currentTimeMillis();
+                Long lastSeen = recentVotes.put(dedupeKey, nowMs);
+                if (lastSeen != null && nowMs - lastSeen < DEDUP_WINDOW_MS) {
+                    logger.warning(String.format("Duplicate vote ignored for %s / %s (re-delivered within %dms)",
+                            vote.username(), vote.serviceName(), DEDUP_WINDOW_MS));
+                    return false;
+                }
 
                 UUID uuid = resolveUuid(vote.username());
                 if (uuid == null) {
