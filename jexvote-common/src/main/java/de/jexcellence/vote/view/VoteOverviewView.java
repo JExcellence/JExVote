@@ -3,6 +3,7 @@ package de.jexcellence.vote.view;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jexplatform.utility.item.HeadBuilder;
 import de.jexcellence.jexplatform.utility.item.ItemBuilder;
+import de.jexcellence.vote.api.event.VoteRewardClaimedEvent;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.VoteService;
@@ -10,8 +11,10 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -481,6 +484,23 @@ public class VoteOverviewView extends VoteBaseView {
     /**
      * Inventory holder for the overview view.
      */
+    /**
+     * Live-refresh the site tiles when the viewer's own vote lands, so the site they just
+     * voted on flips to its cooldown status immediately instead of only on the next reopen.
+     */
+    @EventHandler
+    public void onVoteRewardClaimed(@NotNull VoteRewardClaimedEvent event) {
+        Player player = Bukkit.getPlayer(event.getPlayerUuid());
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+        Inventory top = player.getOpenInventory().getTopInventory();
+        if (top.getHolder() != holder) {
+            return; // overview not open for this player
+        }
+        renderSites(top, player);
+    }
+
     private static final class Holder implements InventoryHolder {
         @Override public @NotNull Inventory getInventory() {
             throw new UnsupportedOperationException();

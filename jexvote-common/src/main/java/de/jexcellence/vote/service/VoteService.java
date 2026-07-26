@@ -352,16 +352,20 @@ public class VoteService {
     public @NotNull CompletableFuture<Map<String, Long>> voteCooldownsSeconds(@NotNull UUID uuid) {
         Map<String, VoteSite> sites = getVoteSites();
         return recordRepository.findByPlayer(uuid).thenApply(records -> {
+            // Key by lowercased service name so a casing/whitespace mismatch between the
+            // recorded vote and the configured site (a common Votifier setup gotcha) still
+            // maps the vote to its site instead of showing "always votable".
             Map<String, Long> latestEpoch = new HashMap<>();
             for (VoteRecordEntity record : records) {
                 if (record.getServiceName() == null || record.getVotedAt() == null) {
                     continue;
                 }
-                latestEpoch.merge(record.getServiceName(), record.getVotedAt().getEpochSecond(), Math::max);
+                latestEpoch.merge(record.getServiceName().trim().toLowerCase(Locale.ROOT),
+                        record.getVotedAt().getEpochSecond(), Math::max);
             }
             Map<String, Long> remaining = new HashMap<>();
             for (VoteSite site : sites.values()) {
-                long lastEpoch = latestEpoch.getOrDefault(site.serviceName(), 0L);
+                long lastEpoch = latestEpoch.getOrDefault(site.serviceName().trim().toLowerCase(Locale.ROOT), 0L);
                 remaining.put(site.serviceName(), site.secondsUntilNextVote(lastEpoch));
             }
             return remaining;
