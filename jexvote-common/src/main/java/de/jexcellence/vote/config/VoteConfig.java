@@ -342,6 +342,15 @@ public final class VoteConfig {
 
             String displayName = siteSection.getString("display-name", id);
             String serviceName = siteSection.getString("service-name", id);
+            // A present-but-empty service-name (service-name: '' / left blank) otherwise
+            // slips through as "" — blanking the tile and making votes untrackable. Fall
+            // back to the site id so the display is never empty and there's a stable key.
+            if (serviceName == null || serviceName.isBlank()) {
+                serviceName = id;
+                logger.warning(String.format(
+                        "Vote site '%s' has an empty service-name — using the id. Set it to the "
+                        + "exact name the site's Votifier sends, or vote cooldowns can't track it.", id));
+            }
             String voteUrl = siteSection.getString("vote-url", null);
             int points = siteSection.getInt("points-per-vote", 1);
 
