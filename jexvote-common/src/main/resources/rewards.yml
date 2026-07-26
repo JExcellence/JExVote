@@ -15,7 +15,9 @@
 default-rewards:
   # Oneblock-relevant baseline: a little XP + coins into the economy every vote.
   vote-xp:    { type: xp,       amount: 35 }
-  vote-coins: { type: currency, currency: coins, amount: 800.0 }
+  # Nerfed after the Season-1 audit (voting was the #1 coin faucet, ~2.19M):
+  # base 800 -> 500 so mine->sell is the primary income, voting a solid bonus.
+  vote-coins: { type: currency, currency: coins, amount: 500.0 }
   # Vote Jackpot / "Lucky Vote" (live): every vote also rolls exactly ONE prize
   # from this weighted pool. Weights sum to EXACTLY 100, so each weight IS its
   # drop chance in %. Shown in /vote rewards with per-entry odds + drop counts
