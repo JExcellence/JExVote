@@ -8,6 +8,7 @@ import de.jexcellence.vote.command.help.HelpRenderer;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
 import de.jexcellence.vote.model.Vote;
+import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.MultiplierService;
 import de.jexcellence.vote.service.VoteService;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -56,8 +57,66 @@ public final class VoteAdminHandler {
                 Map.entry("jexvote.reset", this::onReset),
                 Map.entry("jexvote.resetmonthly", this::onResetMonthly),
                 Map.entry("jexvote.fakevote", this::onFakeVote),
-                Map.entry("jexvote.key", this::onKey)
+                Map.entry("jexvote.key", this::onKey),
+                Map.entry("jexvote.debug-services", this::onDebugServices)
         );
+    }
+
+    /**
+     * Prints, per configured site, its {@code service-name} and whether votes with that
+     * name have actually been received — then lists any received service names that match
+     * NO configured site (the mismatches to fix, so their cooldowns can track).
+     */
+    private void onDebugServices(@NotNull CommandContext ctx) {
+        var sender = ctx.sender();
+        Map<String, VoteSite> sites = voteService.getVoteSites();
+        voteService.receivedServiceNames().thenAccept(received -> {
+            sender.sendMessage(MM.deserialize(
+                    "<gradient:#fde047:#f59e0b><bold>Vote Service Diagnostics</bold></gradient>"));
+            java.util.Set<String> matched = new java.util.HashSet<>();
+            for (VoteSite site : sites.values()) {
+                long last = -1L;
+                for (Map.Entry<String, Long> rec : received.entrySet()) {
+                    if (rec.getKey().trim().equalsIgnoreCase(site.serviceName().trim())) {
+                        last = Math.max(last, rec.getValue());
+                        matched.add(rec.getKey());
+                    }
+                }
+                String status = last >= 0
+                        ? "<green>✓ receiving</green> <dark_gray>(last " + agoText(last) + ")</dark_gray>"
+                        : "<yellow>⚠ no votes recorded yet</yellow>";
+                sender.sendMessage(MM.deserialize("  <white>" + site.id() + "</white> <dark_gray>»</dark_gray> <aqua>'"
+                        + site.serviceName() + "'</aqua> <dark_gray>—</dark_gray> " + status));
+            }
+            boolean anyOrphan = false;
+            for (Map.Entry<String, Long> rec : received.entrySet()) {
+                if (matched.contains(rec.getKey())) {
+                    continue;
+                }
+                if (!anyOrphan) {
+                    sender.sendMessage(MM.deserialize(
+                            "<red>Received but matching NO site — set a site's service-name to one of these:</red>"));
+                    anyOrphan = true;
+                }
+                sender.sendMessage(MM.deserialize("  <red>✗</red> <white>'" + rec.getKey()
+                        + "'</white> <dark_gray>(last " + agoText(rec.getValue()) + ")</dark_gray>"));
+            }
+            if (!anyOrphan) {
+                sender.sendMessage(MM.deserialize("  <gray>All received votes map to a configured site.</gray>"));
+            }
+        });
+    }
+
+    /** Compact "3d ago" / "5h ago" / "12m ago" from an epoch-seconds timestamp. */
+    private static @NotNull String agoText(long epochSeconds) {
+        long secs = Math.max(0L, Instant.now().getEpochSecond() - epochSeconds);
+        if (secs >= 86400L) {
+            return (secs / 86400L) + "d ago";
+        }
+        if (secs >= 3600L) {
+            return (secs / 3600L) + "h ago";
+        }
+        return Math.max(1L, secs / 60L) + "m ago";
     }
 
     private void onHelp(@NotNull CommandContext ctx) {

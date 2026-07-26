@@ -349,6 +349,24 @@ public class VoteService {
      * site's cooldown / daily-reset rule. One async query; used by the vote-list GUI to
      * show a per-site "ready / available in …" status.
      */
+    /**
+     * Every distinct service name that has actually been <b>received</b> in a vote (as
+     * stored, un-normalised) → its most recent epoch-seconds. Used by the service
+     * diagnostics command to spot names that match no configured site's {@code service-name}.
+     */
+    public @NotNull CompletableFuture<Map<String, Long>> receivedServiceNames() {
+        return recordRepository.findAllAsync().thenApply(records -> {
+            Map<String, Long> out = new HashMap<>();
+            for (VoteRecordEntity record : records) {
+                if (record.getServiceName() == null || record.getVotedAt() == null) {
+                    continue;
+                }
+                out.merge(record.getServiceName(), record.getVotedAt().getEpochSecond(), Math::max);
+            }
+            return out;
+        });
+    }
+
     public @NotNull CompletableFuture<Map<String, Long>> voteCooldownsSeconds(@NotNull UUID uuid) {
         Map<String, VoteSite> sites = getVoteSites();
         return recordRepository.findByPlayer(uuid).thenApply(records -> {
