@@ -264,12 +264,9 @@ public class VoteService {
                 executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
                 broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
                 if (firstDailyBonus) {
-                    if (dailyFly.enabled()) {
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                                "jexoneblock flycoupon " + onlinePlayer.getName() + " " + dailyFly.minutes());
-                        R18nManager.getInstance().msg("vote.daily-fly").prefix()
-                                .send(onlinePlayer);
-                    }
+                    // Daily vote-fly is granted SOLELY by JExOneblock's
+                    // VoteFlyRewardListener now — granting it here too double-minted
+                    // a second 15-min coupon on the first vote each day.
                     for (String command : dailyRewardCommands) {
                         Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
                                 command.replace("{player}", onlinePlayer.getName()));
