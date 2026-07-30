@@ -162,9 +162,11 @@ streak-rewards:
     streak-3-xp:        { type: xp,       amount: 80 }
     streak-3-coins:     { type: currency, currency: coins, amount: 2000.0 }
     streak-3-crate:     { type: command,  command: 'ac virtualkey give {player} VoteCrate 1', asConsole: true }
-    # Island flight time — granted via the JExOneblock flytime command (clamped to
-    # the player's flytime cap). The recipient must be online when the streak fires.
-    streak-3-flytime:   { type: command,  command: 'jexoneblock flytime {player} 45', asConsole: true }
+    # Island flight time — handed out as physical, tradeable 15-minute fly-coupon
+    # items (here 3× 15m = 45m) rather than a direct bank grant, so nothing is
+    # silently lost to the flytime cap: the player redeems each coupon when they
+    # have room. Recipient must be online when the streak fires.
+    streak-3-flytime:   { type: command,  command: 'jexoneblock flycoupon {player} 15 3', asConsole: true }
     streak-3-iron:
       type: item
       material: IRON_INGOT
@@ -206,7 +208,7 @@ streak-rewards:
     streak-21-coins:    { type: currency, currency: coins, amount: 12000.0 }
     streak-21-void-key: { type: command,  command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
     streak-21-vote-key: { type: command,  command: 'ac virtualkey give {player} VoteCrate 5', asConsole: true }
-    streak-21-fly:      { type: command,  command: 'jexoneblock flytime {player} 30', asConsole: true }
+    streak-21-fly:      { type: command,  command: 'jexoneblock flycoupon {player} 15 2', asConsole: true }
     streak-21-diamonds: { type: item, material: DIAMOND, amount: 8 }
 
   # ── Day 30 · Legend ★ UNIQUE ────────────────────────────────────
@@ -517,14 +519,14 @@ vote-shop:
   # ── Island & flight ─────────────────────────────────────────────
   # Region auto-resolves to the player's island (capped server-side).
   fly-voucher:
-    name: "Flight Voucher"
+    name: "Flight Vouchers"
     icon: FEATHER
     cost: 18
     description:
-      - "<gray>Top up your island fly-time bank."
-      - "<gray>Perfect for a long build session."
-      - "<dark_gray>Grants: <white>30 minutes of flight"
-    reward: { type: command, command: 'jexoneblock flytime {player} 30', asConsole: true }
+      - "<gray>Tradeable island flight coupons."
+      - "<gray>Redeem each when you have room to spare."
+      - "<dark_gray>Grants: <white>2× 15-minute flight vouchers"
+    reward: { type: command, command: 'jexoneblock flycoupon {player} 15 2', asConsole: true }
     purchase-sound: ITEM_ELYTRA_FLYING
   island-radius-small:
     name: "Island Expansion +5"
