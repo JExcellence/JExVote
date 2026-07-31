@@ -245,7 +245,11 @@ public class VoteService {
         player.setTotalVotes(player.getTotalVotes() + 1);
         player.setMonthlyVotes(player.getMonthlyVotes() + 1);
         player.setVotePoints(player.getVotePoints() + scaledPoints);
-        player.setLastVoteAt(vote.timestamp());
+        Instant previous = player.getLastVoteAt();
+        Instant incoming = vote.timestamp();
+        if (previous == null || incoming.isAfter(previous)) {
+            player.setLastVoteAt(incoming);
+        }
         playerRepository.update(player);
     }
 
