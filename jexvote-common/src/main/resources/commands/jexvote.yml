@@ -37,6 +37,13 @@ subcommands:
   - name: key
     description: "Show the Votifier public key, PEM, port and token"
 
+  - name: setstreak
+    description: "Forcefully set a player's vote streak"
+    permission: "jexvote.command.admin.setstreak"
+    argumentSchema:
+      - { name: player, type: offline_player, required: true, description: "Player to modify" }
+      - { name: value, type: positive_long, required: true, description: "New streak value" }
+
   - name: debug-services
     description: "Diagnose vote-site service-names vs. what's actually been received"
     permission: "jexvote.command.admin"

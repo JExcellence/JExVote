@@ -60,6 +60,10 @@ vote:
   reset:
     success: '<green>Reset vote stats for <yellow>{player}<green>.'
     all_success: '<green>Reset monthly votes for all players.'
+  setstreak:
+    success: '<green>Vote streak for <yellow>{player} <green>set to <yellow>{value}<green>.'
+    not_found: '<red>No vote data found for <yellow>{player}<red>.'
+    invalid: '<red>Streak value must be 0 or greater.'
   sites:
     header: '<gray>━━━━━━ <green>Vote Sites <gray>━━━━━━'
     entry: '<green>{name} <gray>— <aqua>Click to vote'
@@ -627,3 +631,5 @@ command:
     description: 'Reload JExVote configuration'
   votereset:
     description: 'Reset a player''s vote statistics'
+  votesetstreak:
+    description: 'Set a player''s vote streak'

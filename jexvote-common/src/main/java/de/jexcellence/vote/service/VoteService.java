@@ -427,6 +427,20 @@ public class VoteService {
         });
     }
 
+    public @NotNull CompletableFuture<Boolean> setStreak(@NotNull UUID uuid, int streak) {
+        return playerRepository.findByUuidAsync(uuid).thenApply(opt -> {
+            if (opt.isEmpty()) return false;
+
+            VotePlayerEntity player = opt.orElseThrow();
+            player.setCurrentStreak(streak);
+            if (streak > player.getHighestStreak()) {
+                player.setHighestStreak(streak);
+            }
+            playerRepository.update(player);
+            return true;
+        });
+    }
+
     public void resetAllMonthlyVotes() {
         playerRepository.findAllAsync().thenAccept(players -> {
             String currentMonth = YearMonth.now(ZoneId.systemDefault()).toString();
