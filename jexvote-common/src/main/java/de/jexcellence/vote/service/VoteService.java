@@ -396,10 +396,15 @@ public class VoteService {
     }
 
     public @Nullable VoteSite findSiteByServiceName(@NotNull String serviceName) {
-        String lower = serviceName.toLowerCase();
+        // Locale.ROOT avoids the classic Turkish-locale "i" bug: on a server
+        // running under tr/az locales, "I".toLowerCase() yields 'ı' (dotless i),
+        // not 'i', so a service-name comparison without ROOT can silently fail
+        // to match a correctly configured site. Consistent with the ROOT-based
+        // matching already used in voteCooldownsSeconds().
+        String lower = serviceName.toLowerCase(Locale.ROOT);
         return voteSites.get().values().stream()
-                .filter(site -> site.serviceName().toLowerCase().equals(lower) ||
-                        site.id().toLowerCase().equals(lower))
+                .filter(site -> site.serviceName().toLowerCase(Locale.ROOT).equals(lower) ||
+                        site.id().toLowerCase(Locale.ROOT).equals(lower))
                 .findFirst()
                 .orElse(null);
     }
@@ -524,7 +529,12 @@ public class VoteService {
             return false;
         }
 
-        long overflowHours = gap.minus(streakTimeout).toHours();
+        // Use the exact fractional-hour overflow, not Duration.toHours() (which
+        // truncates the sub-hour remainder). Truncating here can under-count by
+        // a whole window right at a duration-hours boundary — e.g. an overflow
+        // of 24h00m01s with a 24h duration truncated to 24h needs ceil(24/24)=1
+        // window, when the true overflow already needs a 2nd one.
+        double overflowHours = gap.minus(streakTimeout).toNanos() / 3_600_000_000_000.0;
         long windowsNeeded = Math.max(1L,
                 (long) Math.ceil(overflowHours / (double) settings.durationHours()));
         if (player.getStreakFreezes() < windowsNeeded) {
