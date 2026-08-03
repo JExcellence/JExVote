@@ -11,7 +11,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Locale;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,6 +26,11 @@ import java.util.logging.Logger;
  * i.e. Spigot/Paper 1.18.1+).
  */
 public final class ConfigMigrator {
+
+    private static final int DEFAULT_BOUNDARY_DEPTH = 1;
+    private static final Map<String, Integer> FILE_BOUNDARY_DEPTHS = Map.of(
+            "sites.yml", 2
+    );
 
     private ConfigMigrator() {
         // Utility class — no instances
@@ -60,7 +66,7 @@ public final class ConfigMigrator {
             return user;
         }
 
-        int added = mergeMissingKeys(user, defaults);
+        int added = mergeMissingKeys(user, defaults, boundaryDepth(fileName));
         if (added > 0) {
             saveMigrated(logger, file, user, fileName, added);
         }
@@ -91,22 +97,22 @@ public final class ConfigMigrator {
 
     /**
      * Copies every default key absent from {@code user}, but only under
-     * top-level sections that already exist in the user's file. If the
-     * operator intentionally removed an entire top-level section (e.g.
-     * {@code streak-rewards} from {@code rewards.yml}), its keys will
-     * NOT be re-injected.
+     * configured ownership sections that already exist in the user's file. Most
+     * files use their top-level section as the boundary. Dynamic registries such
+     * as {@code sites.yml} use {@code sites.<siteId>}, allowing an operator to
+     * delete one default entry while still receiving new fields for entries they
+     * retained.
      *
      * @return the number of leaf values added
      */
-    private static int mergeMissingKeys(@NotNull YamlConfiguration user,
-                                        @NotNull YamlConfiguration defaults) {
-        Set<String> userTopLevel = user.getKeys(false);
-
+    static int mergeMissingKeys(@NotNull YamlConfiguration user,
+                                @NotNull YamlConfiguration defaults,
+                                int boundaryDepth) {
         List<String> missing = new ArrayList<>();
         for (String key : defaults.getKeys(true)) {
             if (!user.contains(key)) {
-                String topLevel = key.contains(".") ? key.substring(0, key.indexOf('.')) : key;
-                if (userTopLevel.contains(topLevel)) {
+                String boundary = boundaryOf(key, boundaryDepth);
+                if (user.contains(boundary)) {
                     missing.add(key);
                 }
             }
@@ -125,6 +131,24 @@ public final class ConfigMigrator {
         return (int) missing.stream()
                 .filter(key -> !defaults.isConfigurationSection(key))
                 .count();
+    }
+
+    private static int boundaryDepth(@NotNull String fileName) {
+        return FILE_BOUNDARY_DEPTHS.getOrDefault(
+                fileName.toLowerCase(Locale.ROOT), DEFAULT_BOUNDARY_DEPTH);
+    }
+
+    private static @NotNull String boundaryOf(@NotNull String key, int requestedDepth) {
+        int depth = Math.max(1, requestedDepth);
+        int separator = -1;
+        for (int segment = 1; segment < depth; segment++) {
+            separator = key.indexOf('.', separator + 1);
+            if (separator < 0) {
+                return key;
+            }
+        }
+        int boundaryEnd = key.indexOf('.', separator + 1);
+        return boundaryEnd < 0 ? key : key.substring(0, boundaryEnd);
     }
 
     private static void copyComments(@NotNull YamlConfiguration user,

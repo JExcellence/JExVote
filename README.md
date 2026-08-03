@@ -148,6 +148,8 @@ Cooldown modes, pick one per site:
 - `daily-reset` + `timezone`: fixed reset. Everyone can vote again at the given time in the given timezone.
 
 The `service-name` must match the service identifier the vote site sends in its Votifier payload. If you are unsure, run `/jexvote fakevote <player> TestService` or check the server log for the incoming service name.
+
+Default site entries are only examples. You can delete any unused site ID from `sites.yml`; `/jexvote reload` and server restarts preserve that deletion. Configuration migrations still add newly introduced fields to site entries that remain in the file without overwriting your values.
 </details>
 
 <details>
