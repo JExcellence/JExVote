@@ -11,6 +11,14 @@ Built-in Votifier server · Vote streaks · Streak Freezes · Vote Gifting · Ja
 
 ---
 
+## Patch 3.2.6
+
+- Deleting an unused bundled site from `sites.yml` now persists across `/jexvote reload` and server restarts.
+- Existing site entries still receive newly introduced configuration fields during migrations without overwriting custom values.
+- Paper and Spigot plugin metadata now report the same release version.
+
+---
+
 ## ■ New in 3.1.0
 
 This release is about retention: making players want to vote every day and stick around.
