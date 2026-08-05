@@ -1,10 +1,8 @@
 package de.jexcellence.vote.database.entity;
 
+import de.jexcellence.jehibernate.entity.base.LongIdEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
@@ -25,11 +23,7 @@ import java.util.UUID;
         indexes = @Index(name = "idx_party_contributor_party", columnList = "party_id"))
 @NamedQuery(name = "VotePartyContributor.deleteByParty",
         query = "DELETE FROM VotePartyContributorEntity c WHERE c.partyId = :partyId")
-public class VotePartyContributorEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class VotePartyContributorEntity extends LongIdEntity {
 
     @Column(name = "party_id", nullable = false)
     @ColumnDefault("0")
@@ -50,7 +44,6 @@ public class VotePartyContributorEntity {
         this.contributedVotes = 1;
     }
 
-    public Long getId() { return id; }
     public long getPartyId() { return partyId; }
     public UUID getPlayerUuid() { return playerUuid; }
     public int getContributedVotes() { return contributedVotes; }

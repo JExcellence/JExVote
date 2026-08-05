@@ -1,10 +1,8 @@
 package de.jexcellence.vote.database.entity;
 
+import de.jexcellence.jehibernate.entity.base.LongIdEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
@@ -26,11 +24,7 @@ import java.util.UUID;
         query = "SELECT c FROM ClaimedStreakRewardEntity c WHERE c.playerUuid = :uuid ORDER BY c.milestoneDay ASC")
 @NamedQuery(name = "ClaimedStreakReward.findByPlayerAndDay",
         query = "SELECT c FROM ClaimedStreakRewardEntity c WHERE c.playerUuid = :uuid AND c.milestoneDay = :day")
-public class ClaimedStreakRewardEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class ClaimedStreakRewardEntity extends LongIdEntity {
 
     @Column(name = "player_uuid", nullable = false, length = 36)
     private UUID playerUuid;
@@ -55,7 +49,6 @@ public class ClaimedStreakRewardEntity {
         this.autoClaimed = autoClaimed;
     }
 
-    public Long getId() { return id; }
     public UUID getPlayerUuid() { return playerUuid; }
     public int getMilestoneDay() { return milestoneDay; }
     public Instant getClaimedAt() { return claimedAt; }

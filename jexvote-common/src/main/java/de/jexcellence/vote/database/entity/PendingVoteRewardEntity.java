@@ -1,10 +1,8 @@
 package de.jexcellence.vote.database.entity;
 
+import de.jexcellence.jehibernate.entity.base.LongIdEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Lob;
 import jakarta.persistence.NamedQuery;
@@ -21,11 +19,7 @@ import java.util.UUID;
         query = "SELECT pr FROM PendingVoteRewardEntity pr WHERE pr.playerUuid = :uuid ORDER BY pr.createdAt ASC")
 @NamedQuery(name = "PendingVoteReward.deleteByPlayer",
         query = "DELETE FROM PendingVoteRewardEntity pr WHERE pr.playerUuid = :uuid")
-public class PendingVoteRewardEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class PendingVoteRewardEntity extends LongIdEntity {
 
     @Column(name = "player_uuid", nullable = false, length = 36)
     private UUID playerUuid;
@@ -49,7 +43,6 @@ public class PendingVoteRewardEntity {
         this.createdAt = Instant.now();
     }
 
-    public Long getId() { return id; }
     public UUID getPlayerUuid() { return playerUuid; }
     public String getServiceName() { return serviceName; }
     public String getRewardData() { return rewardData; }

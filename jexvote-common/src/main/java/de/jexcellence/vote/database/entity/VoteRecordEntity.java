@@ -1,10 +1,8 @@
 package de.jexcellence.vote.database.entity;
 
+import de.jexcellence.jehibernate.entity.base.LongIdEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
@@ -24,11 +22,7 @@ import java.util.UUID;
         query = "SELECT vr FROM VoteRecordEntity vr WHERE vr.playerUuid = :uuid AND vr.serviceName = :service ORDER BY vr.votedAt DESC")
 @NamedQuery(name = "VoteRecord.countByPlayerSince",
         query = "SELECT COUNT(vr) FROM VoteRecordEntity vr WHERE vr.playerUuid = :uuid AND vr.votedAt >= :since")
-public class VoteRecordEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class VoteRecordEntity extends LongIdEntity {
 
     @Column(name = "player_uuid", nullable = false, length = 36)
     private UUID playerUuid;
@@ -56,7 +50,6 @@ public class VoteRecordEntity {
         this.votedAt = votedAt;
     }
 
-    public Long getId() { return id; }
     public UUID getPlayerUuid() { return playerUuid; }
     public String getPlayerName() { return playerName; }
     public String getServiceName() { return serviceName; }
