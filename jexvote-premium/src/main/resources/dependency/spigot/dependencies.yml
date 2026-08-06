@@ -11,6 +11,7 @@ dependencies:
   # Hibernate ORM
   - "org.hibernate.orm:hibernate-core:7.1.4.Final"
   - "org.hibernate.models:hibernate-models:1.0.1"
+  - "com.zaxxer:HikariCP:6.2.1"
   - "org.javassist:javassist:3.29.2-GA"
   - "net.bytebuddy:byte-buddy:1.17.6"
   - "org.jboss.logging:jboss-logging:3.6.1.Final"
