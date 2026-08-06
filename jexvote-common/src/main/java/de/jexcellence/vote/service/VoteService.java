@@ -166,7 +166,7 @@ public class VoteService {
 
                 VotePlayerEntity player = findOrCreatePlayer(vote, uuid);
                 int points = resolvePointsForSite(vote.serviceName());
-                applyVoteToPlayer(player, vote, points);
+                boolean firstDaily = applyVoteToPlayer(player, vote, points);
 
                 recordRepository.create(new VoteRecordEntity(
                         uuid, vote.username(), vote.serviceName(),
@@ -176,7 +176,7 @@ public class VoteService {
                     votePartyService.recordVote(uuid);
                 }
 
-                deliverOrQueueRewards(vote, uuid, player);
+                deliverOrQueueRewards(vote, uuid, player, firstDaily);
                 announceVote(vote, uuid);
                 return true;
             } catch (Exception e) {
@@ -240,7 +240,7 @@ public class VoteService {
         return site.pointsPerVote();
     }
 
-    private void applyVoteToPlayer(@NotNull VotePlayerEntity player, @NotNull Vote vote, int points) {
+    private boolean applyVoteToPlayer(@NotNull VotePlayerEntity player, @NotNull Vote vote, int points) {
         int scaledPoints = (int) Math.round(points * multiplierService.current());
         player.setTotalVotes(player.getTotalVotes() + 1);
         player.setMonthlyVotes(player.getMonthlyVotes() + 1);
@@ -250,10 +250,25 @@ public class VoteService {
         if (previous == null || incoming.isAfter(previous)) {
             player.setLastVoteAt(incoming);
         }
+        boolean firstDaily = applyDailyFlyDate(player);
         playerRepository.update(player);
+        return firstDaily;
     }
 
-    private void deliverOrQueueRewards(@NotNull Vote vote, @NotNull UUID uuid, @NotNull VotePlayerEntity player) {
+    private boolean applyDailyFlyDate(@NotNull VotePlayerEntity player) {
+        if (!dailyFly.enabled() && dailyRewardCommands.isEmpty()) {
+            return false;
+        }
+        String today = LocalDate.now(ZoneId.systemDefault()).toString();
+        if (today.equals(player.getDailyFlyDate())) {
+            return false;
+        }
+        player.setDailyFlyDate(today);
+        return true;
+    }
+
+    private void deliverOrQueueRewards(@NotNull Vote vote, @NotNull UUID uuid,
+                                       @NotNull VotePlayerEntity player, boolean firstDailyBonus) {
         Player onlinePlayer = Bukkit.getPlayer(uuid);
         VoteSnapshot snapshot = toSnapshot(player);
         int streak = player.getCurrentStreak();
@@ -262,7 +277,6 @@ public class VoteService {
         int freshFreezeGrant = player.getFreshFreezeGrant();
 
         if (onlinePlayer != null && onlinePlayer.isOnline()) {
-            boolean firstDailyBonus = claimDailyBonusIfFirstToday(player);
             scheduler.runAtEntity(onlinePlayer, () -> {
                 rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
                 executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
@@ -602,18 +616,6 @@ public class VoteService {
      * daily-reward commands. Shared gate for both: the date is only claimed when
      * there's something to grant, so nothing fires when both are unset.
      */
-    private boolean claimDailyBonusIfFirstToday(@NotNull VotePlayerEntity player) {
-        if (!dailyFly.enabled() && dailyRewardCommands.isEmpty()) {
-            return false;
-        }
-        String today = LocalDate.now(ZoneId.systemDefault()).toString();
-        if (today.equals(player.getDailyFlyDate())) {
-            return false;
-        }
-        player.setDailyFlyDate(today);
-        playerRepository.update(player);
-        return true;
-    }
 
     private void executeStreakCommands(@NotNull Player player, @NotNull String serviceName, int streak) {
         List<String> commands = streakCommands.get().get(streak);
