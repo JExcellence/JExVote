@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "de.jexcellence.vote"
-version = "3.2.5"
+version = "3.2.6"
 description = "JExVote API - Public API for third-party plugin integration"
 
 dependencies {

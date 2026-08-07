@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "de.jexcellence.vote"
-version = "3.2.5"
+version = "3.2.6"
 description = "JExVote Common - Shared library for JExVote"
 
 dependenciesYml {
@@ -30,6 +30,7 @@ dependencies {
     compileOnly(libs.placeholderapi)
     compileOnly(libs.vault.api) { isTransitive = false }
     compileOnly(libs.luckperms.api)
+    compileOnly(libs.floodgate.api)
 
     // ── Logging ──
     compileOnly(libs.slf4j.api)

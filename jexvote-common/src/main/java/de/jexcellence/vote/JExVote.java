@@ -18,6 +18,8 @@ import de.jexcellence.vote.config.VotePartyConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
 import de.jexcellence.vote.rest.VoteRestApiServer;
 import de.jexcellence.vote.reward.ChanceReward;
+import de.jexcellence.vote.bedrock.BedrockFormBridge;
+import de.jexcellence.vote.bedrock.VoteBedrockForms;
 import de.jexcellence.vote.reward.LuckyReward;
 import de.jexcellence.jexplatform.reward.impl.CurrencyReward;
 import de.jexcellence.vote.reward.RewardStats;
@@ -455,6 +457,17 @@ public abstract class JExVote {
         var voteCommandHandler = new VoteCommandHandler(voteService, leaderboardService, voteConfig, overviewView,
                 rewardsView, leaderboardView, streakFreezeService, voteGiftService);
         voteCommandHandler.setShopView(shopView);
+
+        var bedrockBridge = new BedrockFormBridge();
+        if (bedrockBridge.isAvailable()) {
+            var bedrockForms = new VoteBedrockForms(bedrockBridge, voteService, voteConfig,
+                    leaderboardService, rewardService, rewardConfig,
+                    streakClaimService, multiplierService, rewardStatsService,
+                    streakFreezeService, voteGiftService);
+            bedrockForms.setPartyService(votePartyService);
+            bedrockForms.setShopService(new VoteShopService(plugin, playerRepository, rewardService, rewardConfig));
+            voteCommandHandler.setBedrockForms(bedrockForms);
+        }
         factory.registerTree(new File(plugin.getDataFolder(), "commands/vote.yml"),
                 voteCommandHandler.handlerMap(),
                 messages, registry);
