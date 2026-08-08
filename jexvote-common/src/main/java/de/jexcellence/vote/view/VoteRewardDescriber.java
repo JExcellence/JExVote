@@ -33,6 +33,7 @@ import java.util.Locale;
 public final class VoteRewardDescriber {
 
     private static final String CRATE_SUFFIX = "_crate";
+    private static final String AMOUNT = "amount";
 
     private VoteRewardDescriber() {
         // Utility class — no instances
@@ -44,7 +45,7 @@ public final class VoteRewardDescriber {
     public static @NotNull String describe(@NotNull AbstractReward reward) {
         if (reward instanceof ItemReward item) {
             return resolve("reward_describe.item",
-                    "amount", item.getAmount(),
+                    AMOUNT, item.getAmount(),
                     "material", translationKey(item.getMaterial()));
         }
         if (reward instanceof CommandReward command) {
@@ -52,14 +53,14 @@ public final class VoteRewardDescriber {
         }
         if (reward instanceof CurrencyReward currency) {
             return resolve("reward_describe.currency",
-                    "amount", formatAmount(currency.getAmount()),
+                    AMOUNT, formatAmount(currency.getAmount()),
                     "unit", prettyUnit(currency.getCurrency()));
         }
         if (reward instanceof ExperienceReward experience) {
             String key = experience.getMode() == ExperienceReward.ExperienceMode.LEVELS
                     ? "reward_describe.experience-levels"
                     : "reward_describe.experience-points";
-            return resolve(key, "amount", experience.getAmount());
+            return resolve(key, AMOUNT, experience.getAmount());
         }
         return RewardViewHelper.describe(reward);
     }
@@ -75,7 +76,7 @@ public final class VoteRewardDescriber {
             String crateId = tokens[4];
             String amount = tokens.length >= 6 ? tokens[5] : "1";
             return resolve("reward_describe.crate-key",
-                    "amount", amount,
+                    AMOUNT, amount,
                     "crate", prettyCrate(crateId));
         }
         return resolve("reward_describe.special");

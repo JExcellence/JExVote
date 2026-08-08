@@ -74,38 +74,52 @@ public final class VoteAdminHandler {
         voteService.receivedServiceNames().thenAccept(received -> {
             sender.sendMessage(MM.deserialize(
                     "<gradient:#fde047:#f59e0b><bold>Vote Service Diagnostics</bold></gradient>"));
-            java.util.Set<String> matched = new java.util.HashSet<>();
-            for (VoteSite site : sites.values()) {
-                long last = -1L;
-                for (Map.Entry<String, Long> rec : received.entrySet()) {
-                    if (rec.getKey().trim().equalsIgnoreCase(site.serviceName().trim())) {
-                        last = Math.max(last, rec.getValue());
-                        matched.add(rec.getKey());
-                    }
-                }
-                String status = last >= 0
-                        ? "<green>✓ receiving</green> <dark_gray>(last " + agoText(last) + ")</dark_gray>"
-                        : "<yellow>⚠ no votes recorded yet</yellow>";
-                sender.sendMessage(MM.deserialize("  <white>" + site.id() + "</white> <dark_gray>»</dark_gray> <aqua>'"
-                        + site.serviceName() + "'</aqua> <dark_gray>—</dark_gray> " + status));
-            }
-            boolean anyOrphan = false;
+            java.util.Set<String> matched = matchConfiguredSites(sender, sites, received);
+            reportOrphanServices(sender, received, matched);
+        });
+    }
+
+    private java.util.@NotNull Set<String> matchConfiguredSites(
+            @NotNull org.bukkit.command.CommandSender sender,
+            @NotNull Map<String, VoteSite> sites,
+            @NotNull Map<String, Long> received) {
+        java.util.Set<String> matched = new java.util.HashSet<>();
+        for (VoteSite site : sites.values()) {
+            long last = -1L;
             for (Map.Entry<String, Long> rec : received.entrySet()) {
-                if (matched.contains(rec.getKey())) {
-                    continue;
+                if (rec.getKey().trim().equalsIgnoreCase(site.serviceName().trim())) {
+                    last = Math.max(last, rec.getValue());
+                    matched.add(rec.getKey());
                 }
-                if (!anyOrphan) {
-                    sender.sendMessage(MM.deserialize(
-                            "<red>Received but matching NO site — set a site's service-name to one of these:</red>"));
-                    anyOrphan = true;
-                }
-                sender.sendMessage(MM.deserialize("  <red>✗</red> <white>'" + rec.getKey()
-                        + "'</white> <dark_gray>(last " + agoText(rec.getValue()) + ")</dark_gray>"));
+            }
+            String status = last >= 0
+                    ? "<green>✓ receiving</green> <dark_gray>(last " + agoText(last) + ")</dark_gray>"
+                    : "<yellow>⚠ no votes recorded yet</yellow>";
+            sender.sendMessage(MM.deserialize("  <white>" + site.id() + "</white> <dark_gray>»</dark_gray> <aqua>'"
+                    + site.serviceName() + "'</aqua> <dark_gray>—</dark_gray> " + status));
+        }
+        return matched;
+    }
+
+    private void reportOrphanServices(@NotNull org.bukkit.command.CommandSender sender,
+                                       @NotNull Map<String, Long> received,
+                                       @NotNull java.util.Set<String> matched) {
+        boolean anyOrphan = false;
+        for (Map.Entry<String, Long> rec : received.entrySet()) {
+            if (matched.contains(rec.getKey())) {
+                continue;
             }
             if (!anyOrphan) {
-                sender.sendMessage(MM.deserialize("  <gray>All received votes map to a configured site.</gray>"));
+                sender.sendMessage(MM.deserialize(
+                        "<red>Received but matching NO site — set a site's service-name to one of these:</red>"));
+                anyOrphan = true;
             }
-        });
+            sender.sendMessage(MM.deserialize("  <red>✗</red> <white>'" + rec.getKey()
+                    + "'</white> <dark_gray>(last " + agoText(rec.getValue()) + ")</dark_gray>"));
+        }
+        if (!anyOrphan) {
+            sender.sendMessage(MM.deserialize("  <gray>All received votes map to a configured site.</gray>"));
+        }
     }
 
     /** Compact "3d ago" / "5h ago" / "12m ago" from an epoch-seconds timestamp. */

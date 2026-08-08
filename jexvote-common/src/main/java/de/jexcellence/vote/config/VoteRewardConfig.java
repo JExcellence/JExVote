@@ -227,7 +227,7 @@ public final class VoteRewardConfig {
                     }
                 }
             } catch (NumberFormatException e) {
-                logger.warning(String.format("Invalid streak day: %s", key));
+                logger.log(Level.WARNING, () -> String.format("Invalid streak day: %s", key));
             }
         }
         return Collections.unmodifiableMap(map);
@@ -279,34 +279,36 @@ public final class VoteRewardConfig {
             if (entry == null) {
                 continue;
             }
-            try {
-                String name = entry.getString("name", key);
-                int cost = entry.getInt("cost", 0);
-                Material icon = Material.matchMaterial(entry.getString("icon", "PAPER"));
-                if (icon == null) {
-                    icon = Material.PAPER;
-                }
-                ConfigurationSection rewardSection = entry.getConfigurationSection("reward");
-                if (rewardSection == null) {
-                    logger.log(Level.WARNING, () -> String.format("Vote-shop item '%s' missing 'reward'", key));
-                    continue;
-                }
-                Map<String, Object> data = toDeepMap(rewardSection);
-                String json = rewardMapper.writeValueAsString(data);
-                AbstractReward reward = rewardMapper.readValue(json, AbstractReward.class);
-
-                // Load optional effects
-                VoteShopItem.ShopEffects effects = loadShopEffects(entry);
-                // Optional per-item description (MiniMessage lore lines) — the
-                // "preview" shown on the tile so players know exactly what they buy.
-                List<String> description = entry.getStringList("description");
-
-                items.add(new VoteShopItem(key, name, icon, cost, reward, description, effects));
-            } catch (Exception e) {
-                logger.log(Level.WARNING, String.format("Failed to load vote-shop item '%s'", key), e);
-            }
+            parseShopEntry(key, entry, items);
         }
         return Collections.unmodifiableList(items);
+    }
+
+    private void parseShopEntry(@NotNull String key, @NotNull ConfigurationSection entry,
+                                @NotNull List<VoteShopItem> items) {
+        try {
+            String name = entry.getString("name", key);
+            int cost = entry.getInt("cost", 0);
+            Material icon = Material.matchMaterial(entry.getString("icon", "PAPER"));
+            if (icon == null) {
+                icon = Material.PAPER;
+            }
+            ConfigurationSection rewardSection = entry.getConfigurationSection("reward");
+            if (rewardSection == null) {
+                logger.log(Level.WARNING, () -> String.format("Vote-shop item '%s' missing 'reward'", key));
+                return;
+            }
+            Map<String, Object> data = toDeepMap(rewardSection);
+            String json = rewardMapper.writeValueAsString(data);
+            AbstractReward reward = rewardMapper.readValue(json, AbstractReward.class);
+
+            VoteShopItem.ShopEffects effects = loadShopEffects(entry);
+            List<String> description = entry.getStringList("description");
+
+            items.add(new VoteShopItem(key, name, icon, cost, reward, description, effects));
+        } catch (Exception e) {
+            logger.log(Level.WARNING, String.format("Failed to load vote-shop item '%s'", key), e);
+        }
     }
 
     /**

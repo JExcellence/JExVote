@@ -51,6 +51,7 @@ import java.util.concurrent.CompletableFuture;
 public final class VoteBedrockForms {
 
     private static final int LEADERBOARD_LIMIT = 20;
+    private static final String NAV_BACK = "bedrock.nav.back";
 
     private final BedrockFormBridge bridge;
     private final VoteService voteService;
@@ -110,87 +111,97 @@ public final class VoteBedrockForms {
         voteService.getPlayerStats(player.getUniqueId())
                 .thenCombineAsync(voteService.voteCooldownsSeconds(player.getUniqueId()),
                         (playerStats, cooldowns) -> {
-                    String title = plain(player, "bedrock.overview.title");
-
-                    StringBuilder body = new StringBuilder();
-                    body.append(plain(player, "bedrock.overview.header")).append("\n\n");
-
-                    body.append("  ").append(plain(player, "bedrock.overview.total-votes"))
-                            .append(": ").append(playerStats.totalVotes()).append("\n");
-                    body.append("  ").append(plain(player, "bedrock.overview.monthly-votes"))
-                            .append(": ").append(playerStats.monthlyVotes()).append("\n");
-                    body.append("  ").append(plain(player, "bedrock.overview.points"))
-                            .append(": ").append(playerStats.votePoints()).append("\n");
-                    body.append("  ").append(plain(player, "bedrock.overview.streak"))
-                            .append(": ").append(playerStats.currentStreak())
-                            .append(" (").append(plain(player, "bedrock.overview.highest"))
-                            .append(": ").append(playerStats.highestStreak()).append(")\n");
-
-                    if (playerStats.lastVoteAt() != null) {
-                        body.append("  ").append(plain(player, "bedrock.overview.last-vote"))
-                                .append(": ").append(formatAgo(playerStats.lastVoteAt())).append("\n");
-                    }
-
-                    body.append("\n").append(plain(player, "bedrock.overview.sites-header")).append("\n");
-                    Collection<VoteSite> sites = voteService.getVoteSites().values();
-                    for (VoteSite site : sites) {
-                        long secs = cooldowns.getOrDefault(site.serviceName(), 0L);
-                        String status = secs == 0
-                                ? "✔ " + plain(player, "bedrock.overview.votable")
-                                : "⏳ " + formatCooldown(secs);
-                        body.append("  ").append(site.displayName())
-                                .append(" — ").append(status).append("\n");
-                    }
+                    String body = buildOverviewBody(player, playerStats, cooldowns);
 
                     SimpleForm.Builder form = SimpleForm.builder()
-                            .title(title)
-                            .content(body.toString());
+                            .title(plain(player, "bedrock.overview.title"))
+                            .content(body);
 
-                    List<VoteSite> siteList = new ArrayList<>(sites);
-                    for (VoteSite site : siteList) {
-                        long secs = cooldowns.getOrDefault(site.serviceName(), 0L);
-                        String label = secs == 0
-                                ? "✔ " + site.displayName()
-                                : "⏳ " + site.displayName() + " (" + formatCooldown(secs) + ")";
-                        form.button(label);
-                    }
-
-                    form.button(plain(player, "bedrock.nav.leaderboard"));
-                    form.button(plain(player, "bedrock.nav.streaks"));
-                    form.button(plain(player, "bedrock.nav.rewards"));
-                    if (voteConfig.isFeatureShop() && shopService != null) {
-                        form.button(plain(player, "bedrock.nav.shop"));
-                    }
+                    List<VoteSite> siteList = new ArrayList<>(voteService.getVoteSites().values());
+                    addSiteButtons(form, player, siteList, cooldowns);
+                    addOverviewNavButtons(form, player);
 
                     int siteCount = siteList.size();
-                    form.validResultHandler(response -> {
-                        int idx = response.clickedButtonId();
-                        if (idx < siteCount) {
-                            VoteSite clicked = siteList.get(idx);
-                            if (clicked.voteUrl() != null) {
-                                player.sendMessage(Component.text("✔ Vote: " + clicked.voteUrl(), NamedTextColor.GREEN)
-                                        .clickEvent(ClickEvent.openUrl(clicked.voteUrl())));
-                            }
-                            return;
-                        }
-                        int navIdx = idx - siteCount;
-                        switch (navIdx) {
-                            case 0 -> openLeaderboard(player);
-                            case 1 -> openStreaks(player);
-                            case 2 -> openRewards(player);
-                            case 3 -> {
-                                if (shopService != null) {
-                                    openShop(player);
-                                }
-                            }
-                            default -> {
-                                // Intentionally ignored: out of range
-                            }
-                        }
-                    });
+                    form.validResultHandler(response ->
+                            handleOverviewClick(player, response.clickedButtonId(), siteList, siteCount));
 
                     return form.build();
                 }).thenAccept(form -> bridge.sendForm(player, form));
+    }
+
+    private @NotNull String buildOverviewBody(@NotNull Player player, @NotNull VoteSnapshot stats,
+                                               @NotNull Map<String, Long> cooldowns) {
+        StringBuilder body = new StringBuilder();
+        body.append(plain(player, "bedrock.overview.header")).append("\n\n");
+        body.append("  ").append(plain(player, "bedrock.overview.total-votes"))
+                .append(": ").append(stats.totalVotes()).append("\n");
+        body.append("  ").append(plain(player, "bedrock.overview.monthly-votes"))
+                .append(": ").append(stats.monthlyVotes()).append("\n");
+        body.append("  ").append(plain(player, "bedrock.overview.points"))
+                .append(": ").append(stats.votePoints()).append("\n");
+        body.append("  ").append(plain(player, "bedrock.overview.streak"))
+                .append(": ").append(stats.currentStreak())
+                .append(" (").append(plain(player, "bedrock.overview.highest"))
+                .append(": ").append(stats.highestStreak()).append(")\n");
+        if (stats.lastVoteAt() != null) {
+            body.append("  ").append(plain(player, "bedrock.overview.last-vote"))
+                    .append(": ").append(formatAgo(stats.lastVoteAt())).append("\n");
+        }
+        body.append("\n").append(plain(player, "bedrock.overview.sites-header")).append("\n");
+        for (VoteSite site : voteService.getVoteSites().values()) {
+            long secs = cooldowns.getOrDefault(site.serviceName(), 0L);
+            String status = secs == 0
+                    ? "✔ " + plain(player, "bedrock.overview.votable")
+                    : "⏳ " + formatCooldown(secs);
+            body.append("  ").append(site.displayName()).append(" — ").append(status).append("\n");
+        }
+        return body.toString();
+    }
+
+    private void addSiteButtons(@NotNull SimpleForm.Builder form, @NotNull Player player,
+                                @NotNull List<VoteSite> siteList, @NotNull Map<String, Long> cooldowns) {
+        for (VoteSite site : siteList) {
+            long secs = cooldowns.getOrDefault(site.serviceName(), 0L);
+            String label = secs == 0
+                    ? "✔ " + site.displayName()
+                    : "⏳ " + site.displayName() + " (" + formatCooldown(secs) + ")";
+            form.button(label);
+        }
+    }
+
+    private void addOverviewNavButtons(@NotNull SimpleForm.Builder form, @NotNull Player player) {
+        form.button(plain(player, "bedrock.nav.leaderboard"));
+        form.button(plain(player, "bedrock.nav.streaks"));
+        form.button(plain(player, "bedrock.nav.rewards"));
+        if (voteConfig.isFeatureShop() && shopService != null) {
+            form.button(plain(player, "bedrock.nav.shop"));
+        }
+    }
+
+    private void handleOverviewClick(@NotNull Player player, int idx,
+                                     @NotNull List<VoteSite> siteList, int siteCount) {
+        if (idx < siteCount) {
+            VoteSite clicked = siteList.get(idx);
+            if (clicked.voteUrl() != null) {
+                player.sendMessage(Component.text("✔ Vote: " + clicked.voteUrl(), NamedTextColor.GREEN)
+                        .clickEvent(ClickEvent.openUrl(clicked.voteUrl())));
+            }
+            return;
+        }
+        int navIdx = idx - siteCount;
+        switch (navIdx) {
+            case 0 -> openLeaderboard(player);
+            case 1 -> openStreaks(player);
+            case 2 -> openRewards(player);
+            case 3 -> {
+                if (shopService != null) {
+                    openShop(player);
+                }
+            }
+            default -> {
+                // Intentionally ignored: out of range
+            }
+        }
     }
 
     // ── Leaderboard ──────────────────────────────────────────────────────
@@ -220,7 +231,7 @@ public final class VoteBedrockForms {
             SimpleForm form = SimpleForm.builder()
                     .title(title)
                     .content(body.toString())
-                    .button(plain(player, "bedrock.nav.back"))
+                    .button(plain(player, NAV_BACK))
                     .validResultHandler(response -> openOverview(player))
                     .build();
             bridge.sendForm(player, form);
@@ -233,69 +244,74 @@ public final class VoteBedrockForms {
         voteService.getPlayerStats(player.getUniqueId())
                 .thenCombineAsync(claimService.getClaimedDays(player.getUniqueId()),
                         (playerStats, claimed) -> {
-                    String title = plain(player, "bedrock.streaks.title");
                     StringBuilder body = new StringBuilder();
                     body.append(plain(player, "bedrock.streaks.header")).append("\n\n");
 
                     int streak = playerStats.currentStreak();
-                    int highest = playerStats.highestStreak();
                     body.append(plain(player, "bedrock.streaks.current")).append(": ").append(streak).append("\n");
-                    body.append(plain(player, "bedrock.streaks.highest")).append(": ").append(highest).append("\n\n");
-
+                    body.append(plain(player, "bedrock.streaks.highest")).append(": ")
+                            .append(playerStats.highestStreak()).append("\n\n");
                     body.append(plain(player, "bedrock.streaks.milestones")).append(":\n");
 
-                    Map<Integer, List<AbstractReward>> streakRewards = rewardConfig.getStreakRewards();
-                    List<Integer> sortedDays = new ArrayList<>(streakRewards.keySet());
-                    sortedDays.sort(Integer::compareTo);
-                    List<Integer> claimableDays = new ArrayList<>();
-
-                    for (int day : sortedDays) {
-                        boolean reachedIt = streak >= day;
-                        boolean alreadyClaimed = claimed.contains(day);
-                        String status;
-                        if (alreadyClaimed) {
-                            status = "✔ " + plain(player, "bedrock.streaks.claimed");
-                        } else if (reachedIt) {
-                            status = "★ " + plain(player, "bedrock.streaks.claimable");
-                            claimableDays.add(day);
-                        } else {
-                            status = "🔒 " + plain(player, "bedrock.streaks.locked");
-                        }
-                        body.append("  ").append(plain(player, "bedrock.streaks.day"))
-                                .append(" ").append(day).append(": ").append(status).append("\n");
-                    }
+                    List<Integer> claimableDays = appendMilestoneList(body, player, streak, claimed);
 
                     SimpleForm.Builder form = SimpleForm.builder()
-                            .title(title)
+                            .title(plain(player, "bedrock.streaks.title"))
                             .content(body.toString());
 
                     for (int day : claimableDays) {
                         form.button("★ " + plain(player, "bedrock.streaks.claim-day") + " " + day);
                     }
-                    form.button(plain(player, "bedrock.nav.back"));
+                    form.button(plain(player, NAV_BACK));
 
                     int claimCount = claimableDays.size();
-                    form.validResultHandler(response -> {
-                        int idx = response.clickedButtonId();
-                        if (idx < claimCount) {
-                            int targetDay = claimableDays.get(idx);
-                            claimService.claimMilestone(player, targetDay).thenAccept(result -> {
-                                if (result == StreakClaimService.ClaimResult.SUCCESS) {
-                                    r18n().msg("bedrock.streaks.claim-success")
-                                            .prefix().with("day", String.valueOf(targetDay))
-                                            .send(player);
-                                } else {
-                                    r18n().msg("bedrock.streaks.claim-failed").prefix().send(player);
-                                }
-                                openStreaks(player);
-                            });
-                        } else {
-                            openOverview(player);
-                        }
-                    });
+                    form.validResultHandler(response ->
+                            handleStreakClick(player, response.clickedButtonId(), claimableDays, claimCount));
 
                     return form.build();
                 }).thenAccept(form -> bridge.sendForm(player, form));
+    }
+
+    private @NotNull List<Integer> appendMilestoneList(@NotNull StringBuilder body, @NotNull Player player,
+                                                        int streak, @NotNull java.util.Set<Integer> claimed) {
+        Map<Integer, List<AbstractReward>> streakRewards = rewardConfig.getStreakRewards();
+        List<Integer> sortedDays = new ArrayList<>(streakRewards.keySet());
+        sortedDays.sort(Integer::compareTo);
+        List<Integer> claimableDays = new ArrayList<>();
+        for (int day : sortedDays) {
+            boolean alreadyClaimed = claimed.contains(day);
+            String status;
+            if (alreadyClaimed) {
+                status = "✔ " + plain(player, "bedrock.streaks.claimed");
+            } else if (streak >= day) {
+                status = "★ " + plain(player, "bedrock.streaks.claimable");
+                claimableDays.add(day);
+            } else {
+                status = "🔒 " + plain(player, "bedrock.streaks.locked");
+            }
+            body.append("  ").append(plain(player, "bedrock.streaks.day"))
+                    .append(" ").append(day).append(": ").append(status).append("\n");
+        }
+        return claimableDays;
+    }
+
+    private void handleStreakClick(@NotNull Player player, int idx,
+                                   @NotNull List<Integer> claimableDays, int claimCount) {
+        if (idx < claimCount) {
+            int targetDay = claimableDays.get(idx);
+            claimService.claimMilestone(player, targetDay).thenAccept(result -> {
+                if (result == StreakClaimService.ClaimResult.SUCCESS) {
+                    r18n().msg("bedrock.streaks.claim-success")
+                            .prefix().with("day", String.valueOf(targetDay))
+                            .send(player);
+                } else {
+                    r18n().msg("bedrock.streaks.claim-failed").prefix().send(player);
+                }
+                openStreaks(player);
+            });
+        } else {
+            openOverview(player);
+        }
     }
 
     // ── Rewards hub ──────────────────────────────────────────────────────
@@ -349,40 +365,45 @@ public final class VoteBedrockForms {
                     + " (" + freezeService.settings().costPoints() + " pts)");
             actions.add("freeze");
 
-            form.button(plain(player, "bedrock.nav.back"));
+            form.button(plain(player, NAV_BACK));
             actions.add("back");
 
-            form.validResultHandler(response -> {
-                int idx = response.clickedButtonId();
-                if (idx >= 0 && idx < actions.size()) {
-                    switch (actions.get(idx)) {
-                        case "lucky" -> openLucky(player);
-                        case "party" -> openParty(player);
-                        case "shop" -> openShop(player);
-                        case "freeze" -> {
-                            freezeService.purchase(player).thenAccept(result -> {
-                                String key = switch (result) {
-                                    case SUCCESS -> "vote.freeze.bought";
-                                    case DISABLED -> "vote.freeze.disabled";
-                                    case AT_MAX -> "vote.freeze.at_max";
-                                    case NOT_ENOUGH_POINTS -> "vote.freeze.not_enough";
-                                    case NO_PROFILE -> "vote.freeze.no_profile";
-                                    default -> "vote.freeze.error";
-                                };
-                                r18n().msg(key).prefix()
-                                        .with("cost", String.valueOf(freezeService.settings().costPoints()))
-                                        .with("max", String.valueOf(freezeService.resolveMax(player)))
-                                        .send(player);
-                                openRewards(player);
-                            });
-                        }
-                        default -> openOverview(player);
-                    }
-                }
-            });
+            form.validResultHandler(response ->
+                    handleRewardAction(player, actions, response.clickedButtonId()));
 
             return form.build();
         }).thenAccept(form -> bridge.sendForm(player, form));
+    }
+
+    private void handleRewardAction(@NotNull Player player, @NotNull List<String> actions, int idx) {
+        if (idx < 0 || idx >= actions.size()) {
+            return;
+        }
+        switch (actions.get(idx)) {
+            case "lucky" -> openLucky(player);
+            case "party" -> openParty(player);
+            case "shop" -> openShop(player);
+            case "freeze" -> handleFreezePurchase(player);
+            default -> openOverview(player);
+        }
+    }
+
+    private void handleFreezePurchase(@NotNull Player player) {
+        freezeService.purchase(player).thenAccept(result -> {
+            String key = switch (result) {
+                case SUCCESS -> "vote.freeze.bought";
+                case DISABLED -> "vote.freeze.disabled";
+                case AT_MAX -> "vote.freeze.at_max";
+                case NOT_ENOUGH_POINTS -> "vote.freeze.not_enough";
+                case NO_PROFILE -> "vote.freeze.no_profile";
+                default -> "vote.freeze.error";
+            };
+            r18n().msg(key).prefix()
+                    .with("cost", String.valueOf(freezeService.settings().costPoints()))
+                    .with("max", String.valueOf(freezeService.resolveMax(player)))
+                    .send(player);
+            openRewards(player);
+        });
     }
 
     // ── Lucky catalog ────────────────────────────────────────────────────
@@ -417,7 +438,7 @@ public final class VoteBedrockForms {
         SimpleForm form = SimpleForm.builder()
                 .title(title)
                 .content(body.toString())
-                .button(plain(player, "bedrock.nav.back"))
+                .button(plain(player, NAV_BACK))
                 .validResultHandler(response -> openRewards(player))
                 .build();
         bridge.sendForm(player, form);
@@ -451,7 +472,7 @@ public final class VoteBedrockForms {
         SimpleForm form = SimpleForm.builder()
                 .title(title)
                 .content(body.toString())
-                .button(plain(player, "bedrock.nav.back"))
+                .button(plain(player, NAV_BACK))
                 .validResultHandler(response -> openRewards(player))
                 .build();
         bridge.sendForm(player, form);
@@ -490,7 +511,7 @@ public final class VoteBedrockForms {
                         + " (" + item.cost() + " pts)";
                 form.button(label);
             }
-            form.button(plain(player, "bedrock.nav.back"));
+            form.button(plain(player, NAV_BACK));
 
             int itemCount = buyable.size();
             form.validResultHandler(response -> {

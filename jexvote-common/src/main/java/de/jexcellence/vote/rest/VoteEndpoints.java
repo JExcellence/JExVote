@@ -62,7 +62,7 @@ final class VoteEndpoints {
         for (VoteSite site : voteConfig.getVoteSites().values()) {
             long last = recordRepository
                     .findLatestByPlayerAndService(uuid, site.serviceName())
-                    .map(record -> record.getVotedAt().getEpochSecond())
+                    .map(rec -> rec.getVotedAt().getEpochSecond())
                     .orElse(0L);
             long secondsUntilNext = site.secondsUntilNextVote(last);
             Long nextVoteAt = secondsUntilNext > 0 ? now + secondsUntilNext : null;

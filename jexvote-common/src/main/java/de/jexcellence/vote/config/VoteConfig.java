@@ -229,7 +229,8 @@ public final class VoteConfig {
         int defaultMax = Math.max(0, config.getInt("streak.freeze.default-max", 3));
         long durationHours = config.getLong("streak.freeze.duration-hours", 24L);
         if (durationHours < 1L) {
-            logger.warning(String.format("Invalid streak.freeze.duration-hours %d — using 24", durationHours));
+            final long invalidHours = durationHours;
+            logger.log(Level.WARNING, () -> String.format("Invalid streak.freeze.duration-hours %d — using 24", invalidHours));
             durationHours = 24L;
         }
         freezeSettings = new FreezeSettings(enabled, freeAmount, costPoints, defaultMax, durationHours);
@@ -255,7 +256,8 @@ public final class VoteConfig {
         try {
             timezone = ZoneId.of(timezoneStr);
         } catch (Exception e) {
-            logger.warning(String.format("Invalid vote-gift.timezone '%s', using UTC", timezoneStr));
+            final String invalidTz = timezoneStr;
+            logger.log(Level.WARNING, () -> String.format("Invalid vote-gift.timezone '%s', using UTC", invalidTz));
             timezone = ZoneId.of("UTC");
         }
         giftSettings = new GiftSettings(enabled, dailyLimit, requireVoteToday, timezone);
@@ -276,7 +278,8 @@ public final class VoteConfig {
         try {
             weekendMultiplierTimezone = ZoneId.of(timezoneStr);
         } catch (Exception e) {
-            logger.warning(String.format("Invalid multipliers.weekend.timezone '%s', using UTC", timezoneStr));
+            final String invalidMultTz = timezoneStr;
+            logger.log(Level.WARNING, () -> String.format("Invalid multipliers.weekend.timezone '%s', using UTC", invalidMultTz));
             weekendMultiplierTimezone = ZoneId.of("UTC");
         }
     }
@@ -300,7 +303,8 @@ public final class VoteConfig {
         votePartyEnabled = config.getBoolean("vote-party.enabled", false);
         votePartyTarget = config.getInt("vote-party.target", 100);
         if (votePartyTarget < 1) {
-            logger.warning(String.format("Invalid vote-party.target %d — using 100", votePartyTarget));
+            final int invalidTarget = votePartyTarget;
+            logger.log(Level.WARNING, () -> String.format("Invalid vote-party.target %d — using 100", invalidTarget));
             votePartyTarget = 100;
         }
     }
@@ -339,55 +343,56 @@ public final class VoteConfig {
         for (String id : section.getKeys(false)) {
             ConfigurationSection siteSection = section.getConfigurationSection(id);
             if (siteSection == null) continue;
-
-            String displayName = siteSection.getString("display-name", id);
-            String serviceName = siteSection.getString("service-name", id);
-            // A present-but-empty service-name (service-name: '' / left blank) otherwise
-            // slips through as "" — blanking the tile and making votes untrackable. Fall
-            // back to the site id so the display is never empty and there's a stable key.
-            if (serviceName == null || serviceName.isBlank()) {
-                serviceName = id;
-                logger.warning(String.format(
-                        "Vote site '%s' has an empty service-name — using the id. Set it to the "
-                        + "exact name the site's Votifier sends, or vote cooldowns can't track it.", id));
-            }
-            String voteUrl = siteSection.getString("vote-url", null);
-            int points = siteSection.getInt("points-per-vote", 1);
-
-            String resetTimeStr = siteSection.getString("daily-reset", null);
-            String timezoneStr = siteSection.getString("timezone", "UTC");
-
-            ZoneId timezone;
-            try {
-                timezone = ZoneId.of(timezoneStr);
-            } catch (Exception e) {
-                logger.warning(String.format("Invalid timezone '%s' for site %s, using UTC", timezoneStr, id));
-                timezone = ZoneId.of("UTC");
-            }
-
-            LocalTime dailyResetTime = null;
-            Duration cooldown = null;
-
-            if (resetTimeStr != null) {
-                try {
-                    dailyResetTime = LocalTime.parse(resetTimeStr);
-                } catch (DateTimeParseException e) {
-                    logger.warning(String.format("Invalid daily-reset time '%s' for site %s, falling back to cooldown-minutes",
-                            resetTimeStr, id));
-                }
-            }
-
-            if (dailyResetTime == null) {
-                int cooldownMinutes = siteSection.getInt("cooldown-minutes", 1440);
-                cooldown = Duration.ofMinutes(cooldownMinutes);
-            }
-
-            sites.put(id, new VoteSite(id, displayName, serviceName, voteUrl,
-                    cooldown, dailyResetTime, timezone, points));
+            sites.put(id, parseSite(id, siteSection));
         }
         voteSites = Collections.unmodifiableMap(sites);
         int siteCount = sites.size();
         logger.log(Level.INFO, () -> String.format("Loaded %d vote site(s)", siteCount));
+    }
+
+    private @NotNull VoteSite parseSite(@NotNull String id, @NotNull ConfigurationSection siteSection) {
+        String displayName = siteSection.getString("display-name", id);
+        String serviceName = siteSection.getString("service-name", id);
+        if (serviceName == null || serviceName.isBlank()) {
+            serviceName = id;
+            logger.log(Level.WARNING, () -> String.format(
+                    "Vote site '%s' has an empty service-name — using the id. Set it to the "
+                    + "exact name the site's Votifier sends, or vote cooldowns can't track it.", id));
+        }
+        String voteUrl = siteSection.getString("vote-url", null);
+        int points = siteSection.getInt("points-per-vote", 1);
+
+        String resetTimeStr = siteSection.getString("daily-reset", null);
+        String timezoneStr = siteSection.getString("timezone", "UTC");
+
+        ZoneId timezone;
+        try {
+            timezone = ZoneId.of(timezoneStr);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, () -> String.format("Invalid timezone '%s' for site %s, using UTC", timezoneStr, id));
+            timezone = ZoneId.of("UTC");
+        }
+
+        LocalTime dailyResetTime = null;
+        Duration cooldown = null;
+
+        if (resetTimeStr != null) {
+            try {
+                dailyResetTime = LocalTime.parse(resetTimeStr);
+            } catch (DateTimeParseException e) {
+                logger.log(Level.WARNING, () -> String.format(
+                        "Invalid daily-reset time '%s' for site %s, falling back to cooldown-minutes",
+                        resetTimeStr, id));
+            }
+        }
+
+        if (dailyResetTime == null) {
+            int cooldownMinutes = siteSection.getInt("cooldown-minutes", 1440);
+            cooldown = Duration.ofMinutes(cooldownMinutes);
+        }
+
+        return new VoteSite(id, displayName, serviceName, voteUrl,
+                cooldown, dailyResetTime, timezone, points);
     }
 
     public String getServerHost() { return serverHost; }

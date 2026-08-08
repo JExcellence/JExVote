@@ -163,15 +163,7 @@ public final class VoteRestApiServer {
                     return;
                 }
 
-                HmacAuthenticator.AuthResult authResult = authenticate(exchange);
-                if (authResult != HmacAuthenticator.AuthResult.OK) {
-                    int status = authResult == HmacAuthenticator.AuthResult.TIMESTAMP_EXPIRED ? 401 : 403;
-                    String message = switch (authResult) {
-                        case TIMESTAMP_EXPIRED -> "Timestamp expired (max " + HmacAuthenticator.MAX_AGE_SECONDS + "s)";
-                        case INVALID_SIGNATURE -> "Invalid signature";
-                        default -> "Authentication failed";
-                    };
-                    JsonResponse.sendError(exchange, status, message);
+                if (rejectUnauthenticated(exchange)) {
                     return;
                 }
 
@@ -187,6 +179,21 @@ public final class VoteRestApiServer {
                 exchange.close();
             }
         };
+    }
+
+    private boolean rejectUnauthenticated(@NotNull HttpExchange exchange) throws IOException {
+        HmacAuthenticator.AuthResult authResult = authenticate(exchange);
+        if (authResult == HmacAuthenticator.AuthResult.OK) {
+            return false;
+        }
+        int status = authResult == HmacAuthenticator.AuthResult.TIMESTAMP_EXPIRED ? 401 : 403;
+        String message = switch (authResult) {
+            case TIMESTAMP_EXPIRED -> "Timestamp expired (max " + HmacAuthenticator.MAX_AGE_SECONDS + "s)";
+            case INVALID_SIGNATURE -> "Invalid signature";
+            default -> "Authentication failed";
+        };
+        JsonResponse.sendError(exchange, status, message);
+        return true;
     }
 
     private HmacAuthenticator.AuthResult authenticate(@NotNull HttpExchange exchange) {

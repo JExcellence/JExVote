@@ -45,6 +45,7 @@ public final class VoteShopView extends VoteBaseView {
     private static final String TAG_BUY_PREFIX = "buy:";
     private static final String TAG_PAGE_PREV  = "page-prev";
     private static final String TAG_PAGE_NEXT  = "page-next";
+    private static final String PARAM_MISSING = "missing";
 
     private static final int SLOT_POINTS         = 4;
     // Canonical pagination slots (V-10): prev=47, indicator=49, next=53.
@@ -225,7 +226,7 @@ public final class VoteShopView extends VoteBaseView {
         // Affordability footer is a separate template so green/red doesn't bleed
         // into the cost line above.
         String footerKey = canAfford ? "vote_shop.tile.footer-buy" : "vote_shop.tile.footer-need";
-        lore.add(msg(footerKey).with("missing", String.valueOf(missing)).itemComponent(viewer));
+        lore.add(msg(footerKey).with(PARAM_MISSING, String.valueOf(missing)).itemComponent(viewer));
         appendLoreExtra(lore, "vote_shop.tile", viewer);
 
         ItemStack tile = ItemBuilder.of(item.icon())
@@ -290,7 +291,7 @@ public final class VoteShopView extends VoteBaseView {
         // round-trip to the DB on misclicks (and re-checked by the service).
         if (balance >= 0 && balance < item.cost()) {
             msg("vote_shop.not-enough").prefix()
-                    .with("missing", String.valueOf(item.cost() - balance))
+                    .with(PARAM_MISSING, String.valueOf(item.cost() - balance))
                     .send(viewer);
             return;
         }
@@ -298,7 +299,7 @@ public final class VoteShopView extends VoteBaseView {
             switch (result) {
                 case SUCCESS -> sendPurchaseReceipt(viewer, item);
                 case NOT_ENOUGH_POINTS -> msg("vote_shop.not-enough").prefix()
-                        .with("missing", String.valueOf(
+                        .with(PARAM_MISSING, String.valueOf(
                                 Math.max(0, item.cost() - Math.max(0, balance))))
                         .send(viewer);
                 case NO_PROFILE -> msg("vote_shop.no-profile").prefix().send(viewer);

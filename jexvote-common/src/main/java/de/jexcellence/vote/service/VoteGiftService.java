@@ -101,14 +101,13 @@ public class VoteGiftService {
                 continue;
             }
             String perm = info.getPermission();
-            if (perm == null || !perm.startsWith(DAILY_PERMISSION_PREFIX)) {
-                continue;
-            }
-            String suffix = perm.substring(DAILY_PERMISSION_PREFIX.length());
-            try {
-                limit = Math.max(limit, Integer.parseInt(suffix.trim()));
-            } catch (NumberFormatException ex) {
-                // Non-numeric suffix — not a valid daily-override node, ignore
+            if (perm != null && perm.startsWith(DAILY_PERMISSION_PREFIX)) {
+                String suffix = perm.substring(DAILY_PERMISSION_PREFIX.length());
+                try {
+                    limit = Math.max(limit, Integer.parseInt(suffix.trim()));
+                } catch (NumberFormatException ex) {
+                    // Non-numeric suffix — not a valid daily-override node, ignore
+                }
             }
         }
         return limit;

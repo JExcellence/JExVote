@@ -52,6 +52,8 @@ public final class VoteRewardsView extends VoteBaseView {
     private static final String TAG_OPEN_PARTY = "open_party";
     private static final String TAG_OPEN_SHOP  = "open_shop";
     private static final String TAG_OPEN_LUCKY = "open_lucky";
+    private static final String PARAM_FACTOR = "factor";
+    private static final String PARAM_REMAINING = "remaining";
 
     private final Holder holder = new Holder();
     private final JavaPlugin plugin;
@@ -238,9 +240,9 @@ public final class VoteRewardsView extends VoteBaseView {
         lore.add(active ? ic("vote_rewards.multiplier.status-active", viewer)
                         : ic("vote_rewards.multiplier.status-inactive", viewer));
         lore.add(msg("vote_rewards.multiplier.current")
-                .with("factor", fmt(multipliers.current())).itemComponent(viewer));
+                .with(PARAM_FACTOR, fmt(multipliers.current())).itemComponent(viewer));
         lore.add(msg("vote_rewards.multiplier.weekend")
-                .with("factor", fmt(s.weekendFactor())).itemComponent(viewer));
+                .with(PARAM_FACTOR, fmt(s.weekendFactor())).itemComponent(viewer));
         String days = s.weekendDays().stream()
                 .map(d -> d.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH))
                 .reduce((a, b) -> a + ", " + b).orElse("—");
@@ -266,7 +268,7 @@ public final class VoteRewardsView extends VoteBaseView {
                     .with("current", String.valueOf(current))
                     .with("target", String.valueOf(target)).itemComponent(viewer));
             lore.add(msg("vote_rewards.party.remaining")
-                    .with("remaining", String.valueOf(party.getRemainingVotes())).itemComponent(viewer));
+                    .with(PARAM_REMAINING, String.valueOf(party.getRemainingVotes())).itemComponent(viewer));
             lore.add(lore("  " + progressBar(current, target, 20)));
             lore.add(Component.empty());
             lore.add(ic("vote_rewards.party.rewards-header", viewer));
@@ -354,7 +356,7 @@ public final class VoteRewardsView extends VoteBaseView {
         lore.add(ic("vote_rewards.gift.how", viewer));
         int limit = giftService.resolveDailyLimit(viewer);
         lore.add(msg("vote_rewards.gift.limit")
-                .with("remaining", remaining < 0 ? "…" : String.valueOf(remaining))
+                .with(PARAM_REMAINING, remaining < 0 ? "…" : String.valueOf(remaining))
                 .with("limit", String.valueOf(limit)).itemComponent(viewer));
         if (gs.requireVoteToday()) {
             lore.add(ic("vote_rewards.gift.require-vote", viewer));
@@ -430,14 +432,14 @@ public final class VoteRewardsView extends VoteBaseView {
 
         r18n.msg("vote_rewards.text.multiplier").prefix()
                 .with("status", multipliers.isActive() ? "active" : "inactive")
-                .with("factor", fmt(multipliers.current()))
+                .with(PARAM_FACTOR, fmt(multipliers.current()))
                 .send(sender);
 
         if (party != null) {
             r18n.msg("vote_rewards.text.party").prefix()
                     .with("current", String.valueOf(party.getCurrentVotes()))
                     .with("target", String.valueOf(party.getTargetVotes()))
-                    .with("remaining", String.valueOf(party.getRemainingVotes()))
+                    .with(PARAM_REMAINING, String.valueOf(party.getRemainingVotes()))
                     .send(sender);
         }
     }

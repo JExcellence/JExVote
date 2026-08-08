@@ -210,7 +210,8 @@ public class VoteStreakView extends VoteBaseView {
                 renderStreakInfo(top, viewer, streak, highest);
                 renderRewardsSummary(top, viewer, highest, milestones, claimed, manualMode);
                 renderProgress(top, viewer, streak, nextMs);
-                renderMilestoneGrid(top, viewer, highest, nextMs, milestones, claimed, manualMode, state);
+                MilestoneContext ctx = new MilestoneContext(highest, nextMs, milestones, claimed, manualMode);
+                renderMilestoneGrid(top, viewer, ctx, state);
             });
             return null;
         });
@@ -368,30 +369,34 @@ public class VoteStreakView extends VoteBaseView {
                 .build());
     }
 
+    private record MilestoneContext(int highest, int nextMs,
+                                       @NotNull Map<Integer, List<AbstractReward>> milestones,
+                                       @NotNull Set<Integer> claimed, boolean manualMode) {}
+
     private void renderMilestoneGrid(@NotNull Inventory inv, @NotNull Player viewer,
-                                      int highest, int nextMs,
-                                      @NotNull Map<Integer, List<AbstractReward>> milestones,
-                                      @NotNull Set<Integer> claimed, boolean manualMode,
+                                      @NotNull MilestoneContext ctx,
                                       @NotNull ViewerState state) {
-        List<Integer> days = new ArrayList<>(milestones.keySet());
+        List<Integer> days = new ArrayList<>(ctx.milestones().keySet());
         Collections.sort(days);
         int totalTiers = days.size();
         int pages = Math.max(1, (totalTiers + PER_PAGE - 1) / PER_PAGE);
 
-        // Clamp the current page into range (config can shrink between opens).
         state.page = Math.max(0, Math.min(state.page, pages - 1));
 
         int from = state.page * PER_PAGE;
         int to = Math.min(from + PER_PAGE, totalTiers);
         int count = to - from;
-        int start = GRID_ROW_BASE + (GRID_ROW_COLS - count) / 2; // center the page's tiles
+        int start = GRID_ROW_BASE + (GRID_ROW_COLS - count) / 2;
 
         for (int i = 0; i < count; i++) {
+            int slot = start + i;
+            if (slot < 0 || slot >= inv.getSize()) {
+                continue;
+            }
             int globalIndex = from + i;
             int day = days.get(globalIndex);
-            inv.setItem(start + i, buildMilestoneItem(
-                    day, milestones.get(day), viewer, highest,
-                    nextMs, claimed, manualMode, globalIndex, totalTiers));
+            inv.setItem(slot, buildMilestoneItem(
+                    day, ctx.milestones().get(day), viewer, ctx, globalIndex, totalTiers));
         }
 
         renderPager(inv, viewer, state.page, pages);
@@ -425,22 +430,20 @@ public class VoteStreakView extends VoteBaseView {
 
     private @NotNull ItemStack buildMilestoneItem(int day, @NotNull List<AbstractReward> rewards,
                                                     @NotNull Player viewer,
-                                                    int highest, int nextMs,
-                                                    @NotNull Set<Integer> claimed,
-                                                    boolean manualMode,
+                                                    @NotNull MilestoneContext ctx,
                                                     int tierIndex, int totalTiers) {
-        boolean reached = highest >= day;
-        boolean isClaimed = claimed.contains(day);
-        boolean claimable = manualMode && reached && !isClaimed;
-        boolean isNext = !reached && day == nextMs;
+        boolean reached = ctx.highest() >= day;
+        boolean isClaimed = ctx.claimed().contains(day);
+        boolean claimable = ctx.manualMode() && reached && !isClaimed;
+        boolean isNext = !reached && day == ctx.nextMs();
 
         Material mat = resolvePrimaryRewardMaterial(rewards, reached || isNext);
-        String gradient = resolveGradient(isClaimed, claimable, reached, manualMode, isNext);
+        String gradient = resolveGradient(isClaimed, claimable, reached, ctx.manualMode(), isNext);
 
         // Build lore
         List<Component> itemLore = new ArrayList<>();
         itemLore.add(Component.empty());
-        itemLore.add(resolveMilestoneStatus(viewer, isClaimed, claimable, reached, manualMode, isNext));
+        itemLore.add(resolveMilestoneStatus(viewer, isClaimed, claimable, reached, ctx.manualMode(), isNext));
 
         // Rarity badge — only on locked tiers so the player can read at a
         // glance how prestigious the locked one is. Reached/claimable tiles
@@ -451,7 +454,7 @@ public class VoteStreakView extends VoteBaseView {
         }
 
         if (!reached) {
-            int remaining = day - highest;
+            int remaining = day - ctx.highest();
             String daysLabel = remaining == 1
                     ? msg(I18N_DAY_LABEL).text(viewer)
                     : msg(I18N_DAYS_LABEL).text(viewer);

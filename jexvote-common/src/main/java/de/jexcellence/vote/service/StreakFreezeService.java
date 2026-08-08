@@ -63,14 +63,13 @@ public class StreakFreezeService {
                 continue;
             }
             String perm = info.getPermission();
-            if (perm == null || !perm.startsWith(MAX_PERMISSION_PREFIX)) {
-                continue;
-            }
-            String suffix = perm.substring(MAX_PERMISSION_PREFIX.length());
-            try {
-                max = Math.max(max, Integer.parseInt(suffix.trim()));
-            } catch (NumberFormatException ex) {
-                // Non-numeric suffix — not a valid max-override node, ignore
+            if (perm != null && perm.startsWith(MAX_PERMISSION_PREFIX)) {
+                String suffix = perm.substring(MAX_PERMISSION_PREFIX.length());
+                try {
+                    max = Math.max(max, Integer.parseInt(suffix.trim()));
+                } catch (NumberFormatException ex) {
+                    // Non-numeric suffix — not a valid max-override node, ignore
+                }
             }
         }
         return max;

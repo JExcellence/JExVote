@@ -32,6 +32,8 @@ import java.util.concurrent.CompletableFuture;
 public final class VoteCommandHandler {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final String PARAM_TARGET = "target";
+    private static final String PARAM_STREAK = "streak";
 
     private final VoteService voteService;
     private final VoteLeaderboardService leaderboardService;
@@ -151,7 +153,7 @@ public final class VoteCommandHandler {
 
     private void onGift(@NotNull CommandContext ctx) {
         Player player = ctx.asPlayer().orElseThrow();
-        String target = ctx.get("target", String.class).orElse("").trim();
+        String target = ctx.get(PARAM_TARGET, String.class).orElse("").trim();
         if (target.isEmpty()) {
             r18n().msg("vote.gift.usage").prefix().send(player);
             return;
@@ -177,9 +179,9 @@ public final class VoteCommandHandler {
             case LIMIT_REACHED -> r18n().msg("vote.gift.limit").prefix().send(gifter);
             case SELF_GIFT -> r18n().msg("vote.gift.self").prefix().send(gifter);
             case TARGET_NOT_FOUND -> r18n().msg("vote.gift.target_not_found").prefix()
-                    .with("target", targetName).send(gifter);
+                    .with(PARAM_TARGET, targetName).send(gifter);
             case ALREADY_ADVANCED -> r18n().msg("vote.gift.already_advanced").prefix()
-                    .with("target", targetName).send(gifter);
+                    .with(PARAM_TARGET, targetName).send(gifter);
             case NO_RANDOM_TARGET -> r18n().msg("vote.gift.no_random").prefix().send(gifter);
             default -> r18n().msg("vote.gift.error").prefix().send(gifter);
         }
@@ -189,8 +191,8 @@ public final class VoteCommandHandler {
                                    @NotNull VoteGiftService.GiftOutcome outcome,
                                    @NotNull String targetName) {
         r18n().msg("vote.gift.sent").prefix()
-                .with("target", targetName)
-                .with("streak", String.valueOf(outcome.receiverStreak()))
+                .with(PARAM_TARGET, targetName)
+                .with(PARAM_STREAK, String.valueOf(outcome.receiverStreak()))
                 .with("remaining", String.valueOf(outcome.remainingToday()))
                 .send(gifter);
 
@@ -198,7 +200,7 @@ public final class VoteCommandHandler {
         if (receiver != null && receiver.isOnline()) {
             r18n().msg("vote.gift.received").prefix()
                     .with("gifter", gifter.getName())
-                    .with("streak", String.valueOf(outcome.receiverStreak()))
+                    .with(PARAM_STREAK, String.valueOf(outcome.receiverStreak()))
                     .send(receiver);
         }
     }

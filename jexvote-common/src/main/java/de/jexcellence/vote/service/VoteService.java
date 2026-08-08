@@ -217,7 +217,7 @@ public class VoteService {
     private @NotNull VotePlayerEntity findOrCreatePlayer(@NotNull Vote vote, @NotNull UUID uuid) {
         VotePlayerEntity player = playerRepository.findByUuid(uuid)
                 .orElseGet(() -> {
-                    logger.info(String.format("Creating new vote profile for %s (%s)", vote.username(), uuid));
+                    logger.log(Level.INFO, () -> String.format("Creating new vote profile for %s (%s)", vote.username(), uuid));
                     VotePlayerEntity newPlayer = new VotePlayerEntity(uuid, vote.username());
                     initializeFreezes(newPlayer);
                     playerRepository.create(newPlayer);
@@ -277,37 +277,9 @@ public class VoteService {
         int freshFreezeGrant = player.getFreshFreezeGrant();
 
         if (onlinePlayer != null && onlinePlayer.isOnline()) {
-            scheduler.runAtEntity(onlinePlayer, () -> {
-                rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
-                executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
-                broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
-                if (firstDailyBonus) {
-                    // Daily vote-fly is granted SOLELY by JExOneblock's
-                    // VoteFlyRewardListener now — granting it here too double-minted
-                    // a second 15-min coupon on the first vote each day.
-                    for (String command : dailyRewardCommands) {
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                                command.replace("{player}", onlinePlayer.getName()));
-                    }
-                }
-                if (rewardService.hasGuaranteedRewards()) {
-                    broadcastService.notifyGuaranteedReward(onlinePlayer);
-                }
-                if (freshFreezeGrant > 0) {
-                    R18nManager.getInstance().msg("vote.freeze.granted").prefix()
-                            .with("amount", String.valueOf(freshFreezeGrant))
-                            .send(onlinePlayer);
-                }
-                if (consumedFreezes > 0) {
-                    R18nManager.getInstance().msg("vote.freeze.saved").prefix()
-                            .with("consumed", String.valueOf(consumedFreezes))
-                            .with("remaining", String.valueOf(remainingFreezes))
-                            .with("streak", String.valueOf(streak))
-                            .send(onlinePlayer);
-                }
-                Bukkit.getPluginManager().callEvent(
-                        new VoteRewardClaimedEvent(uuid, vote.serviceName(), snapshot));
-            });
+            scheduler.runAtEntity(onlinePlayer, () ->
+                    deliverOnlineRewards(onlinePlayer, vote, uuid, snapshot, streak,
+                            firstDailyBonus, consumedFreezes, remainingFreezes, freshFreezeGrant));
             logger.log(Level.INFO, () -> String.format("Vote processed for %s (online) — streak: %d, total: %d",
                     vote.username(), streak, player.getTotalVotes()));
         } else {
@@ -321,6 +293,39 @@ public class VoteService {
         }
     }
 
+    private void deliverOnlineRewards(@NotNull Player onlinePlayer, @NotNull Vote vote,
+                                         @NotNull UUID uuid, @NotNull VoteSnapshot snapshot,
+                                         int streak, boolean firstDailyBonus,
+                                         int consumedFreezes, int remainingFreezes,
+                                         int freshFreezeGrant) {
+        rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
+        executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
+        broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
+        if (firstDailyBonus) {
+            for (String command : dailyRewardCommands) {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                        command.replace("{player}", onlinePlayer.getName()));
+            }
+        }
+        if (rewardService.hasGuaranteedRewards()) {
+            broadcastService.notifyGuaranteedReward(onlinePlayer);
+        }
+        if (freshFreezeGrant > 0) {
+            R18nManager.getInstance().msg("vote.freeze.granted").prefix()
+                    .with("amount", String.valueOf(freshFreezeGrant))
+                    .send(onlinePlayer);
+        }
+        if (consumedFreezes > 0) {
+            R18nManager.getInstance().msg("vote.freeze.saved").prefix()
+                    .with("consumed", String.valueOf(consumedFreezes))
+                    .with("remaining", String.valueOf(remainingFreezes))
+                    .with("streak", String.valueOf(streak))
+                    .send(onlinePlayer);
+        }
+        Bukkit.getPluginManager().callEvent(
+                new VoteRewardClaimedEvent(uuid, vote.serviceName(), snapshot));
+    }
+
     public void deliverPendingRewards(@NotNull Player player) {
         pendingRewardRepository.findByPlayer(player.getUniqueId()).thenAccept(pending -> {
             if (pending.isEmpty()) return;
@@ -330,8 +335,9 @@ public class VoteService {
                     try {
                         rewardService.grantSerializedRewards(player, reward.getRewardData());
                     } catch (Exception e) {
-                        logger.log(Level.WARNING,
-                                "Failed to deliver pending reward to " + player.getName(), e);
+                        final String playerName = player.getName();
+                        logger.log(Level.WARNING, e,
+                                () -> "Failed to deliver pending reward to " + playerName);
                     }
                 }
 
@@ -341,8 +347,10 @@ public class VoteService {
                 }
 
                 broadcastService.notifyPendingRewards(player, pending.size());
-                logger.info("Delivered " + pending.size()
-                        + " pending vote reward(s) to " + player.getName());
+                final int deliveredCount = pending.size();
+                final String deliveredTo = player.getName();
+                logger.log(Level.INFO, () -> "Delivered " + deliveredCount
+                        + " pending vote reward(s) to " + deliveredTo);
             });
         });
     }
@@ -359,12 +367,6 @@ public class VoteService {
     }
 
     /**
-     * Seconds until each configured site is votable again for {@code uuid} (0 = votable
-     * now), keyed by service name. Computed from the player's last vote per site and each
-     * site's cooldown / daily-reset rule. One async query; used by the vote-list GUI to
-     * show a per-site "ready / available in …" status.
-     */
-    /**
      * Every distinct service name that has actually been <b>received</b> in a vote (as
      * stored, un-normalised) → its most recent epoch-seconds. Used by the service
      * diagnostics command to spot names that match no configured site's {@code service-name}.
@@ -372,11 +374,11 @@ public class VoteService {
     public @NotNull CompletableFuture<Map<String, Long>> receivedServiceNames() {
         return recordRepository.findAllAsync().thenApply(records -> {
             Map<String, Long> out = new HashMap<>();
-            for (VoteRecordEntity record : records) {
-                if (record.getServiceName() == null || record.getVotedAt() == null) {
+            for (VoteRecordEntity entry : records) {
+                if (entry.getServiceName() == null || entry.getVotedAt() == null) {
                     continue;
                 }
-                out.merge(record.getServiceName(), record.getVotedAt().getEpochSecond(), Math::max);
+                out.merge(entry.getServiceName(), entry.getVotedAt().getEpochSecond(), Math::max);
             }
             return out;
         });
@@ -389,12 +391,12 @@ public class VoteService {
             // recorded vote and the configured site (a common Votifier setup gotcha) still
             // maps the vote to its site instead of showing "always votable".
             Map<String, Long> latestEpoch = new HashMap<>();
-            for (VoteRecordEntity record : records) {
-                if (record.getServiceName() == null || record.getVotedAt() == null) {
+            for (VoteRecordEntity entry : records) {
+                if (entry.getServiceName() == null || entry.getVotedAt() == null) {
                     continue;
                 }
-                latestEpoch.merge(record.getServiceName().trim().toLowerCase(Locale.ROOT),
-                        record.getVotedAt().getEpochSecond(), Math::max);
+                latestEpoch.merge(entry.getServiceName().trim().toLowerCase(Locale.ROOT),
+                        entry.getVotedAt().getEpochSecond(), Math::max);
             }
             Map<String, Long> remaining = new HashMap<>();
             for (VoteSite site : sites.values()) {
@@ -550,7 +552,7 @@ public class VoteService {
         // window, when the true overflow already needs a 2nd one.
         double overflowHours = gap.minus(streakTimeout).toNanos() / 3_600_000_000_000.0;
         long windowsNeeded = Math.max(1L,
-                (long) Math.ceil(overflowHours / (double) settings.durationHours()));
+                (long) Math.ceil(overflowHours / settings.durationHours()));
         if (player.getStreakFreezes() < windowsNeeded) {
             return false;
         }

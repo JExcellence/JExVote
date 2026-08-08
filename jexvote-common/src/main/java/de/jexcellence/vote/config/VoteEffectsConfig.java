@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 public final class VoteEffectsConfig {
 
     private static final String CONFIG_FILE = "config.yml";
+    private static final String USING_DEFAULT = "', using default";
 
     /**
      * Settings for vote receivement effects.
@@ -83,17 +84,17 @@ public final class VoteEffectsConfig {
         // Validate sounds
         if (!isValidSound(voteSound)) {
             final String invalidVote = voteSound;
-            logger.log(Level.WARNING, () -> "Invalid vote sound '" + invalidVote + "', using default");
+            logger.log(Level.WARNING, () -> "Invalid vote sound '" + invalidVote + USING_DEFAULT);
             voteSound = VoteEffects.DEFAULTS.voteSound();
         }
         if (!isValidSound(streakSound)) {
             final String invalidStreak = streakSound;
-            logger.log(Level.WARNING, () -> "Invalid streak sound '" + invalidStreak + "', using default");
+            logger.log(Level.WARNING, () -> "Invalid streak sound '" + invalidStreak + USING_DEFAULT);
             streakSound = VoteEffects.DEFAULTS.streakSound();
         }
         if (!isValidSound(milestoneSound)) {
             final String invalidMilestone = milestoneSound;
-            logger.log(Level.WARNING, () -> "Invalid milestone sound '" + invalidMilestone + "', using default");
+            logger.log(Level.WARNING, () -> "Invalid milestone sound '" + invalidMilestone + USING_DEFAULT);
             milestoneSound = VoteEffects.DEFAULTS.milestoneSound();
         }
 

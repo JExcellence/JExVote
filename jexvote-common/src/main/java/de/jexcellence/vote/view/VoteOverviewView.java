@@ -278,28 +278,32 @@ public class VoteOverviewView extends VoteBaseView {
             inv.setItem(SLOT_PAGE_NEXT, null);
         }
 
-        // Async: fill in each site's votable / "available again in …" status.
         final int fPage = page;
         final int fStart = start;
         final int fTotalPages = totalPages;
         voteService.voteCooldownsSeconds(viewer.getUniqueId()).thenAccept(cooldowns ->
-                scheduler.runAtEntity(viewer, () -> {
-                    Inventory top = viewer.getOpenInventory().getTopInventory();
-                    if (top.getHolder() != holder) {
-                        return; // GUI closed
-                    }
-                    if (clampPage(sitePage.getOrDefault(viewer.getUniqueId(), 0), fTotalPages) != fPage) {
-                        return; // player paged away before async returned
-                    }
-                    for (int i = 0; i < SITES_PER_PAGE; i++) {
-                        int siteIdx = fStart + i;
-                        if (siteIdx < sites.size()) {
-                            VoteSite site = sites.get(siteIdx);
-                            long secs = cooldowns.getOrDefault(site.serviceName(), 0L);
-                            top.setItem(SITE_SLOTS[i], siteTile(viewer, site, secs));
-                        }
-                    }
-                }));
+                scheduler.runAtEntity(viewer, () ->
+                        applySiteCooldowns(viewer, sites, cooldowns, fPage, fStart, fTotalPages)));
+    }
+
+    private void applySiteCooldowns(@NotNull Player viewer, @NotNull List<VoteSite> sites,
+                                       @NotNull Map<String, Long> cooldowns,
+                                       int expectedPage, int start, int totalPages) {
+        Inventory top = viewer.getOpenInventory().getTopInventory();
+        if (top.getHolder() != holder) {
+            return;
+        }
+        if (clampPage(sitePage.getOrDefault(viewer.getUniqueId(), 0), totalPages) != expectedPage) {
+            return;
+        }
+        for (int i = 0; i < SITES_PER_PAGE; i++) {
+            int siteIdx = start + i;
+            if (siteIdx < sites.size()) {
+                VoteSite site = sites.get(siteIdx);
+                long secs = cooldowns.getOrDefault(site.serviceName(), 0L);
+                top.setItem(SITE_SLOTS[i], siteTile(viewer, site, secs));
+            }
+        }
     }
 
     /**
@@ -481,9 +485,6 @@ public class VoteOverviewView extends VoteBaseView {
         return 365;
     }
 
-    /**
-     * Inventory holder for the overview view.
-     */
     /**
      * Live-refresh the site tiles when the viewer's own vote lands, so the site they just
      * voted on flips to its cooldown status immediately instead of only on the next reopen.

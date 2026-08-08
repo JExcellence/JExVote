@@ -35,7 +35,7 @@ public final class BedrockFormBridge {
         } catch (ClassNotFoundException ignored) {
             // Floodgate not installed
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "[vote] Floodgate probe failed: " + e.getMessage());
+            LOGGER.log(Level.WARNING, () -> "[vote] Floodgate probe failed: " + e.getMessage());
         }
         this.available = ok;
     }
@@ -77,10 +77,10 @@ public final class BedrockFormBridge {
                         .getMethod("sendForm", UUID.class, formClass)
                         .invoke(floodgateApi, player.getUniqueId(), form);
             } catch (Exception ex) {
-                LOGGER.log(Level.WARNING, "[vote] Failed to send Bedrock form: " + ex.getMessage());
+                LOGGER.log(Level.WARNING, () -> "[vote] Failed to send Bedrock form: " + ex.getMessage());
             }
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "[vote] Failed to send Bedrock form: " + e.getMessage());
+            LOGGER.log(Level.WARNING, () -> "[vote] Failed to send Bedrock form: " + e.getMessage());
         }
     }
 }
