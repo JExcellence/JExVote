@@ -1,10 +1,8 @@
 package de.jexcellence.vote.database.entity;
 
+import de.jexcellence.jehibernate.entity.base.LongIdEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -23,11 +21,7 @@ import java.time.Instant;
 @NamedQuery(name = "RewardGrantStat.increment",
         query = "UPDATE RewardGrantStatEntity s SET s.timesGranted = s.timesGranted + 1, "
                 + "s.lastGrantedAt = :now WHERE s.rewardKey = :key")
-public class RewardGrantStatEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class RewardGrantStatEntity extends LongIdEntity {
 
     @Column(name = "reward_key", nullable = false, length = 128)
     private String rewardKey;
@@ -47,7 +41,6 @@ public class RewardGrantStatEntity {
         this.lastGrantedAt = Instant.now();
     }
 
-    public Long getId() { return id; }
     public String getRewardKey() { return rewardKey; }
     public long getTimesGranted() { return timesGranted; }
     public Instant getLastGrantedAt() { return lastGrantedAt; }

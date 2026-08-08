@@ -166,7 +166,7 @@ public class VoteService {
 
                 VotePlayerEntity player = findOrCreatePlayer(vote, uuid);
                 int points = resolvePointsForSite(vote.serviceName());
-                applyVoteToPlayer(player, vote, points);
+                boolean firstDaily = applyVoteToPlayer(player, vote, points);
 
                 recordRepository.create(new VoteRecordEntity(
                         uuid, vote.username(), vote.serviceName(),
@@ -176,7 +176,7 @@ public class VoteService {
                     votePartyService.recordVote(uuid);
                 }
 
-                deliverOrQueueRewards(vote, uuid, player);
+                deliverOrQueueRewards(vote, uuid, player, firstDaily);
                 announceVote(vote, uuid);
                 return true;
             } catch (Exception e) {
@@ -240,16 +240,35 @@ public class VoteService {
         return site.pointsPerVote();
     }
 
-    private void applyVoteToPlayer(@NotNull VotePlayerEntity player, @NotNull Vote vote, int points) {
+    private boolean applyVoteToPlayer(@NotNull VotePlayerEntity player, @NotNull Vote vote, int points) {
         int scaledPoints = (int) Math.round(points * multiplierService.current());
         player.setTotalVotes(player.getTotalVotes() + 1);
         player.setMonthlyVotes(player.getMonthlyVotes() + 1);
         player.setVotePoints(player.getVotePoints() + scaledPoints);
-        player.setLastVoteAt(vote.timestamp());
+        Instant previous = player.getLastVoteAt();
+        Instant incoming = vote.timestamp();
+        if (previous == null || incoming.isAfter(previous)) {
+            player.setLastVoteAt(incoming);
+        }
+        boolean firstDaily = applyDailyFlyDate(player);
         playerRepository.update(player);
+        return firstDaily;
     }
 
-    private void deliverOrQueueRewards(@NotNull Vote vote, @NotNull UUID uuid, @NotNull VotePlayerEntity player) {
+    private boolean applyDailyFlyDate(@NotNull VotePlayerEntity player) {
+        if (!dailyFly.enabled() && dailyRewardCommands.isEmpty()) {
+            return false;
+        }
+        String today = LocalDate.now(ZoneId.systemDefault()).toString();
+        if (today.equals(player.getDailyFlyDate())) {
+            return false;
+        }
+        player.setDailyFlyDate(today);
+        return true;
+    }
+
+    private void deliverOrQueueRewards(@NotNull Vote vote, @NotNull UUID uuid,
+                                       @NotNull VotePlayerEntity player, boolean firstDailyBonus) {
         Player onlinePlayer = Bukkit.getPlayer(uuid);
         VoteSnapshot snapshot = toSnapshot(player);
         int streak = player.getCurrentStreak();
@@ -258,18 +277,14 @@ public class VoteService {
         int freshFreezeGrant = player.getFreshFreezeGrant();
 
         if (onlinePlayer != null && onlinePlayer.isOnline()) {
-            boolean firstDailyBonus = claimDailyBonusIfFirstToday(player);
             scheduler.runAtEntity(onlinePlayer, () -> {
                 rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
                 executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
                 broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
                 if (firstDailyBonus) {
-                    if (dailyFly.enabled()) {
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                                "jexoneblock flycoupon " + onlinePlayer.getName() + " " + dailyFly.minutes());
-                        R18nManager.getInstance().msg("vote.daily-fly").prefix()
-                                .send(onlinePlayer);
-                    }
+                    // Daily vote-fly is granted SOLELY by JExOneblock's
+                    // VoteFlyRewardListener now — granting it here too double-minted
+                    // a second 15-min coupon on the first vote each day.
                     for (String command : dailyRewardCommands) {
                         Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
                                 command.replace("{player}", onlinePlayer.getName()));
@@ -395,10 +410,15 @@ public class VoteService {
     }
 
     public @Nullable VoteSite findSiteByServiceName(@NotNull String serviceName) {
-        String lower = serviceName.toLowerCase();
+        // Locale.ROOT avoids the classic Turkish-locale "i" bug: on a server
+        // running under tr/az locales, "I".toLowerCase() yields 'ı' (dotless i),
+        // not 'i', so a service-name comparison without ROOT can silently fail
+        // to match a correctly configured site. Consistent with the ROOT-based
+        // matching already used in voteCooldownsSeconds().
+        String lower = serviceName.toLowerCase(Locale.ROOT);
         return voteSites.get().values().stream()
-                .filter(site -> site.serviceName().toLowerCase().equals(lower) ||
-                        site.id().toLowerCase().equals(lower))
+                .filter(site -> site.serviceName().toLowerCase(Locale.ROOT).equals(lower) ||
+                        site.id().toLowerCase(Locale.ROOT).equals(lower))
                 .findFirst()
                 .orElse(null);
     }
@@ -421,6 +441,20 @@ public class VoteService {
             player.setVotePoints(0);
             player.setLastVoteAt(null);
             player.setMonthlyResetMonth(null);
+            playerRepository.update(player);
+            return true;
+        });
+    }
+
+    public @NotNull CompletableFuture<Boolean> setStreak(@NotNull UUID uuid, int streak) {
+        return playerRepository.findByUuidAsync(uuid).thenApply(opt -> {
+            if (opt.isEmpty()) return false;
+
+            VotePlayerEntity player = opt.orElseThrow();
+            player.setCurrentStreak(streak);
+            if (streak > player.getHighestStreak()) {
+                player.setHighestStreak(streak);
+            }
             playerRepository.update(player);
             return true;
         });
@@ -509,7 +543,12 @@ public class VoteService {
             return false;
         }
 
-        long overflowHours = gap.minus(streakTimeout).toHours();
+        // Use the exact fractional-hour overflow, not Duration.toHours() (which
+        // truncates the sub-hour remainder). Truncating here can under-count by
+        // a whole window right at a duration-hours boundary — e.g. an overflow
+        // of 24h00m01s with a 24h duration truncated to 24h needs ceil(24/24)=1
+        // window, when the true overflow already needs a 2nd one.
+        double overflowHours = gap.minus(streakTimeout).toNanos() / 3_600_000_000_000.0;
         long windowsNeeded = Math.max(1L,
                 (long) Math.ceil(overflowHours / (double) settings.durationHours()));
         if (player.getStreakFreezes() < windowsNeeded) {
@@ -577,18 +616,6 @@ public class VoteService {
      * daily-reward commands. Shared gate for both: the date is only claimed when
      * there's something to grant, so nothing fires when both are unset.
      */
-    private boolean claimDailyBonusIfFirstToday(@NotNull VotePlayerEntity player) {
-        if (!dailyFly.enabled() && dailyRewardCommands.isEmpty()) {
-            return false;
-        }
-        String today = LocalDate.now(ZoneId.systemDefault()).toString();
-        if (today.equals(player.getDailyFlyDate())) {
-            return false;
-        }
-        player.setDailyFlyDate(today);
-        playerRepository.update(player);
-        return true;
-    }
 
     private void executeStreakCommands(@NotNull Player player, @NotNull String serviceName, int streak) {
         List<String> commands = streakCommands.get().get(streak);

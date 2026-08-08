@@ -1,10 +1,8 @@
 package de.jexcellence.vote.database.entity;
 
+import de.jexcellence.jehibernate.entity.base.LongIdEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.ColumnDefault;
 
@@ -17,11 +15,7 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "jexvote_party")
-public class VotePartyEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class VotePartyEntity extends LongIdEntity {
 
     @Column(name = "party_number", nullable = false)
     @ColumnDefault("0")
@@ -47,7 +41,6 @@ public class VotePartyEntity {
         this.startedAt = Instant.now();
     }
 
-    public Long getId() { return id; }
     public int getPartyNumber() { return partyNumber; }
     public int getCurrentVotes() { return currentVotes; }
     public int getTargetVotes() { return targetVotes; }

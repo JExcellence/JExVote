@@ -1,10 +1,8 @@
 package de.jexcellence.vote.database.entity;
 
+import de.jexcellence.jehibernate.entity.base.LongIdEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
@@ -30,11 +28,7 @@ import java.util.UUID;
         query = "SELECT vp FROM VotePlayerEntity vp ORDER BY vp.monthlyVotes DESC")
 @NamedQuery(name = "VotePlayer.topByStreak",
         query = "SELECT vp FROM VotePlayerEntity vp ORDER BY vp.highestStreak DESC")
-public class VotePlayerEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class VotePlayerEntity extends LongIdEntity {
 
     @Column(name = "player_uuid", nullable = false, unique = true, length = 36)
     private UUID playerUuid;
@@ -127,8 +121,6 @@ public class VotePlayerEntity {
         this.highestStreak = 0;
         this.votePoints = 0;
     }
-
-    public Long getId() { return id; }
 
     public UUID getPlayerUuid() { return playerUuid; }
 

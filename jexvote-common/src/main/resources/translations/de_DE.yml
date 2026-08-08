@@ -60,6 +60,10 @@ vote:
   reset:
     success: '<green>Vote-Statistiken für <yellow>{player} <green>zurückgesetzt.'
     all_success: '<green>Monatliche Votes für alle Spieler zurückgesetzt.'
+  setstreak:
+    success: '<green>Vote-Streak für <yellow>{player} <green>auf <yellow>{value} <green>gesetzt.'
+    not_found: '<red>Keine Vote-Daten für <yellow>{player} <red>gefunden.'
+    invalid: '<red>Streak-Wert muss 0 oder größer sein.'
   sites:
     header: '<gray>━━━━━━ <green>Vote-Seiten <gray>━━━━━━'
     entry: '<green>{name} <gray>— <aqua>Klicke zum Voten'
@@ -629,3 +633,5 @@ bedrock:
     bought: '{item} für {cost} Punkte gekauft!'
     not-enough: 'Nicht genug Vote-Punkte.'
     error: 'Kauf fehlgeschlagen.'
+  votesetstreak:
+    description: 'Vote-Streak eines Spielers setzen'

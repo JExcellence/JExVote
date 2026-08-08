@@ -58,6 +58,7 @@ public final class VoteAdminHandler {
                 Map.entry("jexvote.resetmonthly", this::onResetMonthly),
                 Map.entry("jexvote.fakevote", this::onFakeVote),
                 Map.entry("jexvote.key", this::onKey),
+                Map.entry("jexvote.setstreak", this::onSetStreak),
                 Map.entry("jexvote.debug-services", this::onDebugServices)
         );
     }
@@ -133,6 +134,8 @@ public final class VoteAdminHandler {
                         HelpRenderer.Action.SUGGEST),
                 HelpRenderer.Entry.of("/jexvote key", "", "Show the Votifier public key, PEM, port and token",
                         HelpRenderer.Action.RUN),
+                HelpRenderer.Entry.of("/jexvote setstreak", "<player> <value>", "Set a player's vote streak",
+                        HelpRenderer.Action.SUGGEST),
                 HelpRenderer.Entry.of("/jexvote help", "", "Show this help",
                         HelpRenderer.Action.RUN)
         );
@@ -252,6 +255,30 @@ public final class VoteAdminHandler {
             } else {
                 ctx.sender().sendMessage(MM.deserialize(
                         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Failed to submit fake vote</red>"));
+            }
+        });
+    }
+
+    private void onSetStreak(@NotNull CommandContext ctx) {
+        OfflinePlayer target = ctx.require(PARAM_PLAYER, OfflinePlayer.class);
+        int value = ctx.require("value", Long.class).intValue();
+        String name = target.getName() != null ? target.getName() : target.getUniqueId().toString();
+
+        if (value < 0) {
+            r18n().msg("vote.setstreak.invalid").prefix().send(ctx.sender());
+            return;
+        }
+
+        voteService.setStreak(target.getUniqueId(), value).thenAccept(success -> {
+            if (Boolean.TRUE.equals(success)) {
+                r18n().msg("vote.setstreak.success").prefix()
+                        .with(PARAM_PLAYER, name)
+                        .with("value", String.valueOf(value))
+                        .send(ctx.sender());
+            } else {
+                r18n().msg("vote.setstreak.not_found").prefix()
+                        .with(PARAM_PLAYER, name)
+                        .send(ctx.sender());
             }
         });
     }
