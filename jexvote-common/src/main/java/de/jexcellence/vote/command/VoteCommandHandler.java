@@ -8,6 +8,7 @@ import de.jexcellence.vote.command.help.HelpRenderer;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.StreakFreezeService;
+import de.jexcellence.vote.bedrock.VoteBedrockForms;
 import de.jexcellence.vote.service.VoteGiftService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteService;
@@ -22,6 +23,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -40,6 +42,7 @@ public final class VoteCommandHandler {
     private final StreakFreezeService streakFreezeService;
     private final VoteGiftService voteGiftService;
     private VoteShopView shopView;
+    private @Nullable VoteBedrockForms bedrockForms;
 
     @SuppressWarnings("java:S107")
     public VoteCommandHandler(@NotNull VoteService voteService,
@@ -77,6 +80,13 @@ public final class VoteCommandHandler {
     /** Sets the vote-token shop view (wired post-construction in JExVote). */
     public void setShopView(@NotNull VoteShopView view) { this.shopView = view; }
 
+    /** Sets the Bedrock forms handler (wired post-construction when Floodgate is present). */
+    public void setBedrockForms(@Nullable VoteBedrockForms forms) { this.bedrockForms = forms; }
+
+    private boolean isBedrock(@NotNull Player player) {
+        return bedrockForms != null && bedrockForms.isBedrock(player);
+    }
+
     private void onShop(@NotNull CommandContext ctx) {
         Player player = ctx.asPlayer().orElse(null);
         if (player == null) {
@@ -87,12 +97,20 @@ public final class VoteCommandHandler {
             r18n().msg("vote.shop.unavailable").prefix().send(player);
             return;
         }
+        if (isBedrock(player)) {
+            bedrockForms.openShop(player);
+            return;
+        }
         shopView.open(player);
     }
 
     private void onRewards(@NotNull CommandContext ctx) {
         Player player = ctx.asPlayer().orElse(null);
         if (player != null) {
+            if (isBedrock(player)) {
+                bedrockForms.openRewards(player);
+                return;
+            }
             rewardsView.open(player);
         } else {
             rewardsView.sendTextSummary(ctx.sender());
@@ -101,6 +119,10 @@ public final class VoteCommandHandler {
 
     private void onVote(@NotNull CommandContext ctx) {
         Player player = ctx.asPlayer().orElseThrow();
+        if (isBedrock(player)) {
+            bedrockForms.openOverview(player);
+            return;
+        }
         overviewView.open(player);
     }
 
@@ -241,6 +263,10 @@ public final class VoteCommandHandler {
         // Self lookup from a player → open the overview GUI (stats + points +
         // sites + navigation). Console or an explicit target → text summary.
         if (explicitTarget.isEmpty() && self != null) {
+            if (isBedrock(self)) {
+                bedrockForms.openOverview(self);
+                return;
+            }
             overviewView.open(self);
             return;
         }
@@ -264,6 +290,10 @@ public final class VoteCommandHandler {
     private void onTop(@NotNull CommandContext ctx) {
         Player self = ctx.asPlayer().orElse(null);
         if (self != null && voteConfig.isFeatureLeaderboard()) {
+            if (isBedrock(self)) {
+                bedrockForms.openLeaderboard(self);
+                return;
+            }
             leaderboardView.open(self);
             return;
         }
