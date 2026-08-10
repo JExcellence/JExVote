@@ -1,37 +1,13 @@
 <div align="center">
 
 # JExVote
-### The Votifier Reward System
+### All-in-One Vote Rewards & Engagement
 
-Built-in Votifier server · Vote streaks · Streak Freezes · Vote Gifting · Jackpot rewards · Beautiful GUIs · Multi-language
+Built-in Votifier · Streaks · Streak Freezes · Vote Gifting · Jackpot · Vote Party · Vote Shop · Bedrock Forms · REST API · Multi-language
 
 *Supports Votifier v1 (RSA) and NuVotifier v2 (HMAC). No external Votifier plugin required.*
 
 </div>
-
----
-
-## Patch 3.2.6
-
-- Deleting an unused bundled site from `sites.yml` now persists across `/jexvote reload` and server restarts.
-- Existing site entries still receive newly introduced configuration fields during migrations without overwriting custom values.
-- Paper and Spigot plugin metadata now report the same release version.
-
----
-
-## ■ New in 3.1.0
-
-This release is about retention: making players want to vote every day and stick around.
-
-- **Streak Freezes** protect a streak when a day is missed. They auto-equip, everyone starts with one free, and more are bought with vote points.
-- **Vote Gifting** lets players keep a friend's streak alive with `/vote gift`.
-- **Vote Jackpot** rolls one prize from a weighted pool on every vote, with the odds shown in the menu.
-- **Reworked streak rewards** form an escalating crate ladder from day 3 to day 30.
-- **Vote Party** rewards every contributor when the server hits a shared vote target (Premium).
-
-Full details further down. Everything is configurable.
-
-> **3.1.1 (patch):** fixes a 3.1.0 upgrade migration error on existing player databases (new `NOT NULL` columns lacked a SQL default). If you ran 3.1.0, update to 3.1.1 and restart; recovery is automatic, no manual database changes needed.
 
 ---
 
@@ -61,6 +37,10 @@ Votes trigger configurable rewards, feed a streak system that brings players bac
 - **Broadcast & private messages**: Server-wide announcements (all / others / none) with anti-spam cooldown, plus optional private thank-you messages.
 - **Multi-language**: Ships with English, German, Czech, and Slovak. Add your own or override existing keys.
 - **Record retention**: Automatically purges old vote records after a configurable number of days.
+- **Bedrock Edition support**: Full GUI parity for Bedrock players via Geyser/Floodgate. Cumulus forms for overview, leaderboard, streaks, rewards, and shop with purchase confirmation modals.
+- **Feature toggles**: Streaks, shop, leaderboard, and effects can each be independently enabled or disabled.
+- **Daily first-vote rewards**: Config-driven commands and fly-time coupon items on the first vote of the day.
+- **Embedded REST API**: HMAC-authenticated HTTP endpoints for web backend integration (sites, cooldowns, player stats). Configurable port, CORS, and per-IP rate limiting.
 - **Spigot / Paper / Folia**: Scheduled tasks run through FoliaLib for full Folia support.
 - **Customizable commands**: Aliases, translations, and command trees are fully configurable.
 
@@ -255,6 +235,9 @@ Permission: `jexvote.command.vote` · Alias: `/v`
 /jexvote reset <player>  Resets all vote data for a player
 /jexvote resetmonthly    Resets monthly counts for ALL players
 /jexvote fakevote <player> [service]   Simulates a vote for testing
+/jexvote key             Prints Votifier public key, PEM, port and v2 token (click-to-copy)
+/jexvote setstreak <player> <value>   Set a player's vote streak
+/jexvote debug-services  Diagnose vote service-name mismatches
 ```
 
 Alias: `/jv`
@@ -367,7 +350,7 @@ JExVote includes a fully self-contained Votifier server. There is no need to ins
 - **Votifier v1**: 256-byte RSA-encrypted vote block. Legacy support for older vote sites.
 - **NuVotifier v2**: JSON payload with HMAC-SHA256 signature verification and challenge-response. Used by most modern vote sites.
 
-JExVote auto-detects the protocol version per connection. The RSA keypair is generated on first launch and stored in `plugins/JExVote/rsa/`. The HMAC token is written to `config.yml`. If a vote site asks for your public key, it is at `plugins/JExVote/rsa/public.key` (Base64-encoded).
+JExVote auto-detects the protocol version per connection. The RSA keypair is generated on first launch and stored in `plugins/JExVote/rsa/`. The HMAC token is written to `config.yml`. If a vote site asks for your public key, it is at `plugins/JExVote/rsa/public.key` (Base64-encoded). Alternatively, use `/jexvote key` in-game to display the key, port, and token with click-to-copy.
 
 ---
 
@@ -397,6 +380,7 @@ Add custom translations by placing a `<locale>.yml` file in the `translations/` 
 - **LuckPerms**: enables the permission reward type (timed, server-specific).
 - **PlaceholderAPI**: exposes vote placeholders for scoreboards, tab lists, and more.
 - **Vault**: economy fallback if JExEconomy is not installed.
+- **Floodgate**: enables native Bedrock Edition forms for Geyser/Floodgate players.
 
 ---
 

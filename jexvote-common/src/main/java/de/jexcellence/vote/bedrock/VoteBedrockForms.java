@@ -21,7 +21,6 @@ import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.service.VoteShopService;
 import de.jexcellence.vote.view.VoteRewardDescriber;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.geysermc.cumulus.form.ModalForm;
@@ -178,8 +177,7 @@ public final class VoteBedrockForms {
                 player.sendMessage(Component.empty());
                 player.sendMessage(Component.text("» ", NamedTextColor.GOLD)
                         .append(Component.text(clicked.displayName(), NamedTextColor.WHITE)));
-                player.sendMessage(Component.text("  " + clicked.voteUrl(), NamedTextColor.GREEN)
-                        .clickEvent(ClickEvent.openUrl(clicked.voteUrl())));
+                player.sendMessage(Component.text("  " + clicked.voteUrl(), NamedTextColor.GREEN));
                 player.sendMessage(Component.empty());
             }
             return;
