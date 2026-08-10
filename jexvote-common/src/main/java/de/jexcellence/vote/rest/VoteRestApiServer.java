@@ -224,10 +224,6 @@ public final class VoteRestApiServer {
     }
 
     private static @NotNull String extractClientIp(@NotNull HttpExchange exchange) {
-        String forwarded = exchange.getRequestHeaders().getFirst("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
         return exchange.getRemoteAddress().getAddress().getHostAddress();
     }
 
