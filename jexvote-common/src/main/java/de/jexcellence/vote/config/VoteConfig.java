@@ -210,7 +210,8 @@ public final class VoteConfig {
         String secret = resolveSecret(api.getString("secret", ""));
         String corsOrigin = api.getString("cors-origin", "*");
         int rateLimit = api.getInt("rate-limit-per-minute", 60);
-        restApiConfig = new VoteRestApiConfig(enabled, port, secret, corsOrigin, rateLimit);
+        java.util.Set<String> trustedProxies = new java.util.HashSet<>(api.getStringList("trusted-proxies"));
+        restApiConfig = new VoteRestApiConfig(enabled, port, secret, corsOrigin, rateLimit, trustedProxies);
     }
 
     /** Resolves a {@code $ENV:VAR_NAME} placeholder against the environment. */

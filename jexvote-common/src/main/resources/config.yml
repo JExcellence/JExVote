@@ -271,3 +271,9 @@ api:
   cors-origin: "https://mythblock.me"
   # Simple per-IP token bucket. 60 = plenty for a live-status dashboard.
   rate-limit-per-minute: 60
+  # IPs of trusted reverse proxies. When the TCP peer matches one of these,
+  # X-Forwarded-For is read to extract the real client IP for rate limiting.
+  # Leave empty to never trust forwarded headers (safest when not proxied).
+  trusted-proxies:
+    - "127.0.0.1"
+    - "::1"

@@ -223,8 +223,15 @@ public final class VoteRestApiServer {
         headers.set("Access-Control-Max-Age", "3600");
     }
 
-    private static @NotNull String extractClientIp(@NotNull HttpExchange exchange) {
-        return exchange.getRemoteAddress().getAddress().getHostAddress();
+    private @NotNull String extractClientIp(@NotNull HttpExchange exchange) {
+        String peerIp = exchange.getRemoteAddress().getAddress().getHostAddress();
+        if (!config.trustedProxies().isEmpty() && config.trustedProxies().contains(peerIp)) {
+            String forwarded = exchange.getRequestHeaders().getFirst("X-Forwarded-For");
+            if (forwarded != null && !forwarded.isBlank()) {
+                return forwarded.split(",")[0].trim();
+            }
+        }
+        return peerIp;
     }
 
     @FunctionalInterface
