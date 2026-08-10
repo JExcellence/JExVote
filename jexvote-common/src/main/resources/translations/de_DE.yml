@@ -577,6 +577,7 @@ bedrock:
     highest: 'Beste'
     last-vote: 'Letzter Vote'
     sites-header: 'Vote-Seiten'
+    sites-ready: 'Seiten bereit zum Voten'
     votable: 'Bereit'
   nav:
     leaderboard: 'Rangliste'

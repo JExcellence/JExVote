@@ -644,6 +644,7 @@ bedrock:
     highest: 'Best'
     last-vote: 'Last Vote'
     sites-header: 'Vote Sites'
+    sites-ready: 'sites ready to vote'
     votable: 'Ready'
   nav:
     leaderboard: 'Leaderboard'

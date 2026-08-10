@@ -132,29 +132,21 @@ public final class VoteBedrockForms {
     private @NotNull String buildOverviewBody(@NotNull Player player, @NotNull VoteSnapshot stats,
                                                @NotNull Map<String, Long> cooldowns) {
         StringBuilder body = new StringBuilder();
-        body.append(plain(player, "bedrock.overview.header")).append("\n\n");
-        body.append("  ").append(plain(player, "bedrock.overview.total-votes"))
-                .append(": ").append(stats.totalVotes()).append("\n");
-        body.append("  ").append(plain(player, "bedrock.overview.monthly-votes"))
-                .append(": ").append(stats.monthlyVotes()).append("\n");
-        body.append("  ").append(plain(player, "bedrock.overview.points"))
-                .append(": ").append(stats.votePoints()).append("\n");
-        body.append("  ").append(plain(player, "bedrock.overview.streak"))
+        body.append(plain(player, "bedrock.overview.streak"))
                 .append(": ").append(stats.currentStreak())
                 .append(" (").append(plain(player, "bedrock.overview.highest"))
                 .append(": ").append(stats.highestStreak()).append(")\n");
-        if (stats.lastVoteAt() != null) {
-            body.append("  ").append(plain(player, "bedrock.overview.last-vote"))
-                    .append(": ").append(formatAgo(stats.lastVoteAt())).append("\n");
-        }
-        body.append("\n").append(plain(player, "bedrock.overview.sites-header")).append("\n");
-        for (VoteSite site : voteService.getVoteSites().values()) {
-            long secs = cooldowns.getOrDefault(site.serviceName(), 0L);
-            String status = secs == 0
-                    ? "✔ " + plain(player, "bedrock.overview.votable")
-                    : "⏳ " + formatCooldown(secs);
-            body.append("  ").append(site.displayName()).append(" — ").append(status).append("\n");
-        }
+        body.append(plain(player, "bedrock.overview.points"))
+                .append(": ").append(stats.votePoints()).append("\n");
+        body.append(plain(player, "bedrock.overview.total-votes"))
+                .append(": ").append(stats.totalVotes()).append("\n");
+
+        long readyCount = voteService.getVoteSites().values().stream()
+                .filter(s -> cooldowns.getOrDefault(s.serviceName(), 0L) == 0)
+                .count();
+        long totalSites = voteService.getVoteSites().size();
+        body.append("\n").append(readyCount).append("/").append(totalSites)
+                .append(" ").append(plain(player, "bedrock.overview.sites-ready"));
         return body.toString();
     }
 
@@ -183,8 +175,12 @@ public final class VoteBedrockForms {
         if (idx < siteCount) {
             VoteSite clicked = siteList.get(idx);
             if (clicked.voteUrl() != null) {
-                player.sendMessage(Component.text("✔ Vote: " + clicked.voteUrl(), NamedTextColor.GREEN)
+                player.sendMessage(Component.empty());
+                player.sendMessage(Component.text("» ", NamedTextColor.GOLD)
+                        .append(Component.text(clicked.displayName(), NamedTextColor.WHITE)));
+                player.sendMessage(Component.text("  " + clicked.voteUrl(), NamedTextColor.GREEN)
                         .clickEvent(ClickEvent.openUrl(clicked.voteUrl())));
+                player.sendMessage(Component.empty());
             }
             return;
         }
