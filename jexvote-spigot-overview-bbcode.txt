@@ -12,10 +12,17 @@
 
 [LIST]
 [*][COLOR=#38BDF8][B]Replace NuVotifier entirely[/B][/COLOR] [COLOR=#94A3B8]— JExVote includes its own Votifier v1 + v2 server. Remove NuVotifier from your plugins folder.[/COLOR]
-[*][COLOR=#38BDF8][B]12 reward types out of the box[/B][/COLOR] [COLOR=#94A3B8]— Commands, items, XP, currency, permissions, sounds, particles, titles, teleports, bundles, choice menus, custom hooks.[/COLOR]
-[*][COLOR=#38BDF8][B]Streak milestones[/B][/COLOR] [COLOR=#94A3B8]— Day 7, 14, 30+ with escalating rewards. Manual claim mode with interactive GUI or auto-grant.[/COLOR]
-[*][COLOR=#38BDF8][B]Polished GUIs[/B][/COLOR] [COLOR=#94A3B8]— Vote overview, paginated leaderboard with player heads, streak progress tracker — all from /vote.[/COLOR]
+[*][COLOR=#38BDF8][B]14 reward types out of the box[/B][/COLOR] [COLOR=#94A3B8]— Commands, items, XP, currency, permissions, sounds, particles, titles, teleports, bundles, choice menus, custom hooks, chance, and lucky (jackpot).[/COLOR]
+[*][COLOR=#38BDF8][B]Streak milestones + Streak Freezes[/B][/COLOR] [COLOR=#94A3B8]— Day 7, 14, 30+ with escalating rewards. Manual claim mode with interactive GUI or auto-grant. Auto-equipping freeze protection when a day is missed.[/COLOR]
+[*][COLOR=#38BDF8][B]Vote Gifting[/B][/COLOR] [COLOR=#94A3B8]— Keep a friend's streak alive with /vote gift. Per-rank daily limit.[/COLOR]
+[*][COLOR=#38BDF8][B]Vote Jackpot[/B][/COLOR] [COLOR=#94A3B8]— Weighted prize pool rolled on every vote. Odds and drop history visible in the rewards menu.[/COLOR]
+[*][COLOR=#38BDF8][B]Vote Party[/B][/COLOR] [I][COLOR=#94A3B8](Premium)[/COLOR][/I] [COLOR=#94A3B8]— Shared server-wide counter. When the target is reached, every contributor is rewarded.[/COLOR]
+[*][COLOR=#38BDF8][B]Vote Shop[/B][/COLOR] [I][COLOR=#94A3B8](Premium)[/COLOR][/I] [COLOR=#94A3B8]— Spend vote points on a curated catalog of items with description preview.[/COLOR]
+[*][COLOR=#38BDF8][B]Polished GUIs[/B][/COLOR] [COLOR=#94A3B8]— Vote overview, paginated leaderboard with player heads, streak progress tracker, rewards hub, and vote shop — all from /vote.[/COLOR]
+[*][COLOR=#38BDF8][B]Bedrock Edition support[/B][/COLOR] [COLOR=#94A3B8]— Full GUI parity for Bedrock players via Geyser/Floodgate. Native Cumulus forms for every menu.[/COLOR]
 [*][COLOR=#38BDF8][B]Offline vote queue[/B][/COLOR] [COLOR=#94A3B8]— Votes received while a player is offline are stored and delivered on next login. Zero lost rewards.[/COLOR]
+[*][COLOR=#38BDF8][B]Daily first-vote rewards[/B][/COLOR] [COLOR=#94A3B8]— Config-driven commands and fly-time coupon items on the first vote of the day.[/COLOR]
+[*][COLOR=#38BDF8][B]Embedded REST API[/B][/COLOR] [COLOR=#94A3B8]— HMAC-authenticated HTTP endpoints for web backend integration. Per-IP rate limiting and CORS.[/COLOR]
 [*][COLOR=#38BDF8][B]Spigot + Paper + Folia[/B][/COLOR] [COLOR=#94A3B8]— Works on all three. Folia-safe scheduling via FoliaLib.[/COLOR]
 [/LIST]
 
@@ -46,15 +53,23 @@ That's it. Full setup guide in the [COLOR=#38BDF8][B][URL='']Description tab[/UR
 [/TR]
 [TR]
 [TD][COLOR=#E0E7FF]Reward Types[/COLOR][/TD]
-[TD][COLOR=#94A3B8]12 types — commands, items, XP, currency, permissions, sounds, particles, titles, teleports, composite, choice, custom[/COLOR][/TD]
+[TD][COLOR=#94A3B8]14 types — commands, items, XP, currency, permissions, sounds, particles, titles, teleports, composite, choice, custom, chance, lucky[/COLOR][/TD]
 [/TR]
 [TR]
 [TD][COLOR=#E0E7FF]Streaks[/COLOR][/TD]
-[TD][COLOR=#94A3B8]Configurable timeout (default 36h), unlimited milestones, auto or manual claim[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Configurable timeout (default 36h), unlimited milestones, auto or manual claim, Streak Freezes[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Engagement[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Vote Gifting, Vote Jackpot, Vote Party (Premium), Weekend Multipliers (Premium)[/COLOR][/TD]
 [/TR]
 [TR]
 [TD][COLOR=#E0E7FF]GUIs[/COLOR][/TD]
-[TD][COLOR=#94A3B8]Vote overview, leaderboard (paginated, top-3 heads), streak tracker[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Vote overview, leaderboard (paginated, top-3 heads), streak tracker, rewards hub, vote shop[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Bedrock[/COLOR][/TD]
+[TD][COLOR=#94A3B8]Full GUI parity via Geyser/Floodgate — native Cumulus forms[/COLOR][/TD]
 [/TR]
 [TR]
 [TD][COLOR=#E0E7FF]Cooldowns[/COLOR][/TD]
@@ -70,7 +85,7 @@ That's it. Full setup guide in the [COLOR=#38BDF8][B][URL='']Description tab[/UR
 [/TR]
 [TR]
 [TD][COLOR=#E0E7FF]Integrations[/COLOR][/TD]
-[TD][COLOR=#94A3B8]JExEconomy, Vault, LuckPerms, PlaceholderAPI (all optional)[/COLOR][/TD]
+[TD][COLOR=#94A3B8]JExEconomy, Vault, LuckPerms, PlaceholderAPI, Floodgate (all optional)[/COLOR][/TD]
 [/TR]
 [/TABLE]
 
@@ -83,6 +98,10 @@ That's it. Full setup guide in the [COLOR=#38BDF8][B][URL='']Description tab[/UR
 /vote sites          — List all vote sites with clickable links
 /vote stats [player] — View vote statistics
 /vote top [count]    — Leaderboard
+/vote rewards        — Rewards & economy menu
+/vote shop           — Vote-token shop (Premium)
+/vote freeze         — Buy a Streak Freeze
+/vote gift <player>  — Gift a streak day (or 'random')
 [/CODE]
 
 [CODE]
@@ -90,6 +109,9 @@ That's it. Full setup guide in the [COLOR=#38BDF8][B][URL='']Description tab[/UR
 /jexvote fakevote <player> [site]  — Simulate a test vote
 /jexvote reset <player>            — Clear a player's vote data
 /jexvote resetmonthly              — Reset monthly counts server-wide
+/jexvote key                       — Show Votifier key, port, token
+/jexvote setstreak <player> <n>    — Set a player's streak
+/jexvote debug-services            — Diagnose service-name mismatches
 [/CODE]
 
 [COLOR=#4C1D95]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
@@ -108,12 +130,12 @@ That's it. Full setup guide in the [COLOR=#38BDF8][B][URL='']Description tab[/UR
 [TD][COLOR=#94A3B8]Unlimited[/COLOR][/TD]
 [/TR]
 [TR]
-[TD][COLOR=#E0E7FF]All 12 reward types[/COLOR][/TD]
+[TD][COLOR=#E0E7FF]All 14 reward types[/COLOR][/TD]
 [TD][COLOR=#22C55E]Yes[/COLOR][/TD]
 [TD][COLOR=#22C55E]Yes[/COLOR][/TD]
 [/TR]
 [TR]
-[TD][COLOR=#E0E7FF]Streaks & milestones[/COLOR][/TD]
+[TD][COLOR=#E0E7FF]Streaks, Freezes & Gifting[/COLOR][/TD]
 [TD][COLOR=#22C55E]Yes[/COLOR][/TD]
 [TD][COLOR=#22C55E]Yes[/COLOR][/TD]
 [/TR]
@@ -123,7 +145,22 @@ That's it. Full setup guide in the [COLOR=#38BDF8][B][URL='']Description tab[/UR
 [TD][COLOR=#22C55E]Yes[/COLOR][/TD]
 [/TR]
 [TR]
+[TD][COLOR=#E0E7FF]Bedrock forms[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[/TR]
+[TR]
 [TD][COLOR=#E0E7FF]Vote shop[/COLOR][/TD]
+[TD][COLOR=#EF4444]No[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Vote Party[/COLOR][/TD]
+[TD][COLOR=#EF4444]No[/COLOR][/TD]
+[TD][COLOR=#22C55E]Yes[/COLOR][/TD]
+[/TR]
+[TR]
+[TD][COLOR=#E0E7FF]Weekend multipliers[/COLOR][/TD]
 [TD][COLOR=#EF4444]No[/COLOR][/TD]
 [TD][COLOR=#22C55E]Yes[/COLOR][/TD]
 [/TR]
