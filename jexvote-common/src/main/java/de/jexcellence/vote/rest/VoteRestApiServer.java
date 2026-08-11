@@ -15,7 +15,9 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -45,6 +47,9 @@ public final class VoteRestApiServer {
     private static final String SITES_ROUTE = "/api/v1/vote/sites";
     private static final String PLAYER_PREFIX = "/api/v1/vote/player/";
     private static final String THREAD_NAME = "jexvote-rest-api";
+
+    /** Max seconds a single HTTP request may occupy a worker thread. */
+    private static final int REQUEST_DEADLINE_SECONDS = 10;
 
     private final VoteRestApiConfig config;
     private final VoteEndpoints endpoints;
@@ -89,12 +94,17 @@ public final class VoteRestApiServer {
             return;
         }
 
-        executor = Executors.newScheduledThreadPool(2, runnable -> {
+        executor = Executors.newScheduledThreadPool(10, runnable -> {
             Thread thread = new Thread(runnable, THREAD_NAME);
             thread.setDaemon(true);
             return thread;
         });
-        server.setExecutor(executor);
+
+        Executor deadlineExecutor = task -> {
+            Future<?> future = executor.submit(task);
+            executor.schedule(() -> future.cancel(true), REQUEST_DEADLINE_SECONDS, TimeUnit.SECONDS);
+        };
+        server.setExecutor(deadlineExecutor);
 
         Map<String, EndpointHandler> getRoutes = new LinkedHashMap<>();
         getRoutes.put(SITES_ROUTE, endpoints::handleSites);

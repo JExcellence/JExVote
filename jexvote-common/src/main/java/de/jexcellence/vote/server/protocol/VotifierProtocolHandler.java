@@ -94,7 +94,8 @@ public class VotifierProtocolHandler implements Runnable {
                 logger.log(Level.FINE, () -> String.format(
                         "Vote connection dropped before completion (%s)", e.getMessage()));
             } else {
-                logger.log(Level.WARNING, "Error handling vote connection", e);
+                final String msg = e.getMessage();
+                logger.log(Level.FINE, () -> String.format("Error handling vote connection: %s", msg));
             }
         }
     }
@@ -282,11 +283,17 @@ public class VotifierProtocolHandler implements Runnable {
         return in.readNBytes(length);
     }
 
+    private static final int MAX_V2_PAYLOAD = 8192;
+
     private byte[] readV2BraceMatched(@NotNull BufferedInputStream in, int firstByte) throws IOException {
         StringBuilder sb = new StringBuilder();
         sb.append((char) firstByte);
         int braces = firstByte == '{' ? 1 : 0;
         while (braces > 0) {
+            if (sb.length() >= MAX_V2_PAYLOAD) {
+                logger.log(Level.WARNING, () -> "v2 brace-matched payload exceeded 8192 bytes — dropping connection");
+                return new byte[0];
+            }
             int b = in.read();
             if (b == -1) break;
             sb.append((char) b);

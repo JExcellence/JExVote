@@ -10,7 +10,7 @@ import java.net.Socket;
 import java.security.KeyPair;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -58,15 +58,17 @@ public class VotifierServer {
             serverSocket.set(ss);
 
             // Handler pool for processing accepted connections — separate from the accept loop.
+            // AbortPolicy ensures the accept thread is NEVER used as a handler (prevents
+            // slowloris from blocking the listener). Rejected connections are closed below.
             executor.set(new ThreadPoolExecutor(
                     2, MAX_CONNECTIONS, 60L, TimeUnit.SECONDS,
-                    new SynchronousQueue<>(),
+                    new LinkedBlockingQueue<>(MAX_CONNECTIONS),
                     r -> {
                         Thread t = new Thread(r, "JExVote-Votifier-Handler");
                         t.setDaemon(true);
                         return t;
                     },
-                    new ThreadPoolExecutor.CallerRunsPolicy()));
+                    new ThreadPoolExecutor.AbortPolicy()));
 
             running.set(true);
 
@@ -75,9 +77,14 @@ public class VotifierServer {
                 while (running.get()) {
                     try {
                         Socket client = serverSocket.get().accept();
-                        client.setSoTimeout(15_000);
-                        executor.get().submit(new VotifierProtocolHandler(
-                                logger, client, keyPair, token, voteCallback));
+                        client.setSoTimeout(5_000);
+                        try {
+                            executor.get().submit(new VotifierProtocolHandler(
+                                    logger, client, keyPair, token, voteCallback));
+                        } catch (RejectedExecutionException e) {
+                            try { client.close(); } catch (IOException ignored) { }
+                            logger.log(Level.FINE, () -> "Vote connection rejected — handler pool full");
+                        }
                     } catch (IOException e) {
                         if (running.get()) {
                             logger.log(Level.WARNING, "Error accepting vote connection", e);
