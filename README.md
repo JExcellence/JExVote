@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/jexvote-logo.png" alt="JExVote logo" width="180">
+
 # JExVote
 ### All-in-One Vote Rewards & Engagement
 
