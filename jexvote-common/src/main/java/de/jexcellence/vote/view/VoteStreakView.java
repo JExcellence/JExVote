@@ -17,7 +17,6 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -256,7 +255,7 @@ public class VoteStreakView extends VoteBaseView {
         int[] rewardSlots = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
         for (int i = 0; i < rewardSlots.length; i++) {
             if (i < flatRewards.size()) {
-                inv.setItem(rewardSlots[i], buildRewardTile(flatRewards.get(i), viewer));
+                inv.setItem(rewardSlots[i], buildRewardTile(flatRewards.get(i)));
             }
         }
 
@@ -497,19 +496,13 @@ public class VoteStreakView extends VoteBaseView {
 
     // ── Reward tile for detail view ────────────────────────────────
 
-    private @NotNull ItemStack buildRewardTile(@NotNull AbstractReward reward,
-                                                @NotNull Player viewer) {
+    private @NotNull ItemStack buildRewardTile(@NotNull AbstractReward reward) {
         RewardViewHelper.ViewEntry entry = RewardViewHelper.toViewEntry(reward);
+        // The description now spells out the actual grant (item / currency / crate key /
+        // fly coupon / radius …), so the tile no longer needs a redundant "Type: Command" line.
         String description = VoteRewardDescriber.describe(reward);
-
         return ItemBuilder.of(entry.icon())
                 .name(name(description))
-                .lore(List.of(
-                        Component.empty(),
-                        msg("vote_streak.detail.reward_type")
-                                .with("type", capitalize(reward.typeId()))
-                                .itemComponent(viewer),
-                        Component.empty()))
                 .build();
     }
 
@@ -692,28 +685,6 @@ public class VoteStreakView extends VoteBaseView {
         } catch (NumberFormatException e) {
             return -1;
         }
-    }
-
-    /**
-     * Capitalizes a type ID string, replacing underscores and hyphens with spaces.
-     *
-     * @param typeId the type ID to capitalize (e.g., "command_reward")
-     * @return the capitalized string (e.g., "Command Reward")
-     */
-    private static @NotNull String capitalize(@Nullable String typeId) {
-        if (typeId == null || typeId.isEmpty()) return "Reward";
-        var sb = new StringBuilder();
-        boolean cap = true;
-        for (char c : typeId.toCharArray()) {
-            if (c == '_' || c == '-') {
-                sb.append(' ');
-                cap = true;
-            } else {
-                sb.append(cap ? Character.toUpperCase(c) : c);
-                cap = false;
-            }
-        }
-        return sb.toString();
     }
 
     // ── Viewer state ───────────────────────────────────────────────

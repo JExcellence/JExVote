@@ -32,7 +32,6 @@ import java.util.Locale;
  */
 public final class VoteRewardDescriber {
 
-    private static final String CRATE_SUFFIX = "_crate";
     private static final String AMOUNT = "amount";
 
     private VoteRewardDescriber() {
@@ -66,20 +65,54 @@ public final class VoteRewardDescriber {
     }
 
     private static @NotNull String describeCommand(@NotNull CommandReward command) {
+        // 1. Operator-supplied description always wins (MiniMessage literal or i18n key).
+        String describe = command.getDescribe();
+        if (describe != null && !describe.isBlank()) {
+            return resolveDescribe(describe);
+        }
+        // 2. Auto-recognise the command shapes actually used across the suite so
+        //    unannotated rewards still read as their grant, not "Special Reward".
         String raw = command.getCommand();
-        String[] tokens = raw == null ? new String[0] : raw.trim().split("\\s+");
-        boolean isCrateKey = tokens.length >= 5
-                && (tokens[0].equalsIgnoreCase("crate") || tokens[0].equalsIgnoreCase("crates"))
-                && tokens[1].equalsIgnoreCase("give")
-                && tokens[2].equalsIgnoreCase("key");
-        if (isCrateKey) {
-            String crateId = tokens[4];
-            String amount = tokens.length >= 6 ? tokens[5] : "1";
-            return resolve("reward_describe.crate-key",
-                    AMOUNT, amount,
-                    "crate", prettyCrate(crateId));
+        String[] t = raw == null ? new String[0] : raw.trim().split("\\s+");
+
+        // /crate give key <player> <crate> [amount]
+        if (t.length >= 5 && (t[0].equalsIgnoreCase("crate") || t[0].equalsIgnoreCase("crates"))
+                && t[1].equalsIgnoreCase("give") && t[2].equalsIgnoreCase("key")) {
+            return crateKey(t[4], t.length >= 6 ? t[5] : "1");
+        }
+        // AdvancedCrates: ac|advancedcrates virtualkey give <player> <crate> [amount]
+        if (t.length >= 5 && (t[0].equalsIgnoreCase("ac") || t[0].equalsIgnoreCase("advancedcrates"))
+                && t[1].equalsIgnoreCase("virtualkey") && t[2].equalsIgnoreCase("give")) {
+            return crateKey(t[4], t.length >= 6 ? t[5] : "1");
+        }
+        // jexoneblock grant-radius <player> <amount>
+        if (t.length >= 4 && t[0].equalsIgnoreCase("jexoneblock") && t[1].equalsIgnoreCase("grant-radius")) {
+            return resolve("reward_describe.island-radius", AMOUNT, t[3]);
+        }
+        // jexoneblock flycoupon <player> <minutes> <count>
+        if (t.length >= 5 && t[0].equalsIgnoreCase("jexoneblock") && t[1].equalsIgnoreCase("flycoupon")) {
+            return resolve("reward_describe.fly-coupon", "minutes", t[3], "count", t[4]);
         }
         return resolve("reward_describe.special");
+    }
+
+    private static @NotNull String crateKey(@NotNull String crateId, @NotNull String amount) {
+        return resolve("reward_describe.crate-key", AMOUNT, amount, "crate", prettyCrate(crateId));
+    }
+
+    /**
+     * Resolves an operator {@code describe} value: a MiniMessage literal when it
+     * carries a tag, an i18n key when it looks like one (dotted, no spaces),
+     * otherwise the plain text as-is.
+     */
+    private static @NotNull String resolveDescribe(@NotNull String describe) {
+        if (describe.indexOf('<') >= 0) {
+            return describe;
+        }
+        if (describe.indexOf(' ') < 0 && describe.indexOf('.') > 0) {
+            return resolve(describe);
+        }
+        return describe;
     }
 
     /**
@@ -127,23 +160,26 @@ public final class VoteRewardDescriber {
     }
 
     /**
-     * Turns a crate identifier ({@code dragon_crate}) into a readable label
-     * ({@code Dragon Crate}).
+     * Turns a crate identifier into a readable "<Name> Crate" label, handling both
+     * {@code dragon_crate} (snake_case) and {@code DragonCrate} (camelCase, as used
+     * by AdvancedCrates virtual keys). A trailing "crate" word is dropped so it is
+     * not duplicated by the appended suffix.
      */
     private static @NotNull String prettyCrate(@NotNull String crateId) {
-        String base = crateId.toLowerCase(Locale.ROOT);
-        if (base.endsWith(CRATE_SUFFIX)) {
-            base = base.substring(0, base.length() - CRATE_SUFFIX.length());
-        }
+        // Split camelCase boundaries and underscores into spaces.
+        String spaced = crateId
+                .replaceAll("([a-z0-9])([A-Z])", "$1 $2")
+                .replace('_', ' ');
         StringBuilder label = new StringBuilder();
-        for (String word : base.split("_")) {
-            if (word.isEmpty()) {
+        for (String word : spaced.trim().split("\\s+")) {
+            if (word.isEmpty() || word.equalsIgnoreCase("crate")) {
                 continue;
             }
             if (label.length() > 0) {
                 label.append(' ');
             }
-            label.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+            label.append(Character.toUpperCase(word.charAt(0)))
+                    .append(word.substring(1).toLowerCase(Locale.ROOT));
         }
         return label.append(" Crate").toString();
     }
