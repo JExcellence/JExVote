@@ -66,6 +66,9 @@ public class VoteService {
     private static final long DEDUP_WINDOW_MS = 5_000L;
     private final Map<String, Long> recentVotes = new ConcurrentHashMap<>();
 
+    /** Tracks server-down periods so vote streaks aren't broken by downtime the player couldn't avoid. */
+    private final DowntimeTracker downtime;
+
     // Configuration group — suppressed (S107)
     @SuppressWarnings("java:S107")
     public VoteService(@NotNull JavaPlugin plugin,
@@ -102,6 +105,11 @@ public class VoteService {
         this.bedrockSettings = bedrockSettings;
         this.dailyFly = dailyFly;
         this.dailyRewardCommands = dailyRewardCommands;
+        this.downtime = new DowntimeTracker(plugin);
+        this.downtime.initialize(logger);
+        // Heartbeat every minute so a crash / kill -9 leaves a fresh-enough
+        // last-alive timestamp for the next boot's gap computation.
+        this.scheduler.runRepeating(this.downtime::heartbeat, 20L * 60L, 20L * 60L);
     }
 
     /**
@@ -245,11 +253,12 @@ public class VoteService {
         player.setTotalVotes(player.getTotalVotes() + 1);
         player.setMonthlyVotes(player.getMonthlyVotes() + 1);
         player.setVotePoints(player.getVotePoints() + scaledPoints);
-        Instant previous = player.getLastVoteAt();
-        Instant incoming = vote.timestamp();
-        if (previous == null || incoming.isAfter(previous)) {
-            player.setLastVoteAt(incoming);
-        }
+        // Store PROCESSING time, not the vote's Votifier timestamp. NuVotifier
+        // relays and API-path votes can carry stale/wrong timestamps; storing
+        // `Instant.now()` keeps updateStreak's "same calendar day" and gap
+        // calculations honest — they compare stored lastVoteAt vs Instant.now(),
+        // so both sides must use the same clock (see updateStreak).
+        player.setLastVoteAt(Instant.now());
         boolean firstDaily = applyDailyFlyDate(player);
         playerRepository.update(player);
         return firstDaily;
@@ -517,7 +526,15 @@ public class VoteService {
             return;
         }
 
-        Duration gap = Duration.between(lastVote, now);
+        Duration rawGap = Duration.between(lastVote, now);
+        // Subtract periods the server was down — a player can't vote while the
+        // Votifier port is unreachable. Without this the streak breaks whenever
+        // a maintenance window straddles the timeout, which is unfair.
+        Duration serverDown = downtime.overlapping(lastVote, now);
+        Duration gap = rawGap.minus(serverDown);
+        if (gap.isNegative()) {
+            gap = Duration.ZERO;
+        }
         if (gap.compareTo(streakTimeout) <= 0) {
             player.setCurrentStreak(player.getCurrentStreak() + 1);
             recordHighestStreak(player);
@@ -694,5 +711,143 @@ public class VoteService {
                 entity.getVotePoints(),
                 entity.getLastVoteAt()
         );
+    }
+
+    /**
+     * Persists a heartbeat timestamp to disk while the server is running so the
+     * next boot can compute how long the server was actually down. Downtime
+     * windows are appended to a small JSON-ish file and consulted during streak
+     * gap evaluation so a player's streak doesn't break just because the server
+     * was offline through the timeout window. Bounded to 90 days of history and
+     * an in-memory cap of 100 entries so the file stays tiny.
+     */
+    private static final class DowntimeTracker {
+
+        /** Minimum gap to consider a real downtime window (guards against harmless clock skew). */
+        private static final long MIN_DOWNTIME_SECONDS = 180L;
+        /** Only remember downtime younger than this — no streak can be older. */
+        private static final long RETENTION_DAYS = 90L;
+        private static final int MAX_ENTRIES = 100;
+
+        private final JavaPlugin plugin;
+        private final java.io.File heartbeatFile;
+        private final java.io.File windowsFile;
+        private final java.util.List<long[]> windows = new java.util.ArrayList<>();
+
+        DowntimeTracker(@NotNull JavaPlugin plugin) {
+            this.plugin = plugin;
+            java.io.File dir = plugin.getDataFolder();
+            if (!dir.exists()) dir.mkdirs();
+            this.heartbeatFile = new java.io.File(dir, "uptime-heartbeat.txt");
+            this.windowsFile = new java.io.File(dir, "downtime-windows.txt");
+        }
+
+        /**
+         * On plugin enable: read the last heartbeat, compute the gap to now, and
+         * if it exceeds the noise floor record it as a downtime window.
+         */
+        void initialize(@NotNull Logger logger) {
+            loadWindows();
+            long lastAlive = readHeartbeat();
+            long now = Instant.now().getEpochSecond();
+            if (lastAlive > 0L && now - lastAlive >= MIN_DOWNTIME_SECONDS) {
+                windows.add(new long[]{lastAlive, now});
+                trimAndSaveWindows();
+                long down = now - lastAlive;
+                logger.log(Level.INFO, () -> "[vote-uptime] recorded "
+                        + Duration.ofSeconds(down).toMinutes()
+                        + " min downtime window — streaks that overlap it will be forgiven");
+            }
+            writeHeartbeat(now);
+        }
+
+        void heartbeat() {
+            writeHeartbeat(Instant.now().getEpochSecond());
+        }
+
+        /**
+         * Total downtime that overlaps ({@code from}, {@code to}). Used by the
+         * streak gap check so an offline period isn't counted against the player.
+         */
+        @NotNull Duration overlapping(@NotNull Instant from, @NotNull Instant to) {
+            long fromSec = from.getEpochSecond();
+            long toSec = to.getEpochSecond();
+            if (toSec <= fromSec) return Duration.ZERO;
+            long overlap = 0L;
+            synchronized (windows) {
+                for (long[] window : windows) {
+                    long start = Math.max(fromSec, window[0]);
+                    long end = Math.min(toSec, window[1]);
+                    if (end > start) {
+                        overlap += (end - start);
+                    }
+                }
+            }
+            return Duration.ofSeconds(overlap);
+        }
+
+        private long readHeartbeat() {
+            if (!heartbeatFile.exists()) return 0L;
+            try {
+                String content = java.nio.file.Files.readString(heartbeatFile.toPath()).trim();
+                return content.isEmpty() ? 0L : Long.parseLong(content);
+            } catch (Exception ex) {
+                return 0L;
+            }
+        }
+
+        private void writeHeartbeat(long epochSecond) {
+            try {
+                java.nio.file.Files.writeString(heartbeatFile.toPath(), Long.toString(epochSecond));
+            } catch (Exception ex) {
+                plugin.getLogger().log(Level.FINE,
+                        () -> "[vote-uptime] failed to write heartbeat: " + ex.getMessage());
+            }
+        }
+
+        private void loadWindows() {
+            if (!windowsFile.exists()) return;
+            try {
+                for (String line : java.nio.file.Files.readAllLines(windowsFile.toPath())) {
+                    String trimmed = line.trim();
+                    if (trimmed.isEmpty()) continue;
+                    String[] parts = trimmed.split(",");
+                    if (parts.length != 2) continue;
+                    try {
+                        long start = Long.parseLong(parts[0].trim());
+                        long end = Long.parseLong(parts[1].trim());
+                        if (end > start) {
+                            windows.add(new long[]{start, end});
+                        }
+                    } catch (NumberFormatException ignored) {
+                        // Skip malformed line — don't fail startup on a corrupt file.
+                    }
+                }
+            } catch (Exception ex) {
+                plugin.getLogger().log(Level.FINE,
+                        () -> "[vote-uptime] failed to load downtime windows: " + ex.getMessage());
+            }
+        }
+
+        private void trimAndSaveWindows() {
+            long cutoff = Instant.now().getEpochSecond()
+                    - Duration.ofDays(RETENTION_DAYS).getSeconds();
+            synchronized (windows) {
+                windows.removeIf(w -> w[1] < cutoff);
+                while (windows.size() > MAX_ENTRIES) {
+                    windows.remove(0);
+                }
+                try {
+                    StringBuilder sb = new StringBuilder();
+                    for (long[] w : windows) {
+                        sb.append(w[0]).append(',').append(w[1]).append('\n');
+                    }
+                    java.nio.file.Files.writeString(windowsFile.toPath(), sb.toString());
+                } catch (Exception ex) {
+                    plugin.getLogger().log(Level.FINE,
+                            () -> "[vote-uptime] failed to save downtime windows: " + ex.getMessage());
+                }
+            }
+        }
     }
 }
