@@ -8,7 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Soft bridge to the Floodgate API — detects Bedrock players and sends
+ * Soft bridge to the Floodgate API - detects Bedrock players and sends
  * Cumulus forms without a hard compile dependency. When Floodgate is not
  * installed the bridge degrades silently: {@link #isBedrockPlayer} always
  * returns {@code false} and {@link #sendForm} is a no-op.
@@ -30,7 +30,7 @@ public final class BedrockFormBridge {
             floodgateApi = apiClass.getMethod("getInstance").invoke(null);
             ok = floodgateApi != null;
             if (ok) {
-                LOGGER.log(Level.INFO, "[vote] Floodgate detected — Bedrock forms enabled");
+                LOGGER.log(Level.INFO, "[vote] Floodgate detected - Bedrock forms enabled");
             }
         } catch (ClassNotFoundException ignored) {
             // Floodgate not installed

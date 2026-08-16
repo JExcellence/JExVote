@@ -38,7 +38,7 @@ public final class VotePartyView extends VoteBaseView {
     private static final String TAG_PAGE_PREV = "page-prev";
     private static final String TAG_PAGE_NEXT = "page-next";
 
-    /** Body slots (rows 2–4, edges excluded) — one page holds 21 pool entries. */
+    /** Body slots (rows 2–4, edges excluded) - one page holds 21 pool entries. */
     private static final int[] BODY_SLOTS = {
             19, 20, 21, 22, 23, 24, 25,
             28, 29, 30, 31, 32, 33, 34,

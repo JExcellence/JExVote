@@ -27,7 +27,7 @@ final class RateLimiter {
         return counter.tryIncrement(maxPerMinute);
     }
 
-    /** Evict stale entries — call periodically from a background task. */
+    /** Evict stale entries - call periodically from a background task. */
     void evictStale() {
         long cutoff = System.currentTimeMillis() - WINDOW_MILLIS * 2;
         counters.entrySet().removeIf(e -> e.getValue().windowStart < cutoff);
@@ -40,7 +40,7 @@ final class RateLimiter {
         boolean tryIncrement(int max) {
             long now = System.currentTimeMillis();
             if (now - windowStart > WINDOW_MILLIS) {
-                // Reset window — slight race is acceptable for rate limiting.
+                // Reset window - slight race is acceptable for rate limiting.
                 windowStart = now;
                 count.set(1);
                 return true;

@@ -35,8 +35,8 @@ import java.util.concurrent.CompletableFuture;
  * <p>
  * Two display modes:
  * <ul>
- *   <li><b>Track view</b> — milestone grid with reward icons and status</li>
- *   <li><b>Detail view</b> — expanded reward list for a single milestone with claim button</li>
+ *   <li><b>Track view</b> - milestone grid with reward icons and status</li>
+ *   <li><b>Detail view</b> - expanded reward list for a single milestone with claim button</li>
  * </ul>
  */
 public class VoteStreakView extends VoteBaseView {
@@ -444,7 +444,7 @@ public class VoteStreakView extends VoteBaseView {
         itemLore.add(Component.empty());
         itemLore.add(resolveMilestoneStatus(viewer, isClaimed, claimable, reached, ctx.manualMode(), isNext));
 
-        // Rarity badge — only on locked tiers so the player can read at a
+        // Rarity badge - only on locked tiers so the player can read at a
         // glance how prestigious the locked one is. Reached/claimable tiles
         // already communicate that with their bright gradient + glow.
         if (!reached && !isNext) {
@@ -566,7 +566,7 @@ public class VoteStreakView extends VoteBaseView {
     private static @NotNull Material resolvePrimaryRewardMaterial(
             @NotNull List<AbstractReward> rewards, boolean showRewardIcon) {
         if (!showRewardIcon || rewards.isEmpty()) {
-            // Locked tier: use GRAY_DYE (not RED_STAINED_GLASS_PANE) — gray
+            // Locked tier: use GRAY_DYE (not RED_STAINED_GLASS_PANE) - gray
             // reads as "not yet" without the harsh "error" tone. The rarity
             // glyph in the lore tells the player how high-value this tier is.
             return rewards.isEmpty() ? Material.GRAY_STAINED_GLASS_PANE : Material.GRAY_DYE;

@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 /**
  * Pays out {@code currency}-type vote rewards. JExPlatform's
  * {@link de.jexcellence.jexplatform.reward.impl.CurrencyReward} has no economy
- * plugin on its classpath, so it delegates to a host-installed depositor — this
+ * plugin on its classpath, so it delegates to a host-installed depositor - this
  * one routes <b>JExEconomy first, then Vault</b>. Both are soft dependencies:
  * each path is guarded by a plugin-presence check and a {@code Throwable} catch,
  * so the server keeps working when neither is installed (the reward is a no-op).

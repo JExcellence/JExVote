@@ -23,7 +23,7 @@ import java.util.Locale;
  * operators can edit the wording, glyphs and colours without touching code.
  * The resolved template (a MiniMessage string with placeholders already
  * substituted) is returned as a fragment that the calling view embeds into its
- * own MiniMessage and parses — so this method serialises the resolved component
+ * own MiniMessage and parses - so this method serialises the resolved component
  * back to a MiniMessage string. Item names additionally use {@code <lang:…>} so
  * they localise to each player's own client language. Resolution uses the
  * server default locale (the templates are mostly colour + glyph + numbers).
@@ -35,7 +35,7 @@ public final class VoteRewardDescriber {
     private static final String AMOUNT = "amount";
 
     private VoteRewardDescriber() {
-        // Utility class — no instances
+        // Utility class - no instances
     }
 
     /**

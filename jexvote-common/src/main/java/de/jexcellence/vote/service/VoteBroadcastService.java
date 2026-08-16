@@ -40,7 +40,7 @@ public class VoteBroadcastService {
             long result = lastBroadcastTime.accumulateAndGet(now,
                     (prev, next) -> prev < threshold ? next : prev);
             if (result != now) {
-                return; // silently skip — within cooldown window
+                return; // silently skip - within cooldown window
             }
         }
 

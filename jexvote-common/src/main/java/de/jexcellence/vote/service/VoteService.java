@@ -69,7 +69,7 @@ public class VoteService {
     /** Tracks server-down periods so vote streaks aren't broken by downtime the player couldn't avoid. */
     private final DowntimeTracker downtime;
 
-    // Configuration group — suppressed (S107)
+    // Configuration group - suppressed (S107)
     @SuppressWarnings("java:S107")
     public VoteService(@NotNull JavaPlugin plugin,
                        @NotNull VotePlayerRepository playerRepository,
@@ -146,7 +146,7 @@ public class VoteService {
 
                 // Duplicate-vote guard: some setups deliver the same vote twice (a second
                 // vote plugin also listening, a relay, or a site that re-sends). Without
-                // this every reward doubles — points, streak, and the first-of-day fly
+                // this every reward doubles - points, streak, and the first-of-day fly
                 // bonus (the reported 2×15m fly). ConcurrentHashMap.put is atomic, so of
                 // two racing duplicates exactly one proceeds.
                 String dedupeKey = vote.username().toLowerCase(Locale.ROOT) + '|'
@@ -161,7 +161,7 @@ public class VoteService {
 
                 UUID uuid = resolveUuid(vote.username());
                 if (uuid == null) {
-                    logger.warning(String.format("Could not resolve UUID for voter: %s — player has never joined this server", vote.username()));
+                    logger.warning(String.format("Could not resolve UUID for voter: %s - player has never joined this server", vote.username()));
                     return false;
                 }
 
@@ -196,7 +196,7 @@ public class VoteService {
 
     /**
      * Fires the public "{player} voted" broadcast. Done here inside the shared
-     * {@code processVote} flow — not in a single ingestion callback — so every
+     * {@code processVote} flow - not in a single ingestion callback - so every
      * vote path announces the voter: the embedded Votifier server, the API
      * provider (external NuVotifier / website), and the admin test command.
      * Previously only the embedded server broadcast, so votes delivered through
@@ -241,7 +241,7 @@ public class VoteService {
         VoteSite site = findSiteByServiceName(serviceName);
         if (site == null) {
             logger.log(Level.WARNING, () -> String.format(
-                    "No vote site configured for service '%s' — using default 1 point. Check sites.yml service-name mappings.",
+                    "No vote site configured for service '%s' - using default 1 point. Check sites.yml service-name mappings.",
                     serviceName));
             return 1;
         }
@@ -256,7 +256,7 @@ public class VoteService {
         // Store PROCESSING time, not the vote's Votifier timestamp. NuVotifier
         // relays and API-path votes can carry stale/wrong timestamps; storing
         // `Instant.now()` keeps updateStreak's "same calendar day" and gap
-        // calculations honest — they compare stored lastVoteAt vs Instant.now(),
+        // calculations honest - they compare stored lastVoteAt vs Instant.now(),
         // so both sides must use the same clock (see updateStreak).
         player.setLastVoteAt(Instant.now());
         boolean firstDaily = applyDailyFlyDate(player);
@@ -289,7 +289,7 @@ public class VoteService {
             scheduler.runAtEntity(onlinePlayer, () ->
                     deliverOnlineRewards(onlinePlayer, vote, uuid, snapshot, streak,
                             firstDailyBonus, consumedFreezes, remainingFreezes, freshFreezeGrant));
-            logger.log(Level.INFO, () -> String.format("Vote processed for %s (online) — streak: %d, total: %d",
+            logger.log(Level.INFO, () -> String.format("Vote processed for %s (online) - streak: %d, total: %d",
                     vote.username(), streak, player.getTotalVotes()));
         } else {
             String rewardData = rewardService.serializeRewards(vote.serviceName(), streak);
@@ -297,7 +297,7 @@ public class VoteService {
                 pendingRewardRepository.create(
                         new PendingVoteRewardEntity(uuid, vote.serviceName(), rewardData));
             }
-            logger.log(Level.INFO, () -> String.format("Vote processed for %s (offline) — rewards queued, streak: %d, total: %d",
+            logger.log(Level.INFO, () -> String.format("Vote processed for %s (offline) - rewards queued, streak: %d, total: %d",
                     vote.username(), streak, player.getTotalVotes()));
         }
     }
@@ -517,7 +517,7 @@ public class VoteService {
 
         // The streak advances at most once per calendar day: if the previous
         // processed vote already fell on today, the day is counted, so leave
-        // currentStreak untouched (keys/rewards still process — only the streak
+        // currentStreak untouched (keys/rewards still process - only the streak
         // number is capped). No per-config vote timezone exists, so the server's
         // local zone is used, consistent with the monthly-reset logic.
         Instant now = Instant.now();
@@ -527,7 +527,7 @@ public class VoteService {
         }
 
         Duration rawGap = Duration.between(lastVote, now);
-        // Subtract periods the server was down — a player can't vote while the
+        // Subtract periods the server was down - a player can't vote while the
         // Votifier port is unreachable. Without this the streak breaks whenever
         // a maintenance window straddles the timeout, which is unfair.
         Duration serverDown = downtime.overlapping(lastVote, now);
@@ -564,7 +564,7 @@ public class VoteService {
 
         // Use the exact fractional-hour overflow, not Duration.toHours() (which
         // truncates the sub-hour remainder). Truncating here can under-count by
-        // a whole window right at a duration-hours boundary — e.g. an overflow
+        // a whole window right at a duration-hours boundary - e.g. an overflow
         // of 24h00m01s with a 24h duration truncated to 24h needs ceil(24/24)=1
         // window, when the true overflow already needs a 2nd one.
         double overflowHours = gap.minus(streakTimeout).toNanos() / 3_600_000_000_000.0;
@@ -631,7 +631,7 @@ public class VoteService {
 
     /**
      * Marks (once per day) and returns whether this is the player's first vote of
-     * the day AND at least one daily bonus is configured — the fly coupon or the
+     * the day AND at least one daily bonus is configured - the fly coupon or the
      * daily-reward commands. Shared gate for both: the date is only claimed when
      * there's something to grant, so nothing fires when both are unset.
      */
@@ -659,7 +659,7 @@ public class VoteService {
 
     private @Nullable UUID resolveUuid(@NotNull String username) {
         // Try the raw name first (Java accounts), then the Bedrock (Geyser/
-        // Floodgate) name variants — a voter types their gamertag on the list,
+        // Floodgate) name variants - a voter types their gamertag on the list,
         // but their in-game name carries the Floodgate prefix (and spaces may
         // be replaced), so an exact match on the raw name misses Bedrock voters.
         for (String candidate : nameCandidates(username)) {
@@ -725,7 +725,7 @@ public class VoteService {
 
         /** Minimum gap to consider a real downtime window (guards against harmless clock skew). */
         private static final long MIN_DOWNTIME_SECONDS = 180L;
-        /** Only remember downtime younger than this — no streak can be older. */
+        /** Only remember downtime younger than this - no streak can be older. */
         private static final long RETENTION_DAYS = 90L;
         private static final int MAX_ENTRIES = 100;
 
@@ -756,7 +756,7 @@ public class VoteService {
                 long down = now - lastAlive;
                 logger.log(Level.INFO, () -> "[vote-uptime] recorded "
                         + Duration.ofSeconds(down).toMinutes()
-                        + " min downtime window — streaks that overlap it will be forgiven");
+                        + " min downtime window - streaks that overlap it will be forgiven");
             }
             writeHeartbeat(now);
         }
@@ -820,7 +820,7 @@ public class VoteService {
                             windows.add(new long[]{start, end});
                         }
                     } catch (NumberFormatException ignored) {
-                        // Skip malformed line — don't fail startup on a corrupt file.
+                        // Skip malformed line - don't fail startup on a corrupt file.
                     }
                 }
             } catch (Exception ex) {

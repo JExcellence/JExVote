@@ -39,7 +39,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Builds Cumulus (Bedrock) forms that mirror each JExVote GUI view.
  * <p>
- * Bedrock forms are text-based with simple buttons — they condense the
+ * Bedrock forms are text-based with simple buttons - they condense the
  * rich chest-GUI tile grid into a readable list format. Each form method
  * loads data async, then sends the form on the main thread via
  * {@link BedrockFormBridge#sendForm}.
@@ -215,7 +215,7 @@ public final class VoteBedrockForms {
                     default -> "#" + rank;
                 };
                 body.append(medal).append(" ").append(e.playerName())
-                        .append(" — ").append(e.totalVotes()).append(" ")
+                        .append(" - ").append(e.totalVotes()).append(" ")
                         .append(plain(player, "bedrock.leaderboard.votes"))
                         .append(" | ").append(plain(player, "bedrock.leaderboard.streak-label"))
                         .append(": ").append(e.currentStreak()).append("\n");
@@ -414,7 +414,7 @@ public final class VoteBedrockForms {
             String desc = VoteRewardDescriber.describe(r.getReward());
             double pct = r.getChance() * 100.0;
             body.append("  ").append(String.format("%.1f%%", pct))
-                    .append(" — ").append(desc).append("\n");
+                    .append(" - ").append(desc).append("\n");
         }
 
         LuckyReward luckyPool = rewardConfig.getVotePartyPool();
@@ -425,7 +425,7 @@ public final class VoteBedrockForms {
                 String desc = VoteRewardDescriber.describe(entry.reward());
                 double pct = totalWeight > 0 ? (entry.weight() / totalWeight) * 100.0 : 0;
                 body.append("  ").append(String.format("%.1f%%", pct))
-                        .append(" — ").append(desc).append("\n");
+                        .append(" - ").append(desc).append("\n");
             }
         }
 
@@ -491,7 +491,7 @@ public final class VoteBedrockForms {
                 boolean canAfford = points >= item.cost();
                 String afford = canAfford ? "✔" : "✘";
                 body.append("  ").append(afford).append(" ").append(item.name())
-                        .append(" — ").append(item.cost()).append(" pts")
+                        .append(" - ").append(item.cost()).append(" pts")
                         .append("\n    ").append(desc).append("\n");
             }
 

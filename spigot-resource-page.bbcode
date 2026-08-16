@@ -1,18 +1,18 @@
 [CENTER]
-[IMG]PLACEHOLDER_1_BANNER — Full-width banner image, JExVote logo + tagline "Reward your community for voting"[/IMG]
+[IMG]PLACEHOLDER_1_BANNER - Full-width banner image, JExVote logo + tagline "Reward your community for voting"[/IMG]
 
-[SIZE=5][COLOR=#2ecc71][B]JExVote[/B][/COLOR] — [COLOR=#95a5a6]All-in-One Vote Rewards & Engagement[/COLOR][/SIZE]
+[SIZE=5][COLOR=#2ecc71][B]JExVote[/B][/COLOR] - [COLOR=#95a5a6]All-in-One Vote Rewards & Engagement[/COLOR][/SIZE]
 
 [SIZE=3][COLOR=#bdc3c7]Built-in Votifier · Streaks · Streak Freezes · Vote Gifting · Jackpot · Vote Party · Vote Shop · Bedrock Forms · REST API · Multi-language[/COLOR][/SIZE]
 
-[SIZE=2][COLOR=#e74c3c]Supports Votifier v1 (RSA) and NuVotifier v2 (HMAC) — no external Votifier plugin required.[/COLOR][/SIZE]
+[SIZE=2][COLOR=#e74c3c]Supports Votifier v1 (RSA) and NuVotifier v2 (HMAC) - no external Votifier plugin required.[/COLOR][/SIZE]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [/CENTER]
 
 [SIZE=4][COLOR=#2ecc71]■[/COLOR] [B]What is JExVote?[/B][/SIZE]
 
-JExVote handles everything related to server voting — from receiving votes off voting sites to rewarding players, tracking streaks, and displaying statistics. It ships with its own Votifier-compatible server built in, so you do not need NuVotifier or any other listener plugin. Just point your vote sites at the configured port and JExVote takes care of the rest.
+JExVote handles everything related to server voting - from receiving votes off voting sites to rewarding players, tracking streaks, and displaying statistics. It ships with its own Votifier-compatible server built in, so you do not need NuVotifier or any other listener plugin. Just point your vote sites at the configured port and JExVote takes care of the rest.
 
 Votes trigger configurable rewards, feed into a streak system that keeps players coming back, and populate a leaderboard GUI accessible to every player. Admins get full control through commands and hot-reloadable configuration files.
 
@@ -20,29 +20,29 @@ Votes trigger configurable rewards, feed into a streak system that keeps players
 [SIZE=4][COLOR=#2ecc71]■[/COLOR] [B]Feature Overview[/B][/SIZE]
 
 [LIST]
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Built-in Votifier server[/B] — Supports both v1 (RSA-encrypted) and v2 (HMAC-SHA256) protocols out of the box. No NuVotifier dependency.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]14 reward types[/B] — Commands, items, XP, currency (JExEconomy/Vault), permissions (LuckPerms), sounds, particles, titles, teleports, composite bundles, choice menus, custom hooks, chance (probability-gated), and lucky (weighted jackpot pool).
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote streaks[/B] — Tracks consecutive daily votes with configurable timeout. Milestone rewards at any day threshold you define.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Streak Freezes[/B] — Auto-equipping streak protection. Every player starts with one free freeze. Buy more with vote points. Per-rank cap via permissions.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote Gifting[/B] — Keep a friend's streak alive with [ICODE]/vote gift <player>[/ICODE] or gift a random online player. Configurable daily limit with per-rank permissions.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote Jackpot[/B] — Weighted prize pool rolled on every vote. Drop odds and drop counts visible in the rewards menu.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote Party[/B] [I](Premium)[/I] — Shared server-wide counter. When the target is reached, every contributor is rewarded. Counter resets automatically.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote Shop[/B] [I](Premium)[/I] — Spend vote points on a curated catalog of items. Per-item description preview and thematic icons.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Weekend Multipliers[/B] [I](Premium)[/I] — Scale vote points and reward amounts during configurable day windows.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Per-site rewards[/B] — Assign bonus rewards for specific vote sites on top of the default reward set.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Offline vote queue[/B] — Votes received while a player is offline are stored and delivered on next login.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Interactive GUIs[/B] — Vote overview, paginated leaderboard, streak progress, rewards/economy hub, and vote shop — all accessible with [ICODE]/vote[/ICODE].
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Bedrock Edition support[/B] — Full GUI parity for Bedrock players via Geyser/Floodgate. Cumulus forms for overview, leaderboard, streaks, rewards, and shop with purchase confirmation modals.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote site cooldowns[/B] — Rolling window or fixed daily reset per site. Players see exactly when they can vote again.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote points[/B] — Each site awards configurable points. Points are tracked separately, spent on Streak Freezes and the vote shop.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Feature toggles[/B] — Streaks, shop, leaderboard, and effects can each be independently enabled or disabled.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Daily first-vote rewards[/B] — Config-driven commands and fly-time coupon items on the first vote of the day.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Embedded REST API[/B] — HMAC-authenticated HTTP endpoints for web backend integration (sites, cooldowns, player stats). Configurable port, CORS, and per-IP rate limiting.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Broadcast & private messages[/B] — Announce votes server-wide (all / others / none) with anti-spam cooldown, plus optional private thank-you messages.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Multi-language[/B] — Ships with English, German, Czech, and Slovak translations. Add your own or override existing ones.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Record retention[/B] — Automatically purges old vote records after a configurable number of days.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]Folia compatible[/B] — Scheduled tasks run through FoliaLib for full Folia support.
-[*][COLOR=#2ecc71]✦[/COLOR] [B]PlaceholderAPI[/B] — Exposes vote placeholders for scoreboards, tab lists, and more.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Built-in Votifier server[/B] - Supports both v1 (RSA-encrypted) and v2 (HMAC-SHA256) protocols out of the box. No NuVotifier dependency.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]14 reward types[/B] - Commands, items, XP, currency (JExEconomy/Vault), permissions (LuckPerms), sounds, particles, titles, teleports, composite bundles, choice menus, custom hooks, chance (probability-gated), and lucky (weighted jackpot pool).
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote streaks[/B] - Tracks consecutive daily votes with configurable timeout. Milestone rewards at any day threshold you define.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Streak Freezes[/B] - Auto-equipping streak protection. Every player starts with one free freeze. Buy more with vote points. Per-rank cap via permissions.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote Gifting[/B] - Keep a friend's streak alive with [ICODE]/vote gift <player>[/ICODE] or gift a random online player. Configurable daily limit with per-rank permissions.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote Jackpot[/B] - Weighted prize pool rolled on every vote. Drop odds and drop counts visible in the rewards menu.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote Party[/B] [I](Premium)[/I] - Shared server-wide counter. When the target is reached, every contributor is rewarded. Counter resets automatically.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote Shop[/B] [I](Premium)[/I] - Spend vote points on a curated catalog of items. Per-item description preview and thematic icons.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Weekend Multipliers[/B] [I](Premium)[/I] - Scale vote points and reward amounts during configurable day windows.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Per-site rewards[/B] - Assign bonus rewards for specific vote sites on top of the default reward set.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Offline vote queue[/B] - Votes received while a player is offline are stored and delivered on next login.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Interactive GUIs[/B] - Vote overview, paginated leaderboard, streak progress, rewards/economy hub, and vote shop - all accessible with [ICODE]/vote[/ICODE].
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Bedrock Edition support[/B] - Full GUI parity for Bedrock players via Geyser/Floodgate. Cumulus forms for overview, leaderboard, streaks, rewards, and shop with purchase confirmation modals.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote site cooldowns[/B] - Rolling window or fixed daily reset per site. Players see exactly when they can vote again.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Vote points[/B] - Each site awards configurable points. Points are tracked separately, spent on Streak Freezes and the vote shop.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Feature toggles[/B] - Streaks, shop, leaderboard, and effects can each be independently enabled or disabled.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Daily first-vote rewards[/B] - Config-driven commands and fly-time coupon items on the first vote of the day.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Embedded REST API[/B] - HMAC-authenticated HTTP endpoints for web backend integration (sites, cooldowns, player stats). Configurable port, CORS, and per-IP rate limiting.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Broadcast & private messages[/B] - Announce votes server-wide (all / others / none) with anti-spam cooldown, plus optional private thank-you messages.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Multi-language[/B] - Ships with English, German, Czech, and Slovak translations. Add your own or override existing ones.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Record retention[/B] - Automatically purges old vote records after a configurable number of days.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]Folia compatible[/B] - Scheduled tasks run through FoliaLib for full Folia support.
+[*][COLOR=#2ecc71]✦[/COLOR] [B]PlaceholderAPI[/B] - Exposes vote placeholders for scoreboards, tab lists, and more.
 [/LIST]
 
 
@@ -62,15 +62,15 @@ A Streak Freeze keeps a streak alive when a player misses a day. It is fully aut
 Players keep a friend's streak going when that friend cannot log in.
 
 [LIST]
-[*][ICODE]/vote gift <player>[/ICODE] — gift a streak day to a specific player.
-[*][ICODE]/vote gift random[/ICODE] — gift one to a random online player.
+[*][ICODE]/vote gift <player>[/ICODE] - gift a streak day to a specific player.
+[*][ICODE]/vote gift random[/ICODE] - gift one to a random online player.
 [/LIST]
 
 A gift advances only the receiver's streak. The daily limit defaults to one (raise it with [ICODE]jexvote.gift.daily.<n>[/ICODE]), gifting can require the gifter to have voted that day, and a player can only be gifted once per day.
 
 [SIZE=3][COLOR=#f1c40f]Vote Jackpot[/COLOR][/SIZE]
 
-Every vote rolls one prize from a weighted pool. The rewards menu lists each outcome with its exact drop chance and how many times it has dropped. The default pool runs from small coin wins up to a top-tier crate key — fully editable in [ICODE]rewards.yml[/ICODE].
+Every vote rolls one prize from a weighted pool. The rewards menu lists each outcome with its exact drop chance and how many times it has dropped. The default pool runs from small coin wins up to a top-tier crate key - fully editable in [ICODE]rewards.yml[/ICODE].
 
 [SIZE=3][COLOR=#f1c40f]Vote Party[/COLOR] [I](Premium)[/I][/SIZE]
 
@@ -89,7 +89,7 @@ A shared, server-wide counter. When votes reach the target, every player who con
 The main menu players see when they type [ICODE]/vote[/ICODE]. Shows their personal stats, a progress bar for the current streak, all configured vote sites with clickable links, vote points, and navigation to the leaderboard and streak views.
 
 [CENTER]
-[IMG]PLACEHOLDER_2_OVERVIEW — Screenshot of the Vote Overview GUI (6-row chest, emerald header, player head with stats, vote site buttons, navigation row)[/IMG]
+[IMG]PLACEHOLDER_2_OVERVIEW - Screenshot of the Vote Overview GUI (6-row chest, emerald header, player head with stats, vote site buttons, navigation row)[/IMG]
 [/CENTER]
 
 [SIZE=3][COLOR=#3498db]Leaderboard[/COLOR][/SIZE]
@@ -97,7 +97,7 @@ The main menu players see when they type [ICODE]/vote[/ICODE]. Shows their perso
 A paginated all-time leaderboard with player heads for the top 3. Each entry displays total votes, monthly votes, streak, vote points, and a visual vote bar. Navigate pages with the arrow buttons.
 
 [CENTER]
-[IMG]PLACEHOLDER_3_LEADERBOARD — Screenshot of the Leaderboard GUI (top 3 as player heads with gold/silver/bronze gradients, remaining entries below, page navigation)[/IMG]
+[IMG]PLACEHOLDER_3_LEADERBOARD - Screenshot of the Leaderboard GUI (top 3 as player heads with gold/silver/bronze gradients, remaining entries below, page navigation)[/IMG]
 [/CENTER]
 
 [SIZE=3][COLOR=#3498db]Streak Rewards[/COLOR][/SIZE]
@@ -105,7 +105,7 @@ A paginated all-time leaderboard with player heads for the top 3. Each entry dis
 Shows the player's current streak, highest streak, and all configured milestones. Achieved milestones glow green, the next target is highlighted yellow, and locked milestones are red. A 20-segment progress bar shows how close the player is to the next reward, with each tier's full reward list on hover.
 
 [CENTER]
-[IMG]PLACEHOLDER_4_STREAKS — Screenshot of the Streak Rewards GUI (milestone grid with green/yellow/red status, progress bar, reward summaries)[/IMG]
+[IMG]PLACEHOLDER_4_STREAKS - Screenshot of the Streak Rewards GUI (milestone grid with green/yellow/red status, progress bar, reward summaries)[/IMG]
 [/CENTER]
 
 [SIZE=3][COLOR=#3498db]Rewards & Economy[/COLOR][/SIZE]
@@ -124,11 +124,11 @@ Bedrock players get full GUI parity through Geyser/Floodgate. Every menu is rend
 
 [SIZE=4][COLOR=#e67e22]■[/COLOR] [B]Setup Guide[/B][/SIZE]
 
-[SIZE=3][COLOR=#e67e22]Step 1 — Install[/COLOR][/SIZE]
+[SIZE=3][COLOR=#e67e22]Step 1 - Install[/COLOR][/SIZE]
 
 Drop [ICODE]JExVote.jar[/ICODE] into your [ICODE]plugins/[/ICODE] folder and restart the server. JExVote generates its configuration files, an RSA keypair, and a Votifier token on first launch.
 
-[SIZE=3][COLOR=#e67e22]Step 2 — Configure the Votifier server[/COLOR][/SIZE]
+[SIZE=3][COLOR=#e67e22]Step 2 - Configure the Votifier server[/COLOR][/SIZE]
 
 Open [ICODE]config.yml[/ICODE] and check the [ICODE]votifier[/ICODE] section:
 
@@ -136,14 +136,14 @@ Open [ICODE]config.yml[/ICODE] and check the [ICODE]votifier[/ICODE] section:
 votifier:
   host: ''          # Leave empty to bind all interfaces
   port: 8192        # The port vote sites connect to
-  token: ''         # Auto-generated on first run — copy this to your vote site settings
+  token: ''         # Auto-generated on first run - copy this to your vote site settings
 [/CODE]
 
-If your host requires a specific bind address, set [ICODE]host[/ICODE] accordingly. The [ICODE]token[/ICODE] is generated automatically — copy it from the config after the first start and paste it into your vote site's Votifier settings.
+If your host requires a specific bind address, set [ICODE]host[/ICODE] accordingly. The [ICODE]token[/ICODE] is generated automatically - copy it from the config after the first start and paste it into your vote site's Votifier settings.
 
 [B]Important:[/B] Make sure port [ICODE]8192[/ICODE] (or whatever you set) is open in your firewall / hosting panel. Vote sites need to reach this port directly.
 
-[SIZE=3][COLOR=#e67e22]Step 3 — Add vote sites[/COLOR][/SIZE]
+[SIZE=3][COLOR=#e67e22]Step 3 - Add vote sites[/COLOR][/SIZE]
 
 Edit [ICODE]sites.yml[/ICODE] to register each voting site:
 
@@ -165,15 +165,15 @@ sites:
     points-per-vote: 2
 [/CODE]
 
-[B]Cooldown modes[/B] — pick one per site:
+[B]Cooldown modes[/B] - pick one per site:
 [LIST]
-[*][ICODE]cooldown-minutes[/ICODE] — Rolling window. The player can vote again X minutes after their last vote.
-[*][ICODE]daily-reset[/ICODE] + [ICODE]timezone[/ICODE] — Fixed reset. Everyone can vote again at the specified time in the given timezone.
+[*][ICODE]cooldown-minutes[/ICODE] - Rolling window. The player can vote again X minutes after their last vote.
+[*][ICODE]daily-reset[/ICODE] + [ICODE]timezone[/ICODE] - Fixed reset. Everyone can vote again at the specified time in the given timezone.
 [/LIST]
 
 The [ICODE]service-name[/ICODE] must exactly match the service identifier that the vote site sends in its Votifier payload. If you are unsure, use [ICODE]/jexvote fakevote <player> TestService[/ICODE] or check your server log for the incoming service name. Use [ICODE]/jexvote debug-services[/ICODE] to diagnose mismatches between configured and received service names.
 
-[SIZE=3][COLOR=#e67e22]Step 4 — Configure rewards[/COLOR][/SIZE]
+[SIZE=3][COLOR=#e67e22]Step 4 - Configure rewards[/COLOR][/SIZE]
 
 Open [ICODE]rewards.yml[/ICODE] to set up what players receive when they vote:
 
@@ -197,15 +197,15 @@ default-rewards:
 Rewards are split into categories:
 
 [LIST]
-[*][B]default-rewards[/B] — Granted on every vote, regardless of which site the vote came from.
-[*][B]streak-rewards[/B] — Bonus rewards at specific streak milestones (day 7, 14, 30, etc.).
-[*][B]site-rewards[/B] — Extra rewards for voting on a specific site, keyed by site ID from [ICODE]sites.yml[/ICODE].
-[*][B]vote-party-rewards[/B] — Granted to every contributor when a vote party completes (Premium).
+[*][B]default-rewards[/B] - Granted on every vote, regardless of which site the vote came from.
+[*][B]streak-rewards[/B] - Bonus rewards at specific streak milestones (day 7, 14, 30, etc.).
+[*][B]site-rewards[/B] - Extra rewards for voting on a specific site, keyed by site ID from [ICODE]sites.yml[/ICODE].
+[*][B]vote-party-rewards[/B] - Granted to every contributor when a vote party completes (Premium).
 [/LIST]
 
-[SIZE=3][COLOR=#e67e22]Step 5 — Verify[/COLOR][/SIZE]
+[SIZE=3][COLOR=#e67e22]Step 5 - Verify[/COLOR][/SIZE]
 
-Use [ICODE]/jexvote fakevote <yourname>[/ICODE] to trigger a test vote and confirm that rewards, broadcasts, and the GUI all work correctly. Check the console output — JExVote logs every vote it receives with the protocol version and service name.
+Use [ICODE]/jexvote fakevote <yourname>[/ICODE] to trigger a test vote and confirm that rewards, broadcasts, and the GUI all work correctly. Check the console output - JExVote logs every vote it receives with the protocol version and service name.
 
 
 [CENTER]
@@ -260,8 +260,8 @@ Grants a permission node via LuckPerms. Supports timed and server-specific permi
 [CODE=YAML]
 - type: permission
   permission: "essentials.fly"
-  duration: "7d"       # Optional — omit for permanent
-  server: "survival"   # Optional — omit for global
+  duration: "7d"       # Optional - omit for permanent
+  server: "survival"   # Optional - omit for global
 [/CODE]
 
 [SIZE=3][COLOR=#9b59b6]sound[/COLOR][/SIZE]
@@ -388,42 +388,42 @@ Rolls one reward from a weighted pool (jackpot). Odds and drop history visible i
 
 [SIZE=3][COLOR=#2ecc71]Player Commands[/COLOR][/SIZE]
 [CODE]
-/vote                    — Opens the vote GUI
-/vote help               — Shows player command help
-/vote sites              — Lists all vote sites with clickable links
-/vote stats [player]     — View vote statistics
-/vote top [count]        — View the all-time leaderboard (max 50)
-/vote rewards            — Opens the rewards/economy menu
-/vote shop               — Opens the vote-token shop (Premium)
-/vote freeze             — Buy a Streak Freeze with vote points
-/vote gift <player>      — Gift a streak day to a player (or 'random')
+/vote                    - Opens the vote GUI
+/vote help               - Shows player command help
+/vote sites              - Lists all vote sites with clickable links
+/vote stats [player]     - View vote statistics
+/vote top [count]        - View the all-time leaderboard (max 50)
+/vote rewards            - Opens the rewards/economy menu
+/vote shop               - Opens the vote-token shop (Premium)
+/vote freeze             - Buy a Streak Freeze with vote points
+/vote gift <player>      - Gift a streak day to a player (or 'random')
 [/CODE]
 Permission: [ICODE]jexvote.command.vote[/ICODE]
 Aliases: [ICODE]/v[/ICODE]
 
 [SIZE=3][COLOR=#e74c3c]Admin Commands[/COLOR][/SIZE]
 [CODE]
-/jexvote                 — Shows admin help
-/jexvote info            — Shows edition, version, site count, Votifier port
-/jexvote reload          — Hot-reloads config.yml, rewards.yml, sites.yml
-/jexvote reset <player>  — Resets all vote data for a player
-/jexvote resetmonthly    — Resets monthly counts for ALL players
-/jexvote fakevote <player> [service]  — Simulates a vote for testing
-/jexvote key             — Prints Votifier public key, PEM, port and v2 token (click-to-copy)
-/jexvote setstreak <player> <value>   — Set a player's vote streak
-/jexvote debug-services  — Diagnose vote service-name mismatches
+/jexvote                 - Shows admin help
+/jexvote info            - Shows edition, version, site count, Votifier port
+/jexvote reload          - Hot-reloads config.yml, rewards.yml, sites.yml
+/jexvote reset <player>  - Resets all vote data for a player
+/jexvote resetmonthly    - Resets monthly counts for ALL players
+/jexvote fakevote <player> [service]  - Simulates a vote for testing
+/jexvote key             - Prints Votifier public key, PEM, port and v2 token (click-to-copy)
+/jexvote setstreak <player> <value>   - Set a player's vote streak
+/jexvote debug-services  - Diagnose vote service-name mismatches
 [/CODE]
 Aliases: [ICODE]/jv[/ICODE]
 
 [SIZE=3]Permission Nodes[/SIZE]
 [CODE]
-jexvote.command.vote              — Access to /vote and all subcommands
-jexvote.command.admin             — Access to /jexvote base and info
-jexvote.command.admin.reload      — Reload configuration files
-jexvote.command.admin.reset       — Reset player data and monthly counts
-jexvote.command.admin.fakevote    — Simulate test votes
-jexvote.freeze.max.<n>            — Raise the Streak Freeze owned cap to <n>
-jexvote.gift.daily.<n>            — Raise the daily gift limit to <n>
+jexvote.command.vote              - Access to /vote and all subcommands
+jexvote.command.admin             - Access to /jexvote base and info
+jexvote.command.admin.reload      - Reload configuration files
+jexvote.command.admin.reset       - Reset player data and monthly counts
+jexvote.command.admin.fakevote    - Simulate test votes
+jexvote.freeze.max.<n>            - Raise the Streak Freeze owned cap to <n>
+jexvote.gift.daily.<n>            - Raise the daily gift limit to <n>
 [/CODE]
 
 
@@ -434,7 +434,7 @@ jexvote.gift.daily.<n>            — Raise the daily gift limit to <n>
 
 [SIZE=4][COLOR=#1abc9c]■[/COLOR] [B]Configuration Reference[/B][/SIZE]
 
-[SPOILER="config.yml — Full Reference"]
+[SPOILER="config.yml - Full Reference"]
 [CODE=YAML]
 # ── Votifier Server ──
 votifier:
@@ -519,15 +519,15 @@ records:
 
 [SIZE=4][COLOR=#f39c12]■[/COLOR] [B]Streak System[/B][/SIZE]
 
-Streaks track how many days in a row a player has voted. The timeout is configurable — by default, a player has 36 hours between votes before the streak resets. This gives some buffer beyond a strict 24-hour window. Streak Freezes extend that buffer automatically when a day is missed.
+Streaks track how many days in a row a player has voted. The timeout is configurable - by default, a player has 36 hours between votes before the streak resets. This gives some buffer beyond a strict 24-hour window. Streak Freezes extend that buffer automatically when a day is missed.
 
 Streak milestones can trigger two things independently:
 [LIST]
-[*][B]Bonus commands[/B] — Defined in [ICODE]config.yml[/ICODE] under [ICODE]streak.bonus-commands[/ICODE]. Quick and simple for running commands.
-[*][B]Streak rewards[/B] — Defined in [ICODE]rewards.yml[/ICODE] under [ICODE]streak-rewards[/ICODE]. Uses the full reward type system (items, currency, choice menus, etc.).
+[*][B]Bonus commands[/B] - Defined in [ICODE]config.yml[/ICODE] under [ICODE]streak.bonus-commands[/ICODE]. Quick and simple for running commands.
+[*][B]Streak rewards[/B] - Defined in [ICODE]rewards.yml[/ICODE] under [ICODE]streak-rewards[/ICODE]. Uses the full reward type system (items, currency, choice menus, etc.).
 [/LIST]
 
-Both fire at the same milestone if configured. Set up whichever fits your use case — or both.
+Both fire at the same milestone if configured. Set up whichever fits your use case - or both.
 
 The streak progress is shown in every GUI: the overview displays a progress bar toward the next milestone, and the dedicated streak view breaks down every milestone with achieved/upcoming/locked status.
 
@@ -543,8 +543,8 @@ JExVote includes a fully self-contained Votifier server. There is no need to ins
 
 [B]Supported protocols:[/B]
 [LIST]
-[*][B]Votifier v1[/B] — 256-byte RSA-encrypted vote block. Legacy support for older vote sites.
-[*][B]NuVotifier v2[/B] — JSON payload with HMAC-SHA256 signature verification and challenge-response. Used by most modern vote sites.
+[*][B]Votifier v1[/B] - 256-byte RSA-encrypted vote block. Legacy support for older vote sites.
+[*][B]NuVotifier v2[/B] - JSON payload with HMAC-SHA256 signature verification and challenge-response. Used by most modern vote sites.
 [/LIST]
 
 JExVote auto-detects the protocol version per connection. The RSA keypair is generated on first launch and stored in [ICODE]plugins/JExVote/rsa/[/ICODE]. The HMAC token is written to [ICODE]config.yml[/ICODE].
@@ -561,10 +561,10 @@ If a vote site asks for your public key, you will find it at [ICODE]plugins/JExV
 
 JExVote ships with translations for:
 [LIST]
-[*][ICODE]en_US[/ICODE] — English
-[*][ICODE]de_DE[/ICODE] — German
-[*][ICODE]cs_CZ[/ICODE] — Czech
-[*][ICODE]sk_SK[/ICODE] — Slovak
+[*][ICODE]en_US[/ICODE] - English
+[*][ICODE]de_DE[/ICODE] - German
+[*][ICODE]cs_CZ[/ICODE] - Czech
+[*][ICODE]sk_SK[/ICODE] - Slovak
 [/LIST]
 
 The language is auto-detected per player based on their client locale. Item names in the rewards menu use the player's own client language. To force a specific language for the entire server, create a [ICODE]translations/config.yml[/ICODE] in the plugin folder:
@@ -593,11 +593,11 @@ You can add custom translations by placing a [ICODE]<locale>.yml[/ICODE] file in
 
 [B]Optional (soft dependencies):[/B]
 [LIST]
-[*][B]JExEconomy[/B] — Enables the [ICODE]currency[/ICODE] reward type
-[*][B]LuckPerms[/B] — Enables the [ICODE]permission[/ICODE] reward type (timed permissions, server-specific)
-[*][B]PlaceholderAPI[/B] — Exposes vote placeholders for use in scoreboards, tab lists, etc.
-[*][B]Vault[/B] — Economy fallback if JExEconomy is not installed
-[*][B]Floodgate[/B] — Enables native Bedrock Edition forms for Geyser/Floodgate players
+[*][B]JExEconomy[/B] - Enables the [ICODE]currency[/ICODE] reward type
+[*][B]LuckPerms[/B] - Enables the [ICODE]permission[/ICODE] reward type (timed permissions, server-specific)
+[*][B]PlaceholderAPI[/B] - Exposes vote placeholders for use in scoreboards, tab lists, etc.
+[*][B]Vault[/B] - Economy fallback if JExEconomy is not installed
+[*][B]Floodgate[/B] - Enables native Bedrock Edition forms for Geyser/Floodgate players
 [/LIST]
 
 

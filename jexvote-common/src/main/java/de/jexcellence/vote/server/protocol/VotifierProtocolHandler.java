@@ -74,7 +74,7 @@ public class VotifierProtocolHandler implements Runnable {
                 if (secondByte == (V2_MAGIC & 0xFF)) {
                     handleV2Binary(in, out, challenge);
                 } else {
-                    // Not v2 magic — treat first two bytes as start of v1 block
+                    // Not v2 magic - treat first two bytes as start of v1 block
                     handleV1(in, out, challenge, firstByte, secondByte);
                 }
             } else if (firstByte == 0x00 || firstByte == '{') {
@@ -88,7 +88,7 @@ public class VotifierProtocolHandler implements Runnable {
             } else if (e instanceof SocketTimeoutException) {
                 logger.log(Level.FINE, () -> "Vote connection timed out (client sent no payload)");
             } else if (isBenignDisconnect(e)) {
-                // Connection reset / aborted / EOF — almost always a port scan,
+                // Connection reset / aborted / EOF - almost always a port scan,
                 // uptime check, or other non-Votifier probe hitting the open
                 // port. Benign; keep it out of the warning log.
                 logger.log(Level.FINE, () -> String.format(
@@ -132,7 +132,7 @@ public class VotifierProtocolHandler implements Runnable {
         } else {
             // Fewer than 256 bytes: not a v1 block. A real v1 vote always sends
             // a full 256-byte RSA block, and v2 votes take the 0x00 / '{' / magic
-            // paths — so this is either a v2 message with odd framing (recovered
+            // paths - so this is either a v2 message with odd framing (recovered
             // by the fallback) or, far more often, non-Votifier traffic (HTTP/TLS
             // probes, port scans). Recover quietly; never warn on the junk.
             final int bytesRead = read;
@@ -172,13 +172,13 @@ public class VotifierProtocolHandler implements Runnable {
             logger.log(Level.INFO, () -> String.format("Received v1 vote from %s for %s", serviceName, username));
         } catch (GeneralSecurityException e) {
             logger.log(Level.FINE, () -> String.format(
-                    "v1 RSA decryption failed (%s) on 256-byte block — attempting v2 fallback",
+                    "v1 RSA decryption failed (%s) on 256-byte block - attempting v2 fallback",
                     e.getClass().getSimpleName()));
             if (!tryV2Fallback(block, out, challenge)) {
                 final String remote = socket.getRemoteSocketAddress().toString();
                 logger.log(Level.WARNING, () -> String.format(
                         "Vote connection from %s: 256-byte block failed both v1 RSA decryption and v2 fallback"
-                                + " — voting site may have the wrong public key configured",
+                                + " - voting site may have the wrong public key configured",
                         remote));
             }
         }
@@ -291,7 +291,7 @@ public class VotifierProtocolHandler implements Runnable {
         int braces = firstByte == '{' ? 1 : 0;
         while (braces > 0) {
             if (sb.length() >= MAX_V2_PAYLOAD) {
-                logger.log(Level.WARNING, () -> "v2 brace-matched payload exceeded 8192 bytes — dropping connection");
+                logger.log(Level.WARNING, () -> "v2 brace-matched payload exceeded 8192 bytes - dropping connection");
                 return new byte[0];
             }
             int b = in.read();
@@ -328,7 +328,7 @@ public class VotifierProtocolHandler implements Runnable {
         byte[] computedSig = hmac(token, payloadStr);
 
         if (!MessageDigest.isEqual(signatureBytes, computedSig)) {
-            logger.warning("v2 vote signature mismatch — invalid token or tampered payload");
+            logger.warning("v2 vote signature mismatch - invalid token or tampered payload");
             sendV2Response(out, "error", "signature verification failed");
             return false;
         }

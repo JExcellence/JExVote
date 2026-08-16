@@ -1,4 +1,4 @@
-# JExVote — Deutsche Übersetzungen
+# JExVote - Deutsche Übersetzungen
 
 prefix: '<dark_gray>[<green>Vote<dark_gray>] '
 
@@ -18,7 +18,7 @@ vote:
     hit: '<gradient:#fde047:#f59e0b>★ Lucky Vote!</gradient> <gray>Du hast eine Bonus-Belohnung gewonnen!</gray> <yellow>{chance}</yellow>'
     jackpot: '<gradient:#fde047:#f59e0b>★ Vote-Jackpot!</gradient> <gray>Das Glück ist dir hold - sieh in deine Belohnungen!</gray>'
   freeze:
-    granted: '<gradient:#a5f3fc:#06b6d4>❄ Willkommensgeschenk!</gradient> <gray>Du hast</gray> <white>{amount}</white> <gray>kostenlose(n) Streak-Freeze(s) erhalten — sie schützen deine Serie automatisch, wenn du einen Tag verpasst. Kaufe mehr mit</gray> <gradient:#86efac:#16a34a>/vote freeze</gradient><gray>.</gray>'
+    granted: '<gradient:#a5f3fc:#06b6d4>❄ Willkommensgeschenk!</gradient> <gray>Du hast</gray> <white>{amount}</white> <gray>kostenlose(n) Streak-Freeze(s) erhalten - sie schützen deine Serie automatisch, wenn du einen Tag verpasst. Kaufe mehr mit</gray> <gradient:#86efac:#16a34a>/vote freeze</gradient><gray>.</gray>'
     saved: '<gradient:#a5f3fc:#06b6d4>❄ Streak-Freeze!</gradient> <gray>Deine Serie wurde gerettet</gray> <dark_gray>(</dark_gray><white>{consumed} verbraucht</white><dark_gray>,</dark_gray> <white>{remaining} übrig</white><dark_gray>)</dark_gray><gray>. Serie:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient>'
     bought: '<gradient:#a5f3fc:#06b6d4>❄</gradient> <gray>Streak-Freeze gekauft für</gray> <gradient:#d8b4fe:#9333ea>{cost} Punkte</gradient><gray>.</gray>'
     disabled: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Streak-Freezes sind auf diesem Server deaktiviert.</red>'
@@ -54,7 +54,7 @@ vote:
     points: '<gray>Vote-Punkte: <aqua>{points}'
   leaderboard:
     header: '<gray>━━━━━━━━ <gold>Top-Voter <gray>━━━━━━━━'
-    entry: '<gray>{rank}. <white>{player} <gray>— <green>{votes} Votes'
+    entry: '<gray>{rank}. <white>{player} <gray>- <green>{votes} Votes'
     empty: '<gray>Noch keine Votes aufgezeichnet.'
   reload: '<green>JExVote-Konfiguration neu geladen.'
   reset:
@@ -66,7 +66,7 @@ vote:
     invalid: '<red>Streak-Wert muss 0 oder größer sein.'
   sites:
     header: '<gray>━━━━━━ <green>Vote-Seiten <gray>━━━━━━'
-    entry: '<green>{name} <gray>— <aqua>Klicke zum Voten'
+    entry: '<green>{name} <gray>- <aqua>Klicke zum Voten'
     no_sites: '<gray>Keine Vote-Seiten konfiguriert.'
 
 # ── Geteilte GUI-Bausteine ───────────────────────────────────────────────────
@@ -268,7 +268,7 @@ vote_streak:
 
   # ── Detail-Ansicht ──
   detail:
-    header: '{status_gradient}Tag {day} — {status}'
+    header: '{status_gradient}Tag {day} - {status}'
     subtitle: '  <gray>Streak-Meilenstein-Belohnungen für Tag <white>{day}'
     reward_type: '  <gray>Typ: <white>{type}'
     back_button: '<gray>← Zurück zu Streaks'
@@ -540,7 +540,7 @@ jexcommand:
     console-only:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Dieser Befehl ist nur für die Konsole."
     invalid-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Ungültiges Argument <white>{value}</white> für <white>{name}</white>."
     missing-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Fehlendes Argument: <white>{name}</white>."
-    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Zu viele Argumente — unerwartet: <white>{value}</white>."
+    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Zu viele Argumente - unerwartet: <white>{value}</white>."
     invalid-long:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> ist keine ganze Zahl."
     invalid-double:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> ist keine Zahl."
     not-positive-long:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> muss positiv sein."
@@ -589,7 +589,7 @@ bedrock:
     back: 'Zurück'
   leaderboard:
     title: 'Vote-Rangliste'
-    header: 'Top-Voter — Gesamt'
+    header: 'Top-Voter - Gesamt'
     votes: 'Votes'
     streak-label: 'Serie'
   streaks:

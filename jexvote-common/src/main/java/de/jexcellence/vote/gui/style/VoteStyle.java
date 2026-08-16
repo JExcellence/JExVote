@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Central JExVote visual-style vocabulary.
  *
- * <p>Single source of truth for dynamic (Java-built) styling — brand gradient,
+ * <p>Single source of truth for dynamic (Java-built) styling - brand gradient,
  * semantic palette, glyphs and helpers. Static text styling lives in the
  * translation YAML; this class is used wherever the code assembles MiniMessage
  * at runtime (progress bars, badges, descriptors).</p>
@@ -44,17 +44,17 @@ public final class VoteStyle {
 
     // ── Per-context gradients ────────────────────────────────────────────
 
-    /** Jackpot / lucky / leaderboard — gold-to-amber. */
+    /** Jackpot / lucky / leaderboard - gold-to-amber. */
     public static final String GRADIENT_JACKPOT = "<gradient:#FDE047:#F59E0B>";
-    /** Vote-points / spend / shop — violet-to-purple. */
+    /** Vote-points / spend / shop - violet-to-purple. */
     public static final String GRADIENT_POINTS  = "<gradient:#D8B4FE:#9333EA>";
-    /** Streak Freeze — cyan-to-blue. */
+    /** Streak Freeze - cyan-to-blue. */
     public static final String GRADIENT_FREEZE  = "<gradient:#A5F3FC:#06B6D4>";
-    /** Gift / community — same as brand. */
+    /** Gift / community - same as brand. */
     public static final String GRADIENT_GIFT    = BRAND_OPEN;
-    /** Admin chrome — red-to-crimson. */
+    /** Admin chrome - red-to-crimson. */
     public static final String GRADIENT_ADMIN   = "<gradient:#FCA5A5:#DC2626>";
-    /** Danger / negative — same as admin. */
+    /** Danger / negative - same as admin. */
     public static final String GRADIENT_DANGER  = GRADIENT_ADMIN;
     /** Info / aqua highlight (URLs, click prompts). */
     public static final String GRADIENT_INFO    = "<gradient:#A5F3FC:#06B6D4>";
@@ -131,7 +131,7 @@ public final class VoteStyle {
 
     /**
      * Builds a fixed-width difficulty/rating bar of filled and empty stars,
-     * wrapped in brackets — e.g. {@code (★★☆☆)} for {@code filled=2, total=4}.
+     * wrapped in brackets - e.g. {@code (★★☆☆)} for {@code filled=2, total=4}.
      *
      * @param filled number of filled stars (clamped to {@code [0, total]})
      * @param total  total number of stars (minimum 1)

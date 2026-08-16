@@ -1,4 +1,4 @@
-# JExVote — English translations
+# JExVote - English translations
 
 prefix: '<dark_gray>[<gradient:#86efac:#16a34a>Vote</gradient><dark_gray>] '
 
@@ -60,7 +60,7 @@ vote:
     points: '<dark_gray>▸</dark_gray> <gray>Vote Points:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient>'
   leaderboard:
     header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b>Top Voters</gradient> <dark_gray>━━━━'
-    entry: '<dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>{rank}.</gradient> <white>{player}</white> <dark_gray>—</dark_gray> <gradient:#86efac:#16a34a>{votes} votes</gradient>'
+    entry: '<dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>{rank}.</gradient> <white>{player}</white> <dark_gray>-</dark_gray> <gradient:#86efac:#16a34a>{votes} votes</gradient>'
     empty: '<dark_gray>▸</dark_gray> <gray>No votes recorded yet.</gray>'
   reload: '<gradient:#86efac:#16a34a>✔</gradient> <gray>JExVote configuration reloaded.</gray>'
   reset:
@@ -68,7 +68,7 @@ vote:
     all_success: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Reset monthly votes for all players.</gray>'
   sites:
     header: '<dark_gray>━━━━ <gradient:#a5f3fc:#06b6d4>Vote Sites</gradient> <dark_gray>━━━━'
-    entry: '<dark_gray>▸</dark_gray> <gradient:#86efac:#16a34a>{name}</gradient> <dark_gray>—</dark_gray> <gradient:#a5f3fc:#06b6d4>Click to vote</gradient>'
+    entry: '<dark_gray>▸</dark_gray> <gradient:#86efac:#16a34a>{name}</gradient> <dark_gray>-</dark_gray> <gradient:#a5f3fc:#06b6d4>Click to vote</gradient>'
     no_sites: '<dark_gray>▸</dark_gray> <gray>No vote sites configured.</gray>'
 
 vote_overview:
@@ -124,7 +124,7 @@ vote_rewards:
   gift:
     name: '<gradient:#86efac:#16a34a>✦ Vote Gift</gradient>'
     disabled: '  <dark_gray>Vote gifting is disabled.'
-    how: '  <gray>Keep a friend''s streak alive — advances'
+    how: '  <gray>Keep a friend''s streak alive - advances'
     limit: '  <dark_gray>▸</dark_gray> <gray>Gifts left today:</gray> <gradient:#86efac:#16a34a>{remaining}</gradient><dark_gray>/</dark_gray><white>{limit}</white>'
     require-vote: '  <dark_gray>▸</dark_gray> <gray>Requires:</gray> <white>you voted today</white>'
     usage: '  <gray>Use</gray> <gradient:#86efac:#16a34a>/vote gift <player|random></gradient>'
@@ -143,7 +143,7 @@ jexcommand:
     console-only:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>This command is console-only."
     invalid-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Invalid argument <white>{value}</white> for <white>{name}</white>."
     missing-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Missing argument <white>{name}</white>."
-    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Too many arguments — unexpected <white>{value}</white>."
+    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Too many arguments - unexpected <white>{value}</white>."
     invalid-long:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> is not a whole number."
     invalid-double:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> is not a number."
     not-positive-long:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> must be positive."

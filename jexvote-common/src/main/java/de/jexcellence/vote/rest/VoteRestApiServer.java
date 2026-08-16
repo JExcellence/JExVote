@@ -33,14 +33,14 @@ import java.util.logging.Logger;
  *
  * <h2>Endpoints (all GET)</h2>
  * <ul>
- *   <li>{@code /api/v1/vote/sites} — configured vote listing sites</li>
- *   <li>{@code /api/v1/vote/player/{uuid}/cooldown} — per-site next-vote time</li>
- *   <li>{@code /api/v1/vote/player/{uuid}/stats} — aggregate vote stats</li>
+ *   <li>{@code /api/v1/vote/sites} - configured vote listing sites</li>
+ *   <li>{@code /api/v1/vote/player/{uuid}/cooldown} - per-site next-vote time</li>
+ *   <li>{@code /api/v1/vote/player/{uuid}/stats} - aggregate vote stats</li>
  * </ul>
  *
  * <p>Player UUIDs are supplied by the backend from the linked Minecraft
  * account; this API only reads vote data the player generated (DSGVO
- * Art. 6 (1)(b) — contract performance for the vote-reward feature).</p>
+ * Art. 6 (1)(b) - contract performance for the vote-reward feature).</p>
  */
 public final class VoteRestApiServer {
 
@@ -75,11 +75,11 @@ public final class VoteRestApiServer {
     /** Start the HTTP server. No-op if disabled or the secret is empty. */
     public void start() {
         if (!config.enabled()) {
-            logger.info("[rest-api] disabled in config — skipping");
+            logger.info("[rest-api] disabled in config - skipping");
             return;
         }
         if (config.secret().isBlank()) {
-            logger.warning("[rest-api] api.secret is empty — refusing to start (authentication would be impossible)");
+            logger.warning("[rest-api] api.secret is empty - refusing to start (authentication would be impossible)");
             return;
         }
 

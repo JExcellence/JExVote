@@ -20,17 +20,17 @@ import java.util.List;
  * <p>Required i18n keys (where {@code <prefix>} is e.g. {@code vote_help} or
  * {@code vote_admin}):
  * <ul>
- *   <li>{@code <prefix>.banner} — header line shown once at the top.</li>
- *   <li>{@code <prefix>.entry} — one line per command. Placeholders:
+ *   <li>{@code <prefix>.banner} - header line shown once at the top.</li>
+ *   <li>{@code <prefix>.entry} - one line per command. Placeholders:
  *       {@code {command}}, {@code {args}}, {@code {description}}.</li>
- *   <li>{@code <prefix>.entry-args} — wrapper used to format the args block
+ *   <li>{@code <prefix>.entry-args} - wrapper used to format the args block
  *       ({@code {args}}); rendered into the {@code {args}} placeholder of
  *       {@code entry}, or empty when the command has no args.</li>
- *   <li>{@code <prefix>.hover-base} — hover tooltip header line. Placeholders:
+ *   <li>{@code <prefix>.hover-base} - hover tooltip header line. Placeholders:
  *       {@code {full}}, {@code {description}}.</li>
- *   <li>{@code <prefix>.hover-aliases} — alias hover line. Placeholder:
+ *   <li>{@code <prefix>.hover-aliases} - alias hover line. Placeholder:
  *       {@code {aliases}}. Skipped when an entry has no aliases.</li>
- *   <li>{@code <prefix>.hover-action-run} / {@code .hover-action-suggest} —
+ *   <li>{@code <prefix>.hover-action-run} / {@code .hover-action-suggest} -
  *       the "click to run/suggest" hint.</li>
  * </ul>
  *
@@ -101,7 +101,7 @@ public final class HelpRenderer {
     private @NotNull Component renderEntry(@NotNull Entry entry) {
         R18nManager r18n = R18nManager.getInstance();
         // The entry line embeds {args} into another MiniMessage template, so we
-        // need the args block as a serialized MiniMessage fragment — not a
+        // need the args block as a serialized MiniMessage fragment - not a
         // raw component (which would lose its styling on re-parse).
         String renderedArgs = entry.args().isBlank()
                 ? ""

@@ -37,7 +37,7 @@ public class RewardGrantStatRepository extends AbstractCrudRepository<RewardGran
                 try {
                     ctx.getEntityManager().persist(new RewardGrantStatEntity(rewardKey));
                 } catch (Exception ignored) {
-                    // Race: another thread inserted the same key first — safe to ignore,
+                    // Race: another thread inserted the same key first - safe to ignore,
                     // the in-memory counter remains authoritative at runtime.
                 }
             }

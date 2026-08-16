@@ -47,10 +47,10 @@ public class VoteOverviewView extends VoteBaseView {
      */
 
     // ── Slot layout ──────────────────────────────────────────────────────
-    // Row 0 (header)         — slot 4
-    // Row 1 (stats)          — slots 11 / 13 / 15  (Identity / Points / Streak)
-    // Row 3 (vote sites)     — slots 29-33 (5 centered), paging at 27/35
-    // Row 5 (nav)            — 45 close, 46/48/50/52 buttons
+    // Row 0 (header)         - slot 4
+    // Row 1 (stats)          - slots 11 / 13 / 15  (Identity / Points / Streak)
+    // Row 3 (vote sites)     - slots 29-33 (5 centered), paging at 27/35
+    // Row 5 (nav)            - 45 close, 46/48/50/52 buttons
     private static final int SLOT_HEADER       = 4;
     private static final int SLOT_IDENTITY     = 11;
     private static final int SLOT_POINTS       = 13;

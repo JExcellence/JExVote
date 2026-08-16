@@ -21,7 +21,7 @@ public final class RewardStats {
     });
 
     private RewardStats() {
-        // Static utility — no instances
+        // Static utility - no instances
     }
 
     /**

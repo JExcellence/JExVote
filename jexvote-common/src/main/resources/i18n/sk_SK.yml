@@ -1,4 +1,4 @@
-# JExVote — Slovenský preklad
+# JExVote - Slovenský preklad
 
 prefix: '<dark_gray>[<gradient:#86efac:#16a34a>Vote</gradient><dark_gray>] '
 
@@ -33,7 +33,7 @@ vote:
     points: '<dark_gray>▸</dark_gray> <gray>Body za hlasovanie:</gray> <gradient:#d8b4fe:#9333ea>{points}</gradient>'
   leaderboard:
     header: '<dark_gray>━━━━ <gradient:#fde047:#f59e0b>Najlepší hlasujúci</gradient> <dark_gray>━━━━'
-    entry: '<dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>{rank}.</gradient> <white>{player}</white> <dark_gray>—</dark_gray> <gradient:#86efac:#16a34a>{votes} hlasov</gradient>'
+    entry: '<dark_gray>▸</dark_gray> <gradient:#fde047:#f59e0b>{rank}.</gradient> <white>{player}</white> <dark_gray>-</dark_gray> <gradient:#86efac:#16a34a>{votes} hlasov</gradient>'
     empty: '<dark_gray>▸</dark_gray> <gray>Zatiaľ žiadne hlasy.</gray>'
   reload: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Konfigurácia JExVote opätovne načítaná.</gray>'
   reset:
@@ -41,7 +41,7 @@ vote:
     all_success: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Hlasy všetkých hráčov za posledný mesiac vynulované.</gray>'
   sites:
     header: '<dark_gray>━━━━ <gradient:#a5f3fc:#06b6d4>Hlasovacie stránky</gradient> <dark_gray>━━━━'
-    entry: '<dark_gray>▸</dark_gray> <gradient:#86efac:#16a34a>{name}</gradient> <dark_gray>—</dark_gray> <gradient:#a5f3fc:#06b6d4>Klikni pre hlasovanie</gradient>'
+    entry: '<dark_gray>▸</dark_gray> <gradient:#86efac:#16a34a>{name}</gradient> <dark_gray>-</dark_gray> <gradient:#a5f3fc:#06b6d4>Klikni pre hlasovanie</gradient>'
     no_sites: '<dark_gray>▸</dark_gray> <gray>Žiadne stránky neboli definované.</gray>'
 
 vote_overview:
@@ -101,7 +101,7 @@ jexcommand:
     console-only:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Tento príkaz je len pre konzolu."
     invalid-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Neplatný argument <white>{value}</white> pre <white>{name}</white>."
     missing-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Chýbajúci argument <white>{name}</white>."
-    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Príliš veľa argumentov — <white>{value}</white> nebolo očakávané."
+    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Príliš veľa argumentov - <white>{value}</white> nebolo očakávané."
     invalid-long:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> nie je celé číslo."
     invalid-double:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> nie je číslo."
     not-positive-long:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> musí byť kladné."

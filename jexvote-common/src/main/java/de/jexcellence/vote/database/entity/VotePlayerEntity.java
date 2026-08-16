@@ -96,7 +96,7 @@ public class VotePlayerEntity extends LongIdEntity {
 
     /**
      * Number of Streak Freezes auto-consumed during the vote currently being
-     * processed. Not persisted — read once by the delivery step to notify the
+     * processed. Not persisted - read once by the delivery step to notify the
      * player that their streak was saved.
      */
     @Transient
@@ -104,7 +104,7 @@ public class VotePlayerEntity extends LongIdEntity {
 
     /**
      * Number of free Streak Freezes just granted on profile creation (first
-     * vote). Not persisted — read once by the delivery step to congratulate
+     * vote). Not persisted - read once by the delivery step to congratulate
      * the player on their welcome freeze.
      */
     @Transient

@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Vote Gifting: lets an active voter keep a friend's streak alive. A gift
- * advances ONLY the receiver's streak (+1 and resets their streak timeout) —
+ * advances ONLY the receiver's streak (+1 and resets their streak timeout) -
  * no reward items move, and the gifter keeps their own vote and rewards in
  * full. The gift is the streak-save itself, so it does not consume the
  * receiver's Streak Freezes.
@@ -29,7 +29,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * <p>Eligibility: the gifter must (optionally) have voted today and stay within
  * a per-day cap ({@code vote-gift.daily-limit}, raised by the highest
  * {@code jexvote.gift.daily.<n>} node). A receiver may be streak-advanced at
- * most once per day — repeat gifts (or a receiver who already voted today)
+ * most once per day - repeat gifts (or a receiver who already voted today)
  * return {@link GiftResult#ALREADY_ADVANCED}, which also caps streak inflation.
  *
  * @author JExcellence
@@ -106,7 +106,7 @@ public class VoteGiftService {
                 try {
                     limit = Math.max(limit, Integer.parseInt(suffix.trim()));
                 } catch (NumberFormatException ex) {
-                    // Non-numeric suffix — not a valid daily-override node, ignore
+                    // Non-numeric suffix - not a valid daily-override node, ignore
                 }
             }
         }

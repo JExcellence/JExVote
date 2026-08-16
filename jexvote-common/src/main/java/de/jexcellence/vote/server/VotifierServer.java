@@ -57,7 +57,7 @@ public class VotifierServer {
             ss.bind(address);
             serverSocket.set(ss);
 
-            // Handler pool for processing accepted connections — separate from the accept loop.
+            // Handler pool for processing accepted connections - separate from the accept loop.
             // AbortPolicy ensures the accept thread is NEVER used as a handler (prevents
             // slowloris from blocking the listener). Rejected connections are closed below.
             executor.set(new ThreadPoolExecutor(
@@ -72,7 +72,7 @@ public class VotifierServer {
 
             running.set(true);
 
-            // Accept loop runs on its own dedicated thread — never competes with handlers.
+            // Accept loop runs on its own dedicated thread - never competes with handlers.
             Thread at = new Thread(() -> {
                 while (running.get()) {
                     try {
@@ -83,7 +83,7 @@ public class VotifierServer {
                                     logger, client, keyPair, token, voteCallback));
                         } catch (RejectedExecutionException e) {
                             try { client.close(); } catch (IOException ignored) { }
-                            logger.log(Level.FINE, () -> "Vote connection rejected — handler pool full");
+                            logger.log(Level.FINE, () -> "Vote connection rejected - handler pool full");
                         }
                     } catch (IOException e) {
                         if (running.get()) {

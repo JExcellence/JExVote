@@ -72,13 +72,13 @@ A shared, server-wide counter. When votes reach the target, every player who con
 ## ■ GUIs
 
 ![Vote Overview](attachment-961877)
-**Vote Overview** — the main menu players see when they type `/vote`. Shows personal stats, a progress bar for the current streak, all configured vote sites with clickable links, vote points, and navigation to the leaderboard and streak views.
+**Vote Overview** - the main menu players see when they type `/vote`. Shows personal stats, a progress bar for the current streak, all configured vote sites with clickable links, vote points, and navigation to the leaderboard and streak views.
 
 ![Leaderboard](attachment-961878)
-**Leaderboard** — a paginated all-time leaderboard with player heads for the top 3. Each entry shows total votes, monthly votes, streak, vote points, and a visual vote bar. Use the arrow buttons to change pages.
+**Leaderboard** - a paginated all-time leaderboard with player heads for the top 3. Each entry shows total votes, monthly votes, streak, vote points, and a visual vote bar. Use the arrow buttons to change pages.
 
 ![Streak Progress](attachment-961879)
-**Streak Progress** — shows the current streak, highest streak, and every configured milestone. Achieved milestones glow green, the next target is highlighted yellow, and locked ones are red. A 20-segment bar shows how close the player is to the next reward, with each tier's full reward list on hover.
+**Streak Progress** - shows the current streak, highest streak, and every configured milestone. Achieved milestones glow green, the next target is highlighted yellow, and locked ones are red. A 20-segment bar shows how close the player is to the next reward, with each tier's full reward list on hover.
 
 *The rewards menu (Lucky Vote odds, weekend multiplier, vote party, Streak Freeze, Vote Gift and vote points) opens from `/vote rewards`.*
 
@@ -87,13 +87,13 @@ A shared, server-wide counter. When votes reach the target, every player who con
 ## ■ Setup Guide
 
 <details>
-<summary>Step 1 — Install</summary>
+<summary>Step 1 - Install</summary>
 
 Drop `JExVote.jar` into your `plugins/` folder and restart the server. JExVote generates its config files, an RSA keypair, and a Votifier token on first launch.
 </details>
 
 <details>
-<summary>Step 2 — Configure the Votifier server</summary>
+<summary>Step 2 - Configure the Votifier server</summary>
 
 Open `config.yml` and check the votifier section:
 
@@ -110,7 +110,7 @@ If your host needs a specific bind address, set `host` accordingly. The token is
 </details>
 
 <details>
-<summary>Step 3 — Add vote sites</summary>
+<summary>Step 3 - Add vote sites</summary>
 
 Edit `sites.yml` to register each voting site:
 
@@ -143,7 +143,7 @@ Default site entries are only examples. You can delete any unused site ID from `
 </details>
 
 <details>
-<summary>Step 4 — Configure rewards</summary>
+<summary>Step 4 - Configure rewards</summary>
 
 Open `rewards.yml`. Each reward is a named entry with a `type`:
 
@@ -178,7 +178,7 @@ Rewards are split into categories:
 </details>
 
 <details>
-<summary>Step 5 — Verify</summary>
+<summary>Step 5 - Verify</summary>
 
 Run `/jexvote fakevote <yourname>` to trigger a test vote and confirm rewards, broadcasts, and the GUI all work. The console logs every vote it receives with the protocol version and service name.
 </details>
@@ -264,7 +264,7 @@ jexvote.gift.daily.<n>            Raise the daily gift limit to <n>
 ## ■ Configuration Reference
 
 <details>
-<summary>config.yml — Full reference</summary>
+<summary>config.yml - Full reference</summary>
 
 ```yaml
 # ── Votifier Server ──

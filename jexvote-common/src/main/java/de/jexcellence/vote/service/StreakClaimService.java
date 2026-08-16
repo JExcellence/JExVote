@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 /**
  * Handles manual claiming of streak milestone rewards.
  * When {@code claim-mode: manual} is configured, streak rewards
- * are not auto-granted at vote time — instead players claim them
+ * are not auto-granted at vote time - instead players claim them
  * from the streak GUI.
  */
 public class StreakClaimService {
@@ -111,7 +111,7 @@ public class StreakClaimService {
 
     /**
      * One-time migration: marks all milestones ≤ {@code highestStreak} as
-     * auto-claimed for every existing player. Idempotent — skips already-claimed rows.
+     * auto-claimed for every existing player. Idempotent - skips already-claimed rows.
      */
     public void runMigration() {
         // Run-once guard: a marker file in the data folder. Without it the
@@ -123,7 +123,7 @@ public class StreakClaimService {
         logger.info("Running streak claim migration for existing players...");
         Map<Integer, ?> milestones = rewardService.getStreakRewards();
         if (milestones.isEmpty()) {
-            logger.info("No streak milestones configured — migration skipped.");
+            logger.info("No streak milestones configured - migration skipped.");
             return;
         }
 
@@ -134,7 +134,7 @@ public class StreakClaimService {
                 if (highest <= 0) continue;
 
                 // Idempotent: only create claims for milestones the player hasn't
-                // already got — never blindly re-insert (avoids the 23505 violation).
+                // already got - never blindly re-insert (avoids the 23505 violation).
                 Set<Integer> alreadyClaimed = claimedRepository.findClaimedDays(player.getPlayerUuid()).join();
                 for (int day : milestones.keySet()) {
                     if (day <= highest && !alreadyClaimed.contains(day)) {
@@ -147,7 +147,7 @@ public class StreakClaimService {
             writeMigrationMarker();
             final int count = migrated;
             logger.log(Level.INFO, () -> String.format(
-                    "Streak claim migration complete — %d claim record(s) created", count));
+                    "Streak claim migration complete - %d claim record(s) created", count));
         }).exceptionally(ex -> {
             logger.log(Level.SEVERE, "Streak claim migration failed", ex);
             return null;

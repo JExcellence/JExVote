@@ -208,7 +208,7 @@ public final class VoteCommandHandler {
     private void onHelp(@NotNull CommandContext ctx) {
         // Styling lives entirely in the vote_help.* i18n keys; entries only
         // contribute the command, args, description and aliases. New subcommands
-        // get one line here — no MiniMessage to hand-paint.
+        // get one line here - no MiniMessage to hand-paint.
         List<HelpRenderer.Entry> entries = List.of(
                 HelpRenderer.Entry.of("/vote", "", "Open the vote menu",
                         List.of("v"), HelpRenderer.Action.RUN),
@@ -242,7 +242,7 @@ public final class VoteCommandHandler {
         r18n().msg("vote.sites.header").prefix().send(ctx.sender());
         for (VoteSite site : sites.values()) {
             Component entry = Component.text(site.displayName(), NamedTextColor.GREEN)
-                    .append(Component.text(" — ", NamedTextColor.DARK_GRAY));
+                    .append(Component.text(" - ", NamedTextColor.DARK_GRAY));
 
             if (site.voteUrl() != null) {
                 entry = entry.append(MM.deserialize(

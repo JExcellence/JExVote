@@ -18,7 +18,7 @@ import java.util.UUID;
 /**
  * Read-only JSON endpoint handlers for the vote REST API.
  *
- * <p>Exposes the configured vote sites, and — per linked player UUID —
+ * <p>Exposes the configured vote sites, and - per linked player UUID -
  * the per-site "next vote available" cooldown and aggregate vote stats.
  * Player UUIDs are supplied by the backend (from the linked Minecraft
  * account); names are returned, never looked up here.</p>
@@ -39,7 +39,7 @@ final class VoteEndpoints {
         this.recordRepository = recordRepository;
     }
 
-    /** {@code GET /api/v1/vote/sites} — the configured vote listing sites. */
+    /** {@code GET /api/v1/vote/sites} - the configured vote listing sites. */
     void handleSites(@NotNull HttpExchange exchange) throws IOException {
         List<SiteDto> sites = new ArrayList<>();
         for (VoteSite site : voteConfig.getVoteSites().values()) {
@@ -49,7 +49,7 @@ final class VoteEndpoints {
     }
 
     /**
-     * {@code GET /api/v1/vote/player/{uuid}/cooldown} — per-site time
+     * {@code GET /api/v1/vote/player/{uuid}/cooldown} - per-site time
      * until the player can vote again.
      */
     void handlePlayerCooldown(@NotNull HttpExchange exchange) throws IOException {
@@ -74,7 +74,7 @@ final class VoteEndpoints {
                 new CooldownResponse(uuid.toString(), rows, Instant.now().toString()));
     }
 
-    /** {@code GET /api/v1/vote/player/{uuid}/stats} — aggregate vote stats. */
+    /** {@code GET /api/v1/vote/player/{uuid}/stats} - aggregate vote stats. */
     void handlePlayerStats(@NotNull HttpExchange exchange) throws IOException {
         UUID uuid = parsePlayerUuid(exchange, "stats");
         if (uuid == null) {

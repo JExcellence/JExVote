@@ -1,4 +1,4 @@
-# JExVote — České překlady
+# JExVote - České překlady
 
 prefix: '<dark_gray>[<green>Vote<dark_gray>] '
 
@@ -21,7 +21,7 @@ vote:
     points: '<gray>Body za hlasování: <aqua>{points}'
   leaderboard:
     header: '<gray>━━━━━━━━ <gold>Top hlasující <gray>━━━━━━━━'
-    entry: '<gray>{rank}. <white>{player} <gray>— <green>{votes} hlasů'
+    entry: '<gray>{rank}. <white>{player} <gray>- <green>{votes} hlasů'
     empty: '<gray>Zatím žádné hlasy.'
   reload: '<green>Konfigurace JExVote znovu načtena.'
   reset:
@@ -29,7 +29,7 @@ vote:
     all_success: '<green>Měsíční hlasy pro všechny hráče resetovány.'
   sites:
     header: '<gray>━━━━━━ <green>Hlasovací stránky <gray>━━━━━━'
-    entry: '<green>{name} <gray>— <aqua>Klikni pro hlasování'
+    entry: '<green>{name} <gray>- <aqua>Klikni pro hlasování'
     no_sites: '<gray>Žádné hlasovací stránky nakonfigurovány.'
 
 vote_overview:
@@ -111,7 +111,7 @@ vote_streak:
 
   # ── Detailní zobrazení ──
   detail:
-    header: '{status_gradient}Den {day} — {status}'
+    header: '{status_gradient}Den {day} - {status}'
     subtitle: '  <gray>Odměny za milník série pro den <white>{day}'
     reward_type: '  <gray>Typ: <white>{type}'
     back_button: '<gray>← Zpět na série'
@@ -155,7 +155,7 @@ jexcommand:
     console-only:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Tento příkaz je pouze pro konzoli."
     invalid-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Neplatný argument <white>{value}</white> pro <white>{name}</white>."
     missing-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Chybějící argument: <white>{name}</white>."
-    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Příliš mnoho argumentů — neočekávaný: <white>{value}</white>."
+    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Příliš mnoho argumentů - neočekávaný: <white>{value}</white>."
     invalid-long:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> není celé číslo."
     invalid-double:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> není číslo."
     not-positive-long:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> musí být kladné."

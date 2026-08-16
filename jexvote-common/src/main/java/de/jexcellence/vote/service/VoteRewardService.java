@@ -170,7 +170,7 @@ public class VoteRewardService {
 
     /**
      * Grants an explicit reward list to a player (used by Vote Parties).
-     * No vote multiplier is applied — party rewards are granted as configured.
+     * No vote multiplier is applied - party rewards are granted as configured.
      */
     public void grantRewardList(@NotNull Player player, @NotNull List<AbstractReward> rewards) {
         grantAll(rewards, player, 1.0);

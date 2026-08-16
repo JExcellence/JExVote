@@ -33,7 +33,7 @@ public final class ConfigMigrator {
     );
 
     private ConfigMigrator() {
-        // Utility class — no instances
+        // Utility class - no instances
     }
 
     /**
@@ -58,7 +58,7 @@ public final class ConfigMigrator {
         try {
             user.load(file);
         } catch (Exception e) {
-            logger.log(Level.WARNING, e, () -> String.format("Failed to load %s — using bundled defaults only", fileName));
+            logger.log(Level.WARNING, e, () -> String.format("Failed to load %s - using bundled defaults only", fileName));
         }
 
         YamlConfiguration defaults = loadBundledDefaults(plugin, fileName);

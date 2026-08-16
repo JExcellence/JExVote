@@ -132,7 +132,7 @@ public class VoteLeaderboardView extends VoteBaseView {
         }
 
         // ── Canonical pagination slots (V-10) ────────────────────────
-        // prev=47, indicator=49, next=53 — same across Leaderboard, Party
+        // prev=47, indicator=49, next=53 - same across Leaderboard, Party
         // and Shop so players never have to relearn where the arrows are.
         if (page > 0) {
             ItemStack prev = ItemBuilder.of(Material.ARROW)

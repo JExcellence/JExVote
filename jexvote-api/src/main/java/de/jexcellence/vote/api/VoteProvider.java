@@ -23,7 +23,7 @@ public interface VoteProvider {
 
     /**
      * Live vote-party progress as {@code {current, target}}. Returns {@code {0, 0}}
-     * when no party is active or the feature is disabled. Synchronous — reads an
+     * when no party is active or the feature is disabled. Synchronous - reads an
      * in-memory counter, so it's safe to call from a render/tick.
      */
     default int[] getVotePartyProgress() {

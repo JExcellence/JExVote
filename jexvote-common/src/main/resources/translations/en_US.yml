@@ -1,4 +1,4 @@
-# JExVote — English translations
+# JExVote - English translations
 
 prefix: '<dark_gray>[<green>Vote<dark_gray>] '
 
@@ -18,7 +18,7 @@ vote:
     hit: '<gradient:#fde047:#f59e0b>★ Lucky Vote!</gradient> <gray>You won a bonus reward!</gray> <yellow>{chance}</yellow>'
     jackpot: '<gradient:#fde047:#f59e0b>★ Vote Jackpot!</gradient> <gray>Fortune smiles on you - check your rewards!</gray>'
   freeze:
-    granted: '<gradient:#a5f3fc:#06b6d4>❄ Welcome gift!</gradient> <gray>You received</gray> <white>{amount}</white> <gray>free Streak Freeze(s) — they auto-protect your streak if you miss a day. Buy more with</gray> <gradient:#86efac:#16a34a>/vote freeze</gradient><gray>.</gray>'
+    granted: '<gradient:#a5f3fc:#06b6d4>❄ Welcome gift!</gradient> <gray>You received</gray> <white>{amount}</white> <gray>free Streak Freeze(s) - they auto-protect your streak if you miss a day. Buy more with</gray> <gradient:#86efac:#16a34a>/vote freeze</gradient><gray>.</gray>'
     saved: '<gradient:#a5f3fc:#06b6d4>❄ Streak Freeze!</gradient> <gray>Your streak was saved</gray> <dark_gray>(</dark_gray><white>used {consumed}</white><dark_gray>,</dark_gray> <white>{remaining} left</white><dark_gray>)</dark_gray><gray>. Streak:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient>'
     bought: '<gradient:#a5f3fc:#06b6d4>❄</gradient> <gray>Streak Freeze purchased for</gray> <gradient:#d8b4fe:#9333ea>{cost} points</gradient><gray>.</gray>'
     disabled: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Streak Freezes are disabled on this server.</red>'
@@ -54,7 +54,7 @@ vote:
     points: '<gray>Vote Points: <aqua>{points}'
   leaderboard:
     header: '<gray>━━━━━━━━ <gold>Top Voters <gray>━━━━━━━━'
-    entry: '<gray>{rank}. <white>{player} <gray>— <green>{votes} votes'
+    entry: '<gray>{rank}. <white>{player} <gray>- <green>{votes} votes'
     empty: '<gray>No votes recorded yet.'
   reload: '<green>JExVote configuration reloaded.'
   reset:
@@ -66,7 +66,7 @@ vote:
     invalid: '<red>Streak value must be 0 or greater.'
   sites:
     header: '<gray>━━━━━━ <green>Vote Sites <gray>━━━━━━'
-    entry: '<green>{name} <gray>— <aqua>Click to vote'
+    entry: '<green>{name} <gray>- <aqua>Click to vote'
     no_sites: '<gray>No vote sites configured.'
 
 # ── Shared GUI vocabulary ────────────────────────────────────────────────────
@@ -83,11 +83,11 @@ gui:
     # Back button (top-left, DARK_OAK_DOOR). Re-styled per server here.
     back-name: '<gradient:#86EFAC:#22C55E:#16A34A>« Back</gradient>'
     back-lore: '<dark_gray>┃ <gray>Return to the previous menu</gray>'
-    # Close button (bottom-left, OAK_DOOR — deliberately not BARRIER, since
+    # Close button (bottom-left, OAK_DOOR - deliberately not BARRIER, since
     # the red barrier reads as "error/not allowed" rather than "leave").
     close-name: '<gradient:#A5F3FC:#06B6D4>✘ Close</gradient>'
     close-lore: '<dark_gray>┃ <gray>Close this menu</gray>'
-    # Click prompts used inside lore lines (kept short — they sit on a tile).
+    # Click prompts used inside lore lines (kept short - they sit on a tile).
     click-open: '<dark_gray>┃ <gradient:#86EFAC:#22C55E>» Click to open</gradient>'
     click-view: '<dark_gray>┃ <gradient:#86EFAC:#22C55E>» Click to view</gradient>'
     click-buy:  '<dark_gray>┃ <gradient:#86EFAC:#22C55E>» Click to buy</gradient>'
@@ -95,7 +95,7 @@ gui:
 
 vote_overview:
   title: '<dark_gray>Vote Overview'
-  # Every tile in this section accepts an optional `lore_extra` list — when
+  # Every tile in this section accepts an optional `lore_extra` list - when
   # present (and non-empty) its lines are appended after the standard lore.
   # Use it to add server-specific hints (e.g. event CTAs, raffle info) without
   # touching the plugin code. Example:
@@ -295,7 +295,7 @@ vote_streak:
 
   # ── Detail view ──
   detail:
-    header: '{status_gradient}Day {day} — {status}'
+    header: '{status_gradient}Day {day} - {status}'
     subtitle: '  <gray>Streak milestone rewards for day <white>{day}'
     reward_type: '  <gray>Type: <white>{type}'
     back_button: '<gray>← Back to Streaks'
@@ -330,7 +330,7 @@ vote_streak:
 vote_rewards:
   title: '<dark_gray>Vote Economy'
   # Every panel below also accepts `lore_extra` for server-specific notes.
-  # ── Header (slot 4) — merged with the live Points balance (V-11.3) ────────
+  # ── Header (slot 4) - merged with the live Points balance (V-11.3) ────────
   # Placeholders: {points}
   header:
     name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Economy</gradient>'
@@ -342,7 +342,7 @@ vote_rewards:
       - '<dark_gray>┕ <gray>❄ Streak Freezes <dark_gray>/vote freeze'
       - '<dark_gray>┕ <gray>✦ Reward shop <dark_gray>/vote shop'
       - ''
-  # Lucky Vote summary tile — full per-outcome catalog lives in VoteLuckyView
+  # Lucky Vote summary tile - full per-outcome catalog lives in VoteLuckyView
   # under the vote_lucky.* keys further down.
   # Placeholders for summary-lore: {outcomes}
   lucky:
@@ -482,7 +482,7 @@ vote_party:
 vote_shop:
   title: '<gradient:#86EFAC:#22C55E:#16A34A>Vote Shop</gradient>'
   # Every tile here also accepts `lore_extra` for server-specific notes.
-  # ── Header tile (slot 4) — live points balance ───────────────────────────
+  # ── Header tile (slot 4) - live points balance ───────────────────────────
   # Placeholders: {points}
   header:
     name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Tokens</gradient>'
@@ -494,7 +494,7 @@ vote_shop:
       - '<dark_gray>┃ <gray>Spend them on the rewards below.'
       - ''
 
-  # ── Shop tile — one per listing ─────────────────────────────────────────
+  # ── Shop tile - one per listing ─────────────────────────────────────────
   # Placeholders: {item} {reward} {cost} {balance} {missing}
   # The {reward} placeholder is rendered by VoteRewardDescriber, so it carries
   # full styling for items (with translatable names), commands ("Dragon Crate
@@ -514,7 +514,7 @@ vote_shop:
     footer-need: '<dark_gray>┕ <gradient:#FCA5A5:#DC2626>» Need {missing} more points</gradient>'
 
   # ── Empty-shop placeholder ───────────────────────────────────────────────
-  # Shown when no items are configured. Door, not barrier — see V-00 design.
+  # Shown when no items are configured. Door, not barrier - see V-00 design.
   empty:
     name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Shop being restocked</gradient>'
     lore:
@@ -607,7 +607,7 @@ jexcommand:
     console-only:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>This command is console-only."
     invalid-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Invalid argument <white>{value}</white> for <white>{name}</white>."
     missing-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Missing argument <white>{name}</white>."
-    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Too many arguments — unexpected <white>{value}</white>."
+    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Too many arguments - unexpected <white>{value}</white>."
     invalid-long:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> is not a whole number."
     invalid-double:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> is not a number."
     not-positive-long:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> must be positive."
@@ -656,7 +656,7 @@ bedrock:
     back: 'Back'
   leaderboard:
     title: 'Vote Leaderboard'
-    header: 'Top Voters — All Time'
+    header: 'Top Voters - All Time'
     votes: 'votes'
     streak-label: 'Streak'
   streaks:

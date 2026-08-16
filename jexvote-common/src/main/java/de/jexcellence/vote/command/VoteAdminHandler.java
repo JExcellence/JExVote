@@ -65,7 +65,7 @@ public final class VoteAdminHandler {
 
     /**
      * Prints, per configured site, its {@code service-name} and whether votes with that
-     * name have actually been received — then lists any received service names that match
+     * name have actually been received - then lists any received service names that match
      * NO configured site (the mismatches to fix, so their cooldowns can track).
      */
     private void onDebugServices(@NotNull CommandContext ctx) {
@@ -96,7 +96,7 @@ public final class VoteAdminHandler {
                     ? "<green>✓ receiving</green> <dark_gray>(last " + agoText(last) + ")</dark_gray>"
                     : "<yellow>⚠ no votes recorded yet</yellow>";
             sender.sendMessage(MM.deserialize("  <white>" + site.id() + "</white> <dark_gray>»</dark_gray> <aqua>'"
-                    + site.serviceName() + "'</aqua> <dark_gray>—</dark_gray> " + status));
+                    + site.serviceName() + "'</aqua> <dark_gray>-</dark_gray> " + status));
         }
         return matched;
     }
@@ -111,7 +111,7 @@ public final class VoteAdminHandler {
             }
             if (!anyOrphan) {
                 sender.sendMessage(MM.deserialize(
-                        "<red>Received but matching NO site — set a site's service-name to one of these:</red>"));
+                        "<red>Received but matching NO site - set a site's service-name to one of these:</red>"));
                 anyOrphan = true;
             }
             sender.sendMessage(MM.deserialize("  <red>✗</red> <white>'" + rec.getKey()
@@ -187,7 +187,7 @@ public final class VoteAdminHandler {
             raw = Files.readString(keyFile).replaceAll("\\s+", "");
         } catch (IOException e) {
             sender.sendMessage(MM.deserialize(
-                    "<red>Could not read the public key — the Votifier server must start at least once to generate it."));
+                    "<red>Could not read the public key - the Votifier server must start at least once to generate it."));
             return;
         }
 
@@ -199,11 +199,11 @@ public final class VoteAdminHandler {
         sender.sendMessage(MM.deserialize(
                 "  <gray>v2 token:</gray> <white>" + (token.isEmpty() ? "(none)" : token) + C_WHITE));
         sender.sendMessage(MM.deserialize(
-                "  <gray>Public key (one line — most sites): "
+                "  <gray>Public key (one line - most sites): "
                         + "<click:copy_to_clipboard:'" + raw + "'><hover:show_text:'Click to copy'><green>[copy]</green></hover></click>"));
         sender.sendMessage(MM.deserialize("<white>" + raw + C_WHITE));
         sender.sendMessage(MM.deserialize(
-                "  <gray>Public key (PEM — if the site wants BEGIN/END headers):"));
+                "  <gray>Public key (PEM - if the site wants BEGIN/END headers):"));
         sender.sendMessage(MM.deserialize("<white>" + toPem(raw).replace("\n", "<newline>") + C_WHITE));
         sender.sendMessage(MM.deserialize(
                 "  <dark_gray>Paste one of these into the site's Votifier public-key field."));

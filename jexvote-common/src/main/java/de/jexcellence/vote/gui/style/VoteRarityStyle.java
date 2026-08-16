@@ -4,7 +4,7 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * JExVote rarity vocabulary — each tier carries a distinct glyph (colorblind
+ * JExVote rarity vocabulary - each tier carries a distinct glyph (colorblind
  * support) and a MiniMessage color/gradient. Shared by every view that surfaces
  * loot rarity (Vote Jackpot outcomes, streak rewards, achievement-style
  * payouts) so rarity always reads the same way across the plugin.
@@ -21,17 +21,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public enum VoteRarityStyle {
 
-    /** Bottom tier — solid dark gray. */
+    /** Bottom tier - solid dark gray. */
     JUNK("·", "<dark_gray>", "", false),
-    /** Baseline — gray-to-white sheen. */
+    /** Baseline - gray-to-white sheen. */
     COMMON("◦", "<gradient:#9CA3AF:#FFFFFF>", "</gradient>", false),
-    /** Notable — aqua-to-blue. */
+    /** Notable - aqua-to-blue. */
     RARE("◆", "<gradient:#22D3EE:#3B82F6>", "</gradient>", false),
-    /** High-value — gold-to-amber shimmer. */
+    /** High-value - gold-to-amber shimmer. */
     JACKPOT("★", "<gradient:#FCD34D:#F59E0B>", "</gradient>", false),
-    /** Top tier — pink-to-violet. */
+    /** Top tier - pink-to-violet. */
     DIVINE("❖", "<gradient:#F472B6:#A855F7>", "</gradient>", false),
-    /** Hidden tier — obfuscated rainbow (mystery prizes). */
+    /** Hidden tier - obfuscated rainbow (mystery prizes). */
     SECRET("⁉", "<rainbow>", "</rainbow>", true);
 
     private final String glyph;
@@ -60,7 +60,7 @@ public enum VoteRarityStyle {
     }
 
     /**
-     * Renders a glyph-prefixed, colored rarity label — e.g. {@code ★ JACKPOT}.
+     * Renders a glyph-prefixed, colored rarity label - e.g. {@code ★ JACKPOT}.
      * For {@link #SECRET} the label (not the glyph) is obfuscated.
      */
     public @NotNull String display(@NotNull String label) {

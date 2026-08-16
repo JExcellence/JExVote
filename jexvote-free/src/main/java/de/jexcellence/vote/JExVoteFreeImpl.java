@@ -32,7 +32,7 @@ public final class JExVoteFreeImpl extends AbstractPluginDelegate<JExVoteFree> {
     @Override
     public void onEnable() {
         if (this.vote == null) {
-            getLogger().severe("JExVote failed to load — disabling");
+            getLogger().severe("JExVote failed to load - disabling");
             getPlugin().getServer().getPluginManager().disablePlugin(getPlugin());
             return;
         }

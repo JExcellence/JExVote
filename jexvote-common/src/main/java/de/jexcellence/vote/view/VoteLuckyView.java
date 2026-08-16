@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>The old approach crammed every chance/lucky entry into a single tile's
  * lore in {@code VoteRewardsView}, producing a long unreadable list. This view
- * gives every outcome its own tile — material picked from the wrapped reward
+ * gives every outcome its own tile - material picked from the wrapped reward
  * via {@link RewardViewHelper#toViewEntry}, name in the rarity colour from
  * {@link VoteRarityStyle#byChance(double)}, lore showing the exact chance,
  * the lifetime drop count and a one-line reward description.</p>

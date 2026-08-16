@@ -17,8 +17,8 @@ import java.util.HexFormat;
  *
  * <p>Expected headers on every request:
  * <ul>
- *   <li>{@code X-Signature} — hex-encoded HMAC of {@code <timestamp>.<path>}</li>
- *   <li>{@code X-Timestamp} — Unix epoch seconds when the request was signed</li>
+ *   <li>{@code X-Signature} - hex-encoded HMAC of {@code <timestamp>.<path>}</li>
+ *   <li>{@code X-Timestamp} - Unix epoch seconds when the request was signed</li>
  * </ul>
  *
  * <p>Requests older than {@link #MAX_AGE_SECONDS} are rejected to

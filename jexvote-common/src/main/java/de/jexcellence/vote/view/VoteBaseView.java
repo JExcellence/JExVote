@@ -132,7 +132,7 @@ public abstract class VoteBaseView implements Listener {
 
     /**
      * Creates a non-italic component from a translation key for the specified
-     * player — ready to drop directly into item names or lore lines without
+     * player - ready to drop directly into item names or lore lines without
      * inheriting Minecraft's default item-meta italic.
      *
      * <p>The italic-strip happens here (mirroring what {@link #ics(String, Player)}
@@ -164,7 +164,7 @@ public abstract class VoteBaseView implements Listener {
      * Strips Minecraft's default item-meta italic from a single component.
      * Use whenever a name/lore is built via a direct
      * {@code msg(...).with(...).itemComponent(viewer)} chain instead of going
-     * through {@link #ic(String, Player)} — names with substituted placeholders
+     * through {@link #ic(String, Player)} - names with substituted placeholders
      * cannot use {@code ic()} since it does not take the placeholder map.
      *
      * @param component the component to render plainly
@@ -208,7 +208,7 @@ public abstract class VoteBaseView implements Listener {
         }
         // Filter out the literal placeholder pattern "{key}.lore_extra" that
         // the translation framework returns when the key is missing entirely
-        // (defensive — JExTranslate behavior varies by version).
+        // (defensive - JExTranslate behavior varies by version).
         boolean placeholder = extras.size() == 1 &&
                 extras.get(0).toString().contains(".lore_extra");
         if (!placeholder) {
@@ -292,7 +292,7 @@ public abstract class VoteBaseView implements Listener {
      * Creates a close button with the {@value #TAG_CLOSE} tag (bottom-left nav
      * slot). Closing is routed centrally in {@link #onInventoryClick}.
      *
-     * <p>Uses {@link Material#BARRIER} — the universal "close / exit" glyph
+     * <p>Uses {@link Material#BARRIER} - the universal "close / exit" glyph
      * players expect at the bottom-left of a menu (matches the rest of the
      * suite's GUIs). Name/lore are read from the {@code gui.common.close} i18n
      * keys.</p>
@@ -326,8 +326,8 @@ public abstract class VoteBaseView implements Listener {
     }
 
     /**
-     * Fills the 1-wide frame — column 0, column 8, the top row and the bottom
-     * row — with a single pane material, leaving the centered interior
+     * Fills the 1-wide frame - column 0, column 8, the top row and the bottom
+     * row - with a single pane material, leaving the centered interior
      * (cols 1–7 × the inner rows) free for content.
      *
      * @param inv the inventory to frame
@@ -407,7 +407,7 @@ public abstract class VoteBaseView implements Listener {
         // Solid block glyphs (▰/▱) read cleaner than the old `[ |||||  ]`
         // pipe-and-bracket bar. Filled segments share one gradient run so the
         // colour interpolates smoothly across the whole bar; unfilled segments
-        // are faint dark-gray. No brackets — the contiguous block is its own
+        // are faint dark-gray. No brackets - the contiguous block is its own
         // visual frame.
         var sb = new StringBuilder();
         if (filled > 0) {

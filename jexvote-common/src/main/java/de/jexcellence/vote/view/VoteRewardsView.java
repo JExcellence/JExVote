@@ -32,7 +32,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * "Vote Economy" overview — Lucky Vote / chance rewards (with odds + drop
+ * "Vote Economy" overview - Lucky Vote / chance rewards (with odds + drop
  * counts), weekend-multiplier status, and vote-party progress + the rewards you
  * earn. Fully i18n + the shared gradient palette; text summary mirrors the GUI.
  *
@@ -110,7 +110,7 @@ public final class VoteRewardsView extends VoteBaseView {
     protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
         frame(inv, Material.LIME_STAINED_GLASS_PANE);
 
-        // Header (slot 4) — also carries the live Points balance now (V-11.3).
+        // Header (slot 4) - also carries the live Points balance now (V-11.3).
         // The old NETHER_STAR Points tile at slot 13 is gone.
         inv.setItem(SLOT_HEADER, headerTile(viewer, -1));
 
@@ -123,7 +123,7 @@ public final class VoteRewardsView extends VoteBaseView {
         inv.setItem(SLOT_FREEZE, freezeIcon(viewer, -1));
         inv.setItem(SLOT_GIFT, giftIcon(viewer, -1));
 
-        // Shop nav at the bottom-row centre (V-11.4) — sits beside the close
+        // Shop nav at the bottom-row centre (V-11.4) - sits beside the close
         // button rather than tucked into row 3.
         if (shopView != null) {
             inv.setItem(SLOT_SHOP, shopIcon(viewer));
@@ -245,7 +245,7 @@ public final class VoteRewardsView extends VoteBaseView {
                 .with(PARAM_FACTOR, fmt(s.weekendFactor())).itemComponent(viewer));
         String days = s.weekendDays().stream()
                 .map(d -> d.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH))
-                .reduce((a, b) -> a + ", " + b).orElse("—");
+                .reduce((a, b) -> a + ", " + b).orElse("-");
         lore.add(msg("vote_rewards.multiplier.days").with("days", days).itemComponent(viewer));
         lore.add(Component.empty());
         appendLoreExtra(lore, "vote_rewards.multiplier", viewer);

@@ -313,7 +313,7 @@ public final class VoteShopView extends VoteBaseView {
     }
 
     private void sendPurchaseReceipt(@NotNull Player viewer, @NotNull VoteShopItem item) {
-        // Multi-line chat receipt — operator-configured messages from
+        // Multi-line chat receipt - operator-configured messages from
         // VoteShopService.sendPurchaseMessages stay separate (additive).
         String reward = VoteRewardDescriber.describe(item.reward());
         // Best-effort: post-purchase balance is "previously-cached - cost".

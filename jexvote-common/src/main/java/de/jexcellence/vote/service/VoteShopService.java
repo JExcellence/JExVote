@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Vote-Token Shop: lets players spend vote points on configured rewards
- * (materials, crate keys, cosmetics — see the {@code vote-shop} section of
+ * (materials, crate keys, cosmetics - see the {@code vote-shop} section of
  * {@code rewards.yml}). This is the primary sink for vote points alongside
  * Streak Freezes.
  *
@@ -104,7 +104,7 @@ public class VoteShopService {
         try {
             sound = Sound.valueOf(effects.purchaseSound());
         } catch (IllegalArgumentException ignored) {
-            // Invalid sound name — fall back to the level-up sound.
+            // Invalid sound name - fall back to the level-up sound.
             sound = Sound.ENTITY_PLAYER_LEVELUP;
         }
         player.playSound(player, sound, effects.purchaseVolume(), effects.purchasePitch());

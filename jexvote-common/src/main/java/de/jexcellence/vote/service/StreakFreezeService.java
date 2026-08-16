@@ -68,7 +68,7 @@ public class StreakFreezeService {
                 try {
                     max = Math.max(max, Integer.parseInt(suffix.trim()));
                 } catch (NumberFormatException ex) {
-                    // Non-numeric suffix — not a valid max-override node, ignore
+                    // Non-numeric suffix - not a valid max-override node, ignore
                 }
             }
         }

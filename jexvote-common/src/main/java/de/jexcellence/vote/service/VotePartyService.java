@@ -160,7 +160,7 @@ public class VotePartyService {
         int rewarded = contributors.size();
         scheduler.runSync(() -> broadcastService.broadcastPartyReached(completedNumber));
         logger.log(Level.INFO, () -> String.format(
-                "Vote Party #%d completed — rewarded %d contributor(s)", completedNumber, rewarded));
+                "Vote Party #%d completed - rewarded %d contributor(s)", completedNumber, rewarded));
     }
 
     /** Injects the weighted party rotation pool (null = no rotation, baseline only). */
@@ -219,7 +219,7 @@ public class VotePartyService {
             Sound sound = Sound.valueOf(soundSettings.revealSound());
             player.playSound(player, sound, soundSettings.revealVolume(), soundSettings.revealPitch());
         } catch (IllegalArgumentException ex) {
-            // Invalid configured sound name — skip audible feedback rather than throw.
+            // Invalid configured sound name - skip audible feedback rather than throw.
             logger.log(Level.FINE, () -> "Invalid vote-party reveal sound: " + soundSettings.revealSound());
         }
     }
@@ -266,7 +266,7 @@ public class VotePartyService {
         }
         // Trim the total by PARTY_DROP_REDUCTION so a party drops meaningfully fewer
         // rewards per trigger (the live config tends to max the extras out). The
-        // probabilistic extras — appended after the guaranteed distinct picks — are
+        // probabilistic extras - appended after the guaranteed distinct picks - are
         // shed first; guaranteed picks are only touched if the whole roll is tiny.
         int keep = Math.max(1, (int) Math.round(picks.size() * (1.0 - PARTY_DROP_REDUCTION)));
         if (keep < picks.size()) {

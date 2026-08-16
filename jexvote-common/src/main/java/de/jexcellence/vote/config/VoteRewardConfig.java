@@ -119,7 +119,7 @@ public final class VoteRewardConfig {
      * Parses a top-level YAML <em>list</em> of universal reward specs (each entry
      * carries {@code type:} directly), such as {@code guaranteed-rewards}. Unlike
      * {@link #loadRewardList(ConfigurationSection)}, which reads a keyed mapping,
-     * this reads a sequence — Bukkit surfaces it via {@code getMapList}.
+     * this reads a sequence - Bukkit surfaces it via {@code getMapList}.
      */
     private @NotNull List<AbstractReward> loadRewardArray(@NotNull YamlConfiguration config,
                                                           @NotNull String path) {
@@ -180,8 +180,8 @@ public final class VoteRewardConfig {
      * <p>Bukkit returns nested mappings as {@code ConfigurationSection} objects
      * (not maps) from {@code getValues(false)}, which Jackson cannot serialize
      * into the expected nested JSON. Without this, any reward carrying a nested
-     * object — a {@code chance} reward's {@code reward:} block or an {@code item}
-     * reward's {@code enchantments:} map — silently fails to load.
+     * object - a {@code chance} reward's {@code reward:} block or an {@code item}
+     * reward's {@code enchantments:} map - silently fails to load.
      */
     private static @NotNull Map<String, Object> toDeepMap(@NotNull ConfigurationSection section) {
         Map<String, Object> map = new LinkedHashMap<>();

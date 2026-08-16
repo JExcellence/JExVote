@@ -39,7 +39,7 @@ public class ClaimedStreakRewardRepository extends AbstractCrudRepository<Claime
         try {
             create(new ClaimedStreakRewardEntity(uuid, milestoneDay, autoClaimed));
         } catch (Exception ignored) {
-            // Unique constraint violation — already claimed, safe to ignore
+            // Unique constraint violation - already claimed, safe to ignore
         }
     }
 }
