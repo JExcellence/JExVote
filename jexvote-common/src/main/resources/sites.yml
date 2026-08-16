@@ -1,5 +1,5 @@
 # ╔═══════════════════════════════════════════════════════════════╗
-# ║                   JExVote — Vote Sites                       ║
+# ║                   JExVote - Vote Sites                       ║
 # ╠═══════════════════════════════════════════════════════════════╣
 # ║  Define your vote listing sites here. The 'service-name'     ║
 # ║  must match what the site sends in its Votifier payload.     ║
@@ -10,9 +10,22 @@
 # ║  Check your vote site's documentation for the exact name.     ║
 # ║                                                               ║
 # ║  Cooldown modes (pick one per site):                          ║
-# ║    • cooldown-minutes — rolling window (e.g. 1440 = 24h)     ║
-# ║    • daily-reset      — fixed time of day (e.g. "00:00")     ║
+# ║    • cooldown-minutes - rolling window (e.g. 1440 = 24h)     ║
+# ║    • daily-reset      - fixed time of day (e.g. "00:00")     ║
 # ║      with optional timezone (default: UTC)                    ║
+# ║                                                               ║
+# ║  Offline-vote reconciliation (optional, per site):            ║
+# ║  Set reconciliation.enabled: true in config.yml, then add     ║
+# ║  the site's status API here so votes cast while the server     ║
+# ║  was offline are credited on the player's next join:          ║
+# ║    api-url: the "has this player voted?" endpoint. Use the     ║
+# ║      {username} and {key} placeholders. Get the exact URL      ║
+# ║      + your server key from the site's API/dashboard docs.     ║
+# ║    api-key: your server-specific API key (fills {key}).        ║
+# ║    api-voted-contains: substring in the response body that     ║
+# ║      means "already voted this window" (default "1"). Many     ║
+# ║      sites return "1"/"0"; set to e.g. 'true' for JSON APIs.   ║
+# ║  Leave api-url unset to skip a site (no reconciliation).       ║
 # ╚═══════════════════════════════════════════════════════════════╝
 
 sites:
@@ -23,6 +36,10 @@ sites:
     daily-reset: '00:00'
     timezone: 'UTC'
     points-per-vote: 1
+    # Offline-vote reconciliation (optional) - fill in from the site's API docs:
+    # api-url: 'https://minecraft-server-list.com/server/520312/vote/json/?username={username}&key={key}'
+    # api-key: 'YOUR_SERVER_KEY'
+    # api-voted-contains: '1'
 
   minecraft-pocket-servers:
     display-name: 'MinecraftPocket Servers'

@@ -32,7 +32,7 @@ votifier:
   # Must match the port configured on vote listing sites.
   port: 8192
   # Shared secret for Votifier v2 protocol (HMAC-SHA256).
-  # Leave empty on first run — a token will be auto-generated.
+  # Leave empty on first run - a token will be auto-generated.
   # Copy this token to your vote site configuration.
   token: ''
 
@@ -40,9 +40,9 @@ votifier:
 # Public chat announcement when someone votes.
 broadcast:
   # Who receives the broadcast:
-  #   all    — all online players including the voter
-  #   others — all online players EXCEPT the voter
-  #   none   — disable broadcasts entirely
+  #   all    - all online players including the voter
+  #   others - all online players EXCEPT the voter
+  #   none   - disable broadcasts entirely
   mode: 'all'
   # Minimum seconds between broadcasts (anti-spam).
   # If a vote arrives within this window, the broadcast is silently skipped.
@@ -67,15 +67,15 @@ streak:
   timeout-hours: 36
 
   # How streak milestone rewards are delivered:
-  #   manual — player claims each milestone reward on click in the /vote streak GUI (default)
-  #   auto   — granted immediately when the streak milestone is reached
+  #   manual - player claims each milestone reward on click in the /vote streak GUI (default)
+  #   auto   - granted immediately when the streak milestone is reached
   claim-mode: 'manual'
 
   # ── Streak Freeze (Duolingo-style) ────────────────────────────
   # A Streak Freeze protects a player's streak when they miss a vote.
   # Freezes auto-equip: if a vote arrives after the streak would have
   # broken, the needed freezes are consumed automatically and the
-  # streak survives — no player action required.
+  # streak survives - no player action required.
   freeze:
     # Master switch.
     enabled: true
@@ -93,20 +93,36 @@ streak:
     # one window consumes multiple freezes.
     duration-hours: 24
 
-  # Bonus commands executed at specific streak milestones — IN ADDITION to
+# Offline-vote reconciliation.
+# Votifier is real-time: a vote cast while the server is fully OFFLINE never
+# reaches it and is lost - and the missed day breaks the streak. When enabled,
+# a player joining is checked against each site's status API; a vote they cast
+# during downtime is detected and credited through the normal pipeline (reward,
+# points, streak day), deduped against already-counted votes so nothing doubles.
+# Only sites with an 'api-url' set (see sites.yml) are checked.
+reconciliation:
+  # Master switch. OFF by default - it needs per-site API URLs + keys in sites.yml.
+  enabled: false
+  # Minimum minutes between reconciliation sweeps for one player (rate-limits the
+  # site APIs; a player relogging repeatedly won't hammer them).
+  player-cooldown-minutes: 30
+  # Per-site HTTP request timeout in seconds.
+  timeout-seconds: 8
+
+  # Bonus commands executed at specific streak milestones - IN ADDITION to
   # rewards.yml's streak-rewards, unconditionally (not gated by claim-mode).
   #
   # Left empty by default. Every "reward" belongs in rewards.yml's
   # `streak-rewards:` block (typed, i18n-shown in `/vote streak`, sound-
   # tracked, MythStyle-rendered). This block only exists for RAW server-
-  # specific commands that don't fit AbstractReward — e.g. running a
+  # specific commands that don't fit AbstractReward - e.g. running a
   # per-region `region addmember` grant on day 30. Don't put `give diamond`
   # or `say "…"` here: streak milestones already grant items via rewards.yml
   # and fire a themed broadcast; vanilla `say` output would clash with the
   # MythStyle brand and duplicate the already-granted items.
   #
   # If you're upgrading and your live config still has stale day-7/14/30
-  # diamond commands from an older ship, delete them — the streak rewards
+  # diamond commands from an older ship, delete them - the streak rewards
   # already cover them.
   # Placeholders: {player}, {service}, {streak}
   bonus-commands: {}
@@ -118,7 +134,7 @@ streak:
 # Prefer rewards.yml for anything expressible as an AbstractReward
 # (currency, xp, item, command, permission, sound, title, composite, chance,
 # lucky). Only put strings here for raw commands that don't fit that model
-# — e.g. a Discord-webhook curl, a WorldGuard region tag, a custom plugin
+# - e.g. a Discord-webhook curl, a WorldGuard region tag, a custom plugin
 # CLI. Every entry runs UNCONDITIONALLY on every vote, so a bad line spams.
 #
 # Placeholders: {player}, {service}, {streak}
@@ -136,7 +152,7 @@ records:
 # Scales vote rewards during configured windows.
 # Applies to: vote POINTS (exact) and top-level numeric reward
 # amounts (xp/currency). NOTE: amounts nested inside composite/
-# chance/lucky rewards are NOT scaled — only their own top-level
+# chance/lucky rewards are NOT scaled - only their own top-level
 # 'amount' field is. Requires the Premium edition.
 multipliers:
   weekend:
@@ -168,10 +184,10 @@ vote-party:
 
 # ── Vote Gifting ────────────────────────────────────────────────
 # Lets active voters keep a friend's streak alive. A gift advances ONLY
-# the receiver's streak (+1 and resets their timeout) — no reward items
+# the receiver's streak (+1 and resets their timeout) - no reward items
 # move, and the gifter keeps their own vote and rewards in full.
-#   /vote gift <player>  — gift a specific player
-#   /vote gift random    — gift a random online player (never yourself)
+#   /vote gift <player>  - gift a specific player
+#   /vote gift random    - gift a random online player (never yourself)
 # ── Bedrock (Geyser/Floodgate) vote matching ─────────────────────────────────
 # Bedrock players vote with their gamertag, but join through Floodgate with a
 # prefixed in-game name (and spaces may be swapped for '_'). Vote resolution
@@ -191,7 +207,7 @@ vote-gift:
     minutes: 15
   # Optional daily first-vote reward: console commands run once on the first vote
   # of the day (alongside daily-fly). {player} is replaced with the voter's name.
-  # Leave the list empty to disable — nothing runs when unset.
+  # Leave the list empty to disable - nothing runs when unset.
   daily-reward:
     commands: []
     # Example:
@@ -212,7 +228,7 @@ vote-gift:
   timezone: 'UTC'
 
 # NOTE: There is no '/vote fly' redemption command. Flight is sold in the
-# vote-token shop instead — see the 'temp-fly' and 'event-fly' entries in
+# vote-token shop instead - see the 'temp-fly' and 'event-fly' entries in
 # rewards.yml (open with /vote shop). Removed the dead 'fly:' block that used
 # to advertise a '/vote fly' / '/vote eventfly' command that was never wired.
 
@@ -248,16 +264,16 @@ vote-effects:
 # web stack's JEXONE_API_SECRET env var.
 #
 # Endpoints (all GET, all HMAC-authenticated):
-#   /sites                          — vote sites configured in sites.yml
-#   /players/{uuid}/cooldown        — per-site cooldowns until next vote
-#   /players/{uuid}/stats           — vote count / streak / lifetime totals
+#   /sites                          - vote sites configured in sites.yml
+#   /players/{uuid}/cooldown        - per-site cooldowns until next vote
+#   /players/{uuid}/stats           - vote count / streak / lifetime totals
 # Wrong-method → 405. Rate-limit hit → 429 + Retry-After. Bad HMAC → 401.
 #
-# ⚠ NEVER hardcode the secret here — this repo is public. Set the env var
+# ⚠ NEVER hardcode the secret here - this repo is public. Set the env var
 # on the server process (systemd: `Environment=JEXONE_API_SECRET=…` under
 # the unit's [Service] section) and the `$ENV:` prefix resolves it at
 # load time. If the env var is unset / empty, the API silently refuses to
-# start ("[rest-api] api.secret is empty — refusing to start") — check
+# start ("[rest-api] api.secret is empty - refusing to start") - check
 # `/plugins/JExVote` in the server console output to confirm it bound the
 # port.
 api:

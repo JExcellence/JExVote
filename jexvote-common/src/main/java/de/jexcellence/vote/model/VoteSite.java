@@ -13,9 +13,9 @@ import java.time.ZonedDateTime;
  *
  * <p>Cooldown can operate in two modes:</p>
  * <ul>
- *   <li><b>Rolling</b> — {@code cooldown} is set, {@code dailyResetTime}/{@code resetTimezone}
+ *   <li><b>Rolling</b> - {@code cooldown} is set, {@code dailyResetTime}/{@code resetTimezone}
  *       are null. The player can vote again after the cooldown duration from their last vote.</li>
- *   <li><b>Daily reset</b> — {@code dailyResetTime} and {@code resetTimezone} are set.
+ *   <li><b>Daily reset</b> - {@code dailyResetTime} and {@code resetTimezone} are set.
  *       Voting resets at a fixed time of day (e.g. 00:00 UTC), matching how many vote sites work.</li>
  * </ul>
  */
@@ -27,8 +27,34 @@ public record VoteSite(
         @Nullable Duration cooldown,
         @Nullable LocalTime dailyResetTime,
         @NotNull ZoneId resetTimezone,
-        int pointsPerVote
+        int pointsPerVote,
+        @Nullable String apiUrl,
+        @Nullable String apiKey,
+        @NotNull String apiVotedContains
 ) {
+
+    /**
+     * Whether this site has a status API configured for offline-vote reconciliation
+     * (a vote cast while the server was down can be detected and credited on the
+     * player's next join). Requires {@link #apiUrl()} to be set.
+     */
+    public boolean hasApi() {
+        return apiUrl != null && !apiUrl.isBlank();
+    }
+
+    /**
+     * Builds the resolved status-check URL for {@code username}, substituting the
+     * {@code {username}} and {@code {key}} placeholders. Returns {@code null} when
+     * no API is configured.
+     */
+    public @Nullable String resolveApiUrl(@NotNull String username) {
+        if (!hasApi()) {
+            return null;
+        }
+        return apiUrl
+                .replace("{username}", username)
+                .replace("{key}", apiKey == null ? "" : apiKey);
+    }
 
     /**
      * Returns the number of seconds until the player can vote again,

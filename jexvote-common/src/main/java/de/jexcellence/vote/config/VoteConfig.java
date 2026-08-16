@@ -61,6 +61,18 @@ public final class VoteConfig {
                                  int defaultMax, long durationHours) {}
 
     /**
+     * Offline-vote reconciliation settings. When enabled, a player joining the
+     * server is checked against each site's status API; a vote they cast while the
+     * server was offline (which Votifier never delivered) is detected and credited
+     * through the normal vote pipeline, so the reward and streak day are not lost.
+     *
+     * @param enabled               master switch (off by default; needs per-site api-url + api-key)
+     * @param playerCooldownMinutes minimum minutes between reconciliation sweeps for one player
+     * @param timeoutSeconds        per-site HTTP request timeout
+     */
+    public record ReconciliationSettings(boolean enabled, int playerCooldownMinutes, int timeoutSeconds) {}
+
+    /**
      * Vote Gifting settings.
      *
      * @param enabled          whether gifting is active
@@ -119,6 +131,8 @@ public final class VoteConfig {
 
     private FreezeSettings freezeSettings =
             new FreezeSettings(true, 1, 5, 3, 24L);
+    private ReconciliationSettings reconciliationSettings =
+            new ReconciliationSettings(false, 30, 8);
     private GiftSettings giftSettings =
             new GiftSettings(true, 1, true, ZoneId.of("UTC"));
     private BedrockSettings bedrockSettings = new BedrockSettings("!", true);
@@ -179,6 +193,7 @@ public final class VoteConfig {
         loadVoteParty(config);
         loadStreakCommands(config);
         loadStreakFreeze(config);
+        loadReconciliation(config);
         loadVoteGift(config);
         loadBedrock(config);
         loadRestApi(config);
@@ -231,10 +246,17 @@ public final class VoteConfig {
         long durationHours = config.getLong("streak.freeze.duration-hours", 24L);
         if (durationHours < 1L) {
             final long invalidHours = durationHours;
-            logger.log(Level.WARNING, () -> String.format("Invalid streak.freeze.duration-hours %d — using 24", invalidHours));
+            logger.log(Level.WARNING, () -> String.format("Invalid streak.freeze.duration-hours %d - using 24", invalidHours));
             durationHours = 24L;
         }
         freezeSettings = new FreezeSettings(enabled, freeAmount, costPoints, defaultMax, durationHours);
+    }
+
+    private void loadReconciliation(@NotNull YamlConfiguration config) {
+        boolean enabled = config.getBoolean("reconciliation.enabled", false);
+        int playerCooldownMinutes = Math.max(1, config.getInt("reconciliation.player-cooldown-minutes", 30));
+        int timeoutSeconds = Math.max(2, config.getInt("reconciliation.timeout-seconds", 8));
+        reconciliationSettings = new ReconciliationSettings(enabled, playerCooldownMinutes, timeoutSeconds);
     }
 
     private void loadBedrock(@NotNull YamlConfiguration config) {
@@ -291,7 +313,7 @@ public final class VoteConfig {
             try {
                 days.add(DayOfWeek.valueOf(name.trim().toUpperCase(Locale.ROOT)));
             } catch (IllegalArgumentException e) {
-                logger.warning(String.format("Invalid weekend day '%s' in multipliers.weekend.days — ignored", name));
+                logger.warning(String.format("Invalid weekend day '%s' in multipliers.weekend.days - ignored", name));
             }
         }
         if (days.isEmpty()) {
@@ -305,7 +327,7 @@ public final class VoteConfig {
         votePartyTarget = config.getInt("vote-party.target", 100);
         if (votePartyTarget < 1) {
             final int invalidTarget = votePartyTarget;
-            logger.log(Level.WARNING, () -> String.format("Invalid vote-party.target %d — using 100", invalidTarget));
+            logger.log(Level.WARNING, () -> String.format("Invalid vote-party.target %d - using 100", invalidTarget));
             votePartyTarget = 100;
         }
     }
@@ -357,7 +379,7 @@ public final class VoteConfig {
         if (serviceName == null || serviceName.isBlank()) {
             serviceName = id;
             logger.log(Level.WARNING, () -> String.format(
-                    "Vote site '%s' has an empty service-name — using the id. Set it to the "
+                    "Vote site '%s' has an empty service-name - using the id. Set it to the "
                     + "exact name the site's Votifier sends, or vote cooldowns can't track it.", id));
         }
         String voteUrl = siteSection.getString("vote-url", null);
@@ -392,8 +414,13 @@ public final class VoteConfig {
             cooldown = Duration.ofMinutes(cooldownMinutes);
         }
 
+        String apiUrl = siteSection.getString("api-url", null);
+        String apiKey = siteSection.getString("api-key", null);
+        String apiVotedContains = siteSection.getString("api-voted-contains", "1");
+
         return new VoteSite(id, displayName, serviceName, voteUrl,
-                cooldown, dailyResetTime, timezone, points);
+                cooldown, dailyResetTime, timezone, points,
+                apiUrl, apiKey, apiVotedContains);
     }
 
     public String getServerHost() { return serverHost; }
@@ -420,6 +447,7 @@ public final class VoteConfig {
     public @NotNull DailyFlySettings getDailyFlySettings() { return dailyFlySettings; }
     public @NotNull List<String> getDailyRewardCommands() { return dailyRewardCommands; }
     public @NotNull FreezeSettings getFreezeSettings() { return freezeSettings; }
+    public @NotNull ReconciliationSettings getReconciliationSettings() { return reconciliationSettings; }
     public @NotNull GiftSettings getGiftSettings() { return giftSettings; }
     public boolean isFeatureStreaks() { return featureStreaks; }
     public boolean isFeatureShop() { return featureShop; }

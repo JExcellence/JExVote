@@ -42,6 +42,7 @@ import de.jexcellence.vote.service.StreakClaimService;
 import de.jexcellence.vote.service.StreakFreezeService;
 import de.jexcellence.vote.service.VoteBroadcastService;
 import de.jexcellence.vote.service.VoteGiftService;
+import de.jexcellence.vote.service.VoteReconciliationService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteRewardService;
 import de.jexcellence.vote.service.VoteService;
@@ -104,6 +105,7 @@ public abstract class JExVote {
     private StreakClaimService streakClaimService;
     private StreakFreezeService streakFreezeService;
     private VoteGiftService voteGiftService;
+    private VoteReconciliationService voteReconciliationService;
     private VotePartyService votePartyService;
     private RewardStatsService rewardStatsService;
     private MultiplierService multiplierService;
@@ -171,7 +173,7 @@ public abstract class JExVote {
             registerApiProvider();
             initializeRestApiServer();
 
-            logger.log(Level.INFO, () -> String.format("JExVote %s enabled — Votifier on port %d", edition, voteConfig.getServerPort()));
+            logger.log(Level.INFO, () -> String.format("JExVote %s enabled - Votifier on port %d", edition, voteConfig.getServerPort()));
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to enable JExVote", e);
             Bukkit.getPluginManager().disablePlugin(plugin);
@@ -276,7 +278,7 @@ public abstract class JExVote {
         rewardStatsService.loadAsync();
         RewardStats.setRecorder(rewardStatsService::trackGrant);
 
-        // Make 'currency' rewards actually pay out — JExPlatform's CurrencyReward
+        // Make 'currency' rewards actually pay out - JExPlatform's CurrencyReward
         // has no economy on its classpath, so install a depositor (JExEconomy → Vault).
         // This also covers currency nested inside chance/lucky rewards.
         CurrencyReward.setDepositor(new RewardEconomy(logger)::deposit);
@@ -347,6 +349,8 @@ public abstract class JExVote {
 
         streakFreezeService = new StreakFreezeService(playerRepository, voteConfig);
         voteGiftService = new VoteGiftService(playerRepository, voteConfig);
+        voteReconciliationService = new VoteReconciliationService(
+                voteService, recordRepository, voteConfig, plugin.getLogger());
 
         // Purge old vote records on startup
         voteService.purgeOldRecords();
@@ -401,7 +405,7 @@ public abstract class JExVote {
                                         + " on " + result.vote().serviceName());
                             }
                             // The "{player} voted" broadcast now fires inside processVote,
-                            // so every ingestion path announces the voter — not just this one.
+                            // so every ingestion path announces the voter - not just this one.
                         });
                     });
 
@@ -414,6 +418,9 @@ public abstract class JExVote {
     private void registerListeners() {
         var pm = Bukkit.getPluginManager();
         pm.registerEvents(new PlayerJoinListener(voteService), plugin);
+        if (voteReconciliationService != null) {
+            pm.registerEvents(voteReconciliationService, plugin);
+        }
     }
 
     private void registerCommands() {
