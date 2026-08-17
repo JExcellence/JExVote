@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "de.jexcellence.vote"
-version = "3.2.6"
+version = "3.2.8"
 
 dependenciesYml {
     usePaperDependencies()
