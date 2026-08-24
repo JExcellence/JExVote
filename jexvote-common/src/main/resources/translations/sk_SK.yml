@@ -9,7 +9,10 @@ _defaults:
 vote:
   broadcast: '<dark_gray>[<green>Vote<dark_gray>] <green>{player} <gray>voted on <aqua>{service}<gray>!'
   received: '<green>Thank you for voting on <aqua>{service}<green>! Streak: <yellow>{streak}'
-  pending_rewards: '<green>You have <yellow>{count} <green>pending vote reward(s)! Delivering now...'
+  delivered:
+    header: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Vitaj späť - odmeny z</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>hlasovaní boli doručené:</gray>'
+    entry: '<dark_gray> ┃ </dark_gray>{reward}'
+    entry_multiple: '<dark_gray> ┃ </dark_gray>{reward} <dark_gray>×</dark_gray><white>{times}</white>'
   shop:
     players_only: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Only players can open the vote shop.</red>'
     unavailable: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>The vote shop is not available on this server.</red>'

@@ -335,14 +335,28 @@ public class VoteService {
                 new VoteRewardClaimedEvent(uuid, vote.serviceName(), snapshot));
     }
 
+    /**
+     * Delivers everything that arrived while the player was offline, then tells them
+     * what they got.
+     *
+     * <p>The order matters and used to be wrong in effect if not in code: the player
+     * was told "you have N pending rewards, delivering now..." - future tense, after
+     * the fact, and naming none of them. What someone returning from three votes wants
+     * is one list of what is now in their inventory, so the announcement is built from
+     * the actual grants and sent once, after they have all completed.
+     *
+     * @param player the returning player
+     */
     public void deliverPendingRewards(@NotNull Player player) {
         pendingRewardRepository.findByPlayer(player.getUniqueId()).thenAccept(pending -> {
             if (pending.isEmpty()) return;
 
             scheduler.runAtEntity(player, () -> {
+                List<CompletableFuture<List<String>>> grants = new ArrayList<>(pending.size());
                 for (PendingVoteRewardEntity reward : pending) {
                     try {
-                        rewardService.grantSerializedRewards(player, reward.getRewardData());
+                        grants.add(rewardService.grantSerializedRewards(
+                                player, reward.getRewardData()));
                     } catch (Exception e) {
                         final String playerName = player.getName();
                         logger.log(Level.WARNING, e,
@@ -350,16 +364,31 @@ public class VoteService {
                     }
                 }
 
-                // Delete only after successful delivery
-                for (PendingVoteRewardEntity reward : pending) {
-                    pendingRewardRepository.delete(reward.getId());
-                }
+                CompletableFuture
+                        .allOf(grants.toArray(CompletableFuture[]::new))
+                        .thenRun(() -> {
+                            // Rows are dropped only once every grant has resolved. The
+                            // previous version deleted them immediately after firing the
+                            // grants, so an async reward that failed took its record with
+                            // it and the player simply never got it.
+                            for (PendingVoteRewardEntity reward : pending) {
+                                pendingRewardRepository.delete(reward.getId());
+                            }
 
-                broadcastService.notifyPendingRewards(player, pending.size());
-                final int deliveredCount = pending.size();
-                final String deliveredTo = player.getName();
-                logger.log(Level.INFO, () -> "Delivered " + deliveredCount
-                        + " pending vote reward(s) to " + deliveredTo);
+                            List<String> received = grants.stream()
+                                    .map(CompletableFuture::join)
+                                    .flatMap(List::stream)
+                                    .toList();
+
+                            scheduler.runAtEntity(player, () ->
+                                    broadcastService.notifyRewardsDelivered(
+                                            player, pending.size(), received));
+
+                            final int deliveredCount = pending.size();
+                            final String deliveredTo = player.getName();
+                            logger.log(Level.INFO, () -> "Delivered " + deliveredCount
+                                    + " pending vote reward(s) to " + deliveredTo);
+                        });
             });
         });
     }

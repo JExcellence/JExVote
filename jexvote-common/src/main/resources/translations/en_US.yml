@@ -10,7 +10,10 @@ vote:
   broadcast: '<dark_gray>[<green>Vote<dark_gray>] <green>{player} <gray>voted on <aqua>{service}<gray>!'
   received: '<green>Thank you for voting on <aqua>{service}<green>! Streak: <yellow>{streak}'
   guaranteed_reward: '<gradient:#7dd3fc:#38bdf8>✦ Vote Key!</gradient> <gray>You also received a guaranteed</gray> <#7dd3fc>Vote Crate Key</#7dd3fc> <gray>for voting!</gray>'
-  pending_rewards: '<green>You have <yellow>{count} <green>pending vote reward(s)! Delivering now...'
+  delivered:
+    header: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Welcome back - rewards from</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>vote(s) have been delivered:</gray>'
+    entry: '<dark_gray> ┃ </dark_gray>{reward}'
+    entry_multiple: '<dark_gray> ┃ </dark_gray>{reward} <dark_gray>×</dark_gray><white>{times}</white>'
   shop:
     players_only: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Only players can open the vote shop.</red>'
     unavailable: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>The vote shop is not available on this server.</red>'
@@ -568,6 +571,11 @@ reward_describe:
   island-radius: '<gradient:#86efac:#16a34a>✦ +{amount} Island Radius</gradient>'
   fly-coupon: '<gradient:#93c5fd:#3b82f6>✦ {count}× {minutes}m Fly Time</gradient>'
   special: '<gradient:#d8b4fe:#9333ea>✦ Special Reward</gradient>'
+  # Pools. lucky-pool describes the pool itself (catalogue view);
+  # lucky-win describes what a draw actually paid out.
+  lucky-pool: '<gradient:#fde047:#f59e0b>✦ 1 of {count} Jackpot Prizes</gradient>'
+  lucky-win: '<gradient:#fde047:#f59e0b>✦ Jackpot</gradient> <dark_gray>»</dark_gray> {reward}'
+  chance: '{reward} <dark_gray>(</dark_gray><gray>{chance}%</gray><dark_gray>)</dark_gray>'
 
 # ── /vote help ──────────────────────────────────────────────────────────────
 # Rendered by HelpRenderer. Placeholders:

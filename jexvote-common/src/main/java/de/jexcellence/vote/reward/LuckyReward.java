@@ -71,20 +71,37 @@ public class LuckyReward extends AbstractReward {
 
     @Override
     public @NotNull CompletableFuture<Boolean> grant(@NotNull Player player) {
+        return grantAndReport(player).thenApply(won -> won != null);
+    }
+
+    /**
+     * Grants one draw and reports which entry won.
+     *
+     * <p>{@link #grant(Player)} can only answer "did something happen", which is not
+     * enough for a caller that has to tell the player what they received - a summary
+     * of a jackpot that cannot name the prize is not a summary. The draw itself is
+     * unchanged; this simply does not throw the outcome away.
+     *
+     * @param player the recipient
+     * @return a future resolving to the winning entry, or {@code null} when the pool
+     *         is empty or the underlying reward failed to grant
+     */
+    public @NotNull CompletableFuture<Entry> grantAndReport(@NotNull Player player) {
         if (entries.isEmpty()) {
-            return CompletableFuture.completedFuture(false);
+            return CompletableFuture.completedFuture(null);
         }
 
         Entry chosen = pickWeighted();
         return chosen.reward().grant(player).thenApply(success -> {
-            if (Boolean.TRUE.equals(success)) {
-                RewardStats.logGrant(chosen.id());
-                String key = chosen.announceKey();
-                if (key != null && !key.isBlank()) {
-                    R18nManager.getInstance().msg(key).send(player);
-                }
+            if (!Boolean.TRUE.equals(success)) {
+                return null;
             }
-            return success;
+            RewardStats.logGrant(chosen.id());
+            String key = chosen.announceKey();
+            if (key != null && !key.isBlank()) {
+                R18nManager.getInstance().msg(key).send(player);
+            }
+            return chosen;
         });
     }
 

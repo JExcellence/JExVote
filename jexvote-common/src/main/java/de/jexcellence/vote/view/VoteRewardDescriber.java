@@ -6,6 +6,8 @@ import de.jexcellence.jexplatform.reward.impl.CurrencyReward;
 import de.jexcellence.jexplatform.reward.impl.ExperienceReward;
 import de.jexcellence.jexplatform.reward.impl.ItemReward;
 import de.jexcellence.jexplatform.view.RewardViewHelper;
+import de.jexcellence.vote.reward.ChanceReward;
+import de.jexcellence.vote.reward.LuckyReward;
 import de.jexcellence.jextranslate.MessageBuilder;
 import de.jexcellence.jextranslate.R18nManager;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -61,7 +63,41 @@ public final class VoteRewardDescriber {
                     : "reward_describe.experience-points";
             return resolve(key, AMOUNT, experience.getAmount());
         }
+        // JExVote's own pool types. Without these the shared renderer falls through to
+        // its default branch and prints the bare type id - a jackpot rendered as the
+        // grey word "lucky", which is what a player saw in the reward list.
+        if (reward instanceof LuckyReward lucky) {
+            return resolve("reward_describe.lucky-pool",
+                    "count", lucky.getEntries().size());
+        }
+        if (reward instanceof ChanceReward chance) {
+            return resolve("reward_describe.chance",
+                    "chance", formatChance(chance.getChance()),
+                    "reward", describe(chance.getReward()));
+        }
         return RewardViewHelper.describe(reward);
+    }
+
+    /**
+     * Describes what a pool actually paid out, rather than the pool itself.
+     *
+     * <p>A catalogue wants "one of 8 jackpot prizes"; somebody reading what they just
+     * received wants the prize. Same type, two different questions, so two methods.
+     *
+     * @param won the entry the draw selected
+     * @return a description of the prize, marked as a jackpot win
+     */
+    public static @NotNull String describeLuckyWin(@NotNull LuckyReward.Entry won) {
+        return resolve("reward_describe.lucky-win", "reward", describe(won.reward()));
+    }
+
+    /** Trims a 0-1 chance to a readable percentage. */
+    private static @NotNull String formatChance(double chance) {
+        double percent = chance * 100.0;
+        if (percent == Math.floor(percent)) {
+            return String.valueOf((long) percent);
+        }
+        return String.format(Locale.US, "%.1f", percent);
     }
 
     private static @NotNull String describeCommand(@NotNull CommandReward command) {

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import de.jexcellence.jexplatform.reward.AbstractReward;
+import de.jexcellence.vote.reward.LuckyReward;
+import de.jexcellence.vote.view.VoteRewardDescriber;
 import de.jexcellence.jexplatform.reward.RewardRegistry;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -12,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -196,16 +199,30 @@ public class VoteRewardService {
         }
     }
 
+    /**
+     * Grants a stored reward blob and reports what the player actually received.
+     *
+     * <p>The descriptions are the point. Telling somebody "you had 3 pending rewards"
+     * says nothing about what arrived, and for a jackpot the pool cannot answer that
+     * at all - only the draw can. So each reward is described from its outcome, and a
+     * lucky pool reports the prize it rolled rather than the fact that it rolled.
+     *
+     * @param player     the recipient
+     * @param rewardData the serialised blob
+     * @return a future resolving to one MiniMessage fragment per reward granted
+     */
     @SuppressWarnings("unchecked")
-    public void grantSerializedRewards(@NotNull Player player, @NotNull String rewardData) {
+    public @NotNull CompletableFuture<List<String>> grantSerializedRewards(
+            @NotNull Player player, @NotNull String rewardData) {
         try {
             Map<String, Object> data = objectMapper.readValue(rewardData, Map.class);
             List<Map<String, Object>> rewards = (List<Map<String, Object>>) data.get(REWARDS_KEY);
             List<String> commands = (List<String>) data.get(COMMANDS_KEY);
 
+            List<CompletableFuture<String>> described = new ArrayList<>();
             if (rewards != null) {
                 for (Map<String, Object> rewardMap : rewards) {
-                    grantSingleReward(player, rewardMap);
+                    described.add(grantSingleReward(player, rewardMap));
                 }
             }
 
@@ -215,19 +232,43 @@ public class VoteRewardService {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), resolved);
                 }
             }
+
+            return CompletableFuture
+                    .allOf(described.toArray(CompletableFuture[]::new))
+                    .thenApply(ignored -> described.stream()
+                            .map(CompletableFuture::join)
+                            .filter(Objects::nonNull)
+                            .toList());
         } catch (Exception e) {
             logger.log(Level.WARNING, e, () -> String.format("Failed to grant serialized rewards to %s", player.getName()));
+            return CompletableFuture.completedFuture(List.of());
         }
     }
 
-    private void grantSingleReward(@NotNull Player player, @NotNull Map<String, Object> rewardMap) {
+    /**
+     * Grants one reward and describes what it gave.
+     *
+     * @return a future resolving to the description, or {@code null} when the reward
+     *         could not be read or did not grant
+     */
+    private @NotNull CompletableFuture<String> grantSingleReward(@NotNull Player player,
+                                                                 @NotNull Map<String, Object> rewardMap) {
         try {
             String json = objectMapper.writeValueAsString(rewardMap);
             AbstractReward reward = objectMapper.readValue(json, AbstractReward.class);
-            reward.grant(player);
+
+            // A pool only knows what it paid out after it has drawn, so it is asked
+            // for the winner rather than described up front.
+            if (reward instanceof LuckyReward lucky) {
+                return lucky.grantAndReport(player).thenApply(won ->
+                        won == null ? null : VoteRewardDescriber.describeLuckyWin(won));
+            }
+            return reward.grant(player).thenApply(success ->
+                    Boolean.TRUE.equals(success) ? VoteRewardDescriber.describe(reward) : null);
         } catch (Exception ex) {
             String typeId = (String) rewardMap.get("type");
             logger.log(Level.WARNING, ex, () -> String.format("Failed to deserialize reward type: %s", typeId));
+            return CompletableFuture.completedFuture(null);
         }
     }
 

@@ -9,7 +9,10 @@ _defaults:
 vote:
   broadcast: '<dark_gray>[<green>Vote<dark_gray>] <green>{player} <gray>hlasoval na <aqua>{service}<gray>!'
   received: '<green>Děkujeme za hlasování na <aqua>{service}<green>! Série: <yellow>{streak}'
-  pending_rewards: '<green>Máte <yellow>{count} <green>čekající odměnu/y za hlasování! Doručuji...'
+  delivered:
+    header: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Vítej zpět - odměny z</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>hlasování byly doručeny:</gray>'
+    entry: '<dark_gray> ┃ </dark_gray>{reward}'
+    entry_multiple: '<dark_gray> ┃ </dark_gray>{reward} <dark_gray>×</dark_gray><white>{times}</white>'
   no_permission: '<red>Na toto nemáte oprávnění.'
   player_not_found: '<red>Hráč nenalezen: <yellow>{player}'
   stats:
