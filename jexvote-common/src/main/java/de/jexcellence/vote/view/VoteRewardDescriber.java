@@ -196,7 +196,7 @@ public final class VoteRewardDescriber {
     }
 
     /**
-     * Turns a crate identifier into a readable "<Name> Crate" label, handling both
+     * Turns a crate identifier into a readable {@code <Name> Crate} label, handling both
      * {@code dragon_crate} (snake_case) and {@code DragonCrate} (camelCase, as used
      * by AdvancedCrates virtual keys). A trailing "crate" word is dropped so it is
      * not duplicated by the appended suffix.
