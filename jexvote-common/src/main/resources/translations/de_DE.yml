@@ -19,7 +19,7 @@ vote:
     unavailable: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Der Vote-Shop ist auf diesem Server nicht verfügbar.</red>'
   lucky:
     hit: '<gradient:#fde047:#f59e0b>★ Lucky Vote!</gradient> <gray>Du hast eine Bonus-Belohnung gewonnen!</gray> <yellow>{chance}</yellow>'
-    jackpot: '<gradient:#fde047:#f59e0b>★ Vote-Jackpot!</gradient> <gray>Das Glück ist dir hold - sieh in deine Belohnungen!</gray>'
+    jackpot: '<gradient:#fde047:#f59e0b>★ Vote-Jackpot!</gradient> <gray>Das Glück ist dir hold - du hast </gray>{reward}<gray> gewonnen!</gray>'
   freeze:
     granted: '<gradient:#a5f3fc:#06b6d4>❄ Willkommensgeschenk!</gradient> <gray>Du hast</gray> <white>{amount}</white> <gray>kostenlose(n) Streak-Freeze(s) erhalten - sie schützen deine Serie automatisch, wenn du einen Tag verpasst. Kaufe mehr mit</gray> <gradient:#86efac:#16a34a>/vote freeze</gradient><gray>.</gray>'
     saved: '<gradient:#a5f3fc:#06b6d4>❄ Streak-Freeze!</gradient> <gray>Deine Serie wurde gerettet</gray> <dark_gray>(</dark_gray><white>{consumed} verbraucht</white><dark_gray>,</dark_gray> <white>{remaining} übrig</white><dark_gray>)</dark_gray><gray>. Serie:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient>'

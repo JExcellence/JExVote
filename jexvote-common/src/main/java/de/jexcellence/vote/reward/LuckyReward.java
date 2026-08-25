@@ -99,7 +99,14 @@ public class LuckyReward extends AbstractReward {
             RewardStats.logGrant(chosen.id());
             String key = chosen.announceKey();
             if (key != null && !key.isBlank()) {
-                R18nManager.getInstance().msg(key).send(player);
+                // Feed the concrete winning reward's description into the announce
+                // key so the player sees WHAT the jackpot dropped, not just that
+                // it dropped. Older configs kept the generic "check your rewards"
+                // wording; keys that don't use {reward} still render fine.
+                R18nManager.getInstance().msg(key)
+                        .with("reward",
+                                de.jexcellence.vote.view.VoteRewardDescriber.describeLuckyWin(chosen))
+                        .send(player);
             }
             return chosen;
         });
