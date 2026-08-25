@@ -10,10 +10,8 @@ vote:
   broadcast: '<dark_gray>[<green>Vote<dark_gray>] <green>{player} <gray>voted on <aqua>{service}<gray>!'
   received: '<green>Thank you for voting on <aqua>{service}<green>! Streak: <yellow>{streak}'
   guaranteed_reward: '<gradient:#7dd3fc:#38bdf8>✦ Vote Key!</gradient> <gray>You also received a guaranteed</gray> <#7dd3fc>Vote Crate Key</#7dd3fc> <gray>for voting!</gray>'
-  delivered:
-    header: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Welcome back - rewards from</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>vote(s) have been delivered:</gray>'
-    entry: '<dark_gray> ┃ </dark_gray>{reward}'
-    entry_multiple: '<dark_gray> ┃ </dark_gray>{reward} <dark_gray>×</dark_gray><white>{times}</white>'
+  offline-summary: '<gradient:#86efac:#16a34a>✔</gradient> <gray>You voted offline</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>times, you got the following reward(s):</gray><newline>{rewards}'
+  offline-summary-empty: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Welcome back - your</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>offline vote(s) were processed.</gray>'
   shop:
     players_only: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Only players can open the vote shop.</red>'
     unavailable: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>The vote shop is not available on this server.</red>'

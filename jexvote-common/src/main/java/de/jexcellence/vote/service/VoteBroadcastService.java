@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class VoteBroadcastService {
 
+    private static final String BULLET = "·";
+
     private final VoteConfig config;
     private final AtomicLong lastBroadcastTime = new AtomicLong(0);
 
@@ -98,45 +100,63 @@ public class VoteBroadcastService {
     }
 
     /**
-     * Tells a returning player what was just delivered.
+     * Tells a returning player what was just delivered, as ONE consolidated message.
      *
-     * <p>Sent after the grants have completed, and phrased in the past tense, because
-     * by the time this runs the items are already in their inventory. The itemised
-     * lines are the substance - a bare count tells somebody who missed three votes
-     * nothing about what they came back to.
+     * <p>Sent after the grants have completed, phrased past tense, because by the
+     * time this runs the items are already in their inventory. The prior version
+     * printed a header plus one line per reward - a wall of chat on login. Now the
+     * vote count and the reward list are folded into a single i18n key so the
+     * returning player sees exactly one card.
      *
-     * <p>Identical rewards are folded together with a multiplier, so five votes that
-     * each paid coins read as one line rather than five.
+     * <p>Identical rewards are collapsed with a multiplier (e.g. "Antike Truhe x2")
+     * so five votes that each paid coins read as one line rather than five.
      *
      * @param player   the returning player
-     * @param votes    how many stored rewards were delivered
-     * @param received one description per reward granted, in delivery order
+     * @param votes    how many stored votes were queued while offline (>= 1)
+     * @param received one description per reward actually granted; empty when
+     *                 every grant failed or produced no describable reward
      */
     public void notifyRewardsDelivered(@NotNull Player player,
                                        int votes,
                                        @NotNull List<String> received) {
         if (votes <= 0) return;
 
-        r18n().msg("vote.delivered.header")
-                .with("count", String.valueOf(votes))
-                .send(player);
-
         if (received.isEmpty()) {
             // The rewards were commands with nothing describable, or every grant
-            // failed. Saying nothing further beats printing an empty list.
+            // failed. Send a single fallback line so the player still sees that
+            // their offline votes were processed.
+            r18n().msg("vote.offline-summary-empty")
+                    .with("count", String.valueOf(votes))
+                    .send(player);
             return;
         }
 
-        for (Map.Entry<String, Integer> line : fold(received).entrySet()) {
-            var message = r18n().msg(line.getValue() > 1
-                    ? "vote.delivered.entry_multiple"
-                    : "vote.delivered.entry");
-            message.with("reward", line.getKey());
-            if (line.getValue() > 1) {
-                message.with("times", String.valueOf(line.getValue()));
+        r18n().msg("vote.offline-summary")
+                .with("count", String.valueOf(votes))
+                .with("rewards", buildRewardList(received))
+                .send(player);
+    }
+
+    /**
+     * Builds the bullet-per-line reward block. Each entry is prefixed with
+     * " {@literal ·} " and lines are separated by newlines, so the final chat
+     * card reads as one bulleted list under the summary header.
+     */
+    private static @NotNull String buildRewardList(@NotNull List<String> received) {
+        Map<String, Integer> folded = fold(received);
+        StringBuilder sb = new StringBuilder(folded.size() * 32);
+        boolean first = true;
+        for (Map.Entry<String, Integer> line : folded.entrySet()) {
+            if (!first) {
+                sb.append("<newline>");
             }
-            message.send(player);
+            first = false;
+            sb.append("<gray> </gray>").append(BULLET).append(' ').append(line.getKey());
+            if (line.getValue() > 1) {
+                sb.append(" x").append(line.getValue());
+            }
         }
+        return sb.toString();
     }
 
     /**

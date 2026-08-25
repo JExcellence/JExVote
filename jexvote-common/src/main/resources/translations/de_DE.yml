@@ -10,10 +10,8 @@ vote:
   broadcast: '<dark_gray>[<green>Vote<dark_gray>] <green>{player} <gray>hat auf <aqua>{service} <gray>gevotet!'
   received: '<green>Danke für deine Stimme auf <aqua>{service}<green>! Streak: <yellow>{streak}'
   guaranteed_reward: '<gradient:#7dd3fc:#38bdf8>✦ Vote-Key!</gradient> <gray>Du hast außerdem einen garantierten</gray> <#7dd3fc>Vote-Crate-Key</#7dd3fc> <gray>fürs Voten erhalten!</gray>'
-  delivered:
-    header: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Willkommen zurück - Belohnungen aus</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>Vote(s) wurden zugestellt:</gray>'
-    entry: '<dark_gray> ┃ </dark_gray>{reward}'
-    entry_multiple: '<dark_gray> ┃ </dark_gray>{reward} <dark_gray>×</dark_gray><white>{times}</white>'
+  offline-summary: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Du hast</gray> <gradient:#fde047:#f59e0b>{count}</gradient><gray>× offline gevotet, du hast folgende Belohnung(en) erhalten:</gray><newline>{rewards}'
+  offline-summary-empty: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Willkommen zurück - deine</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>Offline-Vote(s) wurden verarbeitet.</gray>'
   shop:
     players_only: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Nur Spieler können den Vote-Shop öffnen.</red>'
     unavailable: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Der Vote-Shop ist auf diesem Server nicht verfügbar.</red>'
