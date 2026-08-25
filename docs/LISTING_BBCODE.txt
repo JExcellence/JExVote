@@ -1,0 +1,98 @@
+[CENTER]
+[SIZE=7][B][COLOR=#22c55e]JExVote[/COLOR][/B][/SIZE]
+[SIZE=4][I]The Vote System Your Server Deserves.[/I][/SIZE]
+
+[SIZE=3][COLOR=#9ca3af]Streaks · Lucky Pools · Vote Party · Gifting · Streak Freezes · Vote Points Shop[/COLOR][/SIZE]
+[/CENTER]
+
+[HR][/HR]
+
+[SIZE=5][B][COLOR=#22c55e]What it does[/COLOR][/B][/SIZE]
+
+JExVote turns voting from a single, forgettable reward into a compounding
+loop your players actually come back for. Every vote drops into a system
+that remembers streaks, offers lucky pulls, throws parties when the whole
+server pulls together, and lets friends save each other's day with a
+one-click gift when someone forgets to vote.
+
+[SIZE=5][B][COLOR=#22c55e]Core features[/COLOR][/B][/SIZE]
+
+[LIST]
+[*][B]Vote-driven rewards[/B] — configurable per-vote reward, guaranteed
+Vote Crate Key on every valid vote, chain-safe deduplication so double
+votes on the same site cannot double-dip.
+[*][B]Lucky Pool jackpots[/B] — weighted lottery drawn on hit, the
+winning prize's name is quoted inline in the announce message (not a
+generic "check your rewards").
+[*][B]Vote Party[/B] — server-wide progress bar; every configured
+milestone rewards every contributor at once.
+[*][B]Streak System[/B] — daily streak counter, per-streak visible
+rewards, milestone tiers, month-long resets.
+[*][B]Streak Freezes[/B] — buyable insurance that auto-protects the
+streak when a player misses a day. Welcome-gift, purchasable with vote
+points, cap-configurable.
+[*][B]Streak Gifting[/B] — vote-first, then send a streak advance to a
+teammate. Prevents self-gift, targets random online player when no name
+is passed, daily gift limit.
+[*][B]Vote Points Shop[/B] — points ledger + shop GUI + Vote Point
+formatter. Per-item permissions, streak-gated items.
+[*][B]Offline Vote Delivery[/B] — one consolidated join message listing
+every reward the queued votes granted, deduplicated ("Antike Truhe x2").
+[*][B]Daily Fly Reward[/B] — 15 min fly time on first vote of the day.
+[*][B]Broadcast + private feedback[/B] — server broadcast on vote,
+per-player thank-you with the current streak surfaced.
+[*][B]Stats & Leaderboards[/B] — total, monthly, streak, highest streak,
+points; leaderboard GUI + text output.
+[*][B]Multi-language[/B] — EN, DE, CS, SK bundled with full parity for
+every player-facing message.
+[*][B]MythStyle UI[/B] — every GUI (overview, shop, party, stats,
+leaderboard, freezes, sites) uses one gradient chrome with back/close
+navigation, click-hint lore, and one shared vocabulary of tokens you
+edit in one place.
+[/LIST]
+
+[SIZE=5][B][COLOR=#22c55e]Compatibility[/COLOR][/B][/SIZE]
+
+[LIST]
+[*][B]Server:[/B] Paper 1.21+, Purpur, Folia-tolerant scheduler pathways.
+[*][B]Java:[/B] 21.
+[*][B]Vote services:[/B] any NuVotifier / Votifier-compatible listing.
+[*][B]Currency:[/B] plugs into JExEconomy (coins, crystals) with graceful
+fallback to Vault when the JEx stack isn't present.
+[*][B]Optional:[/B] JExDiscord (posts Vote-Party + jackpot cards into
+your announcements channel via the shared bot).
+[/LIST]
+
+[SIZE=5][B][COLOR=#22c55e]Commands (short list)[/COLOR][/B][/SIZE]
+
+[LIST]
+[*][B]/vote[/B] — open the vote overview.
+[*][B]/vote streak[/B] — your current streak card.
+[*][B]/vote shop[/B] — spend vote points.
+[*][B]/vote party[/B] — party progress + rewards.
+[*][B]/vote freeze[/B] — buy or view your streak freezes.
+[*][B]/vote gift <player|random>[/B] — gift a streak advance.
+[*][B]/vote stats[/B] & [B]/vote leaderboard[/B] — numbers.
+[*][B]/vote reload[/B], [B]/vote reset[/B], [B]/vote setstreak[/B] —
+admin operations.
+[/LIST]
+
+[SIZE=5][B][COLOR=#22c55e]Configuration[/COLOR][/B][/SIZE]
+
+[LIST]
+[*]Every reward pool is a YAML block with weight, chance, and
+description. Drop in new pools, adjust weights, no code changes.
+[*]Every user-facing string lives in [B]translations/en_US.yml[/B] and
+its siblings. MiniMessage-formatted, gradient-token driven, one edit
+retheme the whole plugin's chrome.
+[*]Chain-of-Streak-Freezes, gift limits, welcome-freeze count, and
+lucky-pool chances are all live-editable through [B]/vote reload[/B].
+[/LIST]
+
+[HR][/HR]
+
+[CENTER]
+[SIZE=3][B][COLOR=#9ca3af]Part of the JExSuite ecosystem[/COLOR][/B][/SIZE]
+[SIZE=2][I]JExEssentials · JExOneblock · JExEconomy · JExDiscord ·
+JExWorkbench · JExElements · JExMultiverse · JExScavenger[/I][/SIZE]
+[/CENTER]
