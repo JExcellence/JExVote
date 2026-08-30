@@ -14,12 +14,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,11 +31,11 @@ public class VoteRewardService {
     private final Logger logger;
     private final ObjectMapper objectMapper;
 
-    private final List<AbstractReward> defaultRewards;
-    private final List<AbstractReward> guaranteedRewards;
-    private final Map<Integer, List<AbstractReward>> streakRewards;
-    private final Map<String, List<AbstractReward>> siteRewards;
-    private final List<String> commandsOnVote;
+    private final AtomicReference<List<AbstractReward>> defaultRewards;
+    private final AtomicReference<List<AbstractReward>> guaranteedRewards;
+    private final AtomicReference<Map<Integer, List<AbstractReward>>> streakRewards;
+    private final AtomicReference<Map<String, List<AbstractReward>>> siteRewards;
+    private final AtomicReference<List<String>> commandsOnVote;
     private final MultiplierService multiplierService;
     private volatile boolean manualStreakClaim;
     private volatile boolean streaksEnabled = true;
@@ -51,12 +51,24 @@ public class VoteRewardService {
                              @NotNull MultiplierService multiplierService) {
         this.logger = logger;
         this.objectMapper = buildRewardMapper(rewardRegistry);
-        this.defaultRewards = defaultRewards;
-        this.guaranteedRewards = guaranteedRewards;
-        this.streakRewards = streakRewards;
-        this.siteRewards = siteRewards;
-        this.commandsOnVote = commandsOnVote;
+        this.defaultRewards = new AtomicReference<>(defaultRewards);
+        this.guaranteedRewards = new AtomicReference<>(guaranteedRewards);
+        this.streakRewards = new AtomicReference<>(streakRewards);
+        this.siteRewards = new AtomicReference<>(siteRewards);
+        this.commandsOnVote = new AtomicReference<>(commandsOnVote);
         this.multiplierService = multiplierService;
+    }
+
+    public void reloadRewards(@NotNull List<AbstractReward> defaultRewards,
+                              @NotNull List<AbstractReward> guaranteedRewards,
+                              @NotNull Map<Integer, List<AbstractReward>> streakRewards,
+                              @NotNull Map<String, List<AbstractReward>> siteRewards,
+                              @NotNull List<String> commandsOnVote) {
+        this.defaultRewards.set(defaultRewards);
+        this.guaranteedRewards.set(guaranteedRewards);
+        this.streakRewards.set(streakRewards);
+        this.siteRewards.set(siteRewards);
+        this.commandsOnVote.set(commandsOnVote);
     }
 
     private static @NotNull ObjectMapper buildRewardMapper(@NotNull RewardRegistry registry) {
@@ -77,17 +89,15 @@ public class VoteRewardService {
     public void grantRewards(@NotNull Player player, @NotNull String serviceName, int currentStreak) {
         double multiplier = multiplierService.current();
 
-        grantAll(defaultRewards, player, multiplier);
-        // Granted on EVERY vote, in addition to the weighted default-pool pick above.
-        grantAll(guaranteedRewards, player, multiplier);
-        grantAll(siteRewards.getOrDefault(serviceName.toLowerCase(), List.of()), player, multiplier);
+        grantAll(defaultRewards.get(), player, multiplier);
+        grantAll(guaranteedRewards.get(), player, multiplier);
+        grantAll(siteRewards.get().getOrDefault(serviceName.toLowerCase(), List.of()), player, multiplier);
 
         if (streaksEnabled && !manualStreakClaim) {
-            grantAll(streakRewards.getOrDefault(currentStreak, List.of()), player, multiplier);
+            grantAll(streakRewards.get().getOrDefault(currentStreak, List.of()), player, multiplier);
         }
 
-        // Commands
-        commandsOnVote.forEach(command -> {
+        commandsOnVote.get().forEach(command -> {
             String resolved = command
                     .replace("{player}", player.getName())
                     .replace("{service}", serviceName)
@@ -148,15 +158,14 @@ public class VoteRewardService {
             double multiplier = multiplierService.current();
             List<Map<String, Object>> rewardList = new ArrayList<>();
 
-            defaultRewards.forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
-            // Queue the guaranteed rewards too, so offline voters get them on next login.
-            guaranteedRewards.forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
+            defaultRewards.get().forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
+            guaranteedRewards.get().forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
 
-            siteRewards.getOrDefault(serviceName.toLowerCase(), List.of())
+            siteRewards.get().getOrDefault(serviceName.toLowerCase(), List.of())
                     .forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
 
             if (streaksEnabled && !manualStreakClaim) {
-                streakRewards.getOrDefault(currentStreak, List.of())
+                streakRewards.get().getOrDefault(currentStreak, List.of())
                         .forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
             }
 
@@ -219,13 +228,6 @@ public class VoteRewardService {
             List<Map<String, Object>> rewards = (List<Map<String, Object>>) data.get(REWARDS_KEY);
             List<String> commands = (List<String>) data.get(COMMANDS_KEY);
 
-            List<CompletableFuture<String>> described = new ArrayList<>();
-            if (rewards != null) {
-                for (Map<String, Object> rewardMap : rewards) {
-                    described.add(grantSingleReward(player, rewardMap));
-                }
-            }
-
             if (commands != null) {
                 for (String command : commands) {
                     String resolved = command.replace("{player}", player.getName());
@@ -233,12 +235,24 @@ public class VoteRewardService {
                 }
             }
 
-            return CompletableFuture
-                    .allOf(described.toArray(CompletableFuture[]::new))
-                    .thenApply(ignored -> described.stream()
-                            .map(CompletableFuture::join)
-                            .filter(Objects::nonNull)
-                            .toList());
+            // Grant rewards SEQUENTIALLY, not via allOf: firing them concurrently made
+            // multiple coin deposits hit the same economy account at once, causing an
+            // optimistic-lock storm that exhausted the economy's retry budget
+            // (StaleObjectStateException on Account). Chaining serialises the writes,
+            // so each deposit sees the previous one's committed version.
+            final List<String> descriptions = new ArrayList<>();
+            CompletableFuture<Void> chain = CompletableFuture.completedFuture(null);
+            if (rewards != null) {
+                for (Map<String, Object> rewardMap : rewards) {
+                    chain = chain.thenCompose(ignored -> grantSingleReward(player, rewardMap)
+                            .thenAccept(desc -> {
+                                if (desc != null) {
+                                    descriptions.add(desc);
+                                }
+                            }));
+                }
+            }
+            return chain.thenApply(ignored -> List.copyOf(descriptions));
         } catch (Exception e) {
             logger.log(Level.WARNING, e, () -> String.format("Failed to grant serialized rewards to %s", player.getName()));
             return CompletableFuture.completedFuture(List.of());
@@ -294,10 +308,11 @@ public class VoteRewardService {
     }
 
     private @NotNull List<String> resolveCommands(@NotNull String serviceName, int currentStreak) {
-        if (commandsOnVote.isEmpty()) return Collections.emptyList();
+        List<String> commands = commandsOnVote.get();
+        if (commands.isEmpty()) return Collections.emptyList();
 
-        List<String> resolved = new ArrayList<>(commandsOnVote.size());
-        for (String command : commandsOnVote) {
+        List<String> resolved = new ArrayList<>(commands.size());
+        for (String command : commands) {
             resolved.add(command
                     .replace("{service}", serviceName)
                     .replace("{streak}", String.valueOf(currentStreak)));
@@ -306,19 +321,15 @@ public class VoteRewardService {
     }
 
     public @NotNull List<AbstractReward> getDefaultRewards() {
-        return defaultRewards;
+        return defaultRewards.get();
     }
 
-    /**
-     * @return {@code true} when at least one guaranteed reward is configured
-     * (used to decide whether to send the guaranteed-reward notification).
-     */
     public boolean hasGuaranteedRewards() {
-        return !guaranteedRewards.isEmpty();
+        return !guaranteedRewards.get().isEmpty();
     }
 
     public @NotNull Map<Integer, List<AbstractReward>> getStreakRewards() {
-        return streakRewards;
+        return streakRewards.get();
     }
 
     public boolean isManualStreakClaim() {
@@ -342,21 +353,30 @@ public class VoteRewardService {
      * @return a future that completes with {@code true} if all rewards were granted
      */
     public @NotNull CompletableFuture<Boolean> grantStreakReward(@NotNull Player player, int milestoneDay) {
-        List<AbstractReward> rewards = streakRewards.get(milestoneDay);
+        List<AbstractReward> rewards = streakRewards.get().get(milestoneDay);
         if (rewards == null || rewards.isEmpty()) {
             return CompletableFuture.completedFuture(false);
         }
 
-        List<CompletableFuture<Boolean>> futures = new ArrayList<>();
+        // Serialise the grants (see grantSerializedRewards): concurrent coin deposits
+        // to the same account triggered an optimistic-lock storm. AtomicBoolean tracks
+        // whether every reward granted across the sequential chain.
+        final java.util.concurrent.atomic.AtomicBoolean allOk =
+                new java.util.concurrent.atomic.AtomicBoolean(true);
+        CompletableFuture<Void> chain = CompletableFuture.completedFuture(null);
         for (AbstractReward reward : rewards) {
-            futures.add(reward.grant(player).exceptionally(ex -> {
-                logger.log(Level.WARNING, ex, () -> String.format(
-                        "Failed to grant streak reward (day %d) to %s", milestoneDay, player.getName()));
-                return false;
-            }));
+            chain = chain.thenCompose(ignored -> reward.grant(player)
+                    .exceptionally(ex -> {
+                        logger.log(Level.WARNING, ex, () -> String.format(
+                                "Failed to grant streak reward (day %d) to %s", milestoneDay, player.getName()));
+                        return false;
+                    })
+                    .thenAccept(ok -> {
+                        if (!Boolean.TRUE.equals(ok)) {
+                            allOk.set(false);
+                        }
+                    }));
         }
-
-        return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
-                .thenApply(v -> futures.stream().allMatch(f -> Boolean.TRUE.equals(f.join())));
+        return chain.thenApply(ignored -> allOk.get());
     }
 }
