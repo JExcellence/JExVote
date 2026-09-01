@@ -1,5 +1,6 @@
 package de.jexcellence.vote.service;
 
+import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.event.VoteReceivedEvent;
@@ -65,6 +66,8 @@ public class VoteService {
     /** Duplicate-vote guard: same voter+service delivered again within this window is ignored. */
     private static final long DEDUP_WINDOW_MS = 5_000L;
     private final Map<String, Long> recentVotes = new ConcurrentHashMap<>();
+    /** Votes whose voter had no resolvable UUID yet - replayed on their first join. */
+    private final UnresolvedVoteStore unresolvedVotes;
 
     /** Tracks server-down periods so vote streaks aren't broken by downtime the player couldn't avoid. */
     private final DowntimeTracker downtime;
@@ -106,6 +109,7 @@ public class VoteService {
         this.dailyFly = dailyFly;
         this.dailyRewardCommands = dailyRewardCommands;
         this.downtime = new DowntimeTracker(plugin);
+        this.unresolvedVotes = new UnresolvedVoteStore(plugin.getDataFolder(), this.logger);
         this.downtime.initialize(logger);
         // Heartbeat every minute so a crash / kill -9 leaves a fresh-enough
         // last-alive timestamp for the next boot's gap computation.
@@ -122,12 +126,18 @@ public class VoteService {
                        int recordRetentionDays,
                        boolean manualStreakClaim,
                        @NotNull MultiplierService.Settings multiplierSettings,
-                       @NotNull VoteConfig.FreezeSettings freezeSettings) {
+                       @NotNull VoteConfig.FreezeSettings freezeSettings,
+                       @NotNull List<AbstractReward> defaultRewards,
+                       @NotNull List<AbstractReward> guaranteedRewards,
+                       @NotNull Map<Integer, List<AbstractReward>> streakRewards,
+                       @NotNull Map<String, List<AbstractReward>> siteRewards,
+                       @NotNull List<String> commandsOnVote) {
         this.voteSites.set(voteSites);
         this.streakTimeout = Duration.ofHours(streakTimeoutHours);
         this.streakCommands.set(streakCommands);
         this.recordRetentionDays = recordRetentionDays;
         this.rewardService.setManualStreakClaim(manualStreakClaim);
+        this.rewardService.reloadRewards(defaultRewards, guaranteedRewards, streakRewards, siteRewards, commandsOnVote);
         this.multiplierService.reload(multiplierSettings);
         this.freezeSettings.set(freezeSettings);
     }
@@ -161,8 +171,14 @@ public class VoteService {
 
                 UUID uuid = resolveUuid(vote.username());
                 if (uuid == null) {
-                    logger.warning(String.format("Could not resolve UUID for voter: %s - player has never joined this server", vote.username()));
-                    return false;
+                    // Voter has never joined (or isn't cached) - queue the vote instead of
+                    // dropping it, and replay it on their first join so the reward and streak
+                    // are not lost.
+                    unresolvedVotes.add(vote);
+                    logger.info(String.format(
+                            "Voter %s not resolvable yet - queued (%d pending) until first join",
+                            vote.username(), unresolvedVotes.size()));
+                    return true;
                 }
 
                 logger.fine(String.format("Resolved UUID for %s: %s", vote.username(), uuid));
@@ -292,7 +308,11 @@ public class VoteService {
             logger.log(Level.INFO, () -> String.format("Vote processed for %s (online) - streak: %d, total: %d",
                     vote.username(), streak, player.getTotalVotes()));
         } else {
-            String rewardData = rewardService.serializeRewards(vote.serviceName(), streak);
+            List<String> offlineDailyCommands = firstDailyBonus
+                    ? dailyRewardCommands
+                    : List.of();
+            String rewardData = rewardService.serializeRewards(
+                    vote.serviceName(), streak, offlineDailyCommands);
             if (rewardData != null) {
                 pendingRewardRepository.create(
                         new PendingVoteRewardEntity(uuid, vote.serviceName(), rewardData));
@@ -347,7 +367,36 @@ public class VoteService {
      *
      * @param player the returning player
      */
+    /**
+     * Replays any votes that were queued while this player's name was unresolvable
+     * (see {@link UnresolvedVoteStore}). Matching is done against ONLINE players only
+     * ({@link #resolveOnline}) so the join thread never triggers a blocking name lookup;
+     * the joining player is online now, so their queued votes match and are re-processed
+     * - granting the reward and advancing the streak - while votes for still-absent
+     * players stay queued.
+     */
+    private void replayUnresolvedVotes(@NotNull Player player) {
+        UUID uuid = player.getUniqueId();
+        List<Vote> replay = unresolvedVotes.drain(vote -> uuid.equals(resolveOnline(vote.username())));
+        for (Vote vote : replay) {
+            logger.info(String.format("Replaying queued vote for %s (%s)", player.getName(), vote.serviceName()));
+            processVote(vote);
+        }
+    }
+
+    /** Resolves a vote username to an ONLINE player's UUID (Java + Bedrock name variants), or null. */
+    private @Nullable UUID resolveOnline(@NotNull String username) {
+        for (String candidate : nameCandidates(username)) {
+            Player online = Bukkit.getPlayerExact(candidate);
+            if (online != null) {
+                return online.getUniqueId();
+            }
+        }
+        return null;
+    }
+
     public void deliverPendingRewards(@NotNull Player player) {
+        replayUnresolvedVotes(player);
         pendingRewardRepository.findByPlayer(player.getUniqueId()).thenAccept(pending -> {
             if (pending.isEmpty()) return;
 
@@ -356,7 +405,13 @@ public class VoteService {
                 for (PendingVoteRewardEntity reward : pending) {
                     try {
                         grants.add(rewardService.grantSerializedRewards(
-                                player, reward.getRewardData()));
+                                player, reward.getRewardData())
+                                .exceptionally(ex -> {
+                                    final String playerName = player.getName();
+                                    logger.log(Level.WARNING, ex,
+                                            () -> "Async reward grant failed for " + playerName);
+                                    return List.of();
+                                }));
                     } catch (Exception e) {
                         final String playerName = player.getName();
                         logger.log(Level.WARNING, e,
@@ -366,17 +421,23 @@ public class VoteService {
 
                 CompletableFuture
                         .allOf(grants.toArray(CompletableFuture[]::new))
-                        .thenRun(() -> {
-                            // Rows are dropped only once every grant has resolved. The
-                            // previous version deleted them immediately after firing the
-                            // grants, so an async reward that failed took its record with
-                            // it and the player simply never got it.
-                            for (PendingVoteRewardEntity reward : pending) {
-                                pendingRewardRepository.delete(reward.getId());
+                        .whenComplete((ignored, err) -> {
+                            if (err != null) {
+                                final String pName = player.getName();
+                                logger.log(Level.WARNING, err,
+                                        () -> "Unexpected error in pending reward delivery for " + pName);
                             }
 
+                            pendingRewardRepository.deleteByPlayer(player.getUniqueId())
+                                    .exceptionally(ex -> {
+                                        final String pName = player.getName();
+                                        logger.log(Level.SEVERE, ex,
+                                                () -> "Failed to delete pending rewards for " + pName);
+                                        return 0;
+                                    });
+
                             List<String> received = grants.stream()
-                                    .map(CompletableFuture::join)
+                                    .map(f -> f.getNow(List.of()))
                                     .flatMap(List::stream)
                                     .toList();
 
