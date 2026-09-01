@@ -245,7 +245,7 @@ streak-rewards:
   # a pile of vote keys, and more island room.
   60:
     streak-60-xp:       { type: xp,       amount: 1200 }
-    streak-60-coins:    { type: currency, currency: coins, amount: 40000.0 }
+    streak-60-coins:    { type: currency, currency: coins, amount: 25000.0 }
     streak-60-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
     streak-60-vote-keys: { type: command, command: 'ac virtualkey give {player} VoteCrate 10', asConsole: true }
     # Sigil = cheapest pass. addtemp/accumulate so it stacks if already active.
@@ -256,7 +256,7 @@ streak-rewards:
   # and Aether-120 pass milestones.)
   90:
     streak-90-xp:       { type: xp,       amount: 1500 }
-    streak-90-coins:    { type: currency, currency: coins, amount: 60000.0 }
+    streak-90-coins:    { type: currency, currency: coins, amount: 25000.0 }
     streak-90-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
     streak-90-void-keys: { type: command, command: 'ac virtualkey give {player} VoidCrate 3', asConsole: true }
     streak-90-vote-keys: { type: command, command: 'ac virtualkey give {player} VoteCrate 5', asConsole: true }
@@ -265,7 +265,7 @@ streak-rewards:
   # ── Day 120 · Ascended ──────────────────────────────────────────
   120:
     streak-120-xp:      { type: xp,       amount: 2000 }
-    streak-120-coins:   { type: currency, currency: coins, amount: 80000.0 }
+    streak-120-coins:   { type: currency, currency: coins, amount: 25000.0 }
     streak-120-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
     streak-120-void-keys: { type: command, command: 'ac virtualkey give {player} VoidCrate 5', asConsole: true }
     # Aether = mid pass tier, 7 days.
@@ -274,7 +274,7 @@ streak-rewards:
   # ── Day 180 · Devoted ───────────────────────────────────────────
   180:
     streak-180-xp:      { type: xp,       amount: 3000 }
-    streak-180-coins:   { type: currency, currency: coins, amount: 120000.0 }
+    streak-180-coins:   { type: currency, currency: coins, amount: 25000.0 }
     streak-180-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
     streak-180-shadow-keys: { type: command, command: 'ac virtualkey give {player} ShadowCrate 2', asConsole: true }
     streak-180-void-keys:   { type: command, command: 'ac virtualkey give {player} VoidCrate 2', asConsole: true }
@@ -286,7 +286,7 @@ streak-rewards:
   # 30 days, and the biggest island expansion on the ladder.
   365:
     streak-365-xp:      { type: xp,       amount: 5000 }
-    streak-365-coins:   { type: currency, currency: coins, amount: 250000.0 }
+    streak-365-coins:   { type: currency, currency: coins, amount: 25000.0 }
     streak-365-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 50', asConsole: true }
     streak-365-dragon-keys: { type: command, command: 'ac virtualkey give {player} DragonCrate 10', asConsole: true }
     # Mythic = top rank group (bare id), 30 days.
@@ -606,6 +606,63 @@ vote-shop:
       - "<gray>most prestigious crate on the server."
       - "<dark_gray>Grants: <white>1× Dragon Crate Key"
     reward: { type: command, command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true }
+    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
+
+  # ── Season 3 systems + a rare Crystal goal ──────────────────────
+  backpack-upgrader:
+    name: "Backpack Upgrader"
+    icon: CHEST
+    cost: 35
+    description:
+      - "<gray>Upgrade one backpack up a tier -"
+      - "<gray>more slots, more perks."
+      - "<dark_gray>Grants: <white>1× Backpack Upgrader"
+    reward: { type: command, command: 'backpack upgrader {player}', asConsole: true }
+  cobble-minion:
+    name: "Cobblestone Minion"
+    icon: DISPENSER
+    cost: 20
+    description:
+      - "<gray>A tireless tier-1 worker that mines"
+      - "<gray>cobblestone while you are away."
+      - "<dark_gray>Grants: <white>1× Cobblestone Minion (T1)"
+    reward: { type: command, command: 'jexoneblock minion give {player} cobble_generator 1', asConsole: true }
+  obsidian-breaker:
+    name: "Obsidian Breaker"
+    icon: NETHERITE_PICKAXE
+    cost: 28
+    description:
+      - "<gray>An instant-mine pickaxe with charges -"
+      - "<gray>tear through the central block."
+      - "<dark_gray>Grants: <white>1× Obsidian Breaker (T1)"
+    reward: { type: command, command: 'jexoneblock breaker-give {player} obsidian 1', asConsole: true }
+  ancient-cache:
+    name: "Ancient Cache"
+    icon: BRUSH
+    cost: 16
+    description:
+      - "<gray>Brush it open for relics, coins and"
+      - "<gray>archaeology loot."
+      - "<dark_gray>Grants: <white>1× Ancient Cache"
+    reward: { type: command, command: 'jexoneblock excavate-give {player} cache 1', asConsole: true }
+  excavation-brush:
+    name: "Excavation Brush"
+    icon: BRUSH
+    cost: 12
+    description:
+      - "<gray>The tool for digging caches and"
+      - "<gray>suspicious sand."
+      - "<dark_gray>Grants: <white>1× Excavation Brush (T1)"
+    reward: { type: command, command: 'jexoneblock excavate-give {player} brush 1', asConsole: true }
+  crystal-cache:
+    name: "Crystal Cache"
+    icon: AMETHYST_CLUSTER
+    cost: 120
+    description:
+      - "<gray>A <#c084fc>rare</#c084fc> payout of premium Crystals -"
+      - "<gray>a serious long-term voting goal."
+      - "<dark_gray>Grants: <#c084fc>25 Crystals"
+    reward: { type: command, command: 'economy give {player} 25 crystals', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
 
   # ── Cosmetic flavour ────────────────────────────────────────────
