@@ -13,6 +13,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -25,6 +27,8 @@ public final class VoteRewardConfig {
 
     private static final String REWARDS_FILE = "rewards.yml";
     private static final String TYPE_FIELD = "type";
+    private static final String STREAK_CAP_MIGRATION = "balance-migrations.season-3-vote-streak-cap";
+    private static final double MAX_STREAK_COINS = 25_000.0;
 
     private final JavaPlugin plugin;
     private final Logger logger;
@@ -56,6 +60,7 @@ public final class VoteRewardConfig {
 
     public void load() {
         YamlConfiguration config = ConfigMigrator.loadAndMigrate(plugin, REWARDS_FILE);
+        migrateLegacyStreakCoinRewards(config);
 
         defaultRewards = loadRewardList(config.getConfigurationSection("default-rewards"));
         guaranteedRewards = loadRewardArray(config, "guaranteed-rewards");
@@ -68,6 +73,39 @@ public final class VoteRewardConfig {
         final int poolSize = votePartyPool != null ? votePartyPool.getEntries().size() : 0;
         logger.log(Level.INFO, () -> String.format("Loaded %d default reward(s), %d guaranteed reward(s), %d streak tier(s), %d site-specific reward set(s), %d vote-party baseline reward(s), %d party-pool entr(y/ies)",
                 defaultRewards.size(), guaranteedRewards.size(), streakRewards.size(), siteRewards.size(), votePartyRewards.size(), poolSize));
+    }
+
+    private void migrateLegacyStreakCoinRewards(@NotNull YamlConfiguration config) {
+        if (config.getBoolean(STREAK_CAP_MIGRATION, false)) {
+            return;
+        }
+        Map<Integer, Double> legacyAmounts = Map.of(
+                60, 40_000.0,
+                90, 60_000.0,
+                120, 80_000.0,
+                180, 120_000.0,
+                365, 250_000.0);
+        int changed = 0;
+        for (Map.Entry<Integer, Double> entry : legacyAmounts.entrySet()) {
+            String path = "streak-rewards." + entry.getKey() + ".streak-"
+                    + entry.getKey() + "-coins.amount";
+            if (Double.compare(config.getDouble(path), entry.getValue()) == 0) {
+                config.set(path, MAX_STREAK_COINS);
+                changed++;
+            }
+        }
+        config.set(STREAK_CAP_MIGRATION, true);
+        saveBalanceMigration(config, changed);
+    }
+
+    private void saveBalanceMigration(@NotNull YamlConfiguration config, int changed) {
+        try {
+            config.save(new File(plugin.getDataFolder(), REWARDS_FILE));
+            logger.log(Level.INFO, () -> "Capped " + changed
+                    + " legacy vote streak coin reward(s) at 25,000 coins");
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Failed to persist vote streak balance migration", e);
+        }
     }
 
     /**

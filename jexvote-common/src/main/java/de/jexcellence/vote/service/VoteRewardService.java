@@ -153,7 +153,8 @@ public class VoteRewardService {
      * @param currentStreak the current vote streak
      * @return JSON string of rewards, or null if serialization failed
      */
-    public @Nullable String serializeRewards(@NotNull String serviceName, int currentStreak) {
+    public @Nullable String serializeRewards(@NotNull String serviceName, int currentStreak,
+                                             @NotNull List<String> additionalCommands) {
         try {
             double multiplier = multiplierService.current();
             List<Map<String, Object>> rewardList = new ArrayList<>();
@@ -171,7 +172,9 @@ public class VoteRewardService {
 
             Map<String, Object> data = new LinkedHashMap<>();
             data.put(REWARDS_KEY, rewardList);
-            data.put(COMMANDS_KEY, resolveCommands(serviceName, currentStreak));
+            List<String> commands = new ArrayList<>(resolveCommands(serviceName, currentStreak));
+            commands.addAll(additionalCommands);
+            data.put(COMMANDS_KEY, commands);
 
             return objectMapper.writeValueAsString(data);
         } catch (JsonProcessingException e) {

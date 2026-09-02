@@ -232,7 +232,12 @@ public final class VoteAdminHandler {
                         voteConfig.getWeekendMultiplierFactor(),
                         voteConfig.getWeekendMultiplierDays(),
                         voteConfig.getWeekendMultiplierTimezone()),
-                voteConfig.getFreezeSettings());
+                voteConfig.getFreezeSettings(),
+                rewardConfig.getDefaultRewards(),
+                rewardConfig.getGuaranteedRewards(),
+                rewardConfig.getStreakRewards(),
+                rewardConfig.getSiteRewards(),
+                voteConfig.getCommandsOnVote());
         r18n().msg("vote.reload").prefix().send(ctx.sender());
     }
 

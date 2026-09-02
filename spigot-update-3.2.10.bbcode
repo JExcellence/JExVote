@@ -1,0 +1,15 @@
+[SIZE=4][B]v3.2.10[/B] - Vote reward reliability + fixes[/SIZE]
+
+[SIZE=3][COLOR=#e74c3c]Bug Fixes[/COLOR][/SIZE]
+
+[LIST]
+[*][B]Vote rewards no longer fail under load[/B] - when a single vote granted several currency rewards at once, the deposits raced on the same economy account and could exhaust the retry budget, surfacing an "Async reward grant failed" error and dropping the reward. Reward grants (default, guaranteed and streak) are now applied one after another, so each deposit commits cleanly.
+[*][B]Reload now refreshes rewards[/B] - [ICODE]/jexvote reload[/ICODE] previously reloaded the config files but did not update the live reward service. Editing [ICODE]rewards.yml[/ICODE] had no effect until a full server restart. Reload now properly rebuilds all reward lists (default, guaranteed, streak, site-specific, and commands-on-vote).
+[*][B]Offline vote rewards no longer duplicate[/B] - votes received while a player was offline could be re-delivered on every login instead of once. If any single reward in the batch failed asynchronously, the entire pending queue was never cleared. Pending rewards are now reliably deleted after delivery regardless of individual grant failures.
+[/LIST]
+
+[SIZE=3][COLOR=#2ecc71]Improvements[/COLOR][/SIZE]
+
+[LIST]
+[*][B]Clearer reward feedback[/B] - the win message now names the actual jackpot prize you received, and offline vote rewards are summarised in a single chat message on login instead of one line per vote.
+[/LIST]

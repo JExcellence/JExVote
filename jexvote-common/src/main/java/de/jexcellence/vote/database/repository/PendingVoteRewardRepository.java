@@ -21,4 +21,12 @@ public class PendingVoteRewardRepository extends AbstractCrudRepository<PendingV
     public @NotNull CompletableFuture<List<PendingVoteRewardEntity>> findByPlayer(@NotNull UUID uuid) {
         return query().and("playerUuid", uuid).listAsync();
     }
+
+    public @NotNull CompletableFuture<Integer> deleteByPlayer(@NotNull UUID uuid) {
+        return CompletableFuture.supplyAsync(() ->
+                withSession(ctx -> ctx.getEntityManager()
+                        .createNamedQuery("PendingVoteReward.deleteByPlayer")
+                        .setParameter("uuid", uuid)
+                        .executeUpdate()));
+    }
 }
