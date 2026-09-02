@@ -612,7 +612,7 @@ vote-shop:
   backpack-upgrader:
     name: "Backpack Upgrader"
     icon: CHEST
-    cost: 35
+    cost: 140
     description:
       - "<gray>Upgrade one backpack up a tier -"
       - "<gray>more slots, more perks."
