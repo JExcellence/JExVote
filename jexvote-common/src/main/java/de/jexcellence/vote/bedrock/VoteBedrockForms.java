@@ -99,8 +99,19 @@ public final class VoteBedrockForms {
         this.shopService = shopService;
     }
 
-    /** Returns {@code true} when the player connects via Bedrock/Floodgate. */
+    /**
+     * Returns {@code true} when the player connects via Bedrock. Consults the shared
+     * login-time {@link de.jexcellence.jextranslate.bedrock.BedrockDetectionCache}
+     * (GeyserService-based, the same detector JExOneblock uses successfully) FIRST,
+     * then falls back to the call-time Floodgate probe. Relying on the Floodgate
+     * probe alone let Bedrock players slip through and get the unusable Java GUI -
+     * the "voteshop is only text without function" report.
+     */
     public boolean isBedrock(@NotNull Player player) {
+        var cache = R18nManager.getInstance().getBedrockDetectionCache();
+        if (cache != null && cache.isBedrockPlayer(player)) {
+            return true;
+        }
         return bridge.isBedrockPlayer(player);
     }
 
