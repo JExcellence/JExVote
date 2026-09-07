@@ -31,7 +31,9 @@ public class VoteShopService {
     public enum PurchaseResult {
         SUCCESS,
         NOT_ENOUGH_POINTS,
-        NO_PROFILE
+        NO_PROFILE,
+        /** Points were charged but the reward failed to deliver - the points were refunded. */
+        GRANT_FAILED
     }
 
     private final VotePlayerRepository playerRepository;
@@ -72,27 +74,41 @@ public class VoteShopService {
      */
     public @NotNull CompletableFuture<PurchaseResult> purchase(@NotNull Player player, @NotNull VoteShopItem item) {
         UUID uuid = player.getUniqueId();
-        return playerRepository.findByUuidAsync(uuid).thenApply(opt -> {
-            Optional<VotePlayerEntity> maybe = opt;
-            if (maybe.isEmpty()) {
-                return PurchaseResult.NO_PROFILE;
+        return playerRepository.findByUuidAsync(uuid).thenCompose(opt -> {
+            if (opt.isEmpty()) {
+                return CompletableFuture.completedFuture(PurchaseResult.NO_PROFILE);
             }
-            VotePlayerEntity entity = maybe.orElseThrow();
+            VotePlayerEntity entity = opt.orElseThrow();
             if (entity.getVotePoints() < item.cost()) {
-                return PurchaseResult.NOT_ENOUGH_POINTS;
+                return CompletableFuture.completedFuture(PurchaseResult.NOT_ENOUGH_POINTS);
             }
             entity.setVotePoints(entity.getVotePoints() - item.cost());
             playerRepository.update(entity);
-            scheduler.runAtEntity(player, () -> {
-                // Play purchase sound
-                playPurchaseSound(player, item);
-                // Send purchase messages
-                sendPurchaseMessages(player, item);
-                // Grant the reward
-                rewardService.grantRewardList(player, List.of(item.reward()));
-            });
-            return PurchaseResult.SUCCESS;
+            // Grant on the player's region thread and refund the points if the reward
+            // fails to deliver, instead of charging fire-and-forget (which could leave
+            // a player down points with nothing to show for it).
+            CompletableFuture<PurchaseResult> result = new CompletableFuture<>();
+            scheduler.runAtEntity(player, () ->
+                    rewardService.grantChecked(player, item.reward()).whenComplete((granted, ex) -> {
+                        if (ex != null || !Boolean.TRUE.equals(granted)) {
+                            refundPoints(uuid, item.cost());
+                            result.complete(PurchaseResult.GRANT_FAILED);
+                            return;
+                        }
+                        playPurchaseSound(player, item);
+                        sendPurchaseMessages(player, item);
+                        result.complete(PurchaseResult.SUCCESS);
+                    }));
+            return result;
         });
+    }
+
+    /** Re-credits {@code cost} vote points after a failed reward delivery (re-reads to avoid a stale write). */
+    private void refundPoints(@NotNull UUID uuid, int cost) {
+        playerRepository.findByUuidAsync(uuid).thenAccept(opt -> opt.ifPresent(entity -> {
+            entity.setVotePoints(entity.getVotePoints() + cost);
+            playerRepository.update(entity);
+        }));
     }
 
     /**

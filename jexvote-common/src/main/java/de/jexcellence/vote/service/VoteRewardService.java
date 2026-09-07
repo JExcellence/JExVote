@@ -192,6 +192,19 @@ public class VoteRewardService {
     }
 
     /**
+     * Grants a single reward and reports whether it actually delivered, so a caller
+     * (the shop) can refund on failure instead of charging fire-and-forget. Any
+     * exception resolves to {@code false} (already logged).
+     */
+    public @NotNull CompletableFuture<Boolean> grantChecked(@NotNull Player player,
+                                                            @NotNull AbstractReward reward) {
+        return reward.grant(player).exceptionally(ex -> {
+            logger.log(Level.WARNING, "Failed to grant shop reward to " + player.getName(), ex);
+            return false;
+        });
+    }
+
+    /**
      * Serializes an explicit reward list for offline delivery (used by Vote Parties).
      *
      * @return JSON string, or {@code null} if serialization failed

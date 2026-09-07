@@ -550,6 +550,7 @@ public final class VoteBedrockForms {
                             String key = switch (result) {
                                 case SUCCESS -> "bedrock.shop.bought";
                                 case NOT_ENOUGH_POINTS -> "bedrock.shop.not-enough";
+                                case GRANT_FAILED -> "bedrock.shop.grant-failed";
                                 default -> "bedrock.shop.error";
                             };
                             r18n().msg(key).prefix()

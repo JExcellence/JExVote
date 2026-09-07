@@ -303,6 +303,7 @@ public final class VoteShopView extends VoteBaseView {
                                 Math.max(0, item.cost() - Math.max(0, balance))))
                         .send(viewer);
                 case NO_PROFILE -> msg("vote_shop.no-profile").prefix().send(viewer);
+                case GRANT_FAILED -> msg("vote_shop.grant-failed").prefix().send(viewer);
                 default -> msg("vote_shop.error").prefix().send(viewer);
             }
             scheduler.runAtEntity(viewer, () -> refreshBalance(viewer));

@@ -553,6 +553,7 @@ vote_shop:
   not-enough: '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>You need <white>{missing}</white> more vote points for that.</red>'
   no-profile: '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>Vote at least once first.</red>'
   error:      '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>Purchase failed. Try again.</red>'
+  grant-failed: '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>The reward could not be delivered - your points were refunded.</red>'
   players-only: '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>Only players can use the Vote Shop.</red>'
   unavailable:  '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>The Vote Shop is unavailable right now.</red>'
 
@@ -709,5 +710,6 @@ bedrock:
     bought: 'Purchased {item} for {cost} points!'
     not-enough: 'Not enough vote points.'
     error: 'Purchase failed.'
+    grant-failed: 'Reward could not be delivered - points refunded.'
   votesetstreak:
     description: 'Set a player''s vote streak'
