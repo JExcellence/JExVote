@@ -139,6 +139,11 @@ The embedded HMAC REST server (`rest/`) currently defaults CORS to `https://myth
   any server can feed its own website. Keep the RateLimiter + HmacAuthenticator.
 - Stays **public** (not premium-locked) because web integration drives installs; the mythblock.me wiring becomes
   just one configured consumer of a general feature.
+- **Reads + guarded writes (V9-writes):** REST exposes reads (leaderboard, player stats, party progress) **and
+  a small set of guarded write endpoints** (e.g. submit-vote, grant-points) behind **HMAC + rate-limit + an
+  explicit `rest.writes-enabled` toggle (default OFF)**. Because a leaked secret becomes an economy risk, writes
+  are: off by default, separately toggled, rate-limited harder than reads, scoped to a minimal allow-list, and
+  every write is audit-logged (same trail as the in-game write-hooks, V1.2). Documented with a loud security note.
 
 ---
 
@@ -161,7 +166,11 @@ The embedded HMAC REST server (`rest/`) currently defaults CORS to `https://myth
 - Redis event schema + channel names; poll interval default.
 - The exact `VoteRewardDescriptor` shape for `items` (serialized ItemStack vs material+meta) - pick the most
   version-portable.
-- Which write-hooks (if any) are also exposed over REST.
+- Which write-hooks are exposed over REST: **RESOLVED - reads + guarded writes** (submit-vote, grant-points),
+  `rest.writes-enabled` default OFF, HMAC + hard rate-limit + allow-list + audit log (§4). Exact endpoint list
+  is build-time.
 - Semver starting point for the published api (propose `1.0.0` for the api artifact, independent of the plugin's
   3.x/4.x version).
-- Vote-shop currency and achievement-set expansion (carried from `VOTE_ACHIEVEMENT_PLAN.md` - fold or supersede).
+- Vote-shop currency + achievement set: **RESOLVED** in `VOTE_ACHIEVEMENT_PLAN.md` - vote-points only
+  (Crystals stay premium), token-shop stocks both cosmetics + consumables (consumables = the S4 SPI hook),
+  achievements = one per meaningful milestone. Only prices/thresholds remain build-time.
