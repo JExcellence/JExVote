@@ -5,6 +5,33 @@ install it), currently v3.2.10, Paper 1.21+/Java 21, Folia-supported. This plan 
 architecture + tech-debt pass, decided with the owner. **Ships bundled with Season 4** (decision R3), so the
 vote -> S4-progression hooks land together.
 
+## Progress (2026-09-12)
+
+First implementation slice landed (part of P1/P2/P3):
+
+- **✅ Tech-debt: `Thread.sleep(100)` v2 read hack removed** (§3) - `readV2LengthPrefixed` now
+  blocks on `readNBytes` against the length prefix (race + latency fix), truncation-safe, no
+  `InterruptedException` in the chain. Commit `067b38e`.
+- **✅ Reward-provider SPI (V2, §1.4)** - platform-free `VoteRewardDescriptor`
+  (Item/Command/Currency/Points), `VoteContext`, `VoteRewardProvider` in the zero-dep `jexvote-api`;
+  `JExVoteAPI.registerRewardProvider/unregister` + `apiVersion()` + `supports(capability)`. Runtime:
+  `VoteRewardProviderRegistry` (inert + warn on Free), `VoteDescriptorExecutor`, points write-hook
+  `VoteService.grantVotePoints`. Additive on the online path; `VoteEdition.rewardSpiEnabled()`
+  Premium-gated. Commit `9f7cafb`. **Follow-up:** offline-queue serialization of SPI rewards; the
+  pre-grant mutable event; the remaining read/write hooks (§1.1/§1.2) + `Cancellable` event (§1.3).
+- **✅ Proxy sync, DB-authoritative core (V3/V4, §2)** - `ProxyVoteSyncService` reconciles the
+  in-memory party bar from the shared DB on a poll + join (`VotePartyService.reconcileFromDb`),
+  `proxy.enabled`/`poll-interval-seconds` config, `VoteEdition.proxySyncEnabled()` Premium gate.
+  Commit `e4c9da8`. **Follow-up (needs a decision):** the optional **Redis pub/sub accelerator** -
+  requires a client-library choice (jedis vs lettuce) + `RuntimeDependencies.kt`/catalog lockstep +
+  live testing, so it was intentionally not bundled. Network-scoped party/multiplier + cross-backend
+  double-processing guard (optimistic lock on the party row) also remain.
+
+Still open from P1: decompose `VoteService` (monster-class), non-blocking event fire, i18n sweep.
+P4 (REST generalize + publish api to Maven) and P5 (S4 hooks) unstarted.
+
+---
+
 Grounded in the 2026-09-11 codebase map. **JExVote is already feature-rich** - offline-vote queue + consolidated
 join summary, vote-party, Duolingo streak-freezes, vote-gifting, vote-points shop, weekend multiplier, offline
 reconciliation, Lucky/jackpot, HMAC REST API, Bedrock forms, PlaceholderAPI, 4-language i18n (EN/DE/CS/SK), own
