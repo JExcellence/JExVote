@@ -148,6 +148,21 @@ records:
   # Set to 0 to keep forever.
   retention-days: 90
 
+# ── Proxy / network vote sync (Premium) ─────────────────────────
+# For a multi-backend network where all servers share ONE database.
+# Votes, points, streaks and the vote-party counter are already
+# DB-authoritative (every backend reads/writes the same rows), so a
+# network is correct with zero extra setup. The only thing that lags
+# is each backend's in-memory live party bar - it refreshes on a
+# local vote. Enabling this reconciles that bar from the shared DB on
+# a poll and on player join, so it is network-wide. Requires Premium.
+# (An optional Redis pub/sub accelerator for instant updates is a
+# planned future layer on top of this DB baseline.)
+proxy:
+  enabled: false
+  # How often (seconds) to re-read the network party state from the DB.
+  poll-interval-seconds: 30
+
 # ── Multipliers (Premium) ───────────────────────────────────────
 # Scales vote rewards during configured windows.
 # Applies to: vote POINTS (exact) and top-level numeric reward

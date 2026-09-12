@@ -47,6 +47,7 @@ import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteRewardService;
 import de.jexcellence.vote.service.VoteRewardProviderRegistry;
 import de.jexcellence.vote.service.VoteDescriptorExecutor;
+import de.jexcellence.vote.service.ProxyVoteSyncService;
 import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.view.VoteLeaderboardView;
@@ -359,6 +360,13 @@ public abstract class JExVote {
         VoteDescriptorExecutor descriptorExecutor =
                 new VoteDescriptorExecutor(logger, rewardEconomy, voteService::grantVotePoints);
         voteService.setRewardSpi(rewardSpiRegistry, descriptorExecutor);
+
+        // Proxy-aware vote sync (V3/V4): on a shared-DB network, reconcile the in-memory
+        // party view from the DB so the live bar is network-wide (Premium + proxy.enabled).
+        // Only meaningful when the vote-party exists (it's the one network-divergent view).
+        if (edition().proxySyncEnabled() && voteConfig.isProxyEnabled() && votePartyService != null) {
+            new ProxyVoteSyncService(plugin, votePartyService, voteConfig.getProxyPollSeconds()).start();
+        }
 
         streakFreezeService = new StreakFreezeService(playerRepository, voteConfig);
         voteGiftService = new VoteGiftService(playerRepository, voteConfig);

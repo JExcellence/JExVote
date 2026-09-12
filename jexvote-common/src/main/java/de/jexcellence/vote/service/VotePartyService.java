@@ -109,6 +109,20 @@ public class VotePartyService {
     }
 
     /**
+     * Refreshes the in-memory party snapshot ({@link #currentVotes}/{@link #targetVotes})
+     * from the shared DB. Proxy/network reconcile (V4): every backend increments the same
+     * {@code VotePartyEntity} row, but each caches its own snapshot for the live bar /
+     * placeholders and only updates it on a vote processed locally. Polling this (and
+     * calling it on player join) makes the live bar network-wide with zero new infra.
+     * Synchronized against {@link #recordVote} so a poll can't clobber a fresh increment.
+     */
+    public synchronized void reconcileFromDb() {
+        VotePartyEntity party = getOrCreateActiveParty();
+        currentVotes.set(party.getCurrentVotes());
+        targetVotes.set(party.getTargetVotes());
+    }
+
+    /**
      * Records a single vote toward the active party. Thread-safe. Called from the
      * async vote-processing thread.
      */

@@ -129,6 +129,9 @@ public final class VoteConfig {
     private boolean votePartyEnabled = false;
     private int votePartyTarget = 100;
 
+    private boolean proxyEnabled = false;
+    private int proxyPollSeconds = 30;
+
     private FreezeSettings freezeSettings =
             new FreezeSettings(true, 1, 5, 3, 24L);
     private ReconciliationSettings reconciliationSettings =
@@ -186,6 +189,9 @@ public final class VoteConfig {
         }
 
         recordRetentionDays = config.getInt("records.retention-days", 90);
+
+        proxyEnabled = config.getBoolean("proxy.enabled", false);
+        proxyPollSeconds = Math.max(5, config.getInt("proxy.poll-interval-seconds", 30));
 
         commandsOnVote = config.getStringList("commands-on-vote");
 
@@ -443,6 +449,12 @@ public final class VoteConfig {
     public @NotNull ZoneId getWeekendMultiplierTimezone() { return weekendMultiplierTimezone; }
     public boolean isVotePartyEnabled() { return votePartyEnabled; }
     public int getVotePartyTarget() { return votePartyTarget; }
+
+    /** Whether proxy/network mode is on (backends share one DB and reconcile the live party view). */
+    public boolean isProxyEnabled() { return proxyEnabled; }
+
+    /** How often (seconds) a backend re-reads the network party state from the shared DB. */
+    public int getProxyPollSeconds() { return proxyPollSeconds; }
     public @NotNull BedrockSettings getBedrockSettings() { return bedrockSettings; }
     public @NotNull DailyFlySettings getDailyFlySettings() { return dailyFlySettings; }
     public @NotNull List<String> getDailyRewardCommands() { return dailyRewardCommands; }
