@@ -246,7 +246,7 @@ public class VotifierProtocolHandler implements Runnable {
         int low = in.read();
         if (high == -1 || low == -1) return;
         int length = (high << 8) | low;
-        if (length <= 0 || length > 8192) {
+        if (length <= 0 || length > MAX_V2_PAYLOAD) {
             logger.log(Level.WARNING, () -> String.format("Invalid v2 binary frame length: %d", length));
             return;
         }
@@ -257,7 +257,7 @@ public class VotifierProtocolHandler implements Runnable {
 
     private void handleV2(@NotNull BufferedInputStream in, @NotNull OutputStream out,
                            @NotNull String challenge, int firstByte)
-            throws IOException, GeneralSecurityException, InterruptedException {
+            throws IOException, GeneralSecurityException {
         byte[] rawBytes = (firstByte == 0x00)
                 ? readV2LengthPrefixed(in)
                 : readV2BraceMatched(in, firstByte);
@@ -267,20 +267,32 @@ public class VotifierProtocolHandler implements Runnable {
         processV2Json(rawJson, out, challenge);
     }
 
-    private byte[] readV2LengthPrefixed(@NotNull BufferedInputStream in)
-            throws IOException, InterruptedException {
-        if (in.available() < 2) {
-            Thread.sleep(100);
+    /**
+     * Reads a length-prefixed NuVotifier v2 frame: {@code [2-byte big-endian length][payload]}.
+     *
+     * <p>Uses blocking {@link BufferedInputStream#readNBytes(int)} against the exact byte
+     * counts rather than the old {@code available() < 2 ? Thread.sleep(100)} guess:
+     * {@code available()} on a buffered/socket stream can report 0 while bytes are still in
+     * flight, so the sleep was both a race (100ms may not be enough) and a latency tax (100ms
+     * paid on every fast vote). {@code readNBytes} blocks until the requested count arrives or
+     * the stream ends, which is exactly the contract a length-prefixed frame needs.
+     */
+    private byte[] readV2LengthPrefixed(@NotNull BufferedInputStream in) throws IOException {
+        byte[] prefix = in.readNBytes(2);
+        if (prefix.length < 2) {
+            return new byte[0]; // stream closed before the length prefix arrived
         }
-        int high = in.read();
-        int low = in.read();
-        if (high == -1 || low == -1) return new byte[0];
-        int length = (high << 8) | low;
-        if (length <= 0 || length > 8192) {
+        int length = ((prefix[0] & 0xFF) << 8) | (prefix[1] & 0xFF);
+        if (length <= 0 || length > MAX_V2_PAYLOAD) {
             logger.log(Level.WARNING, () -> String.format("Invalid v2 frame length: %d", length));
             return new byte[0];
         }
-        return in.readNBytes(length);
+        byte[] payload = in.readNBytes(length);
+        if (payload.length < length) {
+            logger.log(Level.WARNING, () -> "v2 frame truncated - stream closed mid-payload");
+            return new byte[0];
+        }
+        return payload;
     }
 
     private static final int MAX_V2_PAYLOAD = 8192;
