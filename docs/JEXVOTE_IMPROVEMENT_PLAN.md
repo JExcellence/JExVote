@@ -19,13 +19,22 @@ First implementation slice landed (part of P1/P2/P3):
   `VoteService.grantVotePoints`. Additive on the online path; `VoteEdition.rewardSpiEnabled()`
   Premium-gated. Commit `9f7cafb`. **Follow-up:** offline-queue serialization of SPI rewards; the
   pre-grant mutable event; the remaining read/write hooks (§1.1/§1.2) + `Cancellable` event (§1.3).
-- **✅ Proxy sync, DB-authoritative core (V3/V4, §2)** - `ProxyVoteSyncService` reconciles the
-  in-memory party bar from the shared DB on a poll + join (`VotePartyService.reconcileFromDb`),
-  `proxy.enabled`/`poll-interval-seconds` config, `VoteEdition.proxySyncEnabled()` Premium gate.
-  Commit `e4c9da8`. **Follow-up (needs a decision):** the optional **Redis pub/sub accelerator** -
-  requires a client-library choice (jedis vs lettuce) + `RuntimeDependencies.kt`/catalog lockstep +
-  live testing, so it was intentionally not bundled. Network-scoped party/multiplier + cross-backend
-  double-processing guard (optimistic lock on the party row) also remain.
+- **✅ Proxy sync, full DB-based real-time (V3/V4, §2)** - two layers, both on the shared DB,
+  **no third-party dependency (no Redis)**:
+  - *Safety net* - `ProxyVoteSyncService` reconciles the in-memory party bar from the authoritative
+    DB row on a periodic poll + player join (`VotePartyService.reconcileFromDb`). Commit `e4c9da8`.
+  - *Fast layer* - a **self-hosted DB outbox event bus** (`OutboxProxyEventBus` +
+    `VoteSyncEventEntity`/`Repository`, `ProxyEventPublisher`/`ProxyEventTypes`): backends publish
+    party progress/completion to a `jexvote_sync_event` table and poll `id > lastSeen` every ~2s, so
+    the live bar and the "party reached" broadcast are near-instant network-wide; own events filtered
+    by a per-backend `server-id`; rows auto-purge (retention). Commit `c13309c`. This **replaces the
+    Redis follow-up** - latency is the poll interval (~2s, imperceptible for a vote bar) with none of
+    Redis's operational cost; the DB stays single source of truth *and* transport.
+  - Config: `proxy.enabled`/`server-id`/`event-poll-seconds`/`reconcile-seconds`/`event-retention-minutes`,
+    `VoteEdition.proxySyncEnabled()` Premium gate.
+  - **Still open:** network-scoped multiplier, and a cross-backend double-processing guard on the party
+    counter (optimistic-lock/version column on `VotePartyEntity`) for simultaneous increments from two
+    backends - the outbox dedupe covers events, not the counter write itself.
 
 Still open from P1: decompose `VoteService` (monster-class), non-blocking event fire, i18n sweep.
 P4 (REST generalize + publish api to Maven) and P5 (S4 hooks) unstarted.
