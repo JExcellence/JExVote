@@ -39,8 +39,18 @@ First implementation slice landed (part of P1/P2/P3):
     never retried before (it broke vote processing instead).
   - **Still open:** network-scoped multiplier (one weekend multiplier across the network).
 
-Still open from P1: decompose `VoteService` (monster-class), non-blocking event fire, i18n sweep.
-P4 (REST generalize + publish api to Maven) and P5 (S4 hooks) unstarted.
+- **✅ VoteProvider API completion (V1.1 reads, V1.2 write-hooks, V1.3 events)** (`8e95550`):
+  - *Reads:* `getSnapshot`, `getHighestStreak`, `listServices`, `canVoteNow`/`nextVoteAt` (per-service
+    cooldown), `getRank`/`getMonthlyRank` (single COUNT query each).
+  - *Write-hooks (Premium-gated, `VoteEdition.writeHooksEnabled`, return false on Free):* `grantVotePoints`,
+    `forceStreakGrace` (+1 freeze, no cost/cap), `triggerVoteParty` (`VotePartyService.forceComplete`,
+    cross-backend single-winner via the version-checked reset).
+  - *Events:* `VoteReceivedEvent implements Cancellable` (non-breaking); new `VotePartyCompletedEvent` +
+    `StreakMilestoneEvent`, fired on the main thread.
+
+Still open from P1: decompose `VoteService` (monster-class), non-blocking event fire (the votifier-handler
+block), i18n sweep; plus the **pre-grant mutable reward event** (V1.3) and offline SPI serialization.
+P4 (REST generalize + publish api to Maven) and P5 (S4 hooks) unstarted. Network-scoped multiplier open.
 
 ---
 
