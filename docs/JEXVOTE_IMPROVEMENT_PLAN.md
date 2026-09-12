@@ -32,9 +32,12 @@ First implementation slice landed (part of P1/P2/P3):
     Redis's operational cost; the DB stays single source of truth *and* transport.
   - Config: `proxy.enabled`/`server-id`/`event-poll-seconds`/`reconcile-seconds`/`event-retention-minutes`,
     `VoteEdition.proxySyncEnabled()` Premium gate.
-  - **Still open:** network-scoped multiplier, and a cross-backend double-processing guard on the party
-    counter (optimistic-lock/version column on `VotePartyEntity`) for simultaneous increments from two
-    backends - the outbox dedupe covers events, not the counter write itself.
+  - **✅ Cross-backend counter guard** (`ca90e25`) - the party counter read-modify-write is now retried on
+    optimistic-lock conflict via jehibernate's `OptimisticLockRetry` (only the version-checked mutation is
+    retried; payout runs once, only for the backend that won the reset - no double reward/broadcast).
+    Discovered `BaseEntity` already carries `@Version`, so no new column was needed; the conflict was simply
+    never retried before (it broke vote processing instead).
+  - **Still open:** network-scoped multiplier (one weekend multiplier across the network).
 
 Still open from P1: decompose `VoteService` (monster-class), non-blocking event fire, i18n sweep.
 P4 (REST generalize + publish api to Maven) and P5 (S4 hooks) unstarted.
