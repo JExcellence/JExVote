@@ -1,5 +1,7 @@
 package de.jexcellence.vote.service;
 
+import de.jexcellence.jehibernate.exception.OptimisticLockRetryException;
+import de.jexcellence.jehibernate.transaction.OptimisticLockRetry;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jexplatform.view.RewardViewHelper;
@@ -126,22 +128,64 @@ public class VotePartyService {
     }
 
     /**
-     * Records a single vote toward the active party. Thread-safe. Called from the
-     * async vote-processing thread.
+     * Records a single vote toward the active party. Thread-safe (the
+     * {@code synchronized} guards same-JVM; the optimistic-lock retry guards
+     * cross-backend). Called from the async vote-processing thread.
      */
     public synchronized void recordVote(@NotNull UUID uuid) {
-        VotePartyEntity party = getOrCreateActiveParty();
-        upsertContributor(party.getId(), uuid);
+        // Count the contributor once (its own transaction, never retried).
+        long partyId = getOrCreateActiveParty().getId();
+        upsertContributor(partyId, uuid);
 
+        // The party-counter row is the one cross-backend-contended write: every backend
+        // increments the same row. Guard just that mutation with an optimistic-lock retry
+        // so two backends cannot lose an increment or both "complete" the same party. The
+        // retried block is side-effect-free (only the version-checked counter update +
+        // in-memory bookkeeping), so a retry is safe; the payout runs once, afterwards,
+        // only when THIS backend won the reset.
+        int completedNumber;
+        try {
+            completedNumber = OptimisticLockRetry.execute(this::bumpActiveParty);
+        } catch (OptimisticLockRetryException ex) {
+            // Extremely rare: lost the counter race past the retry budget. The vote's own
+            // points/streak are already recorded elsewhere; only this shared party tick is
+            // dropped. Log rather than fail the whole vote.
+            logger.log(Level.WARNING, ex, () -> "Vote-party increment gave up after retries for " + uuid);
+            return;
+        }
+        if (completedNumber >= 0) {
+            onPartyCompleted(partyId, completedNumber);
+        }
+    }
+
+    /**
+     * Increments the active party by one inside a version-checked update, resetting it
+     * when it reaches the target. Re-reads the party fresh each call so a retry after a
+     * cross-backend conflict sees the newest version. Returns the completed party number
+     * when this increment finished a party (this backend won the reset), else {@code -1}.
+     */
+    private int bumpActiveParty() {
+        VotePartyEntity party = getOrCreateActiveParty();
         party.setCurrentVotes(party.getCurrentVotes() + 1);
-        if (party.getCurrentVotes() >= party.getTargetVotes()) {
-            completeParty(party);
+        boolean completes = party.getCurrentVotes() >= party.getTargetVotes();
+        int completedNumber = -1;
+        if (completes) {
+            completedNumber = party.getPartyNumber();
+            party.setPartyNumber(completedNumber + 1);
+            party.setCurrentVotes(0);
+            party.setTargetVotes(target);
+            party.setStartedAt(Instant.now());
+        }
+        partyRepository.update(party); // version-checked; a conflict throws -> retry re-reads
+        if (completes) {
+            currentVotes.set(0);
+            targetVotes.set(target);
         } else {
-            partyRepository.update(party);
             currentVotes.set(party.getCurrentVotes());
             publish(ProxyEventTypes.PARTY_PROGRESS,
                     party.getCurrentVotes() + ":" + party.getTargetVotes());
         }
+        return completedNumber;
     }
 
     /** Sets the cross-backend outbox publisher (proxy sync). Null disables publishing. */
@@ -173,26 +217,18 @@ public class VotePartyService {
         }
     }
 
-    private void completeParty(@NotNull VotePartyEntity party) {
-        long partyId = party.getId();
-        int completedNumber = party.getPartyNumber();
+    /**
+     * Pays out a completed party exactly once - called only by the backend whose
+     * version-checked reset in {@link #bumpActiveParty} succeeded, so it cannot
+     * double-fire across the network. Rewards every contributor of the finished party,
+     * clears them, then broadcasts + announces network-wide.
+     */
+    private void onPartyCompleted(long partyId, int completedNumber) {
         List<VotePartyContributorEntity> contributors = contributorRepository.findByParty(partyId);
-
+        contributorRepository.deleteByParty(partyId);
         for (VotePartyContributorEntity contributor : contributors) {
             rewardContributor(contributor.getPlayerUuid());
         }
-
-        contributorRepository.deleteByParty(partyId);
-
-        // Reset for the next party.
-        party.setPartyNumber(completedNumber + 1);
-        party.setCurrentVotes(0);
-        party.setTargetVotes(target);
-        party.setStartedAt(Instant.now());
-        partyRepository.update(party);
-        currentVotes.set(0);
-        targetVotes.set(target);
-
         int rewarded = contributors.size();
         scheduler.runSync(() -> broadcastService.broadcastPartyReached(completedNumber));
         publish(ProxyEventTypes.PARTY_COMPLETE, String.valueOf(completedNumber));

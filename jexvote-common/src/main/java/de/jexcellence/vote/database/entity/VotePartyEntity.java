@@ -32,6 +32,11 @@ public class VotePartyEntity extends LongIdEntity {
     @Column(name = "started_at", nullable = false)
     private Instant startedAt;
 
+    // Optimistic-lock version is inherited from BaseEntity (@Version Integer). It guards
+    // the cross-backend read-modify-write of the counter: two backends incrementing the
+    // same active party row cannot lose an update or both "complete" it - the losing
+    // commit fails and is retried against the fresh row (see VotePartyService.bumpActiveParty).
+
     protected VotePartyEntity() {}
 
     public VotePartyEntity(int partyNumber, int targetVotes) {
