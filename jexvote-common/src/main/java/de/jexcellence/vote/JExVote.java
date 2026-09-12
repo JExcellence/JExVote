@@ -45,6 +45,8 @@ import de.jexcellence.vote.service.VoteGiftService;
 import de.jexcellence.vote.service.VoteReconciliationService;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import de.jexcellence.vote.service.VoteRewardService;
+import de.jexcellence.vote.service.VoteRewardProviderRegistry;
+import de.jexcellence.vote.service.VoteDescriptorExecutor;
 import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.view.VoteLeaderboardView;
@@ -109,6 +111,7 @@ public abstract class JExVote {
     private VotePartyService votePartyService;
     private RewardStatsService rewardStatsService;
     private MultiplierService multiplierService;
+    private VoteRewardProviderRegistry rewardSpiRegistry;
 
     private VotifierServer votifierServer;
     private VoteRestApiServer restApiServer;
@@ -280,8 +283,10 @@ public abstract class JExVote {
 
         // Make 'currency' rewards actually pay out - JExPlatform's CurrencyReward
         // has no economy on its classpath, so install a depositor (JExEconomy → Vault).
-        // This also covers currency nested inside chance/lucky rewards.
-        CurrencyReward.setDepositor(new RewardEconomy(logger)::deposit);
+        // This also covers currency nested inside chance/lucky rewards. The same
+        // instance backs the reward-SPI executor (Currency descriptors).
+        RewardEconomy rewardEconomy = new RewardEconomy(logger);
+        CurrencyReward.setDepositor(rewardEconomy::deposit);
 
         rewardConfig = new VoteRewardConfig(plugin, rewardRegistry);
         rewardConfig.load();
@@ -346,6 +351,14 @@ public abstract class JExVote {
                 voteConfig.getBedrockSettings(),
                 voteConfig.getDailyFlySettings(),
                 voteConfig.getDailyRewardCommands());
+
+        // Reward SPI (V2): registry holds third-party providers (inert on Free), the
+        // executor turns their platform-free descriptors into real grants. Wired into
+        // VoteService post-construction (the executor needs its grantVotePoints sink).
+        rewardSpiRegistry = new VoteRewardProviderRegistry(logger, edition().rewardSpiEnabled());
+        VoteDescriptorExecutor descriptorExecutor =
+                new VoteDescriptorExecutor(logger, rewardEconomy, voteService::grantVotePoints);
+        voteService.setRewardSpi(rewardSpiRegistry, descriptorExecutor);
 
         streakFreezeService = new StreakFreezeService(playerRepository, voteConfig);
         voteGiftService = new VoteGiftService(playerRepository, voteConfig);
@@ -535,7 +548,7 @@ public abstract class JExVote {
 
     private void registerApiProvider() {
         voteProvider = new VoteProviderImpl(voteService, leaderboardService);
-        JExVoteAPIImpl apiImpl = new JExVoteAPIImpl(voteProvider);
+        JExVoteAPIImpl apiImpl = new JExVoteAPIImpl(voteProvider, rewardSpiRegistry);
         Bukkit.getServicesManager().register(
                 JExVoteAPI.class, apiImpl, plugin, ServicePriority.Normal);
     }

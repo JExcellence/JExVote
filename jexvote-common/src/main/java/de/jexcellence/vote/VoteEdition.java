@@ -16,6 +16,12 @@ public sealed interface VoteEdition {
 
     boolean weekendMultiplierEnabled();
 
+    /** V2 reward-provider SPI - heavy capability, Premium only (default off). */
+    default boolean rewardSpiEnabled() { return false; }
+
+    /** V3/V4 proxy-aware vote sync - heavy capability, Premium only (default off). */
+    default boolean proxySyncEnabled() { return false; }
+
     record FreeEdition() implements VoteEdition {
         @Override public String name() { return "Free"; }
         @Override public int maxVoteSites() { return 5; }
@@ -34,5 +40,7 @@ public sealed interface VoteEdition {
         @Override public boolean streakBonusEnabled() { return true; }
         @Override public boolean votePartyEnabled() { return true; }
         @Override public boolean weekendMultiplierEnabled() { return true; }
+        @Override public boolean rewardSpiEnabled() { return true; }
+        @Override public boolean proxySyncEnabled() { return true; }
     }
 }

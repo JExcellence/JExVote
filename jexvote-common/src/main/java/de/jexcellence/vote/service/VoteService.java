@@ -6,6 +6,8 @@ import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.event.VoteReceivedEvent;
 import de.jexcellence.vote.api.event.VoteRewardClaimedEvent;
 import de.jexcellence.vote.api.model.VoteSnapshot;
+import de.jexcellence.vote.api.reward.VoteContext;
+import de.jexcellence.vote.api.reward.VoteRewardDescriptor;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.database.entity.PendingVoteRewardEntity;
 import de.jexcellence.vote.database.entity.VotePlayerEntity;
@@ -51,6 +53,11 @@ public class VoteService {
     private final VoteBroadcastService broadcastService;
     private final MultiplierService multiplierService;
     private final @Nullable VotePartyService votePartyService;
+
+    // Reward SPI (V2) - injected after construction to avoid growing the constructor;
+    // both null until setRewardSpi is called, and the online path guards on them.
+    private @Nullable VoteRewardProviderRegistry rewardSpi;
+    private @Nullable VoteDescriptorExecutor descriptorExecutor;
 
     private final AtomicReference<Map<String, VoteSite>> voteSites;
     // volatile is sufficient: single-write / multi-read
@@ -292,6 +299,69 @@ public class VoteService {
         return true;
     }
 
+    /**
+     * Injects the reward SPI collaborators (V2). Called once at startup after the
+     * executor is built (it needs {@link #grantVotePoints} as its points sink), so
+     * they are set post-construction rather than bloating the constructor.
+     */
+    public void setRewardSpi(@NotNull VoteRewardProviderRegistry registry,
+                             @NotNull VoteDescriptorExecutor executor) {
+        this.rewardSpi = registry;
+        this.descriptorExecutor = executor;
+    }
+
+    /**
+     * Grants vote-points to a (possibly offline) player and persists the change.
+     * The single write path for points-from-automation - the reward SPI's
+     * {@code Points} descriptor and the future API write-hook both route here, so
+     * every points grant is logged with its reason.
+     *
+     * @param uuid   the player
+     * @param amount the points to add (a value {@code <= 0} is a no-op success)
+     * @param reason a short audit reason (e.g. {@code "vote reward SPI"})
+     * @return a future resolving to {@code true} when the points were applied
+     */
+    public @NotNull CompletableFuture<Boolean> grantVotePoints(@NotNull UUID uuid, int amount,
+                                                               @NotNull String reason) {
+        if (amount <= 0) {
+            return CompletableFuture.completedFuture(true);
+        }
+        return playerRepository.findByUuidAsync(uuid).thenApply(opt -> {
+            if (opt.isEmpty()) {
+                logger.log(Level.WARNING, () -> String.format(
+                        "Cannot grant %d vote-points to %s (%s): no player record", amount, uuid, reason));
+                return false;
+            }
+            VotePlayerEntity player = opt.get();
+            player.setVotePoints(player.getVotePoints() + amount);
+            playerRepository.update(player);
+            logger.log(Level.INFO, () -> String.format(
+                    "Granted %d vote-points to %s (%s)", amount, uuid, reason));
+            return true;
+        });
+    }
+
+    /**
+     * Grants any reward-SPI (V2) rewards for an online voter. No-op when the SPI is
+     * disabled (Free edition) or no providers are registered. SPI rewards are
+     * additive to the configured rewards; offline SPI delivery is a later pass, so
+     * this fires only on the online path (config rewards still queue for offline).
+     */
+    private void grantSpiRewards(@NotNull Player onlinePlayer, @NotNull Vote vote,
+                                 @NotNull UUID uuid, @NotNull VoteSnapshot snapshot) {
+        VoteRewardProviderRegistry registry = this.rewardSpi;
+        VoteDescriptorExecutor executor = this.descriptorExecutor;
+        if (registry == null || executor == null || !registry.isActive()) {
+            return;
+        }
+        VoteContext context = new VoteContext(
+                uuid, vote.username(), vote.serviceName(), snapshot, true, false);
+        List<VoteRewardDescriptor> descriptors = registry.collect(context);
+        if (!descriptors.isEmpty()) {
+            executor.grant(onlinePlayer, descriptors);
+        }
+    }
+
     private void deliverOrQueueRewards(@NotNull Vote vote, @NotNull UUID uuid,
                                        @NotNull VotePlayerEntity player, boolean firstDailyBonus) {
         Player onlinePlayer = Bukkit.getPlayer(uuid);
@@ -328,6 +398,7 @@ public class VoteService {
                                          int consumedFreezes, int remainingFreezes,
                                          int freshFreezeGrant) {
         rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
+        grantSpiRewards(onlinePlayer, vote, uuid, snapshot);
         executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
         broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
         if (firstDailyBonus) {
