@@ -130,7 +130,10 @@ public final class VoteConfig {
     private int votePartyTarget = 100;
 
     private boolean proxyEnabled = false;
-    private int proxyPollSeconds = 30;
+    private String proxyServerId = "";
+    private int proxyEventPollSeconds = 2;
+    private int proxyReconcileSeconds = 60;
+    private int proxyEventRetentionMinutes = 10;
 
     private FreezeSettings freezeSettings =
             new FreezeSettings(true, 1, 5, 3, 24L);
@@ -191,7 +194,10 @@ public final class VoteConfig {
         recordRetentionDays = config.getInt("records.retention-days", 90);
 
         proxyEnabled = config.getBoolean("proxy.enabled", false);
-        proxyPollSeconds = Math.max(5, config.getInt("proxy.poll-interval-seconds", 30));
+        proxyServerId = config.getString("proxy.server-id", "").trim();
+        proxyEventPollSeconds = Math.max(1, config.getInt("proxy.event-poll-seconds", 2));
+        proxyReconcileSeconds = Math.max(10, config.getInt("proxy.reconcile-seconds", 60));
+        proxyEventRetentionMinutes = Math.max(1, config.getInt("proxy.event-retention-minutes", 10));
 
         commandsOnVote = config.getStringList("commands-on-vote");
 
@@ -450,11 +456,20 @@ public final class VoteConfig {
     public boolean isVotePartyEnabled() { return votePartyEnabled; }
     public int getVotePartyTarget() { return votePartyTarget; }
 
-    /** Whether proxy/network mode is on (backends share one DB and reconcile the live party view). */
+    /** Whether proxy/network mode is on (backends share one DB and sync the live party view). */
     public boolean isProxyEnabled() { return proxyEnabled; }
 
-    /** How often (seconds) a backend re-reads the network party state from the shared DB. */
-    public int getProxyPollSeconds() { return proxyPollSeconds; }
+    /** Stable id for this backend in the outbox (blank → a random id is generated at startup). */
+    public String getProxyServerId() { return proxyServerId; }
+
+    /** How often (seconds) a backend polls the shared-DB outbox for new events (fast layer). */
+    public int getProxyEventPollSeconds() { return proxyEventPollSeconds; }
+
+    /** How often (seconds) a backend re-reads the authoritative party row (reconcile safety net). */
+    public int getProxyReconcileSeconds() { return proxyReconcileSeconds; }
+
+    /** How long (minutes) outbox event rows are kept before the retention purge removes them. */
+    public int getProxyEventRetentionMinutes() { return proxyEventRetentionMinutes; }
     public @NotNull BedrockSettings getBedrockSettings() { return bedrockSettings; }
     public @NotNull DailyFlySettings getDailyFlySettings() { return dailyFlySettings; }
     public @NotNull List<String> getDailyRewardCommands() { return dailyRewardCommands; }

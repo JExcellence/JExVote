@@ -72,6 +72,9 @@ public class VotePartyService {
     /** Weighted rotation pool for the guaranteed + decaying-extra draws. */
     private @Nullable LuckyReward partyPool;
 
+    /** Cross-backend outbox publisher (null unless proxy sync is enabled). */
+    private @Nullable ProxyEventPublisher eventPublisher;
+
     // Live view of party progress for placeholders.
     private final AtomicInteger currentVotes = new AtomicInteger(0);
     private final AtomicInteger targetVotes = new AtomicInteger(0);
@@ -136,6 +139,25 @@ public class VotePartyService {
         } else {
             partyRepository.update(party);
             currentVotes.set(party.getCurrentVotes());
+            publish(ProxyEventTypes.PARTY_PROGRESS,
+                    party.getCurrentVotes() + ":" + party.getTargetVotes());
+        }
+    }
+
+    /** Sets the cross-backend outbox publisher (proxy sync). Null disables publishing. */
+    public void setEventPublisher(@Nullable ProxyEventPublisher publisher) {
+        this.eventPublisher = publisher;
+    }
+
+    private void publish(@NotNull String type, @Nullable String payload) {
+        ProxyEventPublisher publisher = this.eventPublisher;
+        if (publisher == null) {
+            return;
+        }
+        try {
+            publisher.publish(type, payload);
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, ex, () -> "Failed to publish proxy vote event: " + type);
         }
     }
 
@@ -173,6 +195,7 @@ public class VotePartyService {
 
         int rewarded = contributors.size();
         scheduler.runSync(() -> broadcastService.broadcastPartyReached(completedNumber));
+        publish(ProxyEventTypes.PARTY_COMPLETE, String.valueOf(completedNumber));
         logger.log(Level.INFO, () -> String.format(
                 "Vote Party #%d completed - rewarded %d contributor(s)", completedNumber, rewarded));
     }

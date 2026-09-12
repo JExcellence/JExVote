@@ -31,6 +31,7 @@ import de.jexcellence.vote.database.repository.VotePartyContributorRepository;
 import de.jexcellence.vote.database.repository.VotePartyRepository;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
 import de.jexcellence.vote.database.repository.VoteRecordRepository;
+import de.jexcellence.vote.database.repository.VoteSyncEventRepository;
 import de.jexcellence.vote.listener.PlayerJoinListener;
 import de.jexcellence.vote.placeholder.VotePlaceholderExpansion;
 import de.jexcellence.vote.server.VotifierKeyManager;
@@ -48,6 +49,7 @@ import de.jexcellence.vote.service.VoteRewardService;
 import de.jexcellence.vote.service.VoteRewardProviderRegistry;
 import de.jexcellence.vote.service.VoteDescriptorExecutor;
 import de.jexcellence.vote.service.ProxyVoteSyncService;
+import de.jexcellence.vote.service.OutboxProxyEventBus;
 import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.view.VoteLeaderboardView;
@@ -74,6 +76,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -101,6 +104,7 @@ public abstract class JExVote {
     private VotePartyRepository partyRepository;
     private VotePartyContributorRepository partyContributorRepository;
     private RewardGrantStatRepository rewardStatRepository;
+    private VoteSyncEventRepository syncEventRepository;
 
     private VoteService voteService;
     private VoteRewardService rewardService;
@@ -266,6 +270,7 @@ public abstract class JExVote {
         partyRepository = repos.get(VotePartyRepository.class);
         partyContributorRepository = repos.get(VotePartyContributorRepository.class);
         rewardStatRepository = repos.get(RewardGrantStatRepository.class);
+        syncEventRepository = repos.get(VoteSyncEventRepository.class);
     }
 
     private void initializeServices() {
@@ -361,11 +366,20 @@ public abstract class JExVote {
                 new VoteDescriptorExecutor(logger, rewardEconomy, voteService::grantVotePoints);
         voteService.setRewardSpi(rewardSpiRegistry, descriptorExecutor);
 
-        // Proxy-aware vote sync (V3/V4): on a shared-DB network, reconcile the in-memory
-        // party view from the DB so the live bar is network-wide (Premium + proxy.enabled).
-        // Only meaningful when the vote-party exists (it's the one network-divergent view).
+        // Proxy-aware vote sync (V3/V4): on a shared-DB network, keep the in-memory party
+        // view network-wide (Premium + proxy.enabled). Fast layer = a DB-backed outbox
+        // event bus (self-hosted, no Redis); safety net = a periodic DB reconcile. Only
+        // meaningful when the vote-party exists (it's the one network-divergent view).
         if (edition().proxySyncEnabled() && voteConfig.isProxyEnabled() && votePartyService != null) {
-            new ProxyVoteSyncService(plugin, votePartyService, voteConfig.getProxyPollSeconds()).start();
+            String serverId = voteConfig.getProxyServerId().isBlank()
+                    ? UUID.randomUUID().toString()
+                    : voteConfig.getProxyServerId();
+            OutboxProxyEventBus proxyBus = new OutboxProxyEventBus(
+                    plugin, syncEventRepository, serverId,
+                    voteConfig.getProxyEventPollSeconds(), voteConfig.getProxyEventRetentionMinutes());
+            votePartyService.setEventPublisher(proxyBus);
+            new ProxyVoteSyncService(plugin, votePartyService, broadcastService, proxyBus,
+                    voteConfig.getProxyReconcileSeconds()).start();
         }
 
         streakFreezeService = new StreakFreezeService(playerRepository, voteConfig);
