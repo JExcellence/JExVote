@@ -44,4 +44,27 @@ public class VotePlayerRepository extends AbstractCrudRepository<VotePlayerEntit
                 .limit(limit)
                 .listAsync();
     }
+
+    /**
+     * Counts players with strictly more all-time votes than {@code totalVotes}. A
+     * player's all-time rank is this count {@code + 1} - a single COUNT query rather
+     * than materialising the whole board.
+     */
+    public @NotNull CompletableFuture<Long> countWithMoreTotalVotesAsync(int totalVotes) {
+        return CompletableFuture.supplyAsync(() -> withSession(ctx -> ctx.getEntityManager()
+                .createQuery("SELECT COUNT(p) FROM VotePlayerEntity p WHERE p.totalVotes > :votes", Long.class)
+                .setParameter("votes", totalVotes)
+                .getSingleResult()));
+    }
+
+    /**
+     * Counts players with strictly more monthly votes than {@code monthlyVotes}. A
+     * player's monthly rank is this count {@code + 1}.
+     */
+    public @NotNull CompletableFuture<Long> countWithMoreMonthlyVotesAsync(int monthlyVotes) {
+        return CompletableFuture.supplyAsync(() -> withSession(ctx -> ctx.getEntityManager()
+                .createQuery("SELECT COUNT(p) FROM VotePlayerEntity p WHERE p.monthlyVotes > :votes", Long.class)
+                .setParameter("votes", monthlyVotes)
+                .getSingleResult()));
+    }
 }

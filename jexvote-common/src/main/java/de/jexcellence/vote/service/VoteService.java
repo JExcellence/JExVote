@@ -3,6 +3,7 @@ package de.jexcellence.vote.service;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jextranslate.R18nManager;
+import de.jexcellence.vote.api.event.StreakMilestoneEvent;
 import de.jexcellence.vote.api.event.VoteReceivedEvent;
 import de.jexcellence.vote.api.event.VoteRewardClaimedEvent;
 import de.jexcellence.vote.api.model.VoteSnapshot;
@@ -362,6 +363,29 @@ public class VoteService {
         }
     }
 
+    /**
+     * Grants one Streak Freeze to a (possibly offline) player - the programmatic
+     * "streak grace" write-hook. Unlike the shop purchase this charges nothing and
+     * ignores the owned cap (an admin/automation override). Consumed automatically on
+     * the next vote that would otherwise break the streak.
+     *
+     * @return a future resolving to {@code true} when a freeze was granted
+     */
+    public @NotNull CompletableFuture<Boolean> forceStreakGrace(@NotNull UUID uuid) {
+        return playerRepository.findByUuidAsync(uuid).thenApply(opt -> {
+            if (opt.isEmpty()) {
+                logger.log(Level.WARNING, () -> String.format(
+                        "Cannot force streak grace for %s: no player record", uuid));
+                return false;
+            }
+            VotePlayerEntity player = opt.orElseThrow();
+            player.setStreakFreezes(player.getStreakFreezes() + 1);
+            playerRepository.update(player);
+            logger.log(Level.INFO, () -> String.format("Forced streak grace (+1 freeze) for %s", uuid));
+            return true;
+        });
+    }
+
     private void deliverOrQueueRewards(@NotNull Vote vote, @NotNull UUID uuid,
                                        @NotNull VotePlayerEntity player, boolean firstDailyBonus) {
         Player onlinePlayer = Bukkit.getPlayer(uuid);
@@ -370,6 +394,13 @@ public class VoteService {
         int consumedFreezes = player.getConsumedFreezesThisVote();
         int remainingFreezes = player.getStreakFreezes();
         int freshFreezeGrant = player.getFreshFreezeGrant();
+
+        // Fire a milestone event when the streak lands on a configured streak-reward day,
+        // so integrators react without polling (online or offline). Fired on the main thread.
+        if (rewardService.getStreakRewards().containsKey(streak)) {
+            scheduler.runSync(() -> Bukkit.getPluginManager().callEvent(
+                    new StreakMilestoneEvent(uuid, streak, streak)));
+        }
 
         if (onlinePlayer != null && onlinePlayer.isOnline()) {
             scheduler.runAtEntity(onlinePlayer, () ->
@@ -534,6 +565,47 @@ public class VoteService {
 
     public @NotNull Map<String, VoteSite> getVoteSites() {
         return voteSites.get();
+    }
+
+    /** The configured vote-site service names (sync, cached). */
+    public @NotNull List<String> serviceNames() {
+        return voteSites.get().values().stream().map(VoteSite::serviceName).toList();
+    }
+
+    /**
+     * Seconds until {@code uuid} may vote again on {@code serviceName} (0 = ready now,
+     * also for an unknown service). Honours the site's rolling / daily-reset cooldown.
+     */
+    public @NotNull CompletableFuture<Long> secondsUntilNextVote(@NotNull UUID uuid,
+                                                                 @NotNull String serviceName) {
+        VoteSite site = findSiteByServiceName(serviceName);
+        if (site == null) {
+            return CompletableFuture.completedFuture(0L);
+        }
+        return voteCooldownsSeconds(uuid).thenApply(remaining ->
+                remaining.getOrDefault(site.serviceName(), 0L));
+    }
+
+    /** All-time vote rank (1-based), or {@code -1} if the player has no vote profile. */
+    public @NotNull CompletableFuture<Integer> getAllTimeRank(@NotNull UUID uuid) {
+        return playerRepository.findByUuidAsync(uuid).thenCompose(opt -> {
+            if (opt.isEmpty()) {
+                return CompletableFuture.completedFuture(-1);
+            }
+            return playerRepository.countWithMoreTotalVotesAsync(opt.orElseThrow().getTotalVotes())
+                    .thenApply(count -> count.intValue() + 1);
+        });
+    }
+
+    /** Monthly vote rank (1-based), or {@code -1} if the player has no vote profile. */
+    public @NotNull CompletableFuture<Integer> getMonthlyRank(@NotNull UUID uuid) {
+        return playerRepository.findByUuidAsync(uuid).thenCompose(opt -> {
+            if (opt.isEmpty()) {
+                return CompletableFuture.completedFuture(-1);
+            }
+            return playerRepository.countWithMoreMonthlyVotesAsync(opt.orElseThrow().getMonthlyVotes())
+                    .thenApply(count -> count.intValue() + 1);
+        });
     }
 
     /**

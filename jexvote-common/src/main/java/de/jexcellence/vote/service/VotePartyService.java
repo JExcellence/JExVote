@@ -2,6 +2,7 @@ package de.jexcellence.vote.service;
 
 import de.jexcellence.jehibernate.exception.OptimisticLockRetryException;
 import de.jexcellence.jehibernate.transaction.OptimisticLockRetry;
+import de.jexcellence.vote.api.event.VotePartyCompletedEvent;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jexplatform.view.RewardViewHelper;
@@ -159,6 +160,42 @@ public class VotePartyService {
     }
 
     /**
+     * Force-completes the active party immediately (admin / automation write-hook),
+     * regardless of the current count. Cross-backend-safe: the version-checked reset is
+     * the single-winner claim, so only this backend pays out. Returns {@code true} when
+     * this call completed a party.
+     */
+    public synchronized boolean forceComplete() {
+        long partyId = getOrCreateActiveParty().getId();
+        int completedNumber;
+        try {
+            completedNumber = OptimisticLockRetry.execute(this::claimReset);
+        } catch (OptimisticLockRetryException ex) {
+            logger.log(Level.WARNING, ex, () -> "Force-complete gave up after retries");
+            return false;
+        }
+        if (completedNumber < 0) {
+            return false;
+        }
+        onPartyCompleted(partyId, completedNumber);
+        return true;
+    }
+
+    /** Version-checked reset of the active party; returns the completed party number. */
+    private int claimReset() {
+        VotePartyEntity party = getOrCreateActiveParty();
+        int completedNumber = party.getPartyNumber();
+        party.setPartyNumber(completedNumber + 1);
+        party.setCurrentVotes(0);
+        party.setTargetVotes(target);
+        party.setStartedAt(Instant.now());
+        partyRepository.update(party); // version-checked; conflict -> retry re-reads
+        currentVotes.set(0);
+        targetVotes.set(target);
+        return completedNumber;
+    }
+
+    /**
      * Increments the active party by one inside a version-checked update, resetting it
      * when it reaches the target. Re-reads the party fresh each call so a retry after a
      * cross-backend conflict sees the newest version. Returns the completed party number
@@ -230,7 +267,13 @@ public class VotePartyService {
             rewardContributor(contributor.getPlayerUuid());
         }
         int rewarded = contributors.size();
-        scheduler.runSync(() -> broadcastService.broadcastPartyReached(completedNumber));
+        List<UUID> contributorUuids = contributors.stream()
+                .map(VotePartyContributorEntity::getPlayerUuid).toList();
+        scheduler.runSync(() -> {
+            broadcastService.broadcastPartyReached(completedNumber);
+            Bukkit.getPluginManager().callEvent(
+                    new VotePartyCompletedEvent(completedNumber, target, contributorUuids));
+        });
         publish(ProxyEventTypes.PARTY_COMPLETE, String.valueOf(completedNumber));
         logger.log(Level.INFO, () -> String.format(
                 "Vote Party #%d completed - rewarded %d contributor(s)", completedNumber, rewarded));

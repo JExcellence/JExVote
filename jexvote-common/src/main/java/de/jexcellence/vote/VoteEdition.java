@@ -22,6 +22,9 @@ public sealed interface VoteEdition {
     /** V3/V4 proxy-aware vote sync - heavy capability, Premium only (default off). */
     default boolean proxySyncEnabled() { return false; }
 
+    /** V1.2 API write-hooks (grant points / force streak-grace / trigger party) - Premium only. */
+    default boolean writeHooksEnabled() { return false; }
+
     record FreeEdition() implements VoteEdition {
         @Override public String name() { return "Free"; }
         @Override public int maxVoteSites() { return 5; }
@@ -42,5 +45,6 @@ public sealed interface VoteEdition {
         @Override public boolean weekendMultiplierEnabled() { return true; }
         @Override public boolean rewardSpiEnabled() { return true; }
         @Override public boolean proxySyncEnabled() { return true; }
+        @Override public boolean writeHooksEnabled() { return true; }
     }
 }

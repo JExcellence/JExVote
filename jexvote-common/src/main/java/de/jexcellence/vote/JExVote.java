@@ -569,7 +569,8 @@ public abstract class JExVote {
     }
 
     private void registerApiProvider() {
-        voteProvider = new VoteProviderImpl(voteService, leaderboardService);
+        voteProvider = new VoteProviderImpl(voteService, leaderboardService,
+                votePartyService, edition().writeHooksEnabled());
         JExVoteAPIImpl apiImpl = new JExVoteAPIImpl(voteProvider, rewardSpiRegistry);
         Bukkit.getServicesManager().register(
                 JExVoteAPI.class, apiImpl, plugin, ServicePriority.Normal);
