@@ -57,7 +57,9 @@ First implementation slice landed (part of P1/P2/P3):
   `/vote help` + admin `/jexvote help` entry descriptions are now locale keys - sites in EN/DE/CS/SK; help
   descriptions in EN/DE (`vote_help.desc.*` / `vote_admin.desc.*`), with CS/SK falling back to en_US as they
   already do for the whole help block. No hardcoded user-facing strings left in the command layer.
-  *(Follow-up, separate: HelpRenderer still renders help at the default locale - not yet per-viewer.)*
+  `HelpRenderer` now also resolves every line (entry/args/hover/description) in the **viewer's** locale
+  (`8f1ae9b`) - Entry carries the description key, resolved per-viewer; console falls back to default.
+  i18n story fully closed.
 
 Still open from P1: decompose `VoteService` (monster-class); plus the **pre-grant mutable reward event**
 (V1.3) and offline SPI serialization.
