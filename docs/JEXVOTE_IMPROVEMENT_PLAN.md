@@ -48,8 +48,18 @@ First implementation slice landed (part of P1/P2/P3):
   - *Events:* `VoteReceivedEvent implements Cancellable` (non-breaking); new `VotePartyCompletedEvent` +
     `StreakMilestoneEvent`, fired on the main thread.
 
-Still open from P1: decompose `VoteService` (monster-class), non-blocking event fire (the votifier-handler
-block), i18n sweep; plus the **pre-grant mutable reward event** (V1.3) and offline SPI serialization.
+- **✅ Bedrock rich-text fix** (`0ed5be7`): `BedrockFormText.plain()` strips MiniMessage / legacy §-codes /
+  translation components at the Cumulus boundary (forms render literally); 4 unit tests green.
+- **✅ Non-blocking event fire** (`0b3b498`): `processVote` no longer `join()`s the main-thread event -
+  preResolve → callback-driven `VoteReceivedEvent` → `completeVote` off-thread; no worker pinned per vote
+  (also lowered the method's cognitive complexity).
+- **🟡 i18n sweep - partial** (`1b29037`): the `/vote sites` clickable-link literals ("Open in browser",
+  "Click to vote!"/"Click to vote") are now translator-owned keys (EN/DE/CS/SK). **Remaining:** the
+  `/vote help` + admin `/jexvote help` entry descriptions are still hardcoded English - converting them needs
+  proper CS/SK translation authoring (not machine-guessed for a public plugin), so flagged for a translation pass.
+
+Still open from P1: decompose `VoteService` (monster-class); the i18n help-description pass (above); plus the
+**pre-grant mutable reward event** (V1.3) and offline SPI serialization.
 P4 (REST generalize + publish api to Maven) and P5 (S4 hooks) unstarted. Network-scoped multiplier open.
 
 ---
