@@ -6,7 +6,9 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,31 +52,31 @@ public final class HelpRenderer {
     /**
      * One help entry.
      *
-     * @param command     the full command including the leading slash (e.g. {@code /vote shop}).
-     * @param args        the argument signature (e.g. {@code <player|random>}), or empty.
-     * @param description the short description shown after the dash and on hover.
-     * @param aliases     any aliases for this subcommand (without the leading slash),
-     *                    shown on hover; empty list to omit the alias line.
-     * @param action      whether clicking runs or pre-fills the command.
+     * @param command        the full command including the leading slash (e.g. {@code /vote shop}).
+     * @param args           the argument signature (e.g. {@code <player|random>}), or empty.
+     * @param descriptionKey the i18n key of the short description (resolved per-viewer at render time).
+     * @param aliases        any aliases for this subcommand (without the leading slash),
+     *                       shown on hover; empty list to omit the alias line.
+     * @param action         whether clicking runs or pre-fills the command.
      */
     public record Entry(@NotNull String command,
                         @NotNull String args,
-                        @NotNull String description,
+                        @NotNull String descriptionKey,
                         @NotNull List<String> aliases,
                         @NotNull Action action) {
 
         /** Convenience constructor: no aliases. */
         public static @NotNull Entry of(@NotNull String command, @NotNull String args,
-                                        @NotNull String description, @NotNull Action action) {
-            return new Entry(command, args, description, Collections.emptyList(), action);
+                                        @NotNull String descriptionKey, @NotNull Action action) {
+            return new Entry(command, args, descriptionKey, Collections.emptyList(), action);
         }
 
         /** Convenience constructor with aliases. */
         public static @NotNull Entry of(@NotNull String command, @NotNull String args,
-                                        @NotNull String description,
+                                        @NotNull String descriptionKey,
                                         @NotNull List<String> aliases,
                                         @NotNull Action action) {
-            return new Entry(command, args, description, aliases, action);
+            return new Entry(command, args, descriptionKey, aliases, action);
         }
     }
 
@@ -92,14 +94,17 @@ public final class HelpRenderer {
      */
     public void render(@NotNull CommandSender sender, @NotNull List<Entry> entries) {
         R18nManager r18n = R18nManager.getInstance();
+        // Resolve everything in the viewer's own locale (null = console → default locale).
+        Player viewer = sender instanceof Player player ? player : null;
         r18n.msg(prefix + ".banner").send(sender);
         for (Entry entry : entries) {
-            sender.sendMessage(renderEntry(entry));
+            sender.sendMessage(renderEntry(entry, viewer));
         }
     }
 
-    private @NotNull Component renderEntry(@NotNull Entry entry) {
+    private @NotNull Component renderEntry(@NotNull Entry entry, @Nullable Player viewer) {
         R18nManager r18n = R18nManager.getInstance();
+        String description = r18n.msg(entry.descriptionKey()).toString(viewer);
         // The entry line embeds {args} into another MiniMessage template, so we
         // need the args block as a serialized MiniMessage fragment - not a
         // raw component (which would lose its styling on re-parse).
@@ -107,19 +112,19 @@ public final class HelpRenderer {
                 ? ""
                 : MiniMessage.miniMessage().serialize(
                         r18n.msg(prefix + ".entry-args")
-                                .with("args", entry.args()).itemComponent(null));
+                                .with("args", entry.args()).itemComponent(viewer));
 
         Component line = r18n.msg(prefix + ".entry")
                 .with("command", entry.command())
                 .with("args", renderedArgs)
-                .with("description", entry.description())
-                .itemComponent(null);
+                .with("description", description)
+                .itemComponent(viewer);
 
         String full = entry.args().isBlank()
                 ? entry.command()
                 : entry.command() + " " + entry.args();
 
-        Component hover = buildHover(entry, full);
+        Component hover = buildHover(entry, full, description, viewer);
         ClickEvent click = entry.action() == Action.RUN
                 ? ClickEvent.runCommand(entry.command())
                 : ClickEvent.suggestCommand(entry.command() + " ");
@@ -127,24 +132,25 @@ public final class HelpRenderer {
         return line.hoverEvent(HoverEvent.showText(hover)).clickEvent(click);
     }
 
-    private @NotNull Component buildHover(@NotNull Entry entry, @NotNull String full) {
+    private @NotNull Component buildHover(@NotNull Entry entry, @NotNull String full,
+                                          @NotNull String description, @Nullable Player viewer) {
         R18nManager r18n = R18nManager.getInstance();
         Component hover = r18n.msg(prefix + ".hover-base")
                 .with("full", full)
-                .with("description", entry.description())
-                .itemComponent(null);
+                .with("description", description)
+                .itemComponent(viewer);
 
         if (!entry.aliases().isEmpty()) {
             Component aliasLine = r18n.msg(prefix + ".hover-aliases")
                     .with("aliases", String.join(", ", entry.aliases()))
-                    .itemComponent(null);
+                    .itemComponent(viewer);
             hover = hover.append(Component.newline()).append(aliasLine);
         }
 
         String actionKey = entry.action() == Action.RUN
                 ? prefix + ".hover-action-run"
                 : prefix + ".hover-action-suggest";
-        hover = hover.append(Component.newline()).append(r18n.msg(actionKey).itemComponent(null));
+        hover = hover.append(Component.newline()).append(r18n.msg(actionKey).itemComponent(viewer));
         return hover;
     }
 }

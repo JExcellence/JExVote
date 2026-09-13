@@ -206,23 +206,23 @@ public final class VoteCommandHandler {
         // contribute the command, args, description and aliases. New subcommands
         // get one line here - no MiniMessage to hand-paint.
         List<HelpRenderer.Entry> entries = List.of(
-                HelpRenderer.Entry.of("/vote", "", desc("vote_help.desc.vote"),
+                HelpRenderer.Entry.of("/vote", "", "vote_help.desc.vote",
                         List.of("v"), HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/vote sites", "", desc("vote_help.desc.sites"),
+                HelpRenderer.Entry.of("/vote sites", "", "vote_help.desc.sites",
                         HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/vote stats", "[player]", desc("vote_help.desc.stats"),
+                HelpRenderer.Entry.of("/vote stats", "[player]", "vote_help.desc.stats",
                         List.of("info"), HelpRenderer.Action.SUGGEST),
-                HelpRenderer.Entry.of("/vote top", "[count]", desc("vote_help.desc.top"),
+                HelpRenderer.Entry.of("/vote top", "[count]", "vote_help.desc.top",
                         List.of("leaderboard", "lb"), HelpRenderer.Action.SUGGEST),
-                HelpRenderer.Entry.of("/vote rewards", "", desc("vote_help.desc.rewards"),
+                HelpRenderer.Entry.of("/vote rewards", "", "vote_help.desc.rewards",
                         List.of("economy", "eco"), HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/vote shop", "", desc("vote_help.desc.shop"),
+                HelpRenderer.Entry.of("/vote shop", "", "vote_help.desc.shop",
                         List.of("store", "tokens"), HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/vote freeze", "", desc("vote_help.desc.freeze"),
+                HelpRenderer.Entry.of("/vote freeze", "", "vote_help.desc.freeze",
                         List.of("freezes"), HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/vote gift", "<player|random>", desc("vote_help.desc.gift"),
+                HelpRenderer.Entry.of("/vote gift", "<player|random>", "vote_help.desc.gift",
                         HelpRenderer.Action.SUGGEST),
-                HelpRenderer.Entry.of("/vote help", "", desc("vote_help.desc.help"),
+                HelpRenderer.Entry.of("/vote help", "", "vote_help.desc.help",
                         HelpRenderer.Action.RUN)
         );
         new HelpRenderer("vote_help").render(ctx.sender(), entries);
@@ -313,9 +313,4 @@ public final class VoteCommandHandler {
     }
 
     private static R18nManager r18n() { return R18nManager.getInstance(); }
-
-    /** Resolves a help-description i18n key to its (default-locale) string for a help entry. */
-    private static String desc(@NotNull String key) {
-        return r18n().msg(key).toString(null);
-    }
 }
