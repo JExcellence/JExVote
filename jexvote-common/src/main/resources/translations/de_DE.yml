@@ -67,7 +67,8 @@ vote:
     invalid: '<red>Streak-Wert muss 0 oder größer sein.'
   sites:
     header: '<gray>━━━━━━ <green>Vote-Seiten <gray>━━━━━━'
-    entry: '<green>{name} <gray>- <aqua>Klicke zum Voten'
+    entry: "<green>{name}</green> <dark_gray>-</dark_gray> <click:open_url:'{url}'><hover:show_text:'<gray>Im Browser öffnen</gray><newline><aqua>{url}</aqua><newline><yellow>Klicke zum Voten!</yellow>'><gradient:#a5f3fc:#06b6d4>Klicke zum Voten</gradient></hover></click>"
+    entry_plain: '<green>{name}</green> <dark_gray>-</dark_gray> <white>{service}</white>'
     no_sites: '<gray>Keine Vote-Seiten konfiguriert.'
 
 # ── Geteilte GUI-Bausteine ───────────────────────────────────────────────────

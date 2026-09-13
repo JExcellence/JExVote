@@ -30,7 +30,8 @@ vote:
     all_success: '<green>Měsíční hlasy pro všechny hráče resetovány.'
   sites:
     header: '<gray>━━━━━━ <green>Hlasovací stránky <gray>━━━━━━'
-    entry: '<green>{name} <gray>- <aqua>Klikni pro hlasování'
+    entry: "<green>{name}</green> <dark_gray>-</dark_gray> <click:open_url:'{url}'><hover:show_text:'<gray>Otevřít v prohlížeči</gray><newline><aqua>{url}</aqua><newline><yellow>Klikni pro hlasování!</yellow>'><gradient:#a5f3fc:#06b6d4>Hlasovat</gradient></hover></click>"
+    entry_plain: '<green>{name}</green> <dark_gray>-</dark_gray> <white>{service}</white>'
     no_sites: '<gray>Žádné hlasovací stránky nakonfigurovány.'
 
 vote_overview:

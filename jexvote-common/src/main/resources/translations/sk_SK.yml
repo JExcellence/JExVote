@@ -72,7 +72,8 @@ vote:
     all_success: '<green>Reset monthly votes for all players.'
   sites:
     header: '<gray>━━━━━━ <green>Vote Sites <gray>━━━━━━'
-    entry: '<green>{name} <gray>- <aqua>Click to vote'
+    entry: "<green>{name}</green> <dark_gray>-</dark_gray> <click:open_url:'{url}'><hover:show_text:'<gray>Otvoriť v prehliadači</gray><newline><aqua>{url}</aqua><newline><yellow>Klikni pre hlasovanie!</yellow>'><gradient:#a5f3fc:#06b6d4>Hlasovať</gradient></hover></click>"
+    entry_plain: '<green>{name}</green> <dark_gray>-</dark_gray> <white>{service}</white>'
     no_sites: '<gray>No vote sites configured.'
 
 vote_overview:

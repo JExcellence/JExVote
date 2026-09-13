@@ -16,9 +16,6 @@ import de.jexcellence.vote.view.VoteLeaderboardView;
 import de.jexcellence.vote.view.VoteOverviewView;
 import de.jexcellence.vote.view.VoteRewardsView;
 import de.jexcellence.vote.view.VoteShopView;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -31,7 +28,6 @@ import java.util.concurrent.CompletableFuture;
 
 public final class VoteCommandHandler {
 
-    private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final String PARAM_TARGET = "target";
     private static final String PARAM_STREAK = "streak";
 
@@ -239,22 +235,19 @@ public final class VoteCommandHandler {
             return;
         }
 
+        Player viewer = ctx.asPlayer().orElse(null);
         r18n().msg("vote.sites.header").prefix().send(ctx.sender());
         for (VoteSite site : sites.values()) {
-            Component entry = Component.text(site.displayName(), NamedTextColor.GREEN)
-                    .append(Component.text(" - ", NamedTextColor.DARK_GRAY));
-
-            if (site.voteUrl() != null) {
-                entry = entry.append(MM.deserialize(
-                        "<click:open_url:'" + site.voteUrl() + "'><hover:show_text:'<gray>Open in browser</gray>"
-                                + "<newline><aqua>" + site.voteUrl() + "</aqua>"
-                                + "<newline><yellow>Click to vote!</yellow>'>"
-                                + "<gradient:#a5f3fc:#06b6d4>Click to vote</gradient></hover></click>"));
-            } else {
-                entry = entry.append(Component.text(site.serviceName(), NamedTextColor.WHITE));
-            }
-
-            ctx.sender().sendMessage(entry);
+            // Labels + markup live in the i18n files (EN/DE/CS/SK); the clickable
+            // variant embeds the vote URL, the plain one falls back to the service name.
+            var entry = site.voteUrl() != null
+                    ? r18n().msg("vote.sites.entry")
+                            .with("name", site.displayName())
+                            .with("url", site.voteUrl())
+                    : r18n().msg("vote.sites.entry_plain")
+                            .with("name", site.displayName())
+                            .with("service", site.serviceName());
+            ctx.sender().sendMessage(entry.toComponent(viewer));
         }
     }
 
