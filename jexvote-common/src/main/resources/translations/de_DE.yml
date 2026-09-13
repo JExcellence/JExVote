@@ -528,6 +528,16 @@ vote_help:
   hover-aliases: '<dark_gray>Aliasse: </dark_gray><gray>{aliases}</gray>'
   hover-action-run: '<dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>Zum Ausführen klicken</gradient>'
   hover-action-suggest: '<dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>Zum Vervollständigen klicken</gradient>'
+  desc:
+    vote: 'Öffne das Vote-Menü'
+    sites: 'Zeige alle Vote-Seiten mit Links'
+    stats: 'Zeige Vote-Statistiken (öffnet das Menü für dich)'
+    top: 'Öffne die Allzeit-Bestenliste'
+    rewards: 'Jackpot-Chancen, Multiplikator, Freeze, Geschenk, Punkte'
+    shop: 'Gib Vote-Punkte für Belohnungen aus'
+    freeze: 'Kaufe einen Streak-Freeze (einen gibt es gratis)'
+    gift: 'Schenke einem Freund einen Streak-Tag'
+    help: 'Zeige diese Hilfe'
 
 # ── /jexvote help (admin) ────────────────────────────────────────────────────
 vote_admin:
@@ -538,6 +548,15 @@ vote_admin:
   hover-aliases: '<dark_gray>Aliasse: </dark_gray><gray>{aliases}</gray>'
   hover-action-run: '<dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>Zum Ausführen klicken</gradient>'
   hover-action-suggest: '<dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>Zum Vervollständigen klicken</gradient>'
+  desc:
+    info: 'Zeige Edition, Version, Seitenanzahl und Votifier-Port'
+    reload: 'Lade config.yml, rewards.yml und sites.yml neu'
+    reset: 'Setze die Vote-Statistiken eines Spielers zurück'
+    resetmonthly: 'Setze die monatlichen Vote-Zahlen für alle zurück'
+    fakevote: 'Simuliere einen Vote zum Testen'
+    key: 'Zeige Votifier-Public-Key, PEM, Port und Token'
+    setstreak: 'Setze den Vote-Streak eines Spielers'
+    help: 'Zeige diese Hilfe'
 
 # ── Built-in JExCommand keys ──────────────────────────────────────────────────
 

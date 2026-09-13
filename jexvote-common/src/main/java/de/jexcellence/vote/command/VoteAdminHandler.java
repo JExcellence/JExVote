@@ -136,21 +136,21 @@ public final class VoteAdminHandler {
 
     private void onHelp(@NotNull CommandContext ctx) {
         List<HelpRenderer.Entry> entries = List.of(
-                HelpRenderer.Entry.of("/jexvote info", "", "Show edition, version, site count and Votifier port",
+                HelpRenderer.Entry.of("/jexvote info", "", desc("vote_admin.desc.info"),
                         HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/jexvote reload", "", "Reload config.yml, rewards.yml and sites.yml",
+                HelpRenderer.Entry.of("/jexvote reload", "", desc("vote_admin.desc.reload"),
                         HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/jexvote reset", "<player>", "Reset a player's vote stats",
+                HelpRenderer.Entry.of("/jexvote reset", "<player>", desc("vote_admin.desc.reset"),
                         HelpRenderer.Action.SUGGEST),
-                HelpRenderer.Entry.of("/jexvote resetmonthly", "", "Reset monthly vote counts for everyone",
+                HelpRenderer.Entry.of("/jexvote resetmonthly", "", desc("vote_admin.desc.resetmonthly"),
                         HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/jexvote fakevote", "<player> [service]", "Simulate a vote for testing",
+                HelpRenderer.Entry.of("/jexvote fakevote", "<player> [service]", desc("vote_admin.desc.fakevote"),
                         HelpRenderer.Action.SUGGEST),
-                HelpRenderer.Entry.of("/jexvote key", "", "Show the Votifier public key, PEM, port and token",
+                HelpRenderer.Entry.of("/jexvote key", "", desc("vote_admin.desc.key"),
                         HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/jexvote setstreak", "<player> <value>", "Set a player's vote streak",
+                HelpRenderer.Entry.of("/jexvote setstreak", "<player> <value>", desc("vote_admin.desc.setstreak"),
                         HelpRenderer.Action.SUGGEST),
-                HelpRenderer.Entry.of("/jexvote help", "", "Show this help",
+                HelpRenderer.Entry.of("/jexvote help", "", desc("vote_admin.desc.help"),
                         HelpRenderer.Action.RUN)
         );
         new HelpRenderer("vote_admin").render(ctx.sender(), entries);
@@ -303,4 +303,9 @@ public final class VoteAdminHandler {
     }
 
     private static R18nManager r18n() { return R18nManager.getInstance(); }
+
+    /** Resolves a help-description i18n key to its (default-locale) string for a help entry. */
+    private static String desc(@NotNull String key) {
+        return r18n().msg(key).toString(null);
+    }
 }

@@ -593,6 +593,16 @@ vote_help:
   hover-aliases: '<dark_gray>Aliases: </dark_gray><gray>{aliases}</gray>'
   hover-action-run: '<dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>Click to run</gradient>'
   hover-action-suggest: '<dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>Click to fill</gradient>'
+  desc:
+    vote: 'Open the vote menu'
+    sites: 'List all vote sites with links'
+    stats: 'View vote statistics (opens the menu for yourself)'
+    top: 'Open the all-time leaderboard'
+    rewards: 'Jackpot odds, multiplier, freeze, gift, points'
+    shop: 'Spend vote points on rewards'
+    freeze: 'Buy a Streak Freeze (you start with one free)'
+    gift: 'Gift a streak day to a friend'
+    help: 'Show this help'
 
 # ── /jexvote help (admin) ────────────────────────────────────────────────────
 # Same shape as vote_help; deliberate red gradient + [ADMIN] badge so the two
@@ -605,6 +615,15 @@ vote_admin:
   hover-aliases: '<dark_gray>Aliases: </dark_gray><gray>{aliases}</gray>'
   hover-action-run: '<dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>Click to run</gradient>'
   hover-action-suggest: '<dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>Click to fill</gradient>'
+  desc:
+    info: 'Show edition, version, site count and Votifier port'
+    reload: 'Reload config.yml, rewards.yml and sites.yml'
+    reset: "Reset a player's vote stats"
+    resetmonthly: 'Reset monthly vote counts for everyone'
+    fakevote: 'Simulate a vote for testing'
+    key: 'Show the Votifier public key, PEM, port and token'
+    setstreak: "Set a player's vote streak"
+    help: 'Show this help'
 
 # ── Built-in JExCommand keys ──────────────────────────────────────────────────
 
