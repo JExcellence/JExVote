@@ -61,8 +61,17 @@ First implementation slice landed (part of P1/P2/P3):
   (`8f1ae9b`) - Entry carries the description key, resolved per-viewer; console falls back to default.
   i18n story fully closed.
 
-Still open from P1: decompose `VoteService` (monster-class); plus the **pre-grant mutable reward event**
-(V1.3) and offline SPI serialization.
+- **✅ Pre-reward event + offline SPI** (`a10829e`): async `VotePreRewardEvent` lets a listener append
+  descriptors per vote (collected with SPI in `collectBonusRewards`); bonus descriptors now survive an
+  offline vote - points apply immediately, item/command/currency serialize (executor codec) into a
+  `spi::<service>` pending entry replayed on join.
+- **🟡 VoteService decompose - started** (`8dfb53b`): the read/query surface (snapshots, ranks, cooldowns,
+  site lookups, toSnapshot) extracted into a cohesive, testable `VoteStatsService`; VoteService keeps thin
+  delegators (zero caller ripple). **Deferred to live-testing:** splitting the vote-processing pipeline +
+  dropping the delegators by rewiring callers - the metric-satisfying part, and where a blind split risks
+  regressions.
+
+Still open from P1: finish the `VoteService` pipeline split (above, deferred to live-testing).
 P4 (REST generalize + publish api to Maven) and P5 (S4 hooks) unstarted. Network-scoped multiplier open.
 
 ---
