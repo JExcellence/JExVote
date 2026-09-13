@@ -157,65 +157,93 @@ public class VoteService {
                 : new int[]{votePartyService.currentVotes(), votePartyService.targetVotes()};
     }
 
+    /** Outcome of the pre-resolution step: either stop early (dup/queued) or proceed with a UUID. */
+    private record PreResult(boolean done, boolean result, @Nullable UUID uuid) {
+        static PreResult stop(boolean result) {
+            return new PreResult(true, result, null);
+        }
+        static PreResult proceed(@NotNull UUID uuid) {
+            return new PreResult(false, false, uuid);
+        }
+    }
+
     public @NotNull CompletableFuture<Boolean> processVote(@NotNull Vote vote) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                logger.info(String.format("Processing vote: %s / %s", vote.username(), vote.serviceName()));
-
-                // Duplicate-vote guard: some setups deliver the same vote twice (a second
-                // vote plugin also listening, a relay, or a site that re-sends). Without
-                // this every reward doubles - points, streak, and the first-of-day fly
-                // bonus (the reported 2×15m fly). ConcurrentHashMap.put is atomic, so of
-                // two racing duplicates exactly one proceeds.
-                String dedupeKey = vote.username().toLowerCase(Locale.ROOT) + '|'
-                        + vote.serviceName().toLowerCase(Locale.ROOT);
-                long nowMs = System.currentTimeMillis();
-                Long lastSeen = recentVotes.put(dedupeKey, nowMs);
-                if (lastSeen != null && nowMs - lastSeen < DEDUP_WINDOW_MS) {
-                    logger.warning(String.format("Duplicate vote ignored for %s / %s (re-delivered within %dms)",
-                            vote.username(), vote.serviceName(), DEDUP_WINDOW_MS));
+        // Non-blocking pipeline: pre-resolve async, fire the sync event via a callback, then
+        // continue the DB work off the main thread. Previously fireVoteReceivedEvent hopped to
+        // the main thread and BLOCKED the worker on a CompletableFuture.join() - a stalled main
+        // thread then pinned a bounded votifier/common-pool thread per in-flight vote. Now the
+        // event completion drives the chain via thenApplyAsync, so no thread waits.
+        return CompletableFuture.supplyAsync(() -> preResolve(vote))
+                .thenCompose(pre -> {
+                    if (pre.done()) {
+                        return CompletableFuture.completedFuture(pre.result());
+                    }
+                    UUID uuid = pre.uuid();
+                    return fireVoteReceivedEvent(vote, uuid).thenApplyAsync(allowed -> {
+                        if (!Boolean.TRUE.equals(allowed)) {
+                            logger.info(String.format("Vote for %s was cancelled by event listener", vote.username()));
+                            return false;
+                        }
+                        completeVote(vote, uuid);
+                        return true;
+                    });
+                })
+                .exceptionally(e -> {
+                    logger.log(Level.SEVERE, e, () -> String.format("Failed to process vote for %s", vote.username()));
                     return false;
-                }
+                });
+    }
 
-                UUID uuid = resolveUuid(vote.username());
-                if (uuid == null) {
-                    // Voter has never joined (or isn't cached) - queue the vote instead of
-                    // dropping it, and replay it on their first join so the reward and streak
-                    // are not lost.
-                    unresolvedVotes.add(vote);
-                    logger.info(String.format(
-                            "Voter %s not resolvable yet - queued (%d pending) until first join",
-                            vote.username(), unresolvedVotes.size()));
-                    return true;
-                }
+    /**
+     * Dedupe + UUID resolution (runs off the main thread). Returns a "stop" result for a
+     * duplicate (false) or an unresolvable-and-queued voter (true), else "proceed" with the UUID.
+     */
+    private @NotNull PreResult preResolve(@NotNull Vote vote) {
+        logger.info(String.format("Processing vote: %s / %s", vote.username(), vote.serviceName()));
 
-                logger.fine(String.format("Resolved UUID for %s: %s", vote.username(), uuid));
+        // Duplicate-vote guard: some setups deliver the same vote twice (a second vote plugin
+        // also listening, a relay, or a site that re-sends). Without this every reward doubles.
+        // ConcurrentHashMap.put is atomic, so of two racing duplicates exactly one proceeds.
+        String dedupeKey = vote.username().toLowerCase(Locale.ROOT) + '|'
+                + vote.serviceName().toLowerCase(Locale.ROOT);
+        long nowMs = System.currentTimeMillis();
+        Long lastSeen = recentVotes.put(dedupeKey, nowMs);
+        if (lastSeen != null && nowMs - lastSeen < DEDUP_WINDOW_MS) {
+            logger.warning(String.format("Duplicate vote ignored for %s / %s (re-delivered within %dms)",
+                    vote.username(), vote.serviceName(), DEDUP_WINDOW_MS));
+            return PreResult.stop(false);
+        }
 
-                if (!fireVoteReceivedEvent(vote, uuid)) {
-                    logger.info(String.format("Vote for %s was cancelled by event listener", vote.username()));
-                    return false;
-                }
+        UUID uuid = resolveUuid(vote.username());
+        if (uuid == null) {
+            // Voter has never joined (or isn't cached) - queue the vote instead of dropping it,
+            // and replay it on their first join so the reward and streak are not lost.
+            unresolvedVotes.add(vote);
+            logger.info(String.format(
+                    "Voter %s not resolvable yet - queued (%d pending) until first join",
+                    vote.username(), unresolvedVotes.size()));
+            return PreResult.stop(true);
+        }
+        logger.fine(String.format("Resolved UUID for %s: %s", vote.username(), uuid));
+        return PreResult.proceed(uuid);
+    }
 
-                VotePlayerEntity player = findOrCreatePlayer(vote, uuid);
-                int points = resolvePointsForSite(vote.serviceName());
-                boolean firstDaily = applyVoteToPlayer(player, vote, points);
+    /** The reward pipeline for a resolved, non-cancelled vote (runs off the main thread). */
+    private void completeVote(@NotNull Vote vote, @NotNull UUID uuid) {
+        VotePlayerEntity player = findOrCreatePlayer(vote, uuid);
+        int points = resolvePointsForSite(vote.serviceName());
+        boolean firstDaily = applyVoteToPlayer(player, vote, points);
 
-                recordRepository.create(new VoteRecordEntity(
-                        uuid, vote.username(), vote.serviceName(),
-                        vote.address(), vote.timestamp()));
+        recordRepository.create(new VoteRecordEntity(
+                uuid, vote.username(), vote.serviceName(),
+                vote.address(), vote.timestamp()));
 
-                if (votePartyService != null) {
-                    votePartyService.recordVote(uuid);
-                }
+        if (votePartyService != null) {
+            votePartyService.recordVote(uuid);
+        }
 
-                deliverOrQueueRewards(vote, uuid, player, firstDaily);
-                announceVote(vote, uuid);
-                return true;
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, e, () -> String.format("Failed to process vote for %s", vote.username()));
-                return false;
-            }
-        });
+        deliverOrQueueRewards(vote, uuid, player, firstDaily);
+        announceVote(vote, uuid);
     }
 
     /**
@@ -231,7 +259,12 @@ public class VoteService {
                 vote.username(), vote.serviceName(), uuid));
     }
 
-    private boolean fireVoteReceivedEvent(@NotNull Vote vote, @NotNull UUID uuid) {
+    /**
+     * Fires the cancellable {@link VoteReceivedEvent} on the main thread and completes the
+     * returned future with the not-cancelled verdict via a callback - never blocks the caller
+     * (the old {@code join()} pinned a worker thread on the main thread).
+     */
+    private @NotNull CompletableFuture<Boolean> fireVoteReceivedEvent(@NotNull Vote vote, @NotNull UUID uuid) {
         CompletableFuture<Boolean> eventResult = new CompletableFuture<>();
         scheduler.runSync(() -> {
             try {
@@ -243,7 +276,7 @@ public class VoteService {
                 eventResult.completeExceptionally(e);
             }
         });
-        return Boolean.TRUE.equals(eventResult.join());
+        return eventResult;
     }
 
     private @NotNull VotePlayerEntity findOrCreatePlayer(@NotNull Vote vote, @NotNull UUID uuid) {
