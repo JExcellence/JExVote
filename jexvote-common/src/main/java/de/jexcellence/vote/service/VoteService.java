@@ -4,6 +4,7 @@ import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.event.StreakMilestoneEvent;
+import de.jexcellence.vote.api.event.VotePreRewardEvent;
 import de.jexcellence.vote.api.event.VoteReceivedEvent;
 import de.jexcellence.vote.api.event.VoteRewardClaimedEvent;
 import de.jexcellence.vote.api.model.VoteSnapshot;
@@ -73,6 +74,9 @@ public class VoteService {
 
     /** Duplicate-vote guard: same voter+service delivered again within this window is ignored. */
     private static final long DEDUP_WINDOW_MS = 5_000L;
+    /** Pending-entry service-name prefix that marks a serialized SPI/pre-reward descriptor blob. */
+    private static final String SPI_PENDING_MARKER = "spi::";
+    private static final String SPI_OFFLINE_REASON = "vote reward SPI (offline)";
     private final Map<String, Long> recentVotes = new ConcurrentHashMap<>();
     /** Votes whose voter had no resolvable UUID yet - replayed on their first join. */
     private final UnresolvedVoteStore unresolvedVotes;
@@ -381,18 +385,52 @@ public class VoteService {
      * additive to the configured rewards; offline SPI delivery is a later pass, so
      * this fires only on the online path (config rewards still queue for offline).
      */
-    private void grantSpiRewards(@NotNull Player onlinePlayer, @NotNull Vote vote,
-                                 @NotNull UUID uuid, @NotNull VoteSnapshot snapshot) {
+    /**
+     * Collects the bonus reward descriptors for a vote: the registered SPI providers plus
+     * the additions from the (async) {@link VotePreRewardEvent}. Must be called off the main
+     * thread (the event is async) - i.e. from the vote-processing pipeline, before any
+     * main/region hop. Returns an empty list when the SPI is off and no listener adds anything.
+     */
+    private @NotNull List<VoteRewardDescriptor> collectBonusRewards(@NotNull Vote vote, @NotNull UUID uuid,
+                                                                    @NotNull VoteSnapshot snapshot, boolean online) {
+        List<VoteRewardDescriptor> bonus = new ArrayList<>();
         VoteRewardProviderRegistry registry = this.rewardSpi;
+        if (registry != null && registry.isActive()) {
+            bonus.addAll(registry.collect(new VoteContext(
+                    uuid, vote.username(), vote.serviceName(), snapshot, online, false)));
+        }
+        VotePreRewardEvent event = new VotePreRewardEvent(
+                uuid, vote.username(), vote.serviceName(), snapshot, online);
+        Bukkit.getPluginManager().callEvent(event);
+        bonus.addAll(event.getAdditionalRewards());
+        return bonus;
+    }
+
+    /**
+     * Offline path for bonus descriptors: vote-points apply immediately (DB-backed, offline-safe),
+     * everything else is serialized into a marked pending entry and replayed by the descriptor
+     * executor when the player next joins.
+     */
+    private void queueBonusOffline(@NotNull UUID uuid, @NotNull String service,
+                                   @NotNull List<VoteRewardDescriptor> bonus) {
         VoteDescriptorExecutor executor = this.descriptorExecutor;
-        if (registry == null || executor == null || !registry.isActive()) {
+        if (bonus.isEmpty() || executor == null) {
             return;
         }
-        VoteContext context = new VoteContext(
-                uuid, vote.username(), vote.serviceName(), snapshot, true, false);
-        List<VoteRewardDescriptor> descriptors = registry.collect(context);
-        if (!descriptors.isEmpty()) {
-            executor.grant(onlinePlayer, descriptors);
+        List<VoteRewardDescriptor> queueable = new ArrayList<>();
+        for (VoteRewardDescriptor descriptor : bonus) {
+            if (descriptor instanceof VoteRewardDescriptor.Points p) {
+                grantVotePoints(uuid, p.amount(), SPI_OFFLINE_REASON);
+            } else {
+                queueable.add(descriptor);
+            }
+        }
+        if (queueable.isEmpty()) {
+            return;
+        }
+        String blob = executor.serialize(queueable);
+        if (blob != null) {
+            pendingRewardRepository.create(new PendingVoteRewardEntity(uuid, SPI_PENDING_MARKER + service, blob));
         }
     }
 
@@ -428,6 +466,8 @@ public class VoteService {
         int remainingFreezes = player.getStreakFreezes();
         int freshFreezeGrant = player.getFreshFreezeGrant();
 
+        boolean online = onlinePlayer != null && onlinePlayer.isOnline();
+
         // Fire a milestone event when the streak lands on a configured streak-reward day,
         // so integrators react without polling (online or offline). Fired on the main thread.
         if (rewardService.getStreakRewards().containsKey(streak)) {
@@ -435,10 +475,15 @@ public class VoteService {
                     new StreakMilestoneEvent(uuid, streak, streak)));
         }
 
-        if (onlinePlayer != null && onlinePlayer.isOnline()) {
+        // Bonus descriptors (SPI providers + the async pre-reward event) - collected HERE on the
+        // async processing thread, because the pre-reward event is async and must not fire from
+        // the main/region thread that deliverOnlineRewards runs on.
+        List<VoteRewardDescriptor> bonus = collectBonusRewards(vote, uuid, snapshot, online);
+
+        if (online) {
             scheduler.runAtEntity(onlinePlayer, () ->
                     deliverOnlineRewards(onlinePlayer, vote, uuid, snapshot, streak,
-                            firstDailyBonus, consumedFreezes, remainingFreezes, freshFreezeGrant));
+                            firstDailyBonus, consumedFreezes, remainingFreezes, freshFreezeGrant, bonus));
             logger.log(Level.INFO, () -> String.format("Vote processed for %s (online) - streak: %d, total: %d",
                     vote.username(), streak, player.getTotalVotes()));
         } else {
@@ -451,18 +496,24 @@ public class VoteService {
                 pendingRewardRepository.create(
                         new PendingVoteRewardEntity(uuid, vote.serviceName(), rewardData));
             }
+            queueBonusOffline(uuid, vote.serviceName(), bonus);
             logger.log(Level.INFO, () -> String.format("Vote processed for %s (offline) - rewards queued, streak: %d, total: %d",
                     vote.username(), streak, player.getTotalVotes()));
         }
     }
 
+    @SuppressWarnings("java:S107") // cohesive per-vote delivery context; grouping would obscure it
     private void deliverOnlineRewards(@NotNull Player onlinePlayer, @NotNull Vote vote,
                                          @NotNull UUID uuid, @NotNull VoteSnapshot snapshot,
                                          int streak, boolean firstDailyBonus,
                                          int consumedFreezes, int remainingFreezes,
-                                         int freshFreezeGrant) {
+                                         int freshFreezeGrant,
+                                         @NotNull List<VoteRewardDescriptor> bonus) {
         rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
-        grantSpiRewards(onlinePlayer, vote, uuid, snapshot);
+        VoteDescriptorExecutor executor = this.descriptorExecutor;
+        if (executor != null && !bonus.isEmpty()) {
+            executor.grant(onlinePlayer, bonus);
+        }
         executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
         broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
         if (firstDailyBonus) {
@@ -537,16 +588,22 @@ public class VoteService {
 
             scheduler.runAtEntity(player, () -> {
                 List<CompletableFuture<List<String>>> grants = new ArrayList<>(pending.size());
+                VoteDescriptorExecutor executor = this.descriptorExecutor;
                 for (PendingVoteRewardEntity reward : pending) {
                     try {
-                        grants.add(rewardService.grantSerializedRewards(
-                                player, reward.getRewardData())
-                                .exceptionally(ex -> {
-                                    final String playerName = player.getName();
-                                    logger.log(Level.WARNING, ex,
-                                            () -> "Async reward grant failed for " + playerName);
-                                    return List.of();
-                                }));
+                        // SPI/pre-reward descriptor blobs are marked in the service name and replayed
+                        // through the descriptor executor; everything else is a config-reward blob.
+                        boolean isBonusBlob = executor != null && reward.getServiceName() != null
+                                && reward.getServiceName().startsWith(SPI_PENDING_MARKER);
+                        CompletableFuture<List<String>> grant = isBonusBlob
+                                ? executor.grantSerialized(player, reward.getRewardData())
+                                : rewardService.grantSerializedRewards(player, reward.getRewardData());
+                        grants.add(grant.exceptionally(ex -> {
+                            final String playerName = player.getName();
+                            logger.log(Level.WARNING, ex,
+                                    () -> "Async reward grant failed for " + playerName);
+                            return List.of();
+                        }));
                     } catch (Exception e) {
                         final String playerName = player.getName();
                         logger.log(Level.WARNING, e,
