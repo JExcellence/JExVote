@@ -72,6 +72,8 @@ dependencies {
     testImplementation(libs.jackson.databind)
     testImplementation(libs.adventure.api)
     testImplementation(libs.adventure.minimessage)
+    testImplementation(libs.adventure.serializer.plain)
+    testImplementation(libs.adventure.serializer.legacy)
     testImplementation(libs.caffeine)
     testImplementation(platform(libs.hibernate.platform))
     testImplementation(libs.bundles.hibernate)

@@ -165,8 +165,8 @@ public final class VoteBedrockForms {
         for (VoteSite site : siteList) {
             long secs = cooldowns.getOrDefault(site.serviceName(), 0L);
             String label = secs == 0
-                    ? "✔ " + site.displayName()
-                    : "⏳ " + site.displayName() + " (" + formatCooldown(secs) + ")";
+                    ? "✔ " + BedrockFormText.plain(site.displayName())
+                    : "⏳ " + BedrockFormText.plain(site.displayName()) + " (" + formatCooldown(secs) + ")";
             form.button(label);
         }
     }
@@ -422,7 +422,7 @@ public final class VoteBedrockForms {
         chancePool.sort((a, b) -> Double.compare(b.getChance(), a.getChance()));
 
         for (ChanceReward r : chancePool) {
-            String desc = VoteRewardDescriber.describe(r.getReward());
+            String desc = BedrockFormText.plain(VoteRewardDescriber.describe(r.getReward()));
             double pct = r.getChance() * 100.0;
             body.append("  ").append(String.format("%.1f%%", pct))
                     .append(" - ").append(desc).append("\n");
@@ -433,7 +433,7 @@ public final class VoteBedrockForms {
             body.append("\n").append(plain(player, "bedrock.lucky.pool-header")).append(":\n");
             double totalWeight = luckyPool.getEntries().stream().mapToDouble(LuckyReward.Entry::weight).sum();
             for (LuckyReward.Entry entry : luckyPool.getEntries()) {
-                String desc = VoteRewardDescriber.describe(entry.reward());
+                String desc = BedrockFormText.plain(VoteRewardDescriber.describe(entry.reward()));
                 double pct = totalWeight > 0 ? (entry.weight() / totalWeight) * 100.0 : 0;
                 body.append("  ").append(String.format("%.1f%%", pct))
                         .append(" - ").append(desc).append("\n");
@@ -469,7 +469,7 @@ public final class VoteBedrockForms {
         if (rewards != null && !rewards.isEmpty()) {
             body.append(plain(player, "bedrock.party.rewards")).append(":\n");
             for (var r : rewards) {
-                String desc = VoteRewardDescriber.describe(r);
+                String desc = BedrockFormText.plain(VoteRewardDescriber.describe(r));
                 body.append("  • ").append(desc).append("\n");
             }
         }
@@ -498,10 +498,10 @@ public final class VoteBedrockForms {
             List<VoteShopItem> buyable = new ArrayList<>(shopService.items());
 
             for (VoteShopItem item : buyable) {
-                String desc = VoteRewardDescriber.describe(item.reward());
+                String desc = BedrockFormText.plain(VoteRewardDescriber.describe(item.reward()));
                 boolean canAfford = points >= item.cost();
                 String afford = canAfford ? "✔" : "✘";
-                body.append("  ").append(afford).append(" ").append(item.name())
+                body.append("  ").append(afford).append(" ").append(BedrockFormText.plain(item.name()))
                         .append(" - ").append(item.cost()).append(" pts")
                         .append("\n    ").append(desc).append("\n");
             }
@@ -512,7 +512,7 @@ public final class VoteBedrockForms {
 
             for (VoteShopItem item : buyable) {
                 boolean canAfford = points >= item.cost();
-                String label = (canAfford ? "✔ " : "✘ ") + item.name()
+                String label = (canAfford ? "✔ " : "✘ ") + BedrockFormText.plain(item.name())
                         + " (" + item.cost() + " pts)";
                 form.button(label);
             }
@@ -536,7 +536,7 @@ public final class VoteBedrockForms {
     private void openShopConfirm(@NotNull Player player, @NotNull VoteShopItem item) {
         String title = plain(player, "bedrock.shop.confirm-title");
         String content = plain(player, "bedrock.shop.confirm-body")
-                .replace("{item}", item.name())
+                .replace("{item}", BedrockFormText.plain(item.name()))
                 .replace("{cost}", String.valueOf(item.cost()));
 
         ModalForm form = ModalForm.builder()
