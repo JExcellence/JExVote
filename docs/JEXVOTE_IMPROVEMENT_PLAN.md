@@ -71,8 +71,25 @@ First implementation slice landed (part of P1/P2/P3):
   dropping the delegators by rewiring callers - the metric-satisfying part, and where a blind split risks
   regressions.
 
-Still open from P1: finish the `VoteService` pipeline split (above, deferred to live-testing).
-P4 (REST generalize + publish api to Maven) and P5 (S4 hooks) unstarted. Network-scoped multiplier open.
+### Open backlog (remaining) - tracked
+
+Everything not yet done, as the live checklist. All of it is **gated on a real two-backend + shared-DB
+live test** first - 23 commits of behaviour change are compile-verified but unvalidated on a server.
+
+- [ ] **Live validation** (blocks everything): two backends + one shared DB - verify votes, streaks,
+      points, party bar/broadcast sync, offline delivery, Bedrock forms, SPI, the outbox + proxy sync.
+- [ ] **Push** the JExVote commits (submodule is far ahead of origin).
+- [ ] **Finish the `VoteService` pipeline split** - extract `VotePipeline` (process/validate/dedupe) +
+      `VoteRewardCoordinator` (config+SPI+offline) + `VoteResetService`, drop the `VoteStatsService`
+      delegators by rewiring callers. The monster-class metric closes here. *(Do with live testing.)*
+- [ ] **REST generalization (V9, P4):** config-driven CORS/secret/port/rate-limit, documented endpoints,
+      guarded writes behind `rest.writes-enabled` (default OFF) + HMAC + audit.
+- [ ] **Publish `jexvote-api` to a public Maven repo (V10)** + README + ~40-line example integration.
+- [ ] **S4 vote→progression hooks (P5):** vote rewards feed gear-material keys / small skill+collection
+      XP via the SPI descriptors (ties to `SEASON4_EXISTING_SYSTEMS_INTEGRATION.md`).
+- [ ] **Network-scoped multiplier (V8):** one weekend multiplier across the network under proxy mode.
+- [ ] **Optional Redis pub/sub accelerator** - only if the ~2s DB-outbox latency ever proves too slow
+      (needs a jedis-vs-lettuce decision + `RuntimeDependencies.kt`/catalog lockstep).
 
 ---
 
