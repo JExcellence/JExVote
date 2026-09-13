@@ -55,6 +55,8 @@ public class VoteService {
     private final VoteBroadcastService broadcastService;
     private final MultiplierService multiplierService;
     private final @Nullable VotePartyService votePartyService;
+    /** The read/query surface (snapshots, ranks, cooldowns, site lookups). */
+    private final VoteStatsService stats;
 
     // Reward SPI (V2) - injected after construction to avoid growing the constructor;
     // both null until setRewardSpi is called, and the online path guards on them.
@@ -113,6 +115,8 @@ public class VoteService {
         this.multiplierService = multiplierService;
         this.votePartyService = votePartyService;
         this.voteSites = new AtomicReference<>(voteSites);
+        // Shares the live voteSites reference, so a reload updates the reads too.
+        this.stats = new VoteStatsService(playerRepository, recordRepository, this.voteSites);
         this.streakTimeout = Duration.ofHours(streakTimeoutHours);
         this.streakCommands = new AtomicReference<>(streakCommands);
         this.recordRetentionDays = recordRetentionDays;
@@ -460,7 +464,7 @@ public class VoteService {
     private void deliverOrQueueRewards(@NotNull Vote vote, @NotNull UUID uuid,
                                        @NotNull VotePlayerEntity player, boolean firstDailyBonus) {
         Player onlinePlayer = Bukkit.getPlayer(uuid);
-        VoteSnapshot snapshot = toSnapshot(player);
+        VoteSnapshot snapshot = stats.toSnapshot(player);
         int streak = player.getCurrentStreak();
         int consumedFreezes = player.getConsumedFreezesThisVote();
         int remainingFreezes = player.getStreakFreezes();
@@ -646,97 +650,43 @@ public class VoteService {
         });
     }
 
+    // ── Read surface - delegated to VoteStatsService (see that class) ────────────────
+
+    public @NotNull VoteStatsService stats() {
+        return stats;
+    }
+
     public @NotNull CompletableFuture<VoteSnapshot> getPlayerStats(@NotNull UUID uuid) {
-        return playerRepository.findByUuidAsync(uuid).thenApply(opt ->
-                opt.map(this::toSnapshot).orElse(
-                        new VoteSnapshot(uuid, null, 0, 0, 0, 0, 0, null))
-        );
+        return stats.getPlayerStats(uuid);
     }
 
     public @NotNull Map<String, VoteSite> getVoteSites() {
-        return voteSites.get();
+        return stats.getVoteSites();
     }
 
-    /** The configured vote-site service names (sync, cached). */
     public @NotNull List<String> serviceNames() {
-        return voteSites.get().values().stream().map(VoteSite::serviceName).toList();
+        return stats.serviceNames();
     }
 
-    /**
-     * Seconds until {@code uuid} may vote again on {@code serviceName} (0 = ready now,
-     * also for an unknown service). Honours the site's rolling / daily-reset cooldown.
-     */
     public @NotNull CompletableFuture<Long> secondsUntilNextVote(@NotNull UUID uuid,
                                                                  @NotNull String serviceName) {
-        VoteSite site = findSiteByServiceName(serviceName);
-        if (site == null) {
-            return CompletableFuture.completedFuture(0L);
-        }
-        return voteCooldownsSeconds(uuid).thenApply(remaining ->
-                remaining.getOrDefault(site.serviceName(), 0L));
+        return stats.secondsUntilNextVote(uuid, serviceName);
     }
 
-    /** All-time vote rank (1-based), or {@code -1} if the player has no vote profile. */
     public @NotNull CompletableFuture<Integer> getAllTimeRank(@NotNull UUID uuid) {
-        return playerRepository.findByUuidAsync(uuid).thenCompose(opt -> {
-            if (opt.isEmpty()) {
-                return CompletableFuture.completedFuture(-1);
-            }
-            return playerRepository.countWithMoreTotalVotesAsync(opt.orElseThrow().getTotalVotes())
-                    .thenApply(count -> count.intValue() + 1);
-        });
+        return stats.getAllTimeRank(uuid);
     }
 
-    /** Monthly vote rank (1-based), or {@code -1} if the player has no vote profile. */
     public @NotNull CompletableFuture<Integer> getMonthlyRank(@NotNull UUID uuid) {
-        return playerRepository.findByUuidAsync(uuid).thenCompose(opt -> {
-            if (opt.isEmpty()) {
-                return CompletableFuture.completedFuture(-1);
-            }
-            return playerRepository.countWithMoreMonthlyVotesAsync(opt.orElseThrow().getMonthlyVotes())
-                    .thenApply(count -> count.intValue() + 1);
-        });
+        return stats.getMonthlyRank(uuid);
     }
 
-    /**
-     * Every distinct service name that has actually been <b>received</b> in a vote (as
-     * stored, un-normalised) → its most recent epoch-seconds. Used by the service
-     * diagnostics command to spot names that match no configured site's {@code service-name}.
-     */
     public @NotNull CompletableFuture<Map<String, Long>> receivedServiceNames() {
-        return recordRepository.findAllAsync().thenApply(records -> {
-            Map<String, Long> out = new HashMap<>();
-            for (VoteRecordEntity entry : records) {
-                if (entry.getServiceName() == null || entry.getVotedAt() == null) {
-                    continue;
-                }
-                out.merge(entry.getServiceName(), entry.getVotedAt().getEpochSecond(), Math::max);
-            }
-            return out;
-        });
+        return stats.receivedServiceNames();
     }
 
     public @NotNull CompletableFuture<Map<String, Long>> voteCooldownsSeconds(@NotNull UUID uuid) {
-        Map<String, VoteSite> sites = getVoteSites();
-        return recordRepository.findByPlayer(uuid).thenApply(records -> {
-            // Key by lowercased service name so a casing/whitespace mismatch between the
-            // recorded vote and the configured site (a common Votifier setup gotcha) still
-            // maps the vote to its site instead of showing "always votable".
-            Map<String, Long> latestEpoch = new HashMap<>();
-            for (VoteRecordEntity entry : records) {
-                if (entry.getServiceName() == null || entry.getVotedAt() == null) {
-                    continue;
-                }
-                latestEpoch.merge(entry.getServiceName().trim().toLowerCase(Locale.ROOT),
-                        entry.getVotedAt().getEpochSecond(), Math::max);
-            }
-            Map<String, Long> remaining = new HashMap<>();
-            for (VoteSite site : sites.values()) {
-                long lastEpoch = latestEpoch.getOrDefault(site.serviceName().trim().toLowerCase(Locale.ROOT), 0L);
-                remaining.put(site.serviceName(), site.secondsUntilNextVote(lastEpoch));
-            }
-            return remaining;
-        });
+        return stats.voteCooldownsSeconds(uuid);
     }
 
     public @NotNull VoteBroadcastService getBroadcastService() {
@@ -744,17 +694,7 @@ public class VoteService {
     }
 
     public @Nullable VoteSite findSiteByServiceName(@NotNull String serviceName) {
-        // Locale.ROOT avoids the classic Turkish-locale "i" bug: on a server
-        // running under tr/az locales, "I".toLowerCase() yields 'ı' (dotless i),
-        // not 'i', so a service-name comparison without ROOT can silently fail
-        // to match a correctly configured site. Consistent with the ROOT-based
-        // matching already used in voteCooldownsSeconds().
-        String lower = serviceName.toLowerCase(Locale.ROOT);
-        return voteSites.get().values().stream()
-                .filter(site -> site.serviceName().toLowerCase(Locale.ROOT).equals(lower) ||
-                        site.id().toLowerCase(Locale.ROOT).equals(lower))
-                .findFirst()
-                .orElse(null);
+        return stats.findSiteByServiceName(serviceName);
     }
 
     /**
@@ -1023,18 +963,6 @@ public class VoteService {
         return candidates.stream().distinct().toList();
     }
 
-    private @NotNull VoteSnapshot toSnapshot(@NotNull VotePlayerEntity entity) {
-        return new VoteSnapshot(
-                entity.getPlayerUuid(),
-                entity.getPlayerName(),
-                entity.getTotalVotes(),
-                entity.getMonthlyVotes(),
-                entity.getCurrentStreak(),
-                entity.getHighestStreak(),
-                entity.getVotePoints(),
-                entity.getLastVoteAt()
-        );
-    }
 
     /**
      * Persists a heartbeat timestamp to disk while the server is running so the
