@@ -13,6 +13,8 @@ Built-in Votifier · Streaks · Streak Freezes · Vote Gifting · Jackpot · Vot
 
 ---
 
+> **Status:** BUILT (free + premium editions). **Last verified:** 2026-09-17. **Related:** [../README.md](../README.md). Built: `jexvote-{api,common,free,premium}` modules with a self-contained Votifier v1/v2 server.
+
 ## ■ What is JExVote?
 
 JExVote handles everything around server voting: receiving votes from voting sites, rewarding players, tracking streaks, and showing statistics. It ships with its own Votifier-compatible server built in, so you do not need NuVotifier or any other listener plugin. Point your vote sites at the configured port and JExVote does the rest.
@@ -393,3 +395,9 @@ Free edition is limited to 5 vote sites. Premium unlocks unlimited sites, the vo
 *JExVote is part of the JExcellence plugin suite. Issues, feature requests, and support: use the Discussion tab or open a ticket.*
 
 </div>
+
+---
+
+## Changelog
+
+- 2026-09-17: doc-quality pass (status banner + cross-links).
