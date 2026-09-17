@@ -1,5 +1,9 @@
 # JExVote · Discord Short Blurb
 
+> **Status:** reference (ready-to-post marketing copy; DE/EN). **Last verified:** 2026-09-17. **Related:** [UPDATE_2026-08](UPDATE_2026-08.md), [JEXVOTE_IMPROVEMENT_PLAN](JEXVOTE_IMPROVEMENT_PLAN.md).
+
+Short-form Discord blurbs (one-liner, feature list, announcement card, status/bio) for promoting JExVote.
+
 ## Copy A · One-liner
 
 **JExVote** · das Vote-System für deinen Server: Streaks, Lucky-Jackpots,
@@ -42,3 +46,7 @@ Voten lohnt sich jetzt mehr:
 
 _JExVote: Streaks, Jackpots, Party, Freezes, Gifts, Shop - votes that
 compound instead of vanishing._
+
+## Changelog
+
+- 2026-09-17: doc-quality pass (status banner, purpose line, sibling cross-links).

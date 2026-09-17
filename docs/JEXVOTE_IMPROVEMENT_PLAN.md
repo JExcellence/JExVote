@@ -1,5 +1,20 @@
 # JExVote - Public-Plugin Improvement & API Evolution Plan
 
+> **Status:** in-progress (design locked; first implementation slice landed and code-verified). **Last verified:** 2026-09-17. **Related:** [DISCORD_SHORT](DISCORD_SHORT.md), [UPDATE_2026-08](UPDATE_2026-08.md).
+>
+> **Built (verified 2026-09-17):** the ✅ items below exist in `JExVote/src`: `jexvote-common/.../service/OutboxProxyEventBus.java`, `ProxyVoteSyncService.java`, `VoteRewardProviderRegistry.java`, `VoteStatsService.java`, and `jexvote-api/.../event/VotePreRewardEvent.java`. Remaining work is the "Open backlog" list, gated on a two-backend live test.
+
+## Contents
+
+- [Progress (2026-09-12)](#progress-2026-09-12)
+- [0. Decision register (2026-09-11)](#0-decision-register-2026-09-11)
+- [1. Part A - Public API evolution (`jexvote-api`)](#1-part-a---public-api-evolution-jexvote-api)
+- [2. Part B - Proxy-aware vote sync (V3, V4)](#2-part-b---proxy-aware-vote-sync-v3-v4)
+- [3. Part C - Tech-debt (V7, fix-all)](#3-part-c---tech-debt-v7-fix-all)
+- [4. Part D - REST API generalization (V9)](#4-part-d---rest-api-generalization-v9)
+- [5. Build phases (bundled into the S4 track)](#5-build-phases-bundled-into-the-s4-track)
+- [6. Open (build-time)](#6-open-build-time)
+
 **Status:** design locked 2026-09-11. JExVote is a **live public plugin** (BuiltByBit/Spigot, other servers
 install it), currently v3.2.10, Paper 1.21+/Java 21, Folia-supported. This plan is the API-hardening +
 architecture + tech-debt pass, decided with the owner. **Ships bundled with Season 4** (decision R3), so the
@@ -262,3 +277,7 @@ The embedded HMAC REST server (`rest/`) currently defaults CORS to `https://myth
 - Vote-shop currency + achievement set: **RESOLVED** in `VOTE_ACHIEVEMENT_PLAN.md` - vote-points only
   (Crystals stay premium), token-shop stocks both cosmetics + consumables (consumables = the S4 SPI hook),
   achievements = one per meaningful milestone. Only prices/thresholds remain build-time.
+
+## Changelog
+
+- 2026-09-17: doc-quality pass (mandate status banner + TOC added; ✅ items spot-checked against `JExVote/src` - the five named service/event classes exist).
