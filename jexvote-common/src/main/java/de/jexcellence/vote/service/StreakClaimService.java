@@ -1,7 +1,6 @@
 package de.jexcellence.vote.service;
 
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
-import de.jexcellence.vote.database.entity.ClaimedStreakRewardEntity;
 import de.jexcellence.vote.database.repository.ClaimedStreakRewardRepository;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
 import org.bukkit.entity.Player;
@@ -15,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,7 +34,9 @@ public class StreakClaimService {
         ALREADY_CLAIMED,
         NOT_REACHED,
         UNKNOWN_MILESTONE,
-        GRANT_FAILED
+        GRANT_FAILED,
+        /** The same milestone is already being claimed by this player; nothing was granted. */
+        BUSY
     }
 
     private static final String MIGRATION_MARKER = "streak-claim-migrated.done";
@@ -45,6 +47,7 @@ public class StreakClaimService {
     private final VoteRewardService rewardService;
     private final PlatformScheduler scheduler;
     private final File dataFolder;
+    private final Set<String> claimsInFlight = ConcurrentHashMap.newKeySet();
 
     public StreakClaimService(@NotNull JavaPlugin plugin,
                               @NotNull ClaimedStreakRewardRepository claimedRepository,
@@ -74,7 +77,18 @@ public class StreakClaimService {
         if (!rewardService.getStreakRewards().containsKey(milestoneDay)) {
             return CompletableFuture.completedFuture(ClaimResult.UNKNOWN_MILESTONE);
         }
+        String claimKey = player.getUniqueId() + ":" + milestoneDay;
+        if (!claimsInFlight.add(claimKey)) {
+            return CompletableFuture.completedFuture(ClaimResult.BUSY);
+        }
+        return claimOnce(player, milestoneDay).whenComplete((result, ex) -> claimsInFlight.remove(claimKey));
+    }
 
+    /**
+     * Checks and grants one milestone. {@link #claimMilestone} lets only one call per player and day run at a
+     * time, so a double click cannot pass the "not claimed yet" check twice and pay out twice.
+     */
+    private @NotNull CompletableFuture<ClaimResult> claimOnce(@NotNull Player player, int milestoneDay) {
         UUID uuid = player.getUniqueId();
 
         return claimedRepository.findClaimedDays(uuid).thenCompose(claimed -> {

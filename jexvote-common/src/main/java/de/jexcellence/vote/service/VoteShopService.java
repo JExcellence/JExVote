@@ -5,6 +5,7 @@ import de.jexcellence.vote.config.VoteRewardConfig;
 import de.jexcellence.vote.config.VoteShopItem;
 import de.jexcellence.vote.database.entity.VotePlayerEntity;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -12,8 +13,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Vote-Token Shop: lets players spend vote points on configured rewards
@@ -33,13 +36,16 @@ public class VoteShopService {
         NOT_ENOUGH_POINTS,
         NO_PROFILE,
         /** Points were charged but the reward failed to deliver - the points were refunded. */
-        GRANT_FAILED
+        GRANT_FAILED,
+        /** Another purchase by the same player is still being processed; nothing was charged. */
+        BUSY
     }
 
     private final VotePlayerRepository playerRepository;
     private final VoteRewardService rewardService;
     private final VoteRewardConfig rewardConfig;
     private final PlatformScheduler scheduler;
+    private final Set<UUID> purchasesInFlight = ConcurrentHashMap.newKeySet();
 
     public VoteShopService(@NotNull JavaPlugin plugin,
                            @NotNull VotePlayerRepository playerRepository,
@@ -73,6 +79,20 @@ public class VoteShopService {
      * Plays the configured purchase sound and messages.
      */
     public @NotNull CompletableFuture<PurchaseResult> purchase(@NotNull Player player, @NotNull VoteShopItem item) {
+        UUID uuid = player.getUniqueId();
+        if (!purchasesInFlight.add(uuid)) {
+            return CompletableFuture.completedFuture(PurchaseResult.BUSY);
+        }
+        return chargeAndGrant(player, item)
+                .whenComplete((result, ex) -> purchasesInFlight.remove(uuid));
+    }
+
+    /**
+     * Charges the points and grants the reward. Only one call per player runs at a time (see
+     * {@link #purchase}), so two quick clicks cannot both read the old balance and pay out twice.
+     */
+    private @NotNull CompletableFuture<PurchaseResult> chargeAndGrant(@NotNull Player player,
+                                                                     @NotNull VoteShopItem item) {
         UUID uuid = player.getUniqueId();
         return playerRepository.findByUuidAsync(uuid).thenCompose(opt -> {
             if (opt.isEmpty()) {
@@ -132,9 +152,7 @@ public class VoteShopService {
     private void sendPurchaseMessages(@NotNull Player player, @NotNull VoteShopItem item) {
         VoteShopItem.ShopEffects effects = item.effects();
         for (String message : effects.purchaseMessages()) {
-            player.sendMessage(
-                    net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(message)
-            );
+            player.sendMessage(MiniMessage.miniMessage().deserialize(message));
         }
     }
 }
