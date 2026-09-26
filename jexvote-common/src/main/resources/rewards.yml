@@ -56,7 +56,7 @@ default-rewards:
       - weight: 5           # 5% - a Vote Crate key
         id: 'jackpot-vote-crate'
         announce: 'vote.lucky.jackpot'
-        reward: { type: command, command: 'ac virtualkey give {player} VoteCrate 1', asConsole: true }
+        reward: { type: command, command: 'crate give key {player} VoteCrate 1', asConsole: true }
       - weight: 4           # 4% - a small island expansion (+2 radius, server-capped)
         id: 'jackpot-region'
         announce: 'vote.lucky.jackpot'
@@ -72,12 +72,12 @@ default-rewards:
       - weight: 0.9         # 0.9% - a Shadow Crate key
         id: 'jackpot-shadow-crate'
         announce: 'vote.lucky.jackpot'
-        reward: { type: command, command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true }
+        reward: { type: command, command: 'crate give key {player} ShadowCrate 1', asConsole: true }
       # -- Ultra-rare (<0.6%) - the dream pulls --
       - weight: 0.4         # 0.4% - a Void Crate key
         id: 'jackpot-void-crate'
         announce: 'vote.lucky.jackpot'
-        reward: { type: command, command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
+        reward: { type: command, command: 'crate give key {player} VoidCrate 1', asConsole: true }
       - weight: 0.14        # 0.14% - 25 Crystals jackpot
         id: 'jackpot-crystals'
         announce: 'vote.lucky.jackpot'
@@ -89,11 +89,11 @@ default-rewards:
       - weight: 0.05        # 0.05% - Dragon Crate key ($20-tier: lottery odds)
         id: 'jackpot-dragon-crate'
         announce: 'vote.lucky.jackpot'
-        reward: { type: command, command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true }
+        reward: { type: command, command: 'crate give key {player} DragonCrate 1', asConsole: true }
       - weight: 0.01        # 0.01% - Season Crate key (~1 in 10 000 votes; the rarest prize)
         id: 'jackpot-season-crate'
         announce: 'vote.lucky.jackpot'
-        reward: { type: command, command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
+        reward: { type: command, command: 'crate give key {player} SeasonCrate 1', asConsole: true }
 
 # ── Guaranteed Rewards ──────────────────────────────────────────
 # Granted on EVERY vote, IN ADDITION to the single weighted pick from the
@@ -108,7 +108,7 @@ default-rewards:
 # with no 'chance'/'weight'). Examples: an item, a currency grant, or another
 # command. See the REWARD TYPE REFERENCE at the bottom of this file.
 guaranteed-rewards:
-  - { type: command, command: 'ac virtualkey give {player} VoteCrate 1', asConsole: true }
+  - { type: command, command: 'crate give key {player} VoteCrate 1', asConsole: true }
 
 # ── Streak Rewards ──────────────────────────────────────────────
 # Bonus rewards when a player reaches a specific streak day. IN ADDITION to
@@ -136,7 +136,7 @@ guaranteed-rewards:
 #  180   10 radius + ShadowCrate ×2 + VoidCrate ×2 + Eclipse pass 7 days
 #  365   ★ Dragon key ×10 + Mythic rank 30 days + 50 radius
 #
-# Crate keys: 'ac virtualkey give <player> <Crate> <n>' (AdvancedCrates).
+# Crate keys: 'crate give key <player> <Crate> <n>' (JExCrates virtual keys).
 # Region: 'jexoneblock grant-radius <player> <n>'. Flight: 'jexoneblock flytime'.
 # Passes: LP group 'jexoneblock.pass.<id>' (sigil<aether<eclipse) via addtemp.
 # Rank: LP group 'mythic' (top rank) via addtemp. addtemp uses 'accumulate' so a
@@ -161,7 +161,7 @@ streak-rewards:
   3:
     streak-3-xp:        { type: xp,       amount: 80 }
     streak-3-coins:     { type: currency, currency: coins, amount: 2000.0 }
-    streak-3-crate:     { type: command,  command: 'ac virtualkey give {player} VoteCrate 1', asConsole: true }
+    streak-3-crate:     { type: command,  command: 'crate give key {player} VoteCrate 1', asConsole: true }
     # Island flight time - handed out as physical, tradeable 15-minute fly-coupon
     # items (here 3× 15m = 45m) rather than a direct bank grant, so nothing is
     # silently lost to the flytime cap: the player redeems each coupon when they
@@ -180,7 +180,7 @@ streak-rewards:
   7:
     streak-7-xp:        { type: xp,       amount: 150 }
     streak-7-coins:     { type: currency, currency: coins, amount: 4000.0 }
-    streak-7-crate:     { type: command,  command: 'ac virtualkey give {player} VoteCrate 2', asConsole: true }
+    streak-7-crate:     { type: command,  command: 'crate give key {player} VoteCrate 2', asConsole: true }
     streak-7-pickaxe:
       type: item
       material: IRON_PICKAXE
@@ -198,16 +198,16 @@ streak-rewards:
   14:
     streak-14-xp:       { type: xp,       amount: 250 }
     streak-14-coins:    { type: currency, currency: coins, amount: 8000.0 }
-    streak-14-void-key: { type: command,  command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
-    streak-14-vote-key: { type: command,  command: 'ac virtualkey give {player} VoteCrate 2', asConsole: true }
+    streak-14-void-key: { type: command,  command: 'crate give key {player} VoidCrate 1', asConsole: true }
+    streak-14-vote-key: { type: command,  command: 'crate give key {player} VoteCrate 2', asConsole: true }
     streak-14-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
 
   # ── Day 21 · Champion ───────────────────────────────────────────
   21:
     streak-21-xp:       { type: xp,       amount: 400 }
     streak-21-coins:    { type: currency, currency: coins, amount: 12000.0 }
-    streak-21-void-key: { type: command,  command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
-    streak-21-vote-key: { type: command,  command: 'ac virtualkey give {player} VoteCrate 5', asConsole: true }
+    streak-21-void-key: { type: command,  command: 'crate give key {player} VoidCrate 1', asConsole: true }
+    streak-21-vote-key: { type: command,  command: 'crate give key {player} VoteCrate 5', asConsole: true }
     streak-21-fly:      { type: command,  command: 'jexoneblock flycoupon {player} 15 2', asConsole: true }
     streak-21-diamonds: { type: item, material: DIAMOND, amount: 8 }
 
@@ -218,7 +218,7 @@ streak-rewards:
   30:
     streak-30-xp:       { type: xp,       amount: 800 }
     streak-30-coins:    { type: currency, currency: coins, amount: 25000.0 }
-    streak-30-season-key: { type: command, command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
+    streak-30-season-key: { type: command, command: 'crate give key {player} SeasonCrate 1', asConsole: true }
     streak-30-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 15', asConsole: true }
     streak-30-crown:
       type: item
@@ -242,7 +242,7 @@ streak-rewards:
     streak-60-xp:       { type: xp,       amount: 1200 }
     streak-60-coins:    { type: currency, currency: coins, amount: 25000.0 }
     streak-60-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
-    streak-60-vote-keys: { type: command, command: 'ac virtualkey give {player} VoteCrate 10', asConsole: true }
+    streak-60-vote-keys: { type: command, command: 'crate give key {player} VoteCrate 10', asConsole: true }
     # Sigil = cheapest pass. addtemp/accumulate so it stacks if already active.
     streak-60-pass:     { type: command,  command: 'lp user {player} parent addtemp jexoneblock.pass.sigil 30d accumulate', asConsole: true }
 
@@ -253,8 +253,8 @@ streak-rewards:
     streak-90-xp:       { type: xp,       amount: 1500 }
     streak-90-coins:    { type: currency, currency: coins, amount: 25000.0 }
     streak-90-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
-    streak-90-void-keys: { type: command, command: 'ac virtualkey give {player} VoidCrate 3', asConsole: true }
-    streak-90-vote-keys: { type: command, command: 'ac virtualkey give {player} VoteCrate 5', asConsole: true }
+    streak-90-void-keys: { type: command, command: 'crate give key {player} VoidCrate 3', asConsole: true }
+    streak-90-vote-keys: { type: command, command: 'crate give key {player} VoteCrate 5', asConsole: true }
     streak-90-diamonds: { type: item, material: DIAMOND, amount: 16 }
 
   # ── Day 120 · Ascended ──────────────────────────────────────────
@@ -262,7 +262,7 @@ streak-rewards:
     streak-120-xp:      { type: xp,       amount: 2000 }
     streak-120-coins:   { type: currency, currency: coins, amount: 25000.0 }
     streak-120-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
-    streak-120-void-keys: { type: command, command: 'ac virtualkey give {player} VoidCrate 5', asConsole: true }
+    streak-120-void-keys: { type: command, command: 'crate give key {player} VoidCrate 5', asConsole: true }
     # Aether = mid pass tier, 7 days.
     streak-120-pass:    { type: command,  command: 'lp user {player} parent addtemp jexoneblock.pass.aether 7d accumulate', asConsole: true }
 
@@ -271,8 +271,8 @@ streak-rewards:
     streak-180-xp:      { type: xp,       amount: 3000 }
     streak-180-coins:   { type: currency, currency: coins, amount: 25000.0 }
     streak-180-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
-    streak-180-shadow-keys: { type: command, command: 'ac virtualkey give {player} ShadowCrate 2', asConsole: true }
-    streak-180-void-keys:   { type: command, command: 'ac virtualkey give {player} VoidCrate 2', asConsole: true }
+    streak-180-shadow-keys: { type: command, command: 'crate give key {player} ShadowCrate 2', asConsole: true }
+    streak-180-void-keys:   { type: command, command: 'crate give key {player} VoidCrate 2', asConsole: true }
     # Eclipse = top pass tier, 7 days.
     streak-180-pass:    { type: command,  command: 'lp user {player} parent addtemp jexoneblock.pass.eclipse 7d accumulate', asConsole: true }
 
@@ -283,7 +283,7 @@ streak-rewards:
     streak-365-xp:      { type: xp,       amount: 5000 }
     streak-365-coins:   { type: currency, currency: coins, amount: 25000.0 }
     streak-365-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 50', asConsole: true }
-    streak-365-dragon-keys: { type: command, command: 'ac virtualkey give {player} DragonCrate 10', asConsole: true }
+    streak-365-dragon-keys: { type: command, command: 'crate give key {player} DragonCrate 10', asConsole: true }
     # Mythic = top rank group (bare id), 30 days.
     streak-365-rank:    { type: command,  command: 'lp user {player} parent addtemp mythic 30d accumulate', asConsole: true }
 
@@ -317,7 +317,7 @@ vote-party-rewards:
   party-coins: { type: currency, currency: coins, amount: 2500.0 }
 
 # Weighted party rotation. Redesigned 2026-07-10 (econ pass):
-#   - virtual keys (ac virtualkey give), matching the server key model
+#   - virtual keys (crate give key), matching the server key model
 #   - Season key REMOVED from the pool - a real-money-tier key, reserved for the
 #     final rank + the shop; it must never fall out of a free party
 #   - Dragon key kept but ultra-rare (grand prize)
@@ -349,7 +349,7 @@ vote-party-pool:
     - { weight: 2.5, id: 'party-rails',        reward: { type: item, material: RAIL,             amount: 32 } }
     - { weight: 2.5, id: 'party-torches',      reward: { type: item, material: TORCH,            amount: 64 } }
     # -- Uncommon - chase mats, QoL, cosmetics, a vote key --
-    - { weight: 4,   id: 'party-vote-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'ac virtualkey give {player} VoteCrate 1', asConsole: true } }
+    - { weight: 4,   id: 'party-vote-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} VoteCrate 1', asConsole: true } }
     - { weight: 3.5, id: 'party-diamonds',     reward: { type: item, material: DIAMOND,          amount: 12 } }
     - { weight: 2.5, id: 'party-emerald',      reward: { type: item, material: EMERALD,          amount: 16 } }
     - { weight: 2.5, id: 'party-quartz',       reward: { type: item, material: QUARTZ,           amount: 64 } }
@@ -374,11 +374,11 @@ vote-party-pool:
     - { weight: 1.5, id: 'party-border-small', announce: 'vote.lucky.jackpot', reward: { type: command, command: 'jexoneblock grant-radius {player} 2', asConsole: true } }
     - { weight: 1,   id: 'party-netherite-ingot', reward: { type: item, material: NETHERITE_INGOT, amount: 1 } }
     # -- Epic - shadow key, bigger border win --
-    - { weight: 1.2, id: 'party-shadow-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true } }
+    - { weight: 1.2, id: 'party-shadow-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} ShadowCrate 1', asConsole: true } }
     - { weight: 0.6, id: 'party-border-large', announce: 'vote.lucky.jackpot', reward: { type: command, command: 'jexoneblock grant-radius {player} 5', asConsole: true } }
     # -- Legendary - void & dragon keys (the grand prizes) --
-    - { weight: 0.8, id: 'party-void-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true } }
-    - { weight: 0.25, id: 'party-dragon-key',  announce: 'vote.lucky.jackpot', reward: { type: command, command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true } }
+    - { weight: 0.8, id: 'party-void-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} VoidCrate 1', asConsole: true } }
+    - { weight: 0.25, id: 'party-dragon-key',  announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} DragonCrate 1', asConsole: true } }
 
 
 # ── Vote Party Animation & Sound Configuration ───────────────────
@@ -440,7 +440,7 @@ vote-party:
 # Curation rules: useful oneblock resources, island expansion, flight time,
 # crate keys, and a little cosmetic flavour. The $20-tier Season/Dragon keys
 # are here as LONG-TERM goals (priced high). Removed the odd Shulker/NameTag
-# fillers. Crate keys use 'ac virtualkey give'; region uses grant-radius;
+# fillers. Crate keys use 'crate give key'; region uses grant-radius;
 # flight uses the island fly-time bank (jexoneblock flytime) so it matches the
 # in-game "Out of fly time?" hint that points here.
 vote-shop:
@@ -552,7 +552,7 @@ vote-shop:
     description:
       - "<#94A3B8>Opens a <#7dd3fc>Vote Crate</#7dd3fc> - the everyday"
       - "<#94A3B8>crate full of handy loot."
-    reward: { type: command, command: 'ac virtualkey give {player} VoteCrate 1', asConsole: true }
+    reward: { type: command, command: 'crate give key {player} VoteCrate 1', asConsole: true }
   void-key:
     name: "Void Crate Key"
     icon: ENDER_EYE
@@ -560,7 +560,7 @@ vote-shop:
     description:
       - "<#94A3B8>Opens a <#a855f7>Void Crate</#a855f7> - rarer loot"
       - "<#94A3B8>pulled from the edge of the world."
-    reward: { type: command, command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
+    reward: { type: command, command: 'crate give key {player} VoidCrate 1', asConsole: true }
   shadow-key:
     name: "Shadow Crate Key"
     icon: ECHO_SHARD
@@ -568,7 +568,7 @@ vote-shop:
     description:
       - "<#94A3B8>Opens a <#6c3483>Shadow Crate</#6c3483> - high-tier"
       - "<#94A3B8>rewards for the dedicated."
-    reward: { type: command, command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true }
+    reward: { type: command, command: 'crate give key {player} ShadowCrate 1', asConsole: true }
   season-key:
     name: "Season Crate Key"
     icon: NETHER_STAR
@@ -576,7 +576,7 @@ vote-shop:
     description:
       - "<#94A3B8>Opens a <gold>Season Crate</gold> - a premium,"
       - "<#94A3B8>real-money-tier crate. A serious goal."
-    reward: { type: command, command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
+    reward: { type: command, command: 'crate give key {player} SeasonCrate 1', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
   dragon-key:
     name: "Dragon Crate Key"
@@ -585,7 +585,7 @@ vote-shop:
     description:
       - "<#94A3B8>Opens a <#e74c3c>Dragon Crate</#e74c3c> - the rarest,"
       - "<#94A3B8>most prestigious crate on the server."
-    reward: { type: command, command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true }
+    reward: { type: command, command: 'crate give key {player} DragonCrate 1', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
 
   # ── Season 3 systems + a rare Crystal goal ──────────────────────
