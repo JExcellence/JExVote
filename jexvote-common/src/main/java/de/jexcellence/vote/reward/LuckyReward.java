@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jextranslate.R18nManager;
+import de.jexcellence.vote.view.VoteRewardDescriber;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,13 +100,9 @@ public class LuckyReward extends AbstractReward {
             RewardStats.logGrant(chosen.id());
             String key = chosen.announceKey();
             if (key != null && !key.isBlank()) {
-                // Feed the concrete winning reward's description into the announce
-                // key so the player sees WHAT the jackpot dropped, not just that
-                // it dropped. Older configs kept the generic "check your rewards"
-                // wording; keys that don't use {reward} still render fine.
                 R18nManager.getInstance().msg(key)
-                        .with("reward",
-                                de.jexcellence.vote.view.VoteRewardDescriber.describeLuckyWin(chosen))
+                        .with("reward", VoteRewardDescriber.describeLuckyWin(chosen, player))
+                        .prefix()
                         .send(player);
             }
             return chosen;

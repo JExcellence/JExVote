@@ -1,222 +1,268 @@
 package de.jexcellence.vote.view;
 
+import de.jexcellence.jexplatform.gui.style.MythCurrencyFormat;
+import de.jexcellence.jexplatform.gui.style.MythCurrencyFormat.CurrencyType;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.reward.impl.CommandReward;
 import de.jexcellence.jexplatform.reward.impl.CurrencyReward;
 import de.jexcellence.jexplatform.reward.impl.ExperienceReward;
 import de.jexcellence.jexplatform.reward.impl.ItemReward;
 import de.jexcellence.jexplatform.view.RewardViewHelper;
-import de.jexcellence.vote.reward.ChanceReward;
-import de.jexcellence.vote.reward.LuckyReward;
 import de.jexcellence.jextranslate.MessageBuilder;
 import de.jexcellence.jextranslate.R18nManager;
-import net.kyori.adventure.text.minimessage.MiniMessage;
+import de.jexcellence.vote.gui.style.VoteFormat;
+import de.jexcellence.vote.reward.ChanceReward;
+import de.jexcellence.vote.reward.LuckyReward;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
 /**
- * JExVote-local reward describer. Improves on {@link RewardViewHelper#describe}
- * for the cases the shared renderer shows poorly in the vote GUIs (items,
- * crate-key commands, currency and experience).
+ * Turns a reward into one short line for lore, chat and Bedrock forms: {@code 2x Diamond},
+ * {@code 1x Void Crate key}, {@code +5 island radius}, or the coin / crystal icon with the amount.
  *
- * <p>Every label format lives in the {@code reward_describe.*} i18n keys, so
- * operators can edit the wording, glyphs and colours without touching code.
- * The resolved template (a MiniMessage string with placeholders already
- * substituted) is returned as a fragment that the calling view embeds into its
- * own MiniMessage and parses - so this method serialises the resolved component
- * back to a MiniMessage string. Item names additionally use {@code <lang:…>} so
- * they localise to each player's own client language. Resolution uses the
- * server default locale (the templates are mostly colour + glyph + numbers).
+ * <p>Every label is a {@code reward_describe.*} translation template; this class only picks the template and
+ * fills it. {@link #describe} returns a MiniMessage fragment for Java surfaces (currency as the MythBlock icon),
+ * {@link #describeText} spells the currency out for Bedrock forms, where the resource-pack icon does not
+ * render. {@link #icon} picks the material that best shows the reward in a GUI.
  *
  * @author JExcellence
  */
 public final class VoteRewardDescriber {
 
+    private static final String KEY = "reward_describe.";
     private static final String AMOUNT = "amount";
+    private static final String TYPE_CURRENCY = "currency";
+    private static final String CRATE_WORD = "crate";
 
     private VoteRewardDescriber() {
-        // Utility class - no instances
+    }
+
+    /** Describes a reward in the server's default language (currency as icon). */
+    public static @NotNull String describe(@NotNull AbstractReward reward) {
+        return describe(reward, null);
+    }
+
+    /** Describes a reward in the viewer's language (currency as icon). */
+    public static @NotNull String describe(@NotNull AbstractReward reward, @Nullable Player viewer) {
+        return describe(reward, viewer, true);
+    }
+
+    /** Describes a reward with the currency written out, for surfaces that cannot show the icon font. */
+    public static @NotNull String describeText(@NotNull AbstractReward reward, @Nullable Player viewer) {
+        return describe(reward, viewer, false);
     }
 
     /**
-     * Returns a short, single-line MiniMessage description of one reward.
+     * Describes what a pool actually paid out: the prize, marked as a lucky win.
+     *
+     * @param won    the entry the draw selected
+     * @param viewer the winner, for their language
+     * @return a description of the prize
      */
-    public static @NotNull String describe(@NotNull AbstractReward reward) {
+    public static @NotNull String describeLuckyWin(@NotNull LuckyReward.Entry won, @Nullable Player viewer) {
+        return template("lucky-win").with("reward", describe(won.reward(), viewer)).miniMessage(viewer);
+    }
+
+    private static @NotNull String describe(@NotNull AbstractReward reward, @Nullable Player viewer, boolean icons) {
         if (reward instanceof ItemReward item) {
-            return resolve("reward_describe.item",
-                    AMOUNT, item.getAmount(),
-                    "material", translationKey(item.getMaterial()));
+            return template("item")
+                    .with(AMOUNT, VoteFormat.number(viewer, item.getAmount()))
+                    .with("material", translationKey(item.getMaterial()))
+                    .miniMessage(viewer);
         }
         if (reward instanceof CommandReward command) {
-            return describeCommand(command);
+            return describeCommand(command, viewer);
         }
         if (reward instanceof CurrencyReward currency) {
-            return resolve("reward_describe.currency",
-                    AMOUNT, formatAmount(currency.getAmount()),
-                    "unit", prettyUnit(currency.getCurrency()));
+            return describeCurrency(currency, viewer, icons);
         }
         if (reward instanceof ExperienceReward experience) {
             String key = experience.getMode() == ExperienceReward.ExperienceMode.LEVELS
-                    ? "reward_describe.experience-levels"
-                    : "reward_describe.experience-points";
-            return resolve(key, AMOUNT, experience.getAmount());
+                    ? "experience-levels" : "experience-points";
+            return template(key).with(AMOUNT, VoteFormat.number(viewer, experience.getAmount())).miniMessage(viewer);
         }
-        // JExVote's own pool types. Without these the shared renderer falls through to
-        // its default branch and prints the bare type id - a jackpot rendered as the
-        // grey word "lucky", which is what a player saw in the reward list.
         if (reward instanceof LuckyReward lucky) {
-            return resolve("reward_describe.lucky-pool",
-                    "count", lucky.getEntries().size());
+            return template("lucky-pool").with("count", lucky.getEntries().size()).miniMessage(viewer);
         }
         if (reward instanceof ChanceReward chance) {
-            return resolve("reward_describe.chance",
-                    "chance", formatChance(chance.getChance()),
-                    "reward", describe(chance.getReward()));
+            return template("chance")
+                    .with("chance", VoteFormat.percent(viewer, chance.getChance() * 100.0))
+                    .with("reward", describe(chance.getReward(), viewer, icons))
+                    .miniMessage(viewer);
         }
         return RewardViewHelper.describe(reward);
     }
 
-    /**
-     * Describes what a pool actually paid out, rather than the pool itself.
-     *
-     * <p>A catalogue wants "one of 8 jackpot prizes"; somebody reading what they just
-     * received wants the prize. Same type, two different questions, so two methods.
-     *
-     * @param won the entry the draw selected
-     * @return a description of the prize, marked as a jackpot win
-     */
-    public static @NotNull String describeLuckyWin(@NotNull LuckyReward.Entry won) {
-        return resolve("reward_describe.lucky-win", "reward", describe(won.reward()));
-    }
-
-    /** Trims a 0-1 chance to a readable percentage. */
-    private static @NotNull String formatChance(double chance) {
-        double percent = chance * 100.0;
-        if (percent == Math.floor(percent)) {
-            return String.valueOf((long) percent);
+    private static @NotNull String describeCurrency(@NotNull CurrencyReward currency, @Nullable Player viewer,
+                                                    boolean icons) {
+        String amount = VoteFormat.decimal(viewer, currency.getAmount());
+        CurrencyType type = MythCurrencyFormat.fromIdentifier(currency.getCurrency());
+        if (icons && type != null && type != CurrencyType.SEASON_POINTS && type != CurrencyType.TOKENS) {
+            return MythCurrencyFormat.compact(type, amount, viewer);
         }
-        return String.format(Locale.US, "%.1f", percent);
+        String unitKey = KEY + "unit." + currency.getCurrency().toLowerCase(Locale.ROOT);
+        MessageBuilder unit = R18nManager.getInstance().msg(unitKey);
+        String unitText = unit.exists(viewer) ? unit.text(viewer) : prettyWord(currency.getCurrency());
+        return template(TYPE_CURRENCY).with(AMOUNT, amount).with("unit", unitText).miniMessage(viewer);
     }
 
-    private static @NotNull String describeCommand(@NotNull CommandReward command) {
-        // 1. Operator-supplied description always wins (MiniMessage literal or i18n key).
+    private static @NotNull String describeCommand(@NotNull CommandReward command, @Nullable Player viewer) {
         String describe = command.getDescribe();
         if (describe != null && !describe.isBlank()) {
-            return resolveDescribe(describe);
+            return resolveDescribe(describe, viewer);
         }
-        // 2. Auto-recognise the command shapes actually used across the suite so
-        //    unannotated rewards still read as their grant, not "Special Reward".
-        String raw = command.getCommand();
-        String[] t = raw == null ? new String[0] : raw.trim().split("\\s+");
-
-        // /crate give key <player> <crate> [amount]
-        if (t.length >= 5 && (t[0].equalsIgnoreCase("crate") || t[0].equalsIgnoreCase("crates"))
-                && t[1].equalsIgnoreCase("give") && t[2].equalsIgnoreCase("key")) {
-            return crateKey(t[4], t.length >= 6 ? t[5] : "1");
-        }
-        // AdvancedCrates: ac|advancedcrates virtualkey give <player> <crate> [amount]
-        if (t.length >= 5 && (t[0].equalsIgnoreCase("ac") || t[0].equalsIgnoreCase("advancedcrates"))
-                && t[1].equalsIgnoreCase("virtualkey") && t[2].equalsIgnoreCase("give")) {
-            return crateKey(t[4], t.length >= 6 ? t[5] : "1");
-        }
-        // jexoneblock grant-radius <player> <amount>
-        if (t.length >= 4 && t[0].equalsIgnoreCase("jexoneblock") && t[1].equalsIgnoreCase("grant-radius")) {
-            return resolve("reward_describe.island-radius", AMOUNT, t[3]);
-        }
-        // jexoneblock flycoupon <player> <minutes> <count>
-        if (t.length >= 5 && t[0].equalsIgnoreCase("jexoneblock") && t[1].equalsIgnoreCase("flycoupon")) {
-            return resolve("reward_describe.fly-coupon", "minutes", t[3], "count", t[4]);
-        }
-        return resolve("reward_describe.special");
-    }
-
-    private static @NotNull String crateKey(@NotNull String crateId, @NotNull String amount) {
-        return resolve("reward_describe.crate-key", AMOUNT, amount, "crate", prettyCrate(crateId));
+        CommandShape shape = CommandShape.of(command.getCommand());
+        return switch (shape.kind()) {
+            case CRATE_KEY -> template("crate-key")
+                    .with(AMOUNT, shape.amount()).with(CRATE_WORD, prettyCrate(shape.subject())).miniMessage(viewer);
+            case ISLAND_RADIUS -> template("island-radius").with(AMOUNT, shape.amount()).miniMessage(viewer);
+            case FLY_COUPON -> template("fly-coupon")
+                    .with("minutes", shape.subject()).with("count", shape.amount()).miniMessage(viewer);
+            default -> template("special").miniMessage(viewer);
+        };
     }
 
     /**
-     * Resolves an operator {@code describe} value: a MiniMessage literal when it
-     * carries a tag, an i18n key when it looks like one (dotted, no spaces),
-     * otherwise the plain text as-is.
+     * The material that shows a reward best in a GUI: the item itself, a tripwire hook for crate keys, grass
+     * for island radius, a feather for flight, a gold nugget or amethyst shard for currency.
+     *
+     * @param reward the reward
+     * @return the icon material
      */
-    private static @NotNull String resolveDescribe(@NotNull String describe) {
+    public static @NotNull Material icon(@NotNull AbstractReward reward) {
+        if (reward instanceof ChanceReward chance) {
+            return icon(chance.getReward());
+        }
+        if (reward instanceof ItemReward item) {
+            Material material = Material.matchMaterial(item.getMaterial());
+            return material != null && material.isItem() ? material : Material.CHEST;
+        }
+        if (reward instanceof CurrencyReward currency) {
+            return MythCurrencyFormat.fromIdentifier(currency.getCurrency()) == CurrencyType.CRYSTALS
+                    ? Material.AMETHYST_SHARD : Material.GOLD_NUGGET;
+        }
+        if (reward instanceof CommandReward command) {
+            return switch (CommandShape.of(command.getCommand()).kind()) {
+                case CRATE_KEY -> Material.TRIPWIRE_HOOK;
+                case ISLAND_RADIUS -> Material.GRASS_BLOCK;
+                case FLY_COUPON -> Material.FEATHER;
+                default -> Material.NETHER_STAR;
+            };
+        }
+        if (reward instanceof LuckyReward) {
+            return Material.RABBIT_FOOT;
+        }
+        return RewardViewHelper.toViewEntry(reward).icon();
+    }
+
+    /**
+     * Whether the reward hands out a crate key (a recognised crate-key command).
+     *
+     * @param reward the reward
+     * @return {@code true} for crate keys
+     */
+    public static boolean isCrateKey(@NotNull AbstractReward reward) {
+        return reward instanceof CommandReward command
+                && CommandShape.of(command.getCommand()).kind() == CommandKind.CRATE_KEY;
+    }
+
+    private static @NotNull MessageBuilder template(@NotNull String name) {
+        return R18nManager.getInstance().msg(KEY + name);
+    }
+
+    /**
+     * Resolves an operator {@code describe} value: a MiniMessage literal when it carries a tag, a translation
+     * key when it looks like one (dotted, no spaces), otherwise the plain text.
+     */
+    private static @NotNull String resolveDescribe(@NotNull String describe, @Nullable Player viewer) {
         if (describe.indexOf('<') >= 0) {
             return describe;
         }
         if (describe.indexOf(' ') < 0 && describe.indexOf('.') > 0) {
-            return resolve(describe);
+            return R18nManager.getInstance().msg(describe).miniMessage(viewer);
         }
         return describe;
     }
 
-    /**
-     * Resolves a {@code reward_describe.*} template with the given placeholder
-     * key/value pairs and serialises it back to a MiniMessage fragment string.
-     *
-     * @param key the i18n key
-     * @param kv  alternating placeholder name/value pairs
-     * @return the resolved MiniMessage fragment
-     */
-    private static @NotNull String resolve(@NotNull String key, @NotNull Object... kv) {
-        MessageBuilder builder = R18nManager.getInstance().msg(key);
-        for (int i = 0; i + 1 < kv.length; i += 2) {
-            builder.with(String.valueOf(kv[i]), kv[i + 1]);
-        }
-        return MiniMessage.miniMessage().serialize(builder.itemComponent(null));
-    }
-
     private static @NotNull String translationKey(@NotNull String material) {
-        try {
-            Material mat = Material.matchMaterial(material);
-            if (mat != null) {
-                return mat.translationKey();
-            }
-        } catch (Exception ignored) {
-            // Fall through to a humanised fallback below
+        Material mat = Material.matchMaterial(material);
+        if (mat != null) {
+            return mat.translationKey();
         }
-        return "item." + material.toLowerCase(Locale.ROOT);
+        return "item.minecraft." + material.toLowerCase(Locale.ROOT);
     }
 
-    /** Formats a currency amount with thousands separators, trimming whole-number decimals. */
-    private static @NotNull String formatAmount(double amount) {
-        if (amount == Math.floor(amount) && !Double.isInfinite(amount)) {
-            return String.format(Locale.US, "%,d", (long) amount);
+    private static @NotNull String prettyWord(@NotNull String word) {
+        if (word.isEmpty()) {
+            return word;
         }
-        return String.format(Locale.US, "%,.2f", amount);
-    }
-
-    /** Capitalises a currency id ({@code coins} → {@code Coins}). */
-    private static @NotNull String prettyUnit(@NotNull String currency) {
-        if (currency.isEmpty()) {
-            return "coins";
-        }
-        return Character.toUpperCase(currency.charAt(0)) + currency.substring(1).toLowerCase(Locale.ROOT);
+        return Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase(Locale.ROOT);
     }
 
     /**
-     * Turns a crate identifier into a readable {@code <Name> Crate} label, handling both
-     * {@code dragon_crate} (snake_case) and {@code DragonCrate} (camelCase, as used
-     * by AdvancedCrates virtual keys). A trailing "crate" word is dropped so it is
-     * not duplicated by the appended suffix.
+     * Turns a crate id such as {@code dragon_crate} or {@code DragonCrate} into {@code Dragon}; the template
+     * adds the word "Crate". A trailing "crate" in the id is dropped so it is not doubled.
      */
     private static @NotNull String prettyCrate(@NotNull String crateId) {
-        // Split camelCase boundaries and underscores into spaces.
-        String spaced = crateId
-                .replaceAll("([a-z0-9])([A-Z])", "$1 $2")
-                .replace('_', ' ');
+        String spaced = crateId.replaceAll("([a-z0-9])([A-Z])", "$1 $2").replace('_', ' ');
         StringBuilder label = new StringBuilder();
         for (String word : spaced.trim().split("\\s+")) {
-            if (word.isEmpty() || word.equalsIgnoreCase("crate")) {
-                continue;
+            if (!word.isEmpty() && !word.equalsIgnoreCase(CRATE_WORD)) {
+                if (!label.isEmpty()) {
+                    label.append(' ');
+                }
+                label.append(prettyWord(word));
             }
-            if (label.length() > 0) {
-                label.append(' ');
-            }
-            label.append(Character.toUpperCase(word.charAt(0)))
-                    .append(word.substring(1).toLowerCase(Locale.ROOT));
         }
-        return label.append(" Crate").toString();
+        return label.toString();
+    }
+
+    /** The recognised shapes of reward commands used across the suite. */
+    private enum CommandKind { CRATE_KEY, ISLAND_RADIUS, FLY_COUPON, OTHER }
+
+    /**
+     * A parsed reward command.
+     *
+     * @param kind    what the command grants
+     * @param subject crate id, or fly-coupon minutes
+     * @param amount  how many
+     */
+    private record CommandShape(@NotNull CommandKind kind, @NotNull String subject, @NotNull String amount) {
+
+        private static final CommandShape OTHER = new CommandShape(CommandKind.OTHER, "", "1");
+
+        static @NotNull CommandShape of(@Nullable String raw) {
+            String[] tokens = raw == null ? new String[0] : raw.trim().split("\\s+");
+            if (isCrateGive(tokens) || isVirtualKeyGive(tokens)) {
+                return new CommandShape(CommandKind.CRATE_KEY, tokens[4], tokens.length >= 6 ? tokens[5] : "1");
+            }
+            if (tokens.length >= 4 && isOneblock(tokens, "grant-radius")) {
+                return new CommandShape(CommandKind.ISLAND_RADIUS, "", tokens[3]);
+            }
+            if (tokens.length >= 5 && isOneblock(tokens, "flycoupon")) {
+                return new CommandShape(CommandKind.FLY_COUPON, tokens[3], tokens[4]);
+            }
+            return OTHER;
+        }
+
+        private static boolean isCrateGive(@NotNull String[] tokens) {
+            return tokens.length >= 5
+                    && (tokens[0].equalsIgnoreCase(CRATE_WORD) || tokens[0].equalsIgnoreCase("crates"))
+                    && tokens[1].equalsIgnoreCase("give") && tokens[2].equalsIgnoreCase("key");
+        }
+
+        private static boolean isVirtualKeyGive(@NotNull String[] tokens) {
+            return tokens.length >= 5
+                    && (tokens[0].equalsIgnoreCase("ac") || tokens[0].equalsIgnoreCase("advancedcrates"))
+                    && tokens[1].equalsIgnoreCase("virtualkey") && tokens[2].equalsIgnoreCase("give");
+        }
+
+        private static boolean isOneblock(@NotNull String[] tokens, @NotNull String subcommand) {
+            return tokens[0].equalsIgnoreCase("jexoneblock") && tokens[1].equalsIgnoreCase(subcommand);
+        }
     }
 }

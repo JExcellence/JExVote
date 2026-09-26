@@ -6,6 +6,7 @@ import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.model.VoteSnapshot;
 import de.jexcellence.vote.command.help.HelpRenderer;
 import de.jexcellence.vote.config.VoteConfig;
+import de.jexcellence.vote.gui.style.VoteFormat;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.StreakFreezeService;
 import de.jexcellence.vote.bedrock.VoteBedrockForms;
@@ -30,6 +31,8 @@ public final class VoteCommandHandler {
 
     private static final String PARAM_TARGET = "target";
     private static final String PARAM_STREAK = "streak";
+    private static final String PARAM_PLAYER = "player";
+    private static final String PARAM_COUNT = "count";
 
     private final VoteService voteService;
     private final VoteLeaderboardService leaderboardService;
@@ -128,23 +131,8 @@ public final class VoteCommandHandler {
         Player player = ctx.asPlayer().orElseThrow();
         int cost = streakFreezeService.settings().costPoints();
         int max = streakFreezeService.resolveMax(player);
-
-        streakFreezeService.purchase(player).thenAccept(result -> {
-            switch (result) {
-                case SUCCESS -> r18n().msg("vote.freeze.bought").prefix()
-                        .with("cost", String.valueOf(cost))
-                        .send(player);
-                case DISABLED -> r18n().msg("vote.freeze.disabled").prefix().send(player);
-                case AT_MAX -> r18n().msg("vote.freeze.at_max").prefix()
-                        .with("max", String.valueOf(max))
-                        .send(player);
-                case NOT_ENOUGH_POINTS -> r18n().msg("vote.freeze.not_enough").prefix()
-                        .with("cost", String.valueOf(cost))
-                        .send(player);
-                case NO_PROFILE -> r18n().msg("vote.freeze.no_profile").prefix().send(player);
-                default -> r18n().msg("vote.freeze.error").prefix().send(player);
-            }
-        });
+        streakFreezeService.purchase(player)
+                .thenAccept(result -> VoteRewardsView.sendFreezeResult(player, result, cost, max));
     }
 
     private void onGift(@NotNull CommandContext ctx) {
@@ -166,7 +154,8 @@ public final class VoteCommandHandler {
     }
 
     private void handleGiftOutcome(@NotNull Player gifter, @NotNull VoteGiftService.GiftOutcome outcome) {
-        String targetName = outcome.targetName() != null ? outcome.targetName() : "?";
+        String targetName = outcome.targetName() != null
+                ? outcome.targetName() : r18n().msg("vote.unknown-player").text(gifter);
         switch (outcome.result()) {
             case SUCCESS -> notifyGiftSuccess(gifter, outcome, targetName);
             case DISABLED -> r18n().msg("vote.gift.disabled").prefix().send(gifter);
@@ -188,7 +177,7 @@ public final class VoteCommandHandler {
                                    @NotNull String targetName) {
         r18n().msg("vote.gift.sent").prefix()
                 .with(PARAM_TARGET, targetName)
-                .with(PARAM_STREAK, String.valueOf(outcome.receiverStreak()))
+                .with(PARAM_STREAK, VoteFormat.days(gifter, outcome.receiverStreak()))
                 .with("remaining", String.valueOf(outcome.remainingToday()))
                 .send(gifter);
 
@@ -196,15 +185,12 @@ public final class VoteCommandHandler {
         if (receiver != null && receiver.isOnline()) {
             r18n().msg("vote.gift.received").prefix()
                     .with("gifter", gifter.getName())
-                    .with(PARAM_STREAK, String.valueOf(outcome.receiverStreak()))
+                    .with(PARAM_STREAK, VoteFormat.days(receiver, outcome.receiverStreak()))
                     .send(receiver);
         }
     }
 
     private void onHelp(@NotNull CommandContext ctx) {
-        // Styling lives entirely in the vote_help.* i18n keys; entries only
-        // contribute the command, args, description and aliases. New subcommands
-        // get one line here - no MiniMessage to hand-paint.
         List<HelpRenderer.Entry> entries = List.of(
                 HelpRenderer.Entry.of("/vote", "", "vote_help.desc.vote",
                         List.of("v"), HelpRenderer.Action.RUN),
@@ -234,20 +220,13 @@ public final class VoteCommandHandler {
             r18n().msg("vote.sites.no_sites").prefix().send(ctx.sender());
             return;
         }
-
-        Player viewer = ctx.asPlayer().orElse(null);
-        r18n().msg("vote.sites.header").prefix().send(ctx.sender());
+        r18n().msg("vote.sites.title").with(PARAM_COUNT, String.valueOf(sites.size())).send(ctx.sender());
         for (VoteSite site : sites.values()) {
-            // Labels + markup live in the i18n files (EN/DE/CS/SK); the clickable
-            // variant embeds the vote URL, the plain one falls back to the service name.
             var entry = site.voteUrl() != null
-                    ? r18n().msg("vote.sites.entry")
-                            .with("name", site.displayName())
-                            .with("url", site.voteUrl())
-                    : r18n().msg("vote.sites.entry_plain")
-                            .with("name", site.displayName())
+                    ? r18n().msg("vote.sites.entry").with("name", site.displayName()).with("url", site.voteUrl())
+                    : r18n().msg("vote.sites.entry_plain").with("name", site.displayName())
                             .with("service", site.serviceName());
-            ctx.sender().sendMessage(entry.toComponent(viewer));
+            entry.send(ctx.sender());
         }
     }
 
@@ -255,8 +234,6 @@ public final class VoteCommandHandler {
         var explicitTarget = ctx.get("player", OfflinePlayer.class);
         Player self = ctx.asPlayer().orElse(null);
 
-        // Self lookup from a player → open the overview GUI (stats + points +
-        // sites + navigation). Console or an explicit target → text summary.
         if (explicitTarget.isEmpty() && self != null) {
             if (isBedrock(self)) {
                 bedrockForms.openOverview(self);
@@ -267,19 +244,25 @@ public final class VoteCommandHandler {
         }
 
         OfflinePlayer target = explicitTarget.orElseGet(() -> ctx.asPlayer().orElseThrow());
+        Player viewer = self;
         voteService.getPlayerStats(target.getUniqueId()).thenAccept(stats -> {
-            r18n().msg("vote.stats.header").send(ctx.sender());
-            r18n().msg("vote.stats.total").prefix()
-                    .with("total", String.valueOf(stats.totalVotes())).send(ctx.sender());
-            r18n().msg("vote.stats.monthly").prefix()
-                    .with("monthly", String.valueOf(stats.monthlyVotes())).send(ctx.sender());
-            r18n().msg("vote.stats.streak").prefix()
-                    .with("streak", String.valueOf(stats.currentStreak())).send(ctx.sender());
-            r18n().msg("vote.stats.highest").prefix()
-                    .with("highest", String.valueOf(stats.highestStreak())).send(ctx.sender());
-            r18n().msg("vote.stats.points").prefix()
-                    .with("points", String.valueOf(stats.votePoints())).send(ctx.sender());
+            String name = target.getName() != null ? target.getName() : target.getUniqueId().toString();
+            r18n().msg("vote.stats.title").with(PARAM_PLAYER, name).send(ctx.sender());
+            sendStatRow(ctx, viewer, "total", VoteFormat.number(viewer, stats.totalVotes()));
+            sendStatRow(ctx, viewer, "monthly", VoteFormat.number(viewer, stats.monthlyVotes()));
+            sendStatRow(ctx, viewer, "streak", VoteFormat.days(viewer, stats.currentStreak()));
+            sendStatRow(ctx, viewer, "highest", VoteFormat.days(viewer, stats.highestStreak()));
+            sendStatRow(ctx, viewer, "points", VoteFormat.number(viewer, stats.votePoints()));
+            sendStatRow(ctx, viewer, "last-vote", VoteFormat.ago(viewer, stats.lastVoteAt()));
         });
+    }
+
+    private static void sendStatRow(@NotNull CommandContext ctx, @Nullable Player viewer,
+                                    @NotNull String label, @NotNull String value) {
+        r18n().msg("vote.stats.row")
+                .with("label", r18n().msg("vote.stats.label." + label).text(viewer))
+                .with("value", value)
+                .send(ctx.sender());
     }
 
     private void onTop(@NotNull CommandContext ctx) {
@@ -293,20 +276,21 @@ public final class VoteCommandHandler {
             return;
         }
 
-        int count = ctx.get("count", Long.class).map(Long::intValue).orElse(10);
+        int count = ctx.get(PARAM_COUNT, Long.class).map(Long::intValue).orElse(10);
         leaderboardService.getAllTimeTop(Math.min(count, 50)).thenAccept(top -> {
-            r18n().msg("vote.leaderboard.header").send(ctx.sender());
             if (top.isEmpty()) {
                 r18n().msg("vote.leaderboard.empty").prefix().send(ctx.sender());
                 return;
             }
+            r18n().msg("vote.leaderboard.title").send(ctx.sender());
             for (int i = 0; i < top.size(); i++) {
                 VoteSnapshot entry = top.get(i);
-                String name = entry.playerName() != null ? entry.playerName() : "Unknown";
-                r18n().msg("vote.leaderboard.entry").prefix()
+                String name = entry.playerName() != null
+                        ? entry.playerName() : r18n().msg("vote.unknown-player").text(self);
+                r18n().msg("vote.leaderboard.entry")
                         .with("rank", String.valueOf(i + 1))
-                        .with("player", name)
-                        .with("votes", String.valueOf(entry.totalVotes()))
+                        .with(PARAM_PLAYER, name)
+                        .with("votes", VoteFormat.number(self, entry.totalVotes()))
                         .send(ctx.sender());
             }
         });

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jextranslate.R18nManager;
+import de.jexcellence.vote.view.VoteRewardDescriber;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +75,8 @@ public class ChanceReward extends AbstractReward {
     private void announce(@NotNull Player player) {
         R18nManager.getInstance().msg(announceKey)
                 .with(TYPE_ID, showChance ? formatPercent(chance) + "%" : "")
+                .with("reward", VoteRewardDescriber.describe(reward, player))
+                .prefix()
                 .send(player);
     }
 

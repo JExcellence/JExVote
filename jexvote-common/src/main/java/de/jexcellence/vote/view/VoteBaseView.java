@@ -1,11 +1,10 @@
 package de.jexcellence.vote.view;
 
+import de.jexcellence.jexplatform.gui.component.CardLore;
 import de.jexcellence.jexplatform.utility.item.ItemBuilder;
 import de.jexcellence.jextranslate.MessageBuilder;
-import de.jexcellence.jextranslate.R18nManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -13,11 +12,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -25,31 +24,38 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.logging.Level;
 
 /**
- * Abstract base for all vote GUI views, following the same raw-Bukkit-inventory
- * pattern used by JExOneblock's {@code IslandView}.
+ * Base for every JExVote chest view. Follows the suite layout: back at slot 0, header at slot 4, filter at
+ * slot 8, a 28-slot body (rows 1-4, columns 1-7), pagination at 48 / 50 and close at the first slot of the
+ * last row. Empty slots get the black filler pane.
  *
- * <p>Lifecycle: {@link #open(Player)} creates a Bukkit inventory, calls
- * {@link #render(Inventory, Player)}, fills empty slots, then opens it.
- * Click/drag events are caught via Bukkit's {@link Listener} interface and
- * routed by {@link InventoryHolder} identity.
+ * <p>Lifecycle: {@link #open(Player)} creates the inventory, calls {@link #render(Inventory, Player)}, fills
+ * the gaps and opens it. {@link #rerender(Player)} redraws the open inventory in place, so paging or cycling a
+ * filter does not reset the cursor. Clicks are routed by {@link InventoryHolder} identity; close is handled
+ * here for every view.
  *
  * @author JExcellence
  * @since 3.0.0
  */
 public abstract class VoteBaseView implements Listener {
 
-    protected static final MiniMessage MM = MiniMessage.miniMessage();
+    protected static final NamespacedKey SLOT_KEY = new NamespacedKey("jexvote", "gui_slot");
 
-    protected static final NamespacedKey SLOT_KEY =
-            new NamespacedKey("jexvote", "gui_slot");
-
-    /** Shared nav tags routed centrally by {@link #onInventoryClick(InventoryClickEvent)}. */
     protected static final String TAG_BACK = "back";
     protected static final String TAG_CLOSE = "close";
+    protected static final String TAG_PAGE_PREV = "page-prev";
+    protected static final String TAG_PAGE_NEXT = "page-next";
 
-    // ── Abstract hooks ─────────────────────────────────────────────
+    protected static final int SLOT_BACK = 0;
+    protected static final int SLOT_HEADER = 4;
+    protected static final int SLOT_FILTER = 8;
+    protected static final int SLOT_CENTER = 22;
+    protected static final int SLOT_PAGE_PREV = 48;
+    protected static final int SLOT_PAGE_NEXT = 50;
+
+    private static final int[] BODY_SLOTS = buildBodySlots();
 
     protected abstract @NotNull String title();
 
@@ -61,208 +67,125 @@ public abstract class VoteBaseView implements Listener {
 
     protected abstract void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked);
 
-    // ── Lifecycle ──────────────────────────────────────────────────
+    /**
+     * Click hook with the click type; views with a filter or right-click actions override this one.
+     */
+    protected void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked, @NotNull ClickType type) {
+        onClick(viewer, slot, clicked);
+    }
 
     /**
-     * Opens the GUI inventory for the specified player.
+     * Opens a fresh inventory for the viewer.
      *
-     * @param viewer the player to open the GUI for
+     * @param viewer the player to open the view for
      */
     public void open(@NotNull Player viewer) {
-        Inventory inv = Bukkit.createInventory(holder(), rows() * 9,
-                msg(title()).itemComponent(viewer));
+        Inventory inv = Bukkit.createInventory(holder(), rows() * 9, msg(title()).itemComponent(viewer));
         render(inv, viewer);
-        for (int i = 0; i < inv.getSize(); i++) {
-            if (inv.getItem(i) == null) inv.setItem(i, filler());
-        }
+        fillGaps(inv);
         viewer.openInventory(inv);
     }
 
-    // ── Event handlers ─────────────────────────────────────────────
+    /**
+     * Redraws the view in the viewer's open inventory. Falls back to {@link #open(Player)} when the viewer
+     * is looking at something else.
+     *
+     * @param viewer the player whose view is redrawn
+     */
+    public void rerender(@NotNull Player viewer) {
+        Inventory top = viewer.getOpenInventory().getTopInventory();
+        if (top.getHolder() != holder()) {
+            open(viewer);
+            return;
+        }
+        top.clear();
+        render(top, viewer);
+        fillGaps(top);
+    }
+
+    /** @return whether the viewer still has this view open (for async callbacks). */
+    protected boolean isViewing(@NotNull Player viewer) {
+        return viewer.isOnline() && viewer.getOpenInventory().getTopInventory().getHolder() == holder();
+    }
+
+    private void fillGaps(@NotNull Inventory inv) {
+        for (int i = 0; i < inv.getSize(); i++) {
+            if (inv.getItem(i) == null) {
+                inv.setItem(i, filler());
+            }
+        }
+    }
 
     /**
-     * Handles inventory click events for this view.
+     * Routes clicks inside this view; every click is cancelled.
      *
      * @param event the inventory click event
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInventoryClick(@NotNull InventoryClickEvent event) {
         InventoryHolder owner = event.getInventory().getHolder();
-        if (owner == null || owner != holder()) return;
+        if (owner == null || owner != holder()) {
+            return;
+        }
         event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player viewer)) return;
         ItemStack clicked = event.getCurrentItem();
-        if (clicked == null || clicked.getType() == Material.AIR) return;
-        if (clicked.getType() == Material.BLACK_STAINED_GLASS_PANE) return;
-        // Close is handled centrally so every view gets it for free.
+        if (!(event.getWhoClicked() instanceof Player viewer) || !isContentItem(clicked)) {
+            return;
+        }
         if (TAG_CLOSE.equals(tagOf(clicked))) {
             viewer.closeInventory();
             return;
         }
         try {
-            onClick(viewer, event.getRawSlot(), clicked);
+            onClick(viewer, event.getRawSlot(), clicked, event.getClick());
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Bukkit.getLogger().log(Level.WARNING, ex, () -> "JExVote view click failed in " + getClass().getSimpleName());
         }
     }
 
+    private static boolean isContentItem(@Nullable ItemStack clicked) {
+        return clicked != null && clicked.getType() != Material.AIR
+                && clicked.getType() != Material.BLACK_STAINED_GLASS_PANE;
+    }
+
     /**
-     * Handles inventory drag events for this view.
+     * Cancels drags into this view.
      *
      * @param event the inventory drag event
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInventoryDrag(@NotNull InventoryDragEvent event) {
         InventoryHolder owner = event.getInventory().getHolder();
-        if (owner == null || owner != holder()) return;
-        event.setCancelled(true);
+        if (owner != null && owner == holder()) {
+            event.setCancelled(true);
+        }
     }
 
-    // ── I18n helpers ───────────────────────────────────────────────
-
-    /**
-     * Creates a message builder for the given translation key.
-     *
-     * @param key the translation key
-     * @return the message builder
-     */
     protected @NotNull MessageBuilder msg(@NotNull String key) {
-        return R18nManager.getInstance().msg(key);
+        return VoteCards.msg(key);
     }
 
-    /**
-     * Creates a non-italic component from a translation key for the specified
-     * player - ready to drop directly into item names or lore lines without
-     * inheriting Minecraft's default item-meta italic.
-     *
-     * <p>The italic-strip happens here (mirroring what {@link #ics(String, Player)}
-     * does for multi-line lore) so every name/lore line built via {@code ic()}
-     * stays in visual harmony with the rest of the GUI vocabulary.</p>
-     *
-     * @param key    the translation key
-     * @param viewer the player context (may be null)
-     * @return the translated, italic-stripped component
-     */
     protected @NotNull Component ic(@NotNull String key, @Nullable Player viewer) {
-        return msg(key).itemComponent(viewer).decoration(TextDecoration.ITALIC, false);
+        return VoteCards.ic(viewer, key);
     }
 
     /**
-     * Creates a list of components from a multi-line translation key.
+     * Operator hook: the optional {@code <baseKey>.lore_extra} list is shown as its own block at the end of
+     * a card. Missing or empty keys add nothing.
      *
-     * @param key    the translation key
-     * @param viewer the player context (may be null)
-     * @return the list of translated components
+     * @param lore    the card being built
+     * @param baseKey the card's base key
+     * @param viewer  the viewer
      */
-    protected @NotNull List<Component> ics(@NotNull String key, @Nullable Player viewer) {
-        return msg(key).toComponents(viewer).stream()
-                .map(c -> c.decoration(TextDecoration.ITALIC, false))
-                .toList();
-    }
-
-    /**
-     * Strips Minecraft's default item-meta italic from a single component.
-     * Use whenever a name/lore is built via a direct
-     * {@code msg(...).with(...).itemComponent(viewer)} chain instead of going
-     * through {@link #ic(String, Player)} - names with substituted placeholders
-     * cannot use {@code ic()} since it does not take the placeholder map.
-     *
-     * @param component the component to render plainly
-     * @return the same component with italic forced off
-     */
-    protected @NotNull Component plain(@NotNull Component component) {
-        return component.decoration(TextDecoration.ITALIC, false);
-    }
-
-    /**
-     * Strips Minecraft's default item-meta italic from each line in a
-     * placeholder-substituted lore list. Mirrors what {@link #ics(String, Player)}
-     * does for static keys.
-     *
-     * @param lore the lore components to render plainly
-     * @return a new list with italic forced off on every line
-     */
-    protected @NotNull List<Component> plain(@NotNull List<Component> lore) {
-        return lore.stream()
-                .map(c -> c.decoration(TextDecoration.ITALIC, false))
-                .toList();
-    }
-
-    /**
-     * Appends any lines from {@code <baseKey>.lore_extra} to {@code lore}, in
-     * place. Server owners can populate that list in the translation YAML to
-     * add their own bullet points to any tile (e.g. event hints, raffle CTAs)
-     * without code changes. When the key is missing or its list is empty this
-     * is a no-op, so it's safe to call unconditionally per tile.
-     *
-     * @param lore    the mutable lore list being assembled
-     * @param baseKey the tile's base i18n key (e.g. {@code "vote_overview.identity"})
-     * @param viewer  the viewing player (for placeholder resolution)
-     */
-    protected void appendLoreExtra(@NotNull List<Component> lore,
-                                   @NotNull String baseKey,
-                                   @Nullable Player viewer) {
-        List<Component> extras = ics(baseKey + ".lore_extra", viewer);
-        if (extras.isEmpty()) {
-            return;
-        }
-        // Filter out the literal placeholder pattern "{key}.lore_extra" that
-        // the translation framework returns when the key is missing entirely
-        // (defensive - JExTranslate behavior varies by version).
-        boolean placeholder = extras.size() == 1 &&
-                extras.get(0).toString().contains(".lore_extra");
-        if (!placeholder) {
-            lore.addAll(extras);
+    protected void appendLoreExtra(@NotNull CardLore lore, @NotNull String baseKey, @Nullable Player viewer) {
+        MessageBuilder extra = msg(baseKey + ".lore_extra");
+        if (extra.exists(viewer)) {
+            lore.block(extra.toComponents(viewer).stream()
+                    .map(line -> line.decoration(TextDecoration.ITALIC, false))
+                    .toList());
         }
     }
 
-    // ── Item helpers ───────────────────────────────────────────────
-
-    /**
-     * Creates a display name component from MiniMessage.
-     *
-     * @param mini the MiniMessage string
-     * @return the component with italics disabled
-     */
-    protected static @NotNull Component name(@NotNull String mini) {
-        return MM.deserialize(mini).decoration(TextDecoration.ITALIC, false);
-    }
-
-    /**
-     * Creates a lore component from MiniMessage.
-     *
-     * @param mini the MiniMessage string
-     * @return the component with italics disabled
-     */
-    protected static @NotNull Component lore(@NotNull String mini) {
-        return MM.deserialize(mini).decoration(TextDecoration.ITALIC, false);
-    }
-
-    protected @NotNull ItemStack item(@NotNull Material mat,
-                                      @NotNull Component itemName,
-                                      @NotNull Component... itemLore) {
-        ItemBuilder b = ItemBuilder.of(mat)
-                .name(itemName)
-                .flags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
-        if (itemLore.length > 0) b.lore(List.of(itemLore));
-        return b.build();
-    }
-
-    protected @NotNull ItemStack item(@NotNull Material mat,
-                                      @NotNull Component itemName,
-                                      @NotNull List<Component> itemLore) {
-        return ItemBuilder.of(mat)
-                .name(itemName)
-                .lore(itemLore)
-                .flags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS)
-                .build();
-    }
-
-    /**
-     * Creates a filler item (black stained glass pane).
-     *
-     * @return the filler ItemStack
-     */
     protected @NotNull ItemStack filler() {
         return ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE)
                 .name(Component.empty())
@@ -270,167 +193,125 @@ public abstract class VoteBaseView implements Listener {
     }
 
     /**
-     * Creates a back button with the {@value #TAG_BACK} tag (top-left nav slot).
+     * The back button (slot 0), a dark oak door with a one-line destination.
      *
-     * <p>Uses {@link Material#DARK_OAK_DOOR} as a "go through to the previous
-     * room" metaphor. The name and lore are read from the {@code gui.common.back}
-     * i18n keys so server owners can rename/translate without touching code.</p>
-     *
-     * @return the back button ItemStack
+     * @param viewer         the viewer
+     * @param descriptionKey key of the sentence naming where it leads
+     * @return the tagged back button
      */
-    protected @NotNull ItemStack backButton() {
-        ItemStack btn = ItemBuilder.of(Material.DARK_OAK_DOOR)
-                .name(ic("gui.common.back-name", null))
-                .lore(List.of(ic("gui.common.back-lore", null)))
-                .flags(ItemFlag.HIDE_ATTRIBUTES)
-                .build();
-        tag(btn, TAG_BACK);
-        return btn;
+    protected @NotNull ItemStack backButton(@Nullable Player viewer, @NotNull String descriptionKey) {
+        ItemStack button = VoteCards.card(Material.DARK_OAK_DOOR, ic(VoteCards.COMMON + "back.name", viewer),
+                CardLore.create().block(VoteCards.paragraphOf(viewer, descriptionKey)).build());
+        tag(button, TAG_BACK);
+        return button;
+    }
+
+    /** The close button (first slot of the last row). */
+    protected @NotNull ItemStack closeButton(@Nullable Player viewer) {
+        ItemStack button = VoteCards.card(Material.BARRIER, ic(VoteCards.COMMON + "close.name", viewer),
+                CardLore.create().block(VoteCards.paragraphOf(viewer, VoteCards.COMMON + "close.description")).build());
+        tag(button, TAG_CLOSE);
+        return button;
     }
 
     /**
-     * Creates a close button with the {@value #TAG_CLOSE} tag (bottom-left nav
-     * slot). Closing is routed centrally in {@link #onInventoryClick}.
+     * Places close and, when {@code backDescriptionKey} is set, the back button.
      *
-     * <p>Uses {@link Material#BARRIER} - the universal "close / exit" glyph
-     * players expect at the bottom-left of a menu (matches the rest of the
-     * suite's GUIs). Name/lore are read from the {@code gui.common.close} i18n
-     * keys.</p>
-     *
-     * @return the close button ItemStack
+     * @param inv                the inventory
+     * @param viewer             the viewer
+     * @param backDescriptionKey key naming the back destination, or {@code null} for a root view
      */
-    protected @NotNull ItemStack closeButton() {
-        ItemStack btn = ItemBuilder.of(Material.BARRIER)
-                .name(ic("gui.common.close-name", null))
-                .lore(List.of(ic("gui.common.close-lore", null)))
-                .flags(ItemFlag.HIDE_ATTRIBUTES)
-                .build();
-        tag(btn, TAG_CLOSE);
-        return btn;
-    }
-
-    /**
-     * Places the standard nav bar: back at the top-left (slot 0) and close at
-     * the bottom-left ({@code (rows-1)*9}). Mirrors JExOneblock's IslandView
-     * convention so every vote view aligns identically.
-     *
-     * @param inv      the inventory being rendered
-     * @param withBack {@code true} to place the back button (top-level views omit it)
-     */
-    protected void navBar(@NotNull Inventory inv, boolean withBack) {
-        int rows = inv.getSize() / 9;
-        if (withBack) {
-            inv.setItem(0, backButton());
+    protected void navBar(@NotNull Inventory inv, @Nullable Player viewer, @Nullable String backDescriptionKey) {
+        if (backDescriptionKey != null) {
+            inv.setItem(SLOT_BACK, backButton(viewer, backDescriptionKey));
         }
-        inv.setItem((rows - 1) * 9, closeButton());
+        inv.setItem((rows() - 1) * 9, closeButton(viewer));
     }
 
     /**
-     * Fills the 1-wide frame - column 0, column 8, the top row and the bottom
-     * row - with a single pane material, leaving the centered interior
-     * (cols 1–7 × the inner rows) free for content.
+     * Places the previous / next page arrows at 48 / 50 when there is a page in that direction.
      *
-     * @param inv the inventory to frame
-     * @param mat the pane material
+     * @param inv    the inventory
+     * @param viewer the viewer
+     * @param page   zero-based current page
+     * @param pages  total page count
      */
-    protected void frame(@NotNull Inventory inv, @NotNull Material mat) {
-        int rows = inv.getSize() / 9;
-        ItemStack pane = ItemBuilder.of(mat).name(Component.empty()).build();
-        for (int c = 0; c < 9; c++) {
-            inv.setItem(c, pane);
-            inv.setItem((rows - 1) * 9 + c, pane);
+    protected void pagination(@NotNull Inventory inv, @Nullable Player viewer, int page, int pages) {
+        if (page > 0) {
+            inv.setItem(SLOT_PAGE_PREV, pageButton(viewer, "previous", TAG_PAGE_PREV, page, pages));
         }
-        for (int r = 1; r < rows - 1; r++) {
-            inv.setItem(r * 9, pane);
-            inv.setItem(r * 9 + 8, pane);
+        if (page + 1 < pages) {
+            inv.setItem(SLOT_PAGE_NEXT, pageButton(viewer, "next", TAG_PAGE_NEXT, page + 2, pages));
         }
     }
 
-    /**
-     * Returns the centered interior slots for this view (rows 1..rows-2 ×
-     * columns 1..7), in reading order. Use these for content so the 1-wide
-     * frame stays clear.
-     *
-     * @return the centered body slot indices
-     */
-    protected int @NotNull [] bodySlots() {
-        int rows = rows();
-        int[] slots = new int[(rows - 2) * 7];
-        int idx = 0;
-        for (int r = 1; r <= rows - 2; r++) {
-            for (int c = 1; c <= 7; c++) {
-                slots[idx++] = r * 9 + c;
+    private @NotNull ItemStack pageButton(@Nullable Player viewer, @NotNull String direction, @NotNull String navTag,
+                                          int targetPage, int pages) {
+        String base = VoteCards.COMMON + "page." + direction;
+        ItemStack button = VoteCards.card(Material.ARROW, ic(base + ".name", viewer),
+                CardLore.create().block(List.of(VoteCards.ic(msg(base + ".lore")
+                        .with("page", targetPage).with("pages", pages), viewer))).build());
+        tag(button, navTag);
+        return button;
+    }
+
+    /** @return the 28 body slots (rows 1-4, columns 1-7) in reading order. */
+    protected static int @NotNull [] bodySlots() {
+        return BODY_SLOTS.clone();
+    }
+
+    /** @return how many cards fit on one body page. */
+    protected static int pageSize() {
+        return BODY_SLOTS.length;
+    }
+
+    /** @return the page count for {@code entries} body cards (at least one). */
+    protected static int pageCount(int entries) {
+        return Math.max(1, (entries + BODY_SLOTS.length - 1) / BODY_SLOTS.length);
+    }
+
+    /** @return {@code page} clamped into {@code [0, pages)}. */
+    protected static int clampPage(int page, int pages) {
+        return Math.clamp(page, 0, Math.max(0, pages - 1));
+    }
+
+    private static int @NotNull [] buildBodySlots() {
+        int[] slots = new int[28];
+        int index = 0;
+        for (int row = 1; row <= 4; row++) {
+            for (int column = 1; column <= 7; column++) {
+                slots[index++] = row * 9 + column;
             }
         }
         return slots;
     }
 
-    // ── Tag system ─────────────────────────────────────────────────
-
     /**
-     * Tags an ItemStack with a persistent string value for click routing.
+     * Tags an item for click routing.
      *
-     * @param stack the ItemStack to tag
-     * @param value the tag value
+     * @param stack the item
+     * @param value the tag
      */
     protected void tag(@NotNull ItemStack stack, @NotNull String value) {
         ItemMeta meta = stack.getItemMeta();
-        if (meta == null) return;
+        if (meta == null) {
+            return;
+        }
         meta.getPersistentDataContainer().set(SLOT_KEY, PersistentDataType.STRING, value);
         stack.setItemMeta(meta);
     }
 
     /**
-     * Retrieves the tag value from an ItemStack.
+     * Reads an item's routing tag.
      *
-     * @param stack the ItemStack to read from
-     * @return the tag value, or null if not tagged
+     * @param stack the item
+     * @return the tag, or {@code null}
      */
     protected @Nullable String tagOf(@NotNull ItemStack stack) {
         ItemMeta meta = stack.getItemMeta();
-        if (meta == null) return null;
+        if (meta == null) {
+            return null;
+        }
         return meta.getPersistentDataContainer().get(SLOT_KEY, PersistentDataType.STRING);
-    }
-
-    // ── Shared helpers ─────────────────────────────────────────────
-
-    /**
-     * Creates a visual progress bar using MiniMessage.
-     *
-     * @param current the current progress value
-     * @param target  the target value
-     * @param bars    the total number of bar segments
-     * @return the MiniMessage string for the progress bar
-     */
-    protected static @NotNull String progressBar(int current, int target, int bars) {
-        int filled = target > 0 ? Math.min(bars, (int) ((double) current / target * bars)) : 0;
-        // Solid block glyphs (▰/▱) read cleaner than the old `[ |||||  ]`
-        // pipe-and-bracket bar. Filled segments share one gradient run so the
-        // colour interpolates smoothly across the whole bar; unfilled segments
-        // are faint dark-gray. No brackets - the contiguous block is its own
-        // visual frame.
-        var sb = new StringBuilder();
-        if (filled > 0) {
-            sb.append("<gradient:#86EFAC:#22C55E:#16A34A>");
-            sb.append("▰".repeat(filled));
-            sb.append("</gradient>");
-        }
-        int empty = bars - filled;
-        if (empty > 0) {
-            sb.append("<dark_gray>");
-            sb.append("▱".repeat(empty));
-            sb.append("</dark_gray>");
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Returns the plural suffix for a number (English).
-     *
-     * @param n the number
-     * @return "s" if n != 1, otherwise empty string
-     */
-    protected static @NotNull String plural(int n) {
-        return n != 1 ? "s" : "";
     }
 }

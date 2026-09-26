@@ -1,10 +1,11 @@
 package de.jexcellence.vote.view;
 
+import de.jexcellence.jexplatform.gui.component.CardLore;
+import de.jexcellence.jexplatform.gui.component.FilterHopperButton;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
-import de.jexcellence.jexplatform.utility.item.ItemBuilder;
 import de.jexcellence.jexplatform.view.RewardViewHelper;
-import de.jexcellence.vote.gui.style.VoteRarityStyle;
+import de.jexcellence.vote.gui.style.VoteFormat;
 import de.jexcellence.vote.service.StreakClaimService;
 import de.jexcellence.vote.service.VoteRewardService;
 import de.jexcellence.vote.service.VoteService;
@@ -12,72 +13,56 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
-import java.util.WeakHashMap;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Streak milestone view showing current streak progress, reward-track
- * with actual reward icons, and claim-to-collect mechanics.
- * <p>
- * Two display modes:
- * <ul>
- *   <li><b>Track view</b> - milestone grid with reward icons and status</li>
- *   <li><b>Detail view</b> - expanded reward list for a single milestone with claim button</li>
- * </ul>
+ * Streak milestones. The track shows the streak header, the shared filter and one card per milestone; a
+ * ready milestone is claimed with a left-click, any milestone opens its detail page with a right-click (or a
+ * click when there is nothing to claim). The detail page lists every reward of that day with the claim card.
+ *
+ * @author JExcellence
  */
 public class VoteStreakView extends VoteBaseView {
 
-    private static final String TAG_PREFIX_MILESTONE = "milestone:";
-    private static final String TAG_PREFIX_CLAIM = "claim:";
+    private static final String KEY = "vote_streak.";
+    private static final String LABEL = VoteCards.COMMON + "label.";
+    private static final String TAG_MILESTONE = "milestone:";
+    private static final String TAG_CLAIM = "claim:";
     private static final String TAG_DETAIL_BACK = "detail-back";
-    private static final String TAG_PAGE_PREV = "streak-page-prev";
-    private static final String TAG_PAGE_NEXT = "streak-page-next";
+    private static final String PARAM_DAY = "day";
+    private static final String PARAM_VALUE = "value";
+    private static final String[] FILTERS = {"all", "claimable", "reached", "locked"};
+    private static final int SLOT_CLAIM = 49;
+    private static final int MAX_STACK = 64;
 
-    // String constants for i18n keys
-    private static final String I18N_DAY_LABEL = "vote_streak.day_label";
-    private static final String I18N_DAYS_LABEL = "vote_streak.days_label";
-    private static final String I18N_COUNT = "count";
-
-    // Gradient constants
-    private static final String GRADIENT_CLAIMED = "<gradient:#86efac:#16a34a>";
-    private static final String GRADIENT_CLAIMABLE = "<gradient:#fde047:#f59e0b>";
-
-    /**
-     * Milestones render on ONE centered interior row (slots 28..34, 7 columns)
-     * and PAGINATE rather than spilling into a cramped second row. Prev/next
-     * buttons sit on the bottom bar (slots 48/50) with a page indicator at 49.
-     */
-    private static final int GRID_ROW_BASE = 28;
-    private static final int GRID_ROW_COLS = 7;
-    private static final int PER_PAGE = GRID_ROW_COLS;
-    private static final int SLOT_PAGE_PREV = 48;
-    private static final int SLOT_PAGE_INFO = 49;
-    private static final int SLOT_PAGE_NEXT = 50;
+    /** Where a milestone stands for one player. */
+    private enum MilestoneState { CLAIMED, CLAIMABLE, REACHED, NEXT, LOCKED }
 
     private final Holder holder = new Holder();
     private final VoteService voteService;
     private final VoteRewardService rewardService;
     private final StreakClaimService claimService;
     private final PlatformScheduler scheduler;
+    private final FilterHopperButton stateFilter = new FilterHopperButton("vote-streak-state", FILTERS.length);
+    private final Map<UUID, ViewerState> stateByViewer = new ConcurrentHashMap<>();
 
-    private VoteOverviewView overviewView;
-
-    private final Map<UUID, ViewerState> stateByViewer =
-            Collections.synchronizedMap(new WeakHashMap<>());
+    private @Nullable VoteOverviewView overviewView;
 
     public VoteStreakView(@NotNull JavaPlugin plugin,
                           @NotNull VoteService voteService,
@@ -89,596 +74,373 @@ public class VoteStreakView extends VoteBaseView {
         this.scheduler = PlatformScheduler.of(plugin);
     }
 
-    public void setOverviewView(@NotNull VoteOverviewView view) { this.overviewView = view; }
+    public void setOverviewView(@NotNull VoteOverviewView view) {
+        this.overviewView = view;
+    }
 
-    @Override protected @NotNull String title()           { return "vote_streak.title"; }
-    @Override protected int rows()                         { return 6; }
-    @Override protected @NotNull InventoryHolder holder()  { return holder; }
+    @Override protected @NotNull String title() { return KEY + "title"; }
+    @Override protected int rows() { return 6; }
+    @Override protected @NotNull InventoryHolder holder() { return holder; }
 
-    // ── Lifecycle ──────────────────────────────────────────────────
+    /**
+     * The next milestone above the best streak, used by the vote menu header.
+     *
+     * @param highest the player's best streak
+     * @return the milestone day, or {@code 0} when every milestone is reached
+     */
+    public int nextMilestone(int highest) {
+        for (int day : milestones().keySet()) {
+            if (day > highest) {
+                return day;
+            }
+        }
+        return 0;
+    }
+
+    private @NotNull Map<Integer, List<AbstractReward>> milestones() {
+        return new TreeMap<>(rewardService.getStreakRewards());
+    }
+
+    /** Opens the milestone track with freshly loaded streak data. */
+    @Override
+    public void open(@NotNull Player viewer) {
+        ViewerState state = new ViewerState();
+        stateByViewer.put(viewer.getUniqueId(), state);
+        super.open(viewer);
+        load(viewer, state);
+    }
+
+    private void load(@NotNull Player viewer, @NotNull ViewerState state) {
+        UUID uuid = viewer.getUniqueId();
+        voteService.getPlayerStats(uuid).thenCombine(claimService.getClaimedDays(uuid), (stats, claimed) -> {
+            scheduler.runAtEntity(viewer, () -> {
+                state.current = stats.currentStreak();
+                state.highest = stats.highestStreak();
+                state.claimedDays = new HashSet<>(claimed);
+                state.loaded = true;
+                if (isViewing(viewer)) {
+                    rerender(viewer);
+                }
+            });
+            return null;
+        });
+    }
 
     @Override
     protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
-        ViewerState state = stateByViewer.computeIfAbsent(
-                viewer.getUniqueId(), k -> new ViewerState());
-
-        if (state.detailMilestone > 0) {
+        ViewerState state = stateByViewer.computeIfAbsent(viewer.getUniqueId(), uuid -> new ViewerState());
+        if (state.detailDay > 0 && state.loaded) {
             renderDetail(inv, viewer, state);
         } else {
             renderTrack(inv, viewer, state);
         }
     }
 
-    @Override
-    protected void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked) {
-        String id = tagOf(clicked);
-        if (id == null) return;
+    // ── Track ─────────────────────────────────────────────────────────
 
-        ViewerState state = stateByViewer.computeIfAbsent(
-                viewer.getUniqueId(), k -> new ViewerState());
-
-        if ("back".equals(id)) {
-            stateByViewer.remove(viewer.getUniqueId());
-            if (overviewView != null) overviewView.open(viewer);
+    private void renderTrack(@NotNull Inventory inv, @NotNull Player viewer, @NotNull ViewerState state) {
+        navBar(inv, viewer, overviewView == null ? null : KEY + "back");
+        Map<Integer, List<AbstractReward>> milestones = milestones();
+        inv.setItem(SLOT_HEADER, header(viewer, state, milestones));
+        if (!state.loaded) {
+            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.CLOCK, KEY + "pending"));
             return;
         }
-
-        if (TAG_DETAIL_BACK.equals(id)) {
-            state.detailMilestone = 0;
-            open(viewer);
-            return;
-        }
-
-        if (TAG_PAGE_PREV.equals(id)) {
-            state.page = Math.max(0, state.page - 1);
-            open(viewer);
-            return;
-        }
-
-        if (TAG_PAGE_NEXT.equals(id)) {
-            state.page++;
-            open(viewer);
-            return;
-        }
-
-        if (id.startsWith(TAG_PREFIX_MILESTONE)) {
-            int day = parseDay(id, TAG_PREFIX_MILESTONE);
-            if (day > 0) {
-                state.detailMilestone = day;
-                open(viewer);
-            }
-            return;
-        }
-
-        if (id.startsWith(TAG_PREFIX_CLAIM)) {
-            int day = parseDay(id, TAG_PREFIX_CLAIM);
-            if (day > 0) {
-                handleClaim(viewer, day, state);
-            }
-        }
-    }
-
-    // ── Track view ─────────────────────────────────────────────────
-
-    private void renderTrack(@NotNull Inventory inv, @NotNull Player viewer,
-                              @NotNull ViewerState state) {
-        // 1-wide frame; header, info row and milestone grid sit in the interior
-        frame(inv, Material.ORANGE_STAINED_GLASS_PANE);
-        inv.setItem(4, ItemBuilder.of(Material.MAGMA_CREAM)
-                .name(ic("vote_streak.header.name", viewer))
-                .glow(true)
-                .lore(ics("vote_streak.header.lore", viewer))
-                .build());
-
-        // Row 1: Info placeholders (loading)
-        inv.setItem(11, ItemBuilder.of(Material.BLAZE_POWDER)
-                .name(ic("vote_streak.your_streak.name", viewer))
-                .lore(List.of(Component.empty(), ic("vote_streak.loading", viewer), Component.empty()))
-                .build());
-        inv.setItem(13, ItemBuilder.of(Material.BOOK)
-                .name(ic("vote_streak.how_it_works.name", viewer))
-                .lore(ics("vote_streak.how_it_works.lore", viewer))
-                .build());
-        inv.setItem(15, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
-                .name(ic("vote_streak.progress.name", viewer))
-                .lore(List.of(Component.empty(), ic("vote_streak.loading", viewer), Component.empty()))
-                .build());
-
-        // Row 5: Bottom bar (back top-left, close bottom-left)
-        navBar(inv, true);
-
-        // Async: load stats + claimed days
-        UUID uuid = viewer.getUniqueId();
-        CompletableFuture<Set<Integer>> claimsFuture = claimService.getClaimedDays(uuid);
-
-        voteService.getPlayerStats(uuid).thenCombine(claimsFuture, (stats, claimed) -> {
-            state.claimedDays = claimed;
-            scheduler.runAtEntity(viewer, () -> {
-                Inventory top = viewer.getOpenInventory().getTopInventory();
-                if (top.getHolder() != holder) return;
-
-                int streak = stats.currentStreak();
-                int highest = stats.highestStreak();
-                state.highestStreak = highest;
-
-                Map<Integer, List<AbstractReward>> milestones =
-                        new TreeMap<>(rewardService.getStreakRewards());
-                int nextMs = findNextMilestone(highest, milestones);
-                boolean manualMode = rewardService.isManualStreakClaim();
-
-                renderStreakInfo(top, viewer, streak, highest);
-                renderRewardsSummary(top, viewer, highest, milestones, claimed, manualMode);
-                renderProgress(top, viewer, streak, nextMs);
-                MilestoneContext ctx = new MilestoneContext(highest, nextMs, milestones, claimed, manualMode);
-                renderMilestoneGrid(top, viewer, ctx, state);
-            });
-            return null;
-        });
-    }
-
-    // ── Detail view ────────────────────────────────────────────────
-
-    private void renderDetail(@NotNull Inventory inv, @NotNull Player viewer,
-                               @NotNull ViewerState state) {
-        int day = state.detailMilestone;
-        List<AbstractReward> rewards = rewardService.getStreakRewards().get(day);
-        if (rewards == null) rewards = List.of();
-
-        boolean manualMode = rewardService.isManualStreakClaim();
-        boolean reached = state.highestStreak >= day;
-        boolean claimed = state.claimedDays.contains(day);
-        boolean claimable = manualMode && reached && !claimed;
-
-        // 1-wide frame; header + reward tiles sit in the interior
-        frame(inv, Material.ORANGE_STAINED_GLASS_PANE);
-        String statusGradient = resolveStatusGradient(claimed, claimable, reached);
-        String statusLabel = resolveStatusLabel(viewer, claimed, claimable, reached);
-
-        inv.setItem(4, ItemBuilder.of(Material.MAGMA_CREAM)
-                .name(msg("vote_streak.detail.header")
-                        .with("day", day)
-                        .with("status_gradient", statusGradient)
-                        .with("status", statusLabel)
-                        .itemComponent(viewer))
-                .glow(claimable || claimed)
-                .lore(List.of(
-                        Component.empty(),
-                        msg("vote_streak.detail.subtitle").with("day", day).itemComponent(viewer),
-                        Component.empty()))
-                .build());
-
-        // Rows 2-3: Reward tiles
-        List<AbstractReward> flatRewards = rewards.stream()
-                .flatMap(r -> RewardViewHelper.flatten(r).stream())
+        int filter = stateFilter.index(viewer.getUniqueId());
+        inv.setItem(SLOT_FILTER, filterButton(viewer, filter));
+        List<Integer> days = milestones.keySet().stream()
+                .filter(day -> matches(filter, stateOf(day, state)))
                 .toList();
+        if (days.isEmpty()) {
+            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.PAPER,
+                    milestones.isEmpty() ? KEY + "empty" : KEY + "none-in-filter"));
+            return;
+        }
+        int pages = pageCount(days.size());
+        state.page = clampPage(state.page, pages);
+        int[] slots = bodySlots();
+        int from = state.page * pageSize();
+        for (int i = 0; i < slots.length && from + i < days.size(); i++) {
+            int day = days.get(from + i);
+            inv.setItem(slots[i], milestoneCard(viewer, day, milestones.get(day), state, true));
+        }
+        pagination(inv, viewer, state.page, pages);
+    }
 
-        int[] rewardSlots = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
-        for (int i = 0; i < rewardSlots.length; i++) {
-            if (i < flatRewards.size()) {
-                inv.setItem(rewardSlots[i], buildRewardTile(flatRewards.get(i)));
+    private static boolean matches(int filter, @NotNull MilestoneState state) {
+        return switch (FILTERS[filter]) {
+            case "claimable" -> state == MilestoneState.CLAIMABLE;
+            case "reached" -> state == MilestoneState.CLAIMED || state == MilestoneState.REACHED;
+            case "locked" -> state == MilestoneState.NEXT || state == MilestoneState.LOCKED;
+            default -> true;
+        };
+    }
+
+    private @NotNull ItemStack filterButton(@NotNull Player viewer, int active) {
+        List<String> labels = new ArrayList<>(FILTERS.length);
+        for (String filter : FILTERS) {
+            labels.add(VoteCards.text(viewer, KEY + "filter." + filter));
+        }
+        ItemStack button = VoteCards.filter(viewer, labels, active);
+        tag(button, FilterHopperButton.TAG);
+        return button;
+    }
+
+    private @NotNull ItemStack header(@NotNull Player viewer, @NotNull ViewerState state,
+                                      @NotNull Map<Integer, List<AbstractReward>> milestones) {
+        CardLore lore = CardLore.create().block(VoteCards.paragraphOf(viewer, KEY + "header.description"));
+        String streakValue = state.loaded ? VoteFormat.days(viewer, state.current) : VoteCards.text(viewer,
+                VoteCards.COMMON + "value.loading");
+        if (state.loaded) {
+            lore.section(VoteCards.section(viewer, "now"), nowRows(viewer, state))
+                    .section(VoteCards.section(viewer, "milestones"), milestoneRows(viewer, state, milestones));
+        }
+        appendLoreExtra(lore, KEY + "header", viewer);
+        return VoteCards.card(Material.BLAZE_POWDER, VoteCards.ic(VoteCards.msg(KEY + "header.name")
+                .with(PARAM_VALUE, streakValue), viewer), lore.build());
+    }
+
+    private @NotNull List<Component> nowRows(@NotNull Player viewer, @NotNull ViewerState state) {
+        List<Component> rows = new ArrayList<>();
+        rows.add(VoteCards.rowOf(viewer, LABEL + "streak", VoteCards.days(viewer, state.current)));
+        rows.add(VoteCards.rowOf(viewer, LABEL + "best-streak", VoteCards.days(viewer, state.highest)));
+        int next = nextMilestone(state.highest);
+        if (next > 0) {
+            rows.add(VoteCards.bar(viewer, state.current, next));
+            rows.add(VoteCards.rowOf(viewer, LABEL + "next-milestone", VoteCards.value(viewer,
+                    VoteCards.msg(VoteCards.COMMON + "value.day").with(PARAM_VALUE, next).text(viewer))));
+        }
+        return rows;
+    }
+
+    private @NotNull List<Component> milestoneRows(@NotNull Player viewer, @NotNull ViewerState state,
+                                                   @NotNull Map<Integer, List<AbstractReward>> milestones) {
+        long reached = milestones.keySet().stream().filter(day -> state.highest >= day).count();
+        List<Component> rows = new ArrayList<>();
+        rows.add(VoteCards.rowOf(viewer, LABEL + "reached", VoteCards.ofTotal(viewer, reached, milestones.size())));
+        if (rewardService.isManualStreakClaim()) {
+            long claimable = milestones.keySet().stream()
+                    .filter(day -> stateOf(day, state) == MilestoneState.CLAIMABLE).count();
+            rows.add(VoteCards.rowOf(viewer, LABEL + "ready-to-claim", claimable > 0
+                    ? VoteCards.tone(viewer, "accent", VoteFormat.number(viewer, claimable))
+                    : VoteCards.number(viewer, 0)));
+        }
+        return rows;
+    }
+
+    // ── Milestone card ────────────────────────────────────────────────
+
+    private @NotNull MilestoneState stateOf(int day, @NotNull ViewerState state) {
+        boolean reached = state.highest >= day;
+        if (state.claimedDays.contains(day)) {
+            return MilestoneState.CLAIMED;
+        }
+        if (reached) {
+            return rewardService.isManualStreakClaim() ? MilestoneState.CLAIMABLE : MilestoneState.REACHED;
+        }
+        return day == nextMilestone(state.highest) ? MilestoneState.NEXT : MilestoneState.LOCKED;
+    }
+
+    private @NotNull ItemStack milestoneCard(@NotNull Player viewer, int day, @NotNull List<AbstractReward> rewards,
+                                             @NotNull ViewerState state, boolean onTrack) {
+        MilestoneState milestone = stateOf(day, state);
+        List<Component> rewardRows = new ArrayList<>();
+        for (AbstractReward atomic : flatten(rewards)) {
+            rewardRows.add(VoteCards.reward(viewer, VoteRewardDescriber.describe(atomic, viewer)));
+        }
+        CardLore lore = CardLore.create()
+                .block(VoteCards.paragraph(viewer, VoteCards.msg(KEY + "milestone.description")
+                        .with(PARAM_DAY, day).text(viewer)))
+                .section(VoteCards.section(viewer, "rewards"), rewardRows);
+        if (milestone == MilestoneState.NEXT || milestone == MilestoneState.LOCKED) {
+            List<Component> progress = new ArrayList<>();
+            if (milestone == MilestoneState.NEXT) {
+                progress.add(VoteCards.bar(viewer, state.current, day));
             }
+            progress.add(VoteCards.rowOf(viewer, LABEL + "streak", VoteCards.ofTotal(viewer, state.current, day)));
+            lore.section(VoteCards.section(viewer, "progress"), progress);
         }
-
-        // Row 5: Navigation
-        ItemStack backBtn = ItemBuilder.of(Material.ARROW)
-                .name(ic("vote_streak.detail.back_button", viewer))
-                .build();
-        tag(backBtn, TAG_DETAIL_BACK);
-        inv.setItem(0, backBtn);
-        inv.setItem(45, closeButton());
-
-        if (claimable) {
-            ItemStack claimBtn = ItemBuilder.of(Material.LIME_DYE)
-                    .name(ic("vote_streak.detail.claim_button.name", viewer))
-                    .glow(true)
-                    .lore(ics("vote_streak.detail.claim_button.lore", viewer, day))
-                    .build();
-            tag(claimBtn, TAG_PREFIX_CLAIM + day);
-            inv.setItem(49, claimBtn);
-        } else if (claimed) {
-            inv.setItem(49, ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
-                    .name(ic("vote_streak.detail.already_claimed.name", viewer))
-                    .lore(ics("vote_streak.detail.already_claimed.lore", viewer))
-                    .build());
-        } else {
-            int remaining = day - state.highestStreak;
-            String daysLabel = remaining == 1
-                    ? msg(I18N_DAY_LABEL).text(viewer)
-                    : msg(I18N_DAYS_LABEL).text(viewer);
-            // GRAY_DYE for locked, per the V-06 convention ("locked but visible
-            // tier" reads better than the harsh red-pane "error" tone).
-            inv.setItem(49, ItemBuilder.of(Material.GRAY_DYE)
-                    .name(ic("vote_streak.detail.locked_status.name", viewer))
-                    .lore(icsLocked("vote_streak.detail.locked_status.lore", viewer, day, remaining, daysLabel))
-                    .build());
+        lore.block(stateLines(viewer, day, milestone, state, onTrack));
+        Component name = VoteCards.ic(VoteCards.msg(KEY + "milestone.name-" + stateKey(milestone))
+                .with(PARAM_DAY, day), viewer);
+        Material icon = milestone == MilestoneState.LOCKED ? Material.RED_DYE : primaryIcon(rewards);
+        ItemStack card = VoteCards.card(icon, name, lore.build());
+        card.setAmount(Math.clamp(day, 1, MAX_STACK));
+        if (milestone == MilestoneState.CLAIMABLE) {
+            VoteCards.glint(card);
         }
-    }
-
-    // ── Claim handling ─────────────────────────────────────────────
-
-    private void handleClaim(@NotNull Player viewer, int day, @NotNull ViewerState state) {
-        claimService.claimMilestone(viewer, day).thenAccept(result ->
-            scheduler.runAtEntity(viewer, () -> {
-                switch (result) {
-                    case SUCCESS -> {
-                        state.claimedDays = new HashSet<>(state.claimedDays);
-                        state.claimedDays.add(day);
-                        viewer.playSound(viewer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
-                        msg("vote_streak.claim.success").with("day", day).send(viewer);
-                        open(viewer);
-                    }
-                    case ALREADY_CLAIMED -> msg("vote_streak.claim.already_claimed").send(viewer);
-                    case NOT_REACHED -> msg("vote_streak.claim.not_reached").send(viewer);
-                    default -> msg("vote_streak.claim.failed").send(viewer);
-                }
-            })
-        );
-    }
-
-    // ── Track render helpers ───────────────────────────────────────
-
-    private void renderStreakInfo(@NotNull Inventory inv, @NotNull Player viewer,
-                                  int streak, int highest) {
-        String currentLabel = streak == 1
-                ? msg(I18N_DAY_LABEL).text(viewer)
-                : msg(I18N_DAYS_LABEL).text(viewer);
-        String highestLabel = highest == 1
-                ? msg(I18N_DAY_LABEL).text(viewer)
-                : msg(I18N_DAYS_LABEL).text(viewer);
-
-        inv.setItem(11, ItemBuilder.of(Material.BLAZE_POWDER)
-                .name(ic("vote_streak.your_streak.name", viewer))
-                .glow(streak >= 7)
-                .lore(ics("vote_streak.your_streak.lore", viewer,
-                        streak, highest, currentLabel, highestLabel))
-                .build());
-    }
-
-    private void renderRewardsSummary(@NotNull Inventory inv, @NotNull Player viewer,
-                                       int highest,
-                                       @NotNull Map<Integer, List<AbstractReward>> milestones,
-                                       @NotNull Set<Integer> claimed, boolean manualMode) {
-        int unlocked = countReached(highest, milestones);
-        int claimedCount = (int) milestones.keySet().stream().filter(claimed::contains).count();
-        int claimable = manualMode ? unlocked - claimedCount : 0;
-        int locked = milestones.size() - unlocked;
-
-        List<Component> summaryLore = new ArrayList<>();
-        summaryLore.add(Component.empty());
-        summaryLore.add(msg("vote_streak.milestones_label").with(I18N_COUNT, milestones.size()).itemComponent(viewer));
-        summaryLore.add(msg("vote_streak.unlocked_label").with(I18N_COUNT, unlocked).itemComponent(viewer));
-        if (manualMode && claimable > 0) {
-            summaryLore.add(msg("vote_streak.claimable_label").with(I18N_COUNT, claimable).itemComponent(viewer));
+        if (onTrack) {
+            tag(card, TAG_MILESTONE + day);
         }
-        summaryLore.add(msg("vote_streak.remaining_label").with(I18N_COUNT, locked).itemComponent(viewer));
-        summaryLore.add(Component.empty());
-
-        inv.setItem(13, ItemBuilder.of(Material.CHEST)
-                .name(ic("vote_streak.rewards_summary.name", viewer))
-                .lore(summaryLore)
-                .build());
+        return card;
     }
 
-    private void renderProgress(@NotNull Inventory inv, @NotNull Player viewer,
-                                 int streak, int nextMs) {
-        String bar = progressBar(streak, nextMs, 20);
-        inv.setItem(15, ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
-                .name(ic("vote_streak.progress.name", viewer))
-                .lore(ics("vote_streak.progress.lore", viewer, streak, nextMs, bar))
-                .build());
-    }
-
-    private record MilestoneContext(int highest, int nextMs,
-                                       @NotNull Map<Integer, List<AbstractReward>> milestones,
-                                       @NotNull Set<Integer> claimed, boolean manualMode) {}
-
-    private void renderMilestoneGrid(@NotNull Inventory inv, @NotNull Player viewer,
-                                      @NotNull MilestoneContext ctx,
-                                      @NotNull ViewerState state) {
-        List<Integer> days = new ArrayList<>(ctx.milestones().keySet());
-        Collections.sort(days);
-        int totalTiers = days.size();
-        int pages = Math.max(1, (totalTiers + PER_PAGE - 1) / PER_PAGE);
-
-        state.page = Math.max(0, Math.min(state.page, pages - 1));
-
-        int from = state.page * PER_PAGE;
-        int to = Math.min(from + PER_PAGE, totalTiers);
-        int count = to - from;
-        int start = GRID_ROW_BASE + (GRID_ROW_COLS - count) / 2;
-
-        for (int i = 0; i < count; i++) {
-            int slot = start + i;
-            if (slot < 0 || slot >= inv.getSize()) {
-                continue;
-            }
-            int globalIndex = from + i;
-            int day = days.get(globalIndex);
-            inv.setItem(slot, buildMilestoneItem(
-                    day, ctx.milestones().get(day), viewer, ctx, globalIndex, totalTiers));
+    private @NotNull List<Component> stateLines(@NotNull Player viewer, int day, @NotNull MilestoneState milestone,
+                                                @NotNull ViewerState state, boolean onTrack) {
+        List<Component> lines = new ArrayList<>();
+        String remaining = VoteFormat.days(viewer, Math.max(0, day - state.current));
+        lines.add(VoteCards.ic(VoteCards.msg(KEY + "milestone.state-" + stateKey(milestone))
+                .with(PARAM_VALUE, remaining), viewer));
+        if (onTrack) {
+            String actionKey = milestone == MilestoneState.CLAIMABLE ? "milestone.action-claim" : "milestone.action-details";
+            lines.add(VoteCards.ic(viewer, KEY + actionKey));
         }
-
-        renderPager(inv, viewer, state.page, pages);
+        return lines;
     }
 
-    /** Prev/next arrows + a page indicator on the bottom bar; arrows only when needed. */
-    private void renderPager(@NotNull Inventory inv, @NotNull Player viewer, int page, int pages) {
-        if (page > 0) {
-            ItemStack prev = ItemBuilder.of(Material.ARROW)
-                    .name(ic("vote_streak.pager.prev", viewer))
-                    .build();
-            tag(prev, TAG_PAGE_PREV);
-            inv.setItem(SLOT_PAGE_PREV, prev);
-        }
-        if (page < pages - 1) {
-            ItemStack next = ItemBuilder.of(Material.ARROW)
-                    .name(ic("vote_streak.pager.next", viewer))
-                    .build();
-            tag(next, TAG_PAGE_NEXT);
-            inv.setItem(SLOT_PAGE_NEXT, next);
-        }
-        if (pages > 1) {
-            inv.setItem(SLOT_PAGE_INFO, ItemBuilder.of(Material.PAPER)
-                    .name(msg("vote_streak.pager.info")
-                            .with("page", page + 1)
-                            .with("pages", pages)
-                            .itemComponent(viewer))
-                    .build());
-        }
+    private static @NotNull String stateKey(@NotNull MilestoneState state) {
+        return state.name().toLowerCase(Locale.ROOT);
     }
 
-    private @NotNull ItemStack buildMilestoneItem(int day, @NotNull List<AbstractReward> rewards,
-                                                    @NotNull Player viewer,
-                                                    @NotNull MilestoneContext ctx,
-                                                    int tierIndex, int totalTiers) {
-        boolean reached = ctx.highest() >= day;
-        boolean isClaimed = ctx.claimed().contains(day);
-        boolean claimable = ctx.manualMode() && reached && !isClaimed;
-        boolean isNext = !reached && day == ctx.nextMs();
-
-        Material mat = resolvePrimaryRewardMaterial(rewards, reached || isNext);
-        String gradient = resolveGradient(isClaimed, claimable, reached, ctx.manualMode(), isNext);
-
-        // Build lore
-        List<Component> itemLore = new ArrayList<>();
-        itemLore.add(Component.empty());
-        itemLore.add(resolveMilestoneStatus(viewer, isClaimed, claimable, reached, ctx.manualMode(), isNext));
-
-        // Rarity badge - only on locked tiers so the player can read at a
-        // glance how prestigious the locked one is. Reached/claimable tiles
-        // already communicate that with their bright gradient + glow.
-        if (!reached && !isNext) {
-            VoteRarityStyle rarity = tierRarity(tierIndex, totalTiers);
-            itemLore.add(lore("<dark_gray>┃ <gray>Rarity: " + rarity.display(rarity.name())));
-        }
-
-        if (!reached) {
-            int remaining = day - ctx.highest();
-            String daysLabel = remaining == 1
-                    ? msg(I18N_DAY_LABEL).text(viewer)
-                    : msg(I18N_DAYS_LABEL).text(viewer);
-            itemLore.add(msg("vote_streak.days_to_go")
-                    .with("remaining", remaining)
-                    .with("label", daysLabel)
-                    .itemComponent(viewer));
-        }
-
-        itemLore.add(Component.empty());
-        itemLore.add(ic("vote_streak.rewards_header", viewer));
-
-        for (AbstractReward reward : rewards) {
-            List<AbstractReward> flat = RewardViewHelper.flatten(reward);
-            for (AbstractReward atomic : flat) {
-                itemLore.add(lore("<dark_gray>┃ " + VoteRewardDescriber.describe(atomic)));
-            }
-        }
-        itemLore.add(Component.empty());
-
-        String milestoneName = msg("vote_streak.milestone.name")
-                .with("day", day)
-                .text(viewer);
-        Component nameComponent = MM.deserialize(gradient + milestoneName);
-
-        ItemStack item = ItemBuilder.of(mat)
-                .name(nameComponent)
-                .glow(claimable || isNext)
-                .lore(itemLore)
-                .amount(Math.min(day, 64))
-                .build();
-
-        // Tag for click routing
-        if (claimable || reached || isNext) {
-            tag(item, TAG_PREFIX_MILESTONE + day);
-        }
-
-        return item;
+    private static @NotNull List<AbstractReward> flatten(@NotNull List<AbstractReward> rewards) {
+        return rewards.stream().flatMap(reward -> RewardViewHelper.flatten(reward).stream()).toList();
     }
 
-    // ── Reward tile for detail view ────────────────────────────────
-
-    private @NotNull ItemStack buildRewardTile(@NotNull AbstractReward reward) {
-        RewardViewHelper.ViewEntry entry = RewardViewHelper.toViewEntry(reward);
-        // The description now spells out the actual grant (item / currency / crate key /
-        // fly coupon / radius …), so the tile no longer needs a redundant "Type: Command" line.
-        String description = VoteRewardDescriber.describe(reward);
-        return ItemBuilder.of(entry.icon())
-                .name(name(description))
-                .build();
-    }
-
-    // ── Status resolution helpers ──────────────────────────────────
-
-    private @NotNull String resolveGradient(boolean claimed, boolean claimable,
-                                             boolean reached, boolean manualMode,
-                                             boolean isNext) {
-        if (claimed) return GRADIENT_CLAIMED;
-        if (claimable) return GRADIENT_CLAIMABLE;
-        if (reached && !manualMode) return GRADIENT_CLAIMED;
-        if (isNext) return GRADIENT_CLAIMABLE;
-        return "<gradient:#fca5a5:#dc2626>";
-    }
-
-    private @NotNull Component resolveMilestoneStatus(@NotNull Player viewer,
-                                                       boolean claimed, boolean claimable,
-                                                       boolean reached, boolean manualMode,
-                                                       boolean isNext) {
-        if (claimed) return ic("vote_streak.milestone.claimed.status", viewer);
-        if (claimable) return ic("vote_streak.milestone.claimable.status", viewer);
-        if (reached && !manualMode) return ic("vote_streak.milestone.unlocked.status", viewer);
-        if (isNext) return ic("vote_streak.milestone.next.status", viewer);
-        return ic("vote_streak.milestone.locked.status", viewer);
-    }
-
-    private @NotNull String resolveStatusGradient(boolean claimed, boolean claimable,
-                                                    boolean reached) {
-        if (claimed) return GRADIENT_CLAIMED;
-        if (claimable) return GRADIENT_CLAIMABLE;
-        if (reached) return GRADIENT_CLAIMED;
-        return "<gradient:#fca5a5:#dc2626>";
-    }
-
-    private @NotNull String resolveStatusLabel(@NotNull Player viewer,
-                                                boolean claimed, boolean claimable,
-                                                boolean reached) {
-        if (claimed) return msg("vote_streak.milestone.claimed.status").text(viewer);
-        if (claimable) return msg("vote_streak.milestone.claimable.status").text(viewer);
-        if (reached) return msg("vote_streak.milestone.unlocked.status").text(viewer);
-        return msg("vote_streak.milestone.locked.status").text(viewer);
-    }
-
-    /**
-     * Maps a milestone tier's position to a {@link VoteRarityStyle} bucket so
-     * locked tiles can show "how prestigious is this one?" at a glance.
-     * Spreads tiers across the six rarity tiers evenly: the lowest tier is
-     * JUNK, the highest is SECRET (with a fallback to DIVINE when there are
-     * exactly six tiers so SECRET isn't always exposed).
-     */
-    private static @NotNull VoteRarityStyle tierRarity(int tierIndex, int totalTiers) {
-        if (totalTiers <= 0) {
-            return VoteRarityStyle.COMMON;
-        }
-        VoteRarityStyle[] tiers = VoteRarityStyle.values();
-        // Map index to the [0, tiers.length-1] range proportionally.
-        int idx = (int) Math.round((tierIndex / (double) Math.max(1, totalTiers - 1)) * (tiers.length - 1));
-        return tiers[Math.max(0, Math.min(tiers.length - 1, idx))];
-    }
-
-    private static @NotNull Material resolvePrimaryRewardMaterial(
-            @NotNull List<AbstractReward> rewards, boolean showRewardIcon) {
-        if (!showRewardIcon || rewards.isEmpty()) {
-            // Locked tier: use GRAY_DYE (not RED_STAINED_GLASS_PANE) - gray
-            // reads as "not yet" without the harsh "error" tone. The rarity
-            // glyph in the lore tells the player how high-value this tier is.
-            return rewards.isEmpty() ? Material.GRAY_STAINED_GLASS_PANE : Material.GRAY_DYE;
-        }
-
-        List<AbstractReward> flat = rewards.stream()
-                .flatMap(r -> RewardViewHelper.flatten(r).stream())
-                .toList();
-
+    private static @NotNull Material primaryIcon(@NotNull List<AbstractReward> rewards) {
+        List<AbstractReward> flat = flatten(rewards);
         if (flat.size() == 1) {
-            return RewardViewHelper.toViewEntry(flat.getFirst()).icon();
+            return VoteRewardDescriber.icon(flat.getFirst());
         }
         return Material.CHEST;
     }
 
-    // ── i18n lore helpers ──────────────────────────────────────────
+    // ── Detail ────────────────────────────────────────────────────────
 
-    /**
-     * Resolves multi-line lore with placeholders injected into the
-     * {@code vote_streak.your_streak.lore} template.
-     */
-    private @NotNull List<Component> ics(@NotNull String key, @NotNull Player viewer,
-                                          int current, int highest,
-                                          @NotNull String currentLabel,
-                                          @NotNull String highestLabel) {
-        return msg(key)
-                .with("current", current)
-                .with("highest", highest)
-                .with("current_label", currentLabel)
-                .with("highest_label", highestLabel)
-                .toComponents(viewer).stream()
-                .map(c -> c.decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))
-                .toList();
-    }
-
-    /**
-     * Resolves multi-line lore for progress display.
-     */
-    private @NotNull List<Component> ics(@NotNull String key, @NotNull Player viewer,
-                                          int current, int next, @NotNull String bar) {
-        return msg(key)
-                .with("current", current)
-                .with("next", next)
-                .with("bar", bar)
-                .toComponents(viewer).stream()
-                .map(c -> c.decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))
-                .toList();
-    }
-
-    /**
-     * Resolves multi-line lore for claim button with day placeholder.
-     */
-    private @NotNull List<Component> ics(@NotNull String key, @NotNull Player viewer,
-                                          int day) {
-        return msg(key)
-                .with("day", day)
-                .toComponents(viewer).stream()
-                .map(c -> c.decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))
-                .toList();
-    }
-
-    /**
-     * Resolves multi-line lore for locked status with day, remaining, label.
-     */
-    private @NotNull List<Component> icsLocked(@NotNull String key, @NotNull Player viewer,
-                                                int day, int remaining, @NotNull String label) {
-        return msg(key)
-                .with("day", day)
-                .with("remaining", remaining)
-                .with("label", label)
-                .toComponents(viewer).stream()
-                .map(c -> c.decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))
-                .toList();
-    }
-
-    // ── Helpers ─────────────────────────────────────────────────────
-
-    /**
-     * Finds the next milestone day that is greater than the highest streak.
-     *
-     * @param highest   the highest streak achieved
-     * @param milestones the map of milestone days to rewards
-     * @return the next milestone day, or the maximum milestone if all are reached
-     */
-    private static int findNextMilestone(int highest, Map<Integer, ?> milestones) {
-        for (int day : milestones.keySet()) {
-            if (day > highest) return day;
+    private void renderDetail(@NotNull Inventory inv, @NotNull Player viewer, @NotNull ViewerState state) {
+        int day = state.detailDay;
+        List<AbstractReward> rewards = milestones().getOrDefault(day, List.of());
+        ItemStack back = backButton(viewer, KEY + "detail.back");
+        tag(back, TAG_DETAIL_BACK);
+        inv.setItem(SLOT_BACK, back);
+        inv.setItem((rows() - 1) * 9, closeButton(viewer));
+        inv.setItem(SLOT_HEADER, milestoneCard(viewer, day, rewards, state, false));
+        List<AbstractReward> flat = flatten(rewards);
+        int[] slots = bodySlots();
+        for (int i = 0; i < slots.length && i < flat.size(); i++) {
+            inv.setItem(slots[i], rewardCard(viewer, day, flat.get(i)));
         }
-        if (!milestones.isEmpty()) {
-            return milestones.keySet().stream().mapToInt(Integer::intValue).max().orElse(highest);
+        inv.setItem(SLOT_CLAIM, claimCard(viewer, day, stateOf(day, state), state));
+    }
+
+    private @NotNull ItemStack rewardCard(@NotNull Player viewer, int day, @NotNull AbstractReward reward) {
+        return VoteCards.card(VoteRewardDescriber.icon(reward),
+                VoteCards.ic(VoteCards.msg(KEY + "detail.reward-name")
+                        .with("reward", VoteRewardDescriber.describe(reward, viewer)), viewer),
+                CardLore.create().block(VoteCards.paragraph(viewer, VoteCards.msg(KEY + "detail.reward-description")
+                        .with(PARAM_DAY, day).text(viewer))).build());
+    }
+
+    private @NotNull ItemStack claimCard(@NotNull Player viewer, int day, @NotNull MilestoneState milestone,
+                                         @NotNull ViewerState state) {
+        String base = KEY + "detail.claim-" + stateKey(milestone);
+        CardLore lore = CardLore.create().block(VoteCards.paragraph(viewer, VoteCards.msg(base + ".description")
+                .with(PARAM_DAY, day).text(viewer)));
+        Material icon;
+        switch (milestone) {
+            case CLAIMABLE -> {
+                icon = Material.LIME_DYE;
+                lore.block(List.of(VoteCards.ic(viewer, KEY + "detail.claim-action")));
+            }
+            case CLAIMED, REACHED -> icon = Material.PAPER;
+            default -> {
+                icon = Material.RED_DYE;
+                lore.section(VoteCards.section(viewer, "progress"), List.of(
+                        VoteCards.rowOf(viewer, LABEL + "streak", VoteCards.ofTotal(viewer, state.current, day))));
+            }
         }
-        return 7;
+        ItemStack card = VoteCards.card(icon, VoteCards.ic(VoteCards.msg(base + ".name").with(PARAM_DAY, day), viewer),
+                lore.build());
+        if (milestone == MilestoneState.CLAIMABLE) {
+            tag(VoteCards.glint(card), TAG_CLAIM + day);
+        }
+        return card;
     }
 
-    /**
-     * Counts how many milestones have been reached based on the highest streak.
-     *
-     * @param highest   the highest streak achieved
-     * @param milestones the map of milestone days to rewards
-     * @return the count of reached milestones
-     */
-    private static int countReached(int highest, Map<Integer, ?> milestones) {
-        return (int) milestones.keySet().stream().filter(d -> highest >= d).count();
+    // ── Clicks ────────────────────────────────────────────────────────
+
+    @Override
+    protected void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked) {
+        onClick(viewer, slot, clicked, ClickType.LEFT);
     }
 
-    /**
-     * Parses the day number from a tag string.
-     *
-     * @param tag    the full tag string (e.g., "milestone:7")
-     * @param prefix the prefix to strip (e.g., "milestone:")
-     * @return the day number, or -1 if parsing fails
-     */
+    @Override
+    protected void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked, @NotNull ClickType type) {
+        String id = tagOf(clicked);
+        if (id == null) {
+            return;
+        }
+        ViewerState state = stateByViewer.computeIfAbsent(viewer.getUniqueId(), uuid -> new ViewerState());
+        if (TAG_BACK.equals(id)) {
+            stateByViewer.remove(viewer.getUniqueId());
+            if (overviewView != null) {
+                overviewView.open(viewer);
+            }
+        } else if (id.startsWith(TAG_MILESTONE)) {
+            onMilestoneClick(viewer, parseDay(id, TAG_MILESTONE), state, type);
+        } else if (id.startsWith(TAG_CLAIM)) {
+            claim(viewer, parseDay(id, TAG_CLAIM), state);
+        } else {
+            onNavigationClick(viewer, id, state, type);
+        }
+    }
+
+    private void onNavigationClick(@NotNull Player viewer, @NotNull String id, @NotNull ViewerState state,
+                                   @NotNull ClickType type) {
+        switch (id) {
+            case TAG_DETAIL_BACK -> state.detailDay = 0;
+            case TAG_PAGE_PREV -> state.page = Math.max(0, state.page - 1);
+            case TAG_PAGE_NEXT -> state.page++;
+            case FilterHopperButton.TAG -> {
+                stateFilter.cycle(viewer.getUniqueId(), !type.isRightClick());
+                state.page = 0;
+            }
+            default -> {
+                return;
+            }
+        }
+        rerender(viewer);
+    }
+
+    private void onMilestoneClick(@NotNull Player viewer, int day, @NotNull ViewerState state,
+                                  @NotNull ClickType type) {
+        if (day <= 0) {
+            return;
+        }
+        if (!type.isRightClick() && stateOf(day, state) == MilestoneState.CLAIMABLE) {
+            claim(viewer, day, state);
+            return;
+        }
+        state.detailDay = day;
+        rerender(viewer);
+    }
+
+    private void claim(@NotNull Player viewer, int day, @NotNull ViewerState state) {
+        if (day <= 0) {
+            return;
+        }
+        claimService.claimMilestone(viewer, day).thenAccept(result -> scheduler.runAtEntity(viewer, () -> {
+            switch (result) {
+                case SUCCESS -> {
+                    state.claimedDays.add(day);
+                    viewer.playSound(viewer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
+                    msg(KEY + "claim.success").with(PARAM_DAY, day).prefix().send(viewer);
+                }
+                case ALREADY_CLAIMED -> {
+                    state.claimedDays.add(day);
+                    msg(KEY + "claim.already_claimed").prefix().send(viewer);
+                }
+                case NOT_REACHED -> msg(KEY + "claim.not_reached").prefix().send(viewer);
+                case BUSY -> {
+                    // Intentionally silent: the first click is still being processed.
+                }
+                default -> msg(KEY + "claim.failed").prefix().send(viewer);
+            }
+            if (isViewing(viewer)) {
+                rerender(viewer);
+            }
+        }));
+    }
+
     private static int parseDay(@NotNull String tag, @NotNull String prefix) {
         try {
             return Integer.parseInt(tag.substring(prefix.length()));
@@ -687,22 +449,16 @@ public class VoteStreakView extends VoteBaseView {
         }
     }
 
-    // ── Viewer state ───────────────────────────────────────────────
-
-    /**
-     * Holds the viewer-specific state for the streak view.
-     * Tracks the detail milestone, highest streak, and claimed days.
-     */
+    /** Per-viewer state of the streak view. */
     private static final class ViewerState {
-        int detailMilestone;
-        int highestStreak;
-        int page;
-        Set<Integer> claimedDays = Set.of();
+        private int detailDay;
+        private int page;
+        private int current;
+        private int highest;
+        private boolean loaded;
+        private Set<Integer> claimedDays = new HashSet<>();
     }
 
-    /**
-     * Inventory holder for the streak view.
-     */
     private static final class Holder implements InventoryHolder {
         @Override public @NotNull Inventory getInventory() {
             throw new UnsupportedOperationException();

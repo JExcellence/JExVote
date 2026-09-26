@@ -151,9 +151,9 @@ streak-rewards:
       type: item
       material: IRON_INGOT
       amount: 8
-      name: "<gradient:#ffffff:#bdc3c7>Voter's Iron</gradient>"
+      name: "<#F1F5F9>Voter's Iron</#F1F5F9>"
       lore:
-        - "<gray>A warm-up reward for showing up."
+        - "<#94A3B8>Paid for a 1-day vote streak.</#94A3B8>"
 
   # ── Day 3 · Sprout ──────────────────────────────────────────────
   # No diamonds this early - a starter key, a little coin, some iron, and a
@@ -171,9 +171,9 @@ streak-rewards:
       type: item
       material: IRON_INGOT
       amount: 16
-      name: "<gradient:#ffffff:#bdc3c7>Voter's Ingots</gradient>"
+      name: "<#F1F5F9>Voter's Ingots</#F1F5F9>"
       lore:
-        - "<gray>Three days in - keep it going."
+        - "<#94A3B8>Paid for a 3-day vote streak.</#94A3B8>"
 
   # ── Day 7 · Settler ─────────────────────────────────────────────
   # A week earns a modest starter tool (iron, Eff I) + a couple diamonds.
@@ -185,9 +185,9 @@ streak-rewards:
       type: item
       material: IRON_PICKAXE
       amount: 1
-      name: "<gradient:#ffffff:#bdc3c7>Voter's Pickaxe</gradient>"
+      name: "<#F1F5F9>Voter's Pickaxe</#F1F5F9>"
       lore:
-        - "<gray>Forged from a week of devotion."
+        - "<#94A3B8>Paid for a 7-day vote streak.</#94A3B8>"
       enchantments:
         efficiency: 1
         unbreaking: 3
@@ -225,16 +225,11 @@ streak-rewards:
       material: GOLDEN_HELMET
       amount: 1
       unbreakable: true
-      name: "<gradient:#FFD24A:#FF9A1F>❖ Devoted Voter's Crown ❖</gradient>"
+      name: "<gradient:#FBBF24:#F59E0B>Devoted Voter's Crown</gradient>"
       lore:
-        - "<gray>Worn only by those who never missed a day."
-        - "<dark_gray>Thirty dawns, thirty votes, one unbroken oath."
+        - "<#94A3B8>Only players who voted 30 days in a row own this crown.</#94A3B8>"
         - ""
-        - "<#FDE047>❂ Unbreakable</#FDE047>"
-        - "<#A5B4FC>❂ Protection V</#A5B4FC>"
-        - "<#67E8F9>❂ Aqua Affinity V</#67E8F9>"
-        - ""
-        - "<gradient:#fde047:#f59e0b>✦ Streak Milestone - Day 30 ✦</gradient>"
+        - "<#C4B5FD>Streak milestone</#C4B5FD> <dark_gray>|</dark_gray> <#F1F5F9>Day 30</#F1F5F9>"
       enchantments:
         protection: 5
         aqua_affinity: 5
@@ -370,9 +365,9 @@ vote-party-pool:
     - { weight: 1.5, id: 'party-disc',         reward: { type: item, material: MUSIC_DISC_BLOCKS, amount: 1 } }
     - { weight: 1.5, id: 'party-banner',       reward: { type: item, material: PURPLE_BANNER,    amount: 4 } }
     # -- Party-EXCLUSIVE tools (named + enchanted, no Mending - party-only) --
-    - { weight: 1.5, id: 'party-pickaxe',      announce: 'vote.lucky.jackpot', reward: { type: item, material: DIAMOND_PICKAXE, amount: 1, glow: true, name: '<gradient:#a855f7:#6366f1>Party Pickaxe</gradient>', lore: ['<gray>Won from a Vote Party.', '<dark_gray>Efficiency IV, Unbreaking III'], enchantments: { efficiency: 4, unbreaking: 3 } } }
-    - { weight: 1.5, id: 'party-blade',        announce: 'vote.lucky.jackpot', reward: { type: item, material: DIAMOND_SWORD, amount: 1, glow: true, name: '<gradient:#a855f7:#e74c3c>Party Blade</gradient>', lore: ['<gray>Won from a Vote Party.', '<dark_gray>Sharpness IV, Unbreaking III'], enchantments: { sharpness: 4, unbreaking: 3 } } }
-    - { weight: 1.2, id: 'party-spade',        announce: 'vote.lucky.jackpot', reward: { type: item, material: DIAMOND_SHOVEL, amount: 1, glow: true, name: '<gradient:#a855f7:#0891b2>Party Spade</gradient>', lore: ['<gray>Won from a Vote Party.', '<dark_gray>Efficiency IV, Unbreaking III'], enchantments: { efficiency: 4, unbreaking: 3 } } }
+    - { weight: 1.5, id: 'party-pickaxe',      announce: 'vote.lucky.jackpot', reward: { type: item, material: DIAMOND_PICKAXE, amount: 1, glow: true, name: '<gradient:#5EEAD4:#A78BFA>Party Pickaxe</gradient>', lore: ['<#94A3B8>Won in a vote party.</#94A3B8>'], enchantments: { efficiency: 4, unbreaking: 3 } } }
+    - { weight: 1.5, id: 'party-blade',        announce: 'vote.lucky.jackpot', reward: { type: item, material: DIAMOND_SWORD, amount: 1, glow: true, name: '<gradient:#5EEAD4:#A78BFA>Party Blade</gradient>', lore: ['<#94A3B8>Won in a vote party.</#94A3B8>'], enchantments: { sharpness: 4, unbreaking: 3 } } }
+    - { weight: 1.2, id: 'party-spade',        announce: 'vote.lucky.jackpot', reward: { type: item, material: DIAMOND_SHOVEL, amount: 1, glow: true, name: '<gradient:#5EEAD4:#A78BFA>Party Spade</gradient>', lore: ['<#94A3B8>Won in a vote party.</#94A3B8>'], enchantments: { efficiency: 4, unbreaking: 3 } } }
     # -- Rare - netherite mats, larger coin, border extension --
     - { weight: 2,   id: 'party-netherite-scrap', reward: { type: item, material: NETHERITE_SCRAP, amount: 3 } }
     - { weight: 1.5, id: 'party-coins-large',  reward: { type: currency, currency: coins, amount: 12000.0 } }
@@ -417,14 +412,14 @@ vote-party:
     reveal-volume: 1.0
     reveal-pitch: 1.0
 
-  # Title settings (MiniMessage format)
+  # Title settings. The spin / reveal texts come from the translation files
+  # (vote_party.titles.* in translations/<locale>.yml), so every player sees
+  # them in their language. To override them for everyone, add MiniMessage
+  # strings here, for example:
+  #   spin: '<gradient:#5EEAD4:#A78BFA>Vote party</gradient>'
+  #   reveal: '<gradient:#5EEAD4:#A78BFA>Party rewards</gradient>'
+  #   reveal-subtitle: '<#F1F5F9>You won {count} prizes</#F1F5F9>'
   titles:
-    # Title shown during spin animation
-    spin: '<gradient:#fde047:#f59e0b>★ VOTE PARTY ★</gradient>'
-    # Title shown on reveal
-    reveal: '<gradient:#86efac:#16a34a>✦ REWARDS! ✦</gradient>'
-    # Subtitle shown on reveal (supports {count} placeholder)
-    reveal-subtitle: '<gray>You won <gradient:#fde047:#f59e0b>{count}</gradient> rewards!</gray>'
     # Title timing (milliseconds)
     fade-in: 0
     stay: 200
@@ -456,36 +451,32 @@ vote-shop:
     icon: IRON_INGOT
     cost: 10
     description:
-      - "<gray>A stack of refined iron - hoppers, rails,"
-      - "<gray>anvils, and the backbone of any build."
-      - "<dark_gray>Grants: <white>32× Iron Ingot"
+      - "<#94A3B8>A stack of refined iron - hoppers, rails,"
+      - "<#94A3B8>anvils, and the backbone of any build."
     reward: { type: item, material: IRON_INGOT, amount: 32 }
   gold-bundle:
     name: "Gold Bundle"
     icon: GOLD_INGOT
     cost: 12
     description:
-      - "<gray>Gold for powered rails, clocks,"
-      - "<gray>and the finer redstone contraptions."
-      - "<dark_gray>Grants: <white>32× Gold Ingot"
+      - "<#94A3B8>Gold for powered rails, clocks,"
+      - "<#94A3B8>and the finer redstone contraptions."
     reward: { type: item, material: GOLD_INGOT, amount: 32 }
   diamond-bundle:
     name: "Diamond Bundle"
     icon: DIAMOND
     cost: 18
     description:
-      - "<gray>Eight diamonds - a full set of tools,"
-      - "<gray>or a head start on enchanting."
-      - "<dark_gray>Grants: <white>8× Diamond"
+      - "<#94A3B8>Eight diamonds - a full set of tools,"
+      - "<#94A3B8>or a head start on enchanting."
     reward: { type: item, material: DIAMOND, amount: 8 }
   xp-bundle:
     name: "Experience Bundle"
     icon: EXPERIENCE_BOTTLE
     cost: 12
     description:
-      - "<gray>Skip the grind - pop these for"
-      - "<gray>instant enchanting levels."
-      - "<dark_gray>Grants: <white>32× Bottle o' Enchanting"
+      - "<#94A3B8>Skip the grind - pop these for"
+      - "<#94A3B8>instant enchanting levels."
     reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 32 }
     purchase-pitch: 1.2
   hopper-bundle:
@@ -493,27 +484,24 @@ vote-shop:
     icon: HOPPER
     cost: 10
     description:
-      - "<gray>Automate your one block - pipe drops"
-      - "<gray>straight into your storage."
-      - "<dark_gray>Grants: <white>16× Hopper"
+      - "<#94A3B8>Automate your one block - pipe drops"
+      - "<#94A3B8>straight into your storage."
     reward: { type: item, material: HOPPER, amount: 16 }
   obsidian-bundle:
     name: "Obsidian Bundle"
     icon: OBSIDIAN
     cost: 12
     description:
-      - "<gray>Portals, blast-proofing, and the"
-      - "<gray>foundations that never break."
-      - "<dark_gray>Grants: <white>16× Obsidian"
+      - "<#94A3B8>Portals, blast-proofing, and the"
+      - "<#94A3B8>foundations that never break."
     reward: { type: item, material: OBSIDIAN, amount: 16 }
   coin-pouch:
     name: "Coin Pouch"
     icon: GOLD_NUGGET
     cost: 15
     description:
-      - "<gray>Turn your loyalty into spending money."
-      - "<gray>Straight into your island bank."
-      - "<dark_gray>Grants: <gold>20,000 coins"
+      - "<#94A3B8>Turn your loyalty into spending money."
+      - "<#94A3B8>Straight into your island bank."
     reward: { type: currency, currency: coins, amount: 20000.0 }
 
   # ── Island & flight ─────────────────────────────────────────────
@@ -523,9 +511,8 @@ vote-shop:
     icon: FEATHER
     cost: 18
     description:
-      - "<gray>Tradeable island flight coupons."
-      - "<gray>Redeem each when you have room to spare."
-      - "<dark_gray>Grants: <white>2× 15-minute flight vouchers"
+      - "<#94A3B8>Tradeable island flight coupons."
+      - "<#94A3B8>Redeem each when you have room to spare."
     reward: { type: command, command: 'jexoneblock flycoupon {player} 15 2', asConsole: true }
     purchase-sound: ITEM_ELYTRA_FLYING
   island-radius-small:
@@ -533,18 +520,16 @@ vote-shop:
     icon: GRASS_BLOCK
     cost: 10
     description:
-      - "<gray>Push your island border out by 5 blocks"
-      - "<gray>on every side. Room to grow."
-      - "<dark_gray>Grants: <white>+5 island radius"
+      - "<#94A3B8>Push your island border out by 5 blocks"
+      - "<#94A3B8>on every side. Room to grow."
     reward: { type: command, command: 'jexoneblock grant-radius {player} 5', asConsole: true }
   island-radius-large:
     name: "Island Expansion +25"
     icon: GRASS_BLOCK
     cost: 40
     description:
-      - "<gray>A big leap - +25 blocks on every side."
-      - "<gray>For the ambitious builder."
-      - "<dark_gray>Grants: <white>+25 island radius"
+      - "<#94A3B8>A big leap - +25 blocks on every side."
+      - "<#94A3B8>For the ambitious builder."
     reward: { type: command, command: 'jexoneblock grant-radius {player} 25', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
   event-fly:
@@ -552,10 +537,10 @@ vote-shop:
     icon: PHANTOM_MEMBRANE
     cost: 250
     description:
-      - "<gray>A <gold>permanent</gold> perk - you fly automatically"
-      - "<gray>but <white>only while an island event is running</white>."
-      - "<dark_gray>Not free-flight; it switches on for events."
-      - "<dark_gray>A long-term goal for the devoted voter."
+      - "<#94A3B8>A <gold>permanent</gold> perk - you fly automatically"
+      - "<#94A3B8>but <white>only while an island event is running</white>."
+      - "<#94A3B8>Not free-flight; it switches on for events."
+      - "<#94A3B8>A long-term goal for the devoted voter."
     reward: { type: command, command: 'lp user {player} permission set jexoneblock.eventfly true', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
 
@@ -565,36 +550,32 @@ vote-shop:
     icon: TRIPWIRE_HOOK
     cost: 12
     description:
-      - "<gray>Opens a <#7dd3fc>Vote Crate</#7dd3fc> - the everyday"
-      - "<gray>crate full of handy loot."
-      - "<dark_gray>Grants: <white>1× Vote Crate Key"
+      - "<#94A3B8>Opens a <#7dd3fc>Vote Crate</#7dd3fc> - the everyday"
+      - "<#94A3B8>crate full of handy loot."
     reward: { type: command, command: 'ac virtualkey give {player} VoteCrate 1', asConsole: true }
   void-key:
     name: "Void Crate Key"
     icon: ENDER_EYE
     cost: 45
     description:
-      - "<gray>Opens a <#a855f7>Void Crate</#a855f7> - rarer loot"
-      - "<gray>pulled from the edge of the world."
-      - "<dark_gray>Grants: <white>1× Void Crate Key"
+      - "<#94A3B8>Opens a <#a855f7>Void Crate</#a855f7> - rarer loot"
+      - "<#94A3B8>pulled from the edge of the world."
     reward: { type: command, command: 'ac virtualkey give {player} VoidCrate 1', asConsole: true }
   shadow-key:
     name: "Shadow Crate Key"
     icon: ECHO_SHARD
     cost: 55
     description:
-      - "<gray>Opens a <#6c3483>Shadow Crate</#6c3483> - high-tier"
-      - "<gray>rewards for the dedicated."
-      - "<dark_gray>Grants: <white>1× Shadow Crate Key"
+      - "<#94A3B8>Opens a <#6c3483>Shadow Crate</#6c3483> - high-tier"
+      - "<#94A3B8>rewards for the dedicated."
     reward: { type: command, command: 'ac virtualkey give {player} ShadowCrate 1', asConsole: true }
   season-key:
     name: "Season Crate Key"
     icon: NETHER_STAR
     cost: 75
     description:
-      - "<gray>Opens a <gold>Season Crate</gold> - a premium,"
-      - "<gray>real-money-tier crate. A serious goal."
-      - "<dark_gray>Grants: <white>1× Season Crate Key"
+      - "<#94A3B8>Opens a <gold>Season Crate</gold> - a premium,"
+      - "<#94A3B8>real-money-tier crate. A serious goal."
     reward: { type: command, command: 'ac virtualkey give {player} SeasonCrate 1', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
   dragon-key:
@@ -602,9 +583,8 @@ vote-shop:
     icon: DRAGON_HEAD
     cost: 65
     description:
-      - "<gray>Opens a <#e74c3c>Dragon Crate</#e74c3c> - the rarest,"
-      - "<gray>most prestigious crate on the server."
-      - "<dark_gray>Grants: <white>1× Dragon Crate Key"
+      - "<#94A3B8>Opens a <#e74c3c>Dragon Crate</#e74c3c> - the rarest,"
+      - "<#94A3B8>most prestigious crate on the server."
     reward: { type: command, command: 'ac virtualkey give {player} DragonCrate 1', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
 
@@ -614,54 +594,48 @@ vote-shop:
     icon: CHEST
     cost: 140
     description:
-      - "<gray>Upgrade one backpack up a tier -"
-      - "<gray>more slots, more perks."
-      - "<dark_gray>Grants: <white>1× Backpack Upgrader"
+      - "<#94A3B8>Upgrade one backpack up a tier -"
+      - "<#94A3B8>more slots, more perks."
     reward: { type: command, command: 'backpack upgrader {player}', asConsole: true }
   cobble-minion:
     name: "Cobblestone Minion"
     icon: DISPENSER
     cost: 20
     description:
-      - "<gray>A tireless tier-1 worker that mines"
-      - "<gray>cobblestone while you are away."
-      - "<dark_gray>Grants: <white>1× Cobblestone Minion (T1)"
+      - "<#94A3B8>A tireless tier-1 worker that mines"
+      - "<#94A3B8>cobblestone while you are away."
     reward: { type: command, command: 'jexoneblock minion give {player} cobble_generator 1', asConsole: true }
   obsidian-breaker:
     name: "Obsidian Breaker"
     icon: NETHERITE_PICKAXE
     cost: 28
     description:
-      - "<gray>An instant-mine pickaxe with charges -"
-      - "<gray>tear through the central block."
-      - "<dark_gray>Grants: <white>1× Obsidian Breaker (T1)"
+      - "<#94A3B8>An instant-mine pickaxe with charges -"
+      - "<#94A3B8>tear through the central block."
     reward: { type: command, command: 'jexoneblock breaker-give {player} obsidian 1', asConsole: true }
   ancient-cache:
     name: "Ancient Cache"
     icon: BRUSH
     cost: 16
     description:
-      - "<gray>Brush it open for relics, coins and"
-      - "<gray>archaeology loot."
-      - "<dark_gray>Grants: <white>1× Ancient Cache"
+      - "<#94A3B8>Brush it open for relics, coins and"
+      - "<#94A3B8>archaeology loot."
     reward: { type: command, command: 'jexoneblock excavate-give {player} cache 1', asConsole: true }
   excavation-brush:
     name: "Excavation Brush"
     icon: BRUSH
     cost: 12
     description:
-      - "<gray>The tool for digging caches and"
-      - "<gray>suspicious sand."
-      - "<dark_gray>Grants: <white>1× Excavation Brush (T1)"
+      - "<#94A3B8>The tool for digging caches and"
+      - "<#94A3B8>suspicious sand."
     reward: { type: command, command: 'jexoneblock excavate-give {player} brush 1', asConsole: true }
   crystal-cache:
     name: "Crystal Cache"
     icon: AMETHYST_CLUSTER
     cost: 120
     description:
-      - "<gray>A <#c084fc>rare</#c084fc> payout of premium Crystals -"
-      - "<gray>a serious long-term voting goal."
-      - "<dark_gray>Grants: <#c084fc>25 Crystals"
+      - "<#94A3B8>A <#c084fc>rare</#c084fc> payout of premium Crystals -"
+      - "<#94A3B8>a serious long-term voting goal."
     reward: { type: command, command: 'economy give {player} 25 crystals', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
 
@@ -671,8 +645,7 @@ vote-shop:
     icon: FIREWORK_ROCKET
     cost: 6
     description:
-      - "<gray>Light up the sky over your island."
-      - "<dark_gray>Grants: <white>32× Firework Rocket"
+      - "<#94A3B8>Light up the sky over your island."
     reward: { type: item, material: FIREWORK_ROCKET, amount: 32 }
     purchase-sound: ENTITY_FIREWORK_ROCKET_LAUNCH
   music-disc:
@@ -680,8 +653,7 @@ vote-shop:
     icon: MUSIC_DISC_BLOCKS
     cost: 10
     description:
-      - "<gray>A tune for your island jukebox."
-      - "<dark_gray>Grants: <white>1× Music Disc"
+      - "<#94A3B8>A tune for your island jukebox."
     reward: { type: item, material: MUSIC_DISC_BLOCKS, amount: 1 }
     purchase-sound: BLOCK_NOTE_BLOCK_PLING
   # Permanent cosmetic particle trail - unlocks the GATED trail tier in /trail
@@ -691,10 +663,10 @@ vote-shop:
     icon: FIREWORK_STAR
     cost: 60
     description:
-      - "<gray>Unlock a <#f0abfc>permanent</#f0abfc> cosmetic trail that"
-      - "<gray>follows you wherever you walk."
-      - "<gray>Pick your effect in <white>/trail</white>."
-      - "<dark_gray>Cosmetic only - no stats."
+      - "<#94A3B8>Unlock a <#f0abfc>permanent</#f0abfc> cosmetic trail that"
+      - "<#94A3B8>follows you wherever you walk."
+      - "<#94A3B8>Pick your effect in <white>/trail</white>."
+      - "<#94A3B8>Cosmetic only - no stats."
     reward: { type: command, command: 'lp user {player} permission set jexoneblock.cosmetic.trail true', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
   decorative-lanterns:
@@ -702,17 +674,15 @@ vote-shop:
     icon: SEA_LANTERN
     cost: 8
     description:
-      - "<gray>Clean, glowing light for your builds."
-      - "<dark_gray>Grants: <white>16× Sea Lantern"
+      - "<#94A3B8>Clean, glowing light for your builds."
     reward: { type: item, material: SEA_LANTERN, amount: 16 }
   froglight-set:
     name: "Froglight Set"
     icon: PEARLESCENT_FROGLIGHT
     cost: 12
     description:
-      - "<gray>Rare, colourful light blocks - a proper"
-      - "<gray>flex for any island centrepiece."
-      - "<dark_gray>Grants: <white>16× Pearlescent Froglight"
+      - "<#94A3B8>Rare, colourful light blocks - a proper"
+      - "<#94A3B8>flex for any island centrepiece."
     reward: { type: item, material: PEARLESCENT_FROGLIGHT, amount: 16 }
 
 # ═════════════════════════════════════════════════════════════════

@@ -1,735 +1,632 @@
 # JExVote - English translations
+#
+# Colour language (shared with the rest of the suite):
+#   names #F1F5F9 | section titles #C4B5FD | muted text #94A3B8 | accent #A78BFA
+#   ok #4ADE80 | bad #F87171 | warning #FBBF24 | titles <gradient:#5EEAD4:#A78BFA>
+# Status tokens: [OK] done, [+] ready, [!] blocked or short, [X] locked or failed.
+# Optional per-card hook: add a list under <card key>.lore_extra (for example
+# vote_overview.header.lore_extra) and its lines are shown as an extra block.
 
-prefix: '<dark_gray>[<green>Vote<dark_gray>] '
+prefix: '<gradient:#5EEAD4:#A78BFA>Vote</gradient> <dark_gray>»</dark_gray> '
 
 _defaults:
-  title: '<gray>Menu'
-  back: '<gray>Back'
+  title: '<#F1F5F9>Menu</#F1F5F9>'
+  back: '<#F1F5F9>Back</#F1F5F9>'
 
+# ── Chat messages ────────────────────────────────────────────────────────────
 vote:
-  broadcast: '<dark_gray>[<green>Vote<dark_gray>] <green>{player} <gray>voted on <aqua>{service}<gray>!'
-  received: '<green>Thank you for voting on <aqua>{service}<green>! Streak: <yellow>{streak}'
-  guaranteed_reward: '<gradient:#7dd3fc:#38bdf8>✦ Vote Key!</gradient> <gray>You also received a guaranteed</gray> <#7dd3fc>Vote Crate Key</#7dd3fc> <gray>for voting!</gray>'
-  offline-summary: '<gradient:#86efac:#16a34a>✔</gradient> <gray>You voted offline</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>times, you got the following reward(s):</gray><newline>{rewards}'
-  offline-summary-empty: '<gradient:#86efac:#16a34a>✔</gradient> <gray>Welcome back - your</gray> <gradient:#fde047:#f59e0b>{count}</gradient> <gray>offline vote(s) were processed.</gray>'
+  broadcast: '<#A78BFA>[+]</#A78BFA> <#F1F5F9>{player} voted on {service}.</#F1F5F9> <#94A3B8>Vote too with /vote</#94A3B8>'
+  received: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Thanks for voting on {service}. Your streak is now</#F1F5F9> <#A78BFA>{streak}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+  guaranteed_reward: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>You also got a</#F1F5F9> <#A78BFA>Vote Crate key</#A78BFA> <#F1F5F9>for this vote.</#F1F5F9>'
+  offline-summary: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Your</#F1F5F9> <#A78BFA>{count}</#A78BFA> <#F1F5F9>votes while you were offline paid out:</#F1F5F9><newline>{rewards}'
+  offline-summary-empty: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Welcome back. Your</#F1F5F9> <#A78BFA>{count}</#A78BFA> <#F1F5F9>offline votes were counted.</#F1F5F9>'
+  offline-summary-entry: '<#A78BFA>+</#A78BFA> {reward}'
+  offline-summary-entry-stacked: '<#A78BFA>+</#A78BFA> {reward} <#94A3B8>x{count}</#94A3B8>'
+  site-link: "<#A78BFA>▸</#A78BFA> <#F1F5F9>Vote on {site}:</#F1F5F9> <click:open_url:'{url}'><hover:show_text:'<#94A3B8>Opens the vote page in your browser</#94A3B8>'><#A78BFA><u>{url}</u></#A78BFA></hover></click>"
+  unknown-player: 'Unknown'
   shop:
-    players_only: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Only players can open the vote shop.</red>'
-    unavailable: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>The vote shop is not available on this server.</red>'
+    players_only: '<#F87171>[X]</#F87171> <#F1F5F9>Only players can open the vote shop.</#F1F5F9>'
+    unavailable: '<#F87171>[X]</#F87171> <#F1F5F9>The vote shop is not available on this server.</#F1F5F9>'
   lucky:
-    hit: '<gradient:#fde047:#f59e0b>★ Lucky Vote!</gradient> <gray>You won a bonus reward!</gray> <yellow>{chance}</yellow>'
-    jackpot: '<gradient:#fde047:#f59e0b>★ Vote Jackpot!</gradient> <gray>Fortune smiles on you - you won </gray>{reward}<gray>!</gray>'
+    hit: '<#A78BFA>[+]</#A78BFA> <#F1F5F9>Lucky vote! You won a bonus reward.</#F1F5F9> <#94A3B8>{chance}</#94A3B8>'
+    jackpot: '<#A78BFA>[+]</#A78BFA> <#F1F5F9>Lucky vote! You won</#F1F5F9> {reward}<#F1F5F9>.</#F1F5F9>'
   freeze:
-    granted: '<gradient:#a5f3fc:#06b6d4>❄ Welcome gift!</gradient> <gray>You received</gray> <white>{amount}</white> <gray>free Streak Freeze(s) - they auto-protect your streak if you miss a day. Buy more with</gray> <gradient:#86efac:#16a34a>/vote freeze</gradient><gray>.</gray>'
-    saved: '<gradient:#a5f3fc:#06b6d4>❄ Streak Freeze!</gradient> <gray>Your streak was saved</gray> <dark_gray>(</dark_gray><white>used {consumed}</white><dark_gray>,</dark_gray> <white>{remaining} left</white><dark_gray>)</dark_gray><gray>. Streak:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient>'
-    bought: '<gradient:#a5f3fc:#06b6d4>❄</gradient> <gray>Streak Freeze purchased for</gray> <gradient:#d8b4fe:#9333ea>{cost} points</gradient><gray>.</gray>'
-    disabled: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Streak Freezes are disabled on this server.</red>'
-    at_max: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You already own the maximum of</red> <white>{max}</white> <red>Streak Freeze(s).</red>'
-    not_enough: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You need</red> <gradient:#d8b4fe:#9333ea>{cost} vote points</gradient> <red>to buy a Streak Freeze.</red>'
-    no_profile: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote at least once before buying a Streak Freeze.</red>'
-    error: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Could not complete the purchase. Try again.</red>'
-  daily-fly: '<gradient:#7CFFCB:#2DD4BF>✈ Daily Flight!</gradient> <gray>You received</gray> <white>15 min</white> <gray>fly time for voting today.</gray>'
+    granted: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>You got</#F1F5F9> <#A78BFA>{amount}</#A78BFA> <#F1F5F9>free Streak Freeze. It saves your streak once if you miss a day. Buy more with</#F1F5F9> <#A78BFA>/vote freeze</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    saved: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>A Streak Freeze saved your streak of</#F1F5F9> <#A78BFA>{streak}</#A78BFA><#F1F5F9>. Used</#F1F5F9> <#A78BFA>{consumed}</#A78BFA><#F1F5F9>,</#F1F5F9> <#A78BFA>{remaining}</#A78BFA> <#F1F5F9>left.</#F1F5F9>'
+    bought: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Streak Freeze bought for</#F1F5F9> <#A78BFA>{cost} points</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    disabled: '<#F87171>[X]</#F87171> <#F1F5F9>Streak Freezes are turned off on this server.</#F1F5F9>'
+    at_max: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>You already own the most you can hold:</#F1F5F9> <#A78BFA>{max}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    not_enough: '<#F87171>[X]</#F87171> <#F1F5F9>A Streak Freeze costs</#F1F5F9> <#A78BFA>{cost} points</#A78BFA><#F1F5F9>. Vote to earn more.</#F1F5F9>'
+    no_profile: '<#F87171>[X]</#F87171> <#F1F5F9>Vote once before you buy a Streak Freeze.</#F1F5F9>'
+    error: '<#F87171>[X]</#F87171> <#F1F5F9>The purchase did not go through. Try again.</#F1F5F9>'
+  daily-fly: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>You got</#F1F5F9> <#A78BFA>15 min</#A78BFA> <#F1F5F9>of flight for voting today.</#F1F5F9>'
   gift:
-    usage: '<dark_gray>▸</dark_gray> <gray>Usage:</gray> <gradient:#86efac:#16a34a>/vote gift <white><player|random></white></gradient>'
-    sent: '<gradient:#86efac:#16a34a>✔</gradient> <gray>You gifted a streak advance to</gray> <gradient:#86efac:#16a34a>{target}</gradient><gray>! Their streak:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient> <dark_gray>(</dark_gray><white>{remaining} gift(s) left today</white><dark_gray>)</dark_gray>'
-    received: '<gradient:#86efac:#16a34a>✦ Gift!</gradient> <gradient:#86efac:#16a34a>{gifter}</gradient> <gray>kept your vote streak alive! Streak:</gray> <gradient:#fde047:#f59e0b>{streak}</gradient>'
-    disabled: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote gifting is disabled on this server.</red>'
-    gifter_no_profile: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Vote at least once before gifting.</red>'
-    not_voted: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You must vote today before you can gift.</red>'
-    limit: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You have used all your gifts for today.</red>'
-    self: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You cannot gift to yourself.</red>'
-    target_not_found: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>No vote profile found for</red> <white>{target}</white><red>.</red>'
-    already_advanced: '<gradient:#fde047:#f59e0b>ⓘ</gradient> <gray><white>{target}</white> already advanced their streak today.</gray>'
-    no_random: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>No other players are online to gift to.</red>'
-    error: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Could not complete the gift. Try again.</red>'
+    usage: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Use</#F1F5F9> <#A78BFA>/vote gift <player|random></#A78BFA>'
+    sent: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>You kept</#F1F5F9> <#A78BFA>{target}</#A78BFA><#F1F5F9>''s streak alive. It is now</#F1F5F9> <#A78BFA>{streak}</#A78BFA><#F1F5F9>. Gifts left today:</#F1F5F9> <#A78BFA>{remaining}</#A78BFA>'
+    received: '<#4ADE80>[OK]</#4ADE80> <#A78BFA>{gifter}</#A78BFA> <#F1F5F9>kept your vote streak alive. It is now</#F1F5F9> <#A78BFA>{streak}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    disabled: '<#F87171>[X]</#F87171> <#F1F5F9>Vote gifts are turned off on this server.</#F1F5F9>'
+    gifter_no_profile: '<#F87171>[X]</#F87171> <#F1F5F9>Vote once before you send a gift.</#F1F5F9>'
+    not_voted: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>Vote today first, then you can send a gift.</#F1F5F9>'
+    limit: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>You used all your gifts for today.</#F1F5F9>'
+    self: '<#F87171>[X]</#F87171> <#F1F5F9>You can''t send a gift to yourself.</#F1F5F9>'
+    target_not_found: '<#F87171>[X]</#F87171> <#A78BFA>{target}</#A78BFA> <#F1F5F9>has never voted, so there is no streak to keep alive.</#F1F5F9>'
+    already_advanced: '<#FBBF24>[!]</#FBBF24> <#A78BFA>{target}</#A78BFA> <#F1F5F9>already moved their streak forward today.</#F1F5F9>'
+    no_random: '<#F87171>[X]</#F87171> <#F1F5F9>No other player is online to get a gift.</#F1F5F9>'
+    error: '<#F87171>[X]</#F87171> <#F1F5F9>The gift did not go through. Try again.</#F1F5F9>'
   party:
-    progress: '<gray>Vote Party:</gray> <green>{current}</green><gray>/</gray><white>{target}</white>'
-    reached: '<dark_gray>[<gradient:#86efac:#16a34a>Vote</gradient><dark_gray>]</dark_gray> <gradient:#fde047:#f59e0b>★ Vote Party #{party} complete!</gradient> <gray>All contributors have been rewarded!</gray>'
-  no_permission: '<red>You do not have permission to do this.'
-  player_not_found: '<red>Player not found: <yellow>{player}'
+    progress: '<#94A3B8>Vote party</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{current} / {target}</#F1F5F9>'
+    reached: '<#A78BFA>[+]</#A78BFA> <#F1F5F9>Vote party #{party} is complete. Everyone who voted gets party rewards.</#F1F5F9>'
+  no_permission: '<#F87171>[X]</#F87171> <#F1F5F9>You don''t have permission to do that.</#F1F5F9>'
+  player_not_found: '<#F87171>[X]</#F87171> <#F1F5F9>No player named</#F1F5F9> <#A78BFA>{player}</#A78BFA><#F1F5F9>.</#F1F5F9>'
   stats:
-    header: '<gray>━━━━━━━━ <green>Vote Stats <gray>━━━━━━━━'
-    total: '<gray>Total Votes: <white>{total}'
-    monthly: '<gray>Monthly Votes: <white>{monthly}'
-    streak: '<gray>Current Streak: <green>{streak}'
-    highest: '<gray>Highest Streak: <yellow>{highest}'
-    points: '<gray>Vote Points: <aqua>{points}'
+    title: '<gradient:#5EEAD4:#A78BFA>Vote stats</gradient> <dark_gray>|</dark_gray> <#F1F5F9>{player}</#F1F5F9>'
+    row: '<#94A3B8>{label}</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{value}</#F1F5F9>'
+    label:
+      total: 'All-time votes'
+      monthly: 'This month'
+      streak: 'Streak'
+      highest: 'Best streak'
+      points: 'Vote points'
+      last-vote: 'Last vote'
   leaderboard:
-    header: '<gray>━━━━━━━━ <gold>Top Voters <gray>━━━━━━━━'
-    entry: '<gray>{rank}. <white>{player} <gray>- <green>{votes} votes'
-    empty: '<gray>No votes recorded yet.'
-  reload: '<green>JExVote configuration reloaded.'
+    title: '<gradient:#5EEAD4:#A78BFA>Top voters</gradient> <dark_gray>|</dark_gray> <#F1F5F9>All time</#F1F5F9>'
+    entry: '<#A78BFA>#{rank}</#A78BFA> <#F1F5F9>{player}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>{votes} votes</#94A3B8>'
+    empty: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>No votes yet.</#F1F5F9>'
+  reload: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>config.yml, rewards.yml and sites.yml reloaded.</#F1F5F9>'
   reset:
-    success: '<green>Reset vote stats for <yellow>{player}<green>.'
-    all_success: '<green>Reset monthly votes for all players.'
+    success: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Vote stats of</#F1F5F9> <#A78BFA>{player}</#A78BFA> <#F1F5F9>were reset.</#F1F5F9>'
+    all_success: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Monthly votes were reset for every player.</#F1F5F9>'
+    not_found: '<#F87171>[X]</#F87171> <#F1F5F9>No vote data found for</#F1F5F9> <#A78BFA>{player}</#A78BFA><#F1F5F9>.</#F1F5F9>'
   setstreak:
-    success: '<green>Vote streak for <yellow>{player} <green>set to <yellow>{value}<green>.'
-    not_found: '<red>No vote data found for <yellow>{player}<red>.'
-    invalid: '<red>Streak value must be 0 or greater.'
+    success: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Streak of</#F1F5F9> <#A78BFA>{player}</#A78BFA> <#F1F5F9>set to</#F1F5F9> <#A78BFA>{value}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    not_found: '<#F87171>[X]</#F87171> <#F1F5F9>No vote data found for</#F1F5F9> <#A78BFA>{player}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    invalid: '<#F87171>[X]</#F87171> <#F1F5F9>The streak must be 0 or higher.</#F1F5F9>'
+  fakevote:
+    success: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Test vote sent for</#F1F5F9> <#A78BFA>{player}</#A78BFA> <#F1F5F9>on</#F1F5F9> <#A78BFA>{service}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    failed: '<#F87171>[X]</#F87171> <#F1F5F9>The test vote was not processed. Check the console.</#F1F5F9>'
   sites:
-    header: '<gray>━━━━━━ <green>Vote Sites <gray>━━━━━━'
-    entry: "<green>{name}</green> <dark_gray>-</dark_gray> <click:open_url:'{url}'><hover:show_text:'<gray>Open in browser</gray><newline><aqua>{url}</aqua><newline><yellow>Click to vote!</yellow>'><gradient:#a5f3fc:#06b6d4>Click to vote</gradient></hover></click>"
-    entry_plain: '<green>{name}</green> <dark_gray>-</dark_gray> <white>{service}</white>'
-    no_sites: '<gray>No vote sites configured.'
+    title: '<gradient:#5EEAD4:#A78BFA>Vote sites</gradient> <dark_gray>|</dark_gray> <#F1F5F9>{count}</#F1F5F9>'
+    entry: "<#A78BFA>▸</#A78BFA> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <click:open_url:'{url}'><hover:show_text:'<#94A3B8>Opens the vote page in your browser</#94A3B8><newline><#F1F5F9>{url}</#F1F5F9>'><#A78BFA><u>Click to vote</u></#A78BFA></hover></click>"
+    entry_plain: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>{service}</#94A3B8>'
+    no_sites: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>No vote sites are set up yet.</#F1F5F9>'
 
 # ── Shared GUI vocabulary ────────────────────────────────────────────────────
-# Reused by every vote view (navigation buttons, paging, filter labels). Edit
-# here to retheme the whole plugin's chrome without touching individual views.
-#
-# Style tokens you can rely on inside MiniMessage:
-#   brand gradient  : <gradient:#86EFAC:#22C55E:#16A34A>...</gradient>
-#   value highlight : <#C084FC>...</#C084FC>
-#   muted body line : <gray>...</gray>
-#   faint border    : <dark_gray>...</dark_gray>
 gui:
   common:
-    # Back button (top-left, DARK_OAK_DOOR). Re-styled per server here.
-    back-name: '<gradient:#86EFAC:#22C55E:#16A34A>« Back</gradient>'
-    back-lore: '<dark_gray>┃ <gray>Return to the previous menu</gray>'
-    # Close button (bottom-left, OAK_DOOR - deliberately not BARRIER, since
-    # the red barrier reads as "error/not allowed" rather than "leave").
-    close-name: '<gradient:#A5F3FC:#06B6D4>✘ Close</gradient>'
-    close-lore: '<dark_gray>┃ <gray>Close this menu</gray>'
-    # Click prompts used inside lore lines (kept short - they sit on a tile).
-    click-open: '<dark_gray>┃ <gradient:#86EFAC:#22C55E>» Click to open</gradient>'
-    click-view: '<dark_gray>┃ <gradient:#86EFAC:#22C55E>» Click to view</gradient>'
-    click-buy:  '<dark_gray>┃ <gradient:#86EFAC:#22C55E>» Click to buy</gradient>'
-    click-run:  '<dark_gray>┃ <gradient:#86EFAC:#22C55E>» Click to run</gradient>'
+    card:
+      line: '<#94A3B8>{text}</#94A3B8>'
+      section: '<#C4B5FD>{name}</#C4B5FD>'
+      row: '<#94A3B8>{label}</#94A3B8> <dark_gray>|</dark_gray> {value}'
+      reward: '<#A78BFA>+</#A78BFA> {value}'
+      bar: '<dark_gray>[</dark_gray><#A78BFA>{filled}</#A78BFA><dark_gray>{empty}]</dark_gray>'
+    section:
+      votes: 'Your votes'
+      streak: 'Streak'
+      wallet: 'Wallet'
+      this-vote: 'This vote'
+      now: 'Right now'
+      milestones: 'Milestones'
+      rewards: 'Rewards'
+      progress: 'Progress'
+      pool: 'Pool'
+      odds: 'Odds'
+      every-voter: 'Every voter gets'
+      bonus: 'Bonus'
+      freeze: 'Your freezes'
+      today: 'Today'
+      you-get: 'You get'
+      price: 'Price'
+    label:
+      status: 'Status'
+      votes-total: 'All-time votes'
+      votes-month: 'This month'
+      last-vote: 'Last vote'
+      rank: 'Rank'
+      vote-points: 'Vote points'
+      streak: 'Streak'
+      best-streak: 'Best streak'
+      next-milestone: 'Next milestone'
+      again-in: 'Votable again in'
+      chance: 'Chance'
+      rarity: 'Rarity'
+      won: 'Won on this server'
+      prizes: 'Prizes'
+      best-odds: 'Best odds'
+      rarest: 'Rarest'
+      votes: 'Votes'
+      votes-left: 'Votes left'
+      showing: 'Showing'
+      your-place: 'Your place'
+      reached: 'Reached'
+      ready-to-claim: 'Ready to claim'
+      freezes: 'Streak Freezes'
+      gifts-left: 'Gifts left today'
+      now: 'Now'
+      weekend: 'Weekend'
+      days: 'Days'
+      owned: 'Owned'
+      price: 'Price'
+      covers: 'Covers'
+      needs: 'Needs'
+      can-buy: 'You can buy'
+      you-have: 'You have'
+    value:
+      plain: '<#F1F5F9>{value}</#F1F5F9>'
+      accent: '<#A78BFA>{value}</#A78BFA>'
+      ok: '<#4ADE80>{value}</#4ADE80>'
+      bad: '<#F87171>{value}</#F87171>'
+      warn: '<#FBBF24>{value}</#FBBF24>'
+      muted: '<#94A3B8>{value}</#94A3B8>'
+      of-total: '<#F1F5F9>{have}</#F1F5F9> <#94A3B8>/</#94A3B8> <#F1F5F9>{total}</#F1F5F9>'
+      points: '<#A78BFA>{value}</#A78BFA> <#94A3B8>points</#94A3B8>'
+      loading: '<#94A3B8>Loading</#94A3B8>'
+      multiplier: 'x{value}'
+      percent: '{value}%'
+      plus: '+{value}'
+      day: 'Day {value}'
+      days:
+        one: '{count} day'
+        other: '{count} days'
+    back:
+      name: '<#F1F5F9>← Back</#F1F5F9>'
+    close:
+      name: '<#F1F5F9>✘ Close</#F1F5F9>'
+      description: 'Closes this menu.'
+    page:
+      previous:
+        name: '<#F1F5F9>← Previous page</#F1F5F9>'
+        lore: '<#94A3B8>Page {page} of {pages}</#94A3B8>'
+      next:
+        name: '<#F1F5F9>Next page »</#F1F5F9>'
+        lore: '<#94A3B8>Page {page} of {pages}</#94A3B8>'
+    filter:
+      name: '<#F1F5F9>Filter</#F1F5F9>'
+      title: '<#C4B5FD>Show</#C4B5FD>'
+      option: '<#94A3B8>○</#94A3B8> <#94A3B8>{name}</#94A3B8>'
+      option-active: '<#A78BFA>●</#A78BFA> <#F1F5F9>{name}</#F1F5F9>'
+      action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Left-click next, right-click back</#F1F5F9>'
+    action:
+      open: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Click to open</#F1F5F9>'
+    time:
+      days-hours: '{days} d {hours} h'
+      hours-minutes: '{hours} h {minutes} min'
+      minutes: '{value} min'
+      seconds: '{value} s'
+      ago: '{value} ago'
+      just-now: 'just now'
+      never: 'never'
+    rarity:
+      common: '<#94A3B8>Common</#94A3B8>'
+      uncommon: '<#4ADE80>Uncommon</#4ADE80>'
+      rare: '<#A78BFA>Rare</#A78BFA>'
+      epic: '<gradient:#5EEAD4:#A78BFA>Epic</gradient>'
+      legendary: '<#FBBF24>Legendary</#FBBF24>'
+  prize:
+    card:
+      name: '{reward} <dark_gray>|</dark_gray> {rarity}'
+    filter:
+      all: 'All prizes'
+    none-in-filter:
+      name: '<#F1F5F9>Nothing here</#F1F5F9>'
+      description: 'No prize has this rarity. Left-click the filter to change it.'
 
+# ── /vote menu ───────────────────────────────────────────────────────────────
 vote_overview:
-  title: '<dark_gray>Vote Overview'
-  # Every tile in this section accepts an optional `lore_extra` list - when
-  # present (and non-empty) its lines are appended after the standard lore.
-  # Use it to add server-specific hints (e.g. event CTAs, raffle info) without
-  # touching the plugin code. Example:
-  #   identity:
-  #     lore_extra:
-  #       - '<dark_gray>┃ <gradient:#FDE047:#F59E0B>★ Top voter this season!</gradient>'
-  # ── Header tile (slot 4) ─────────────────────────────────────────────────
+  title: '<gradient:#5EEAD4:#A78BFA>Vote</gradient>'
   header:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Overview</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>Vote daily, earn rewards.'
-      - '<dark_gray>┃ <gray>Click a site below to begin.'
-      - ''
-
-  # ── Identity tile (slot 11): name + lifetime totals, no points/streak ────
-  # Placeholders: {player} {total} {monthly} {last_voted}
-  identity:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>{player}</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>Total votes: <#C084FC>{total}'
-      - '<dark_gray>┃ <gray>This month: <#C084FC>{monthly}'
-      - '<dark_gray>┃ <gray>Last voted: <#C084FC>{last_voted}'
-      - ''
-
-  # ── Points tile (slot 13): balance + what to spend it on ─────────────────
-  # Placeholders: {points}
-  points:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Points</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>Balance: <gradient:#D8B4FE:#9333EA>{points}</gradient>'
-      - ''
-      - '<dark_gray>┃ <gray>Spend on:'
-      - '<dark_gray>┕ <gray>❄ Streak Freezes <dark_gray>/vote freeze'
-      - '<dark_gray>┕ <gray>✦ Reward shop <dark_gray>/vote shop'
-      - ''
-  points-never: '<gray>never'
-
-  # ── Streak tile (slot 15): current/highest, progress bar, next milestone ─
-  # Placeholders: {streak} {highest} {next} {bar}
-  streak:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>★ Vote Streak</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>Current: <gradient:#86EFAC:#22C55E>{streak} day(s)</gradient>'
-      - '<dark_gray>┃ <gray>Highest: <gradient:#FDE047:#F59E0B>{highest} day(s)</gradient>'
-      - ''
-      - '<dark_gray>┃ <gray>Next milestone: <#C084FC>Day {next}'
-      - '<dark_gray>┃ {bar}'
-      - ''
-
-  # ── Vote site tile (slots 29-33) ─────────────────────────────────────────
-  # Placeholders: {site} {service} {points}
+    name: '<gradient:#5EEAD4:#A78BFA>{player}</gradient> <dark_gray>|</dark_gray> <#F1F5F9>Vote profile</#F1F5F9>'
+    description: 'Vote on each site once a day. Every vote pays rewards and vote points and keeps your streak going.'
+  rank: '#{value}'
+  no-sites:
+    name: '<#F1F5F9>No vote sites</#F1F5F9>'
+    description: 'The server has not set up any vote sites yet.'
   site:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>{site}</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>Service: <#C084FC>{service}'
-      - '<dark_gray>┃ <gray>Reward: <gradient:#86EFAC:#22C55E>+{points} points</gradient>'
-      - ''
-      - '<dark_gray>┕ <gradient:#A5F3FC:#06B6D4>» Click to open the vote link</gradient>'
-      - ''
-    status-checking: '<dark_gray>┃ <gray>Checking availability…</gray>'
-    status-ready: '<dark_gray>┃ <gradient:#86EFAC:#22C55E>✔ Ready to vote now!</gradient>'
-    status-cooldown: '<dark_gray>┃ <gradient:#F59E0B:#D97706>⏳ Votable again in {time}</gradient>'
-  site-empty:
-    name: '<dark_gray>· Empty slot'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>No site configured.'
-      - ''
-  page-prev:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>« Previous page</gradient>'
-    lore:
-      - '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
-  page-next:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>Next page »</gradient>'
-    lore:
-      - '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
-
-  # ── Bottom nav (slots 46, 48, 50, 52) ────────────────────────────────────
+    name-checking: '<#F1F5F9>{site}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>Checking</#94A3B8>'
+    name-ready: '<#F1F5F9>{site}</#F1F5F9> <dark_gray>|</dark_gray> <#4ADE80>Ready</#4ADE80>'
+    name-cooldown: '<#F1F5F9>{site}</#F1F5F9> <dark_gray>|</dark_gray> <#FBBF24>Voted</#FBBF24>'
+    description: 'Vote for the server on {site}. Rewards arrive a few seconds after the vote.'
+    status-ready: 'Ready now'
+    action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Click to get the vote link</#F1F5F9>'
   nav:
-    leaderboard:
-      name: '<gradient:#86EFAC:#22C55E:#16A34A>❖ Leaderboard</gradient>'
-      lore:
-        - ''
-        - '<dark_gray>┃ <gray>See who voted the most.'
-        - ''
-        - '<dark_gray>┕ <gradient:#FDE047:#F59E0B>» Click to open</gradient>'
-        - ''
     streaks:
-      name: '<gradient:#86EFAC:#22C55E:#16A34A>★ Streak Rewards</gradient>'
-      lore:
-        - ''
-        - '<dark_gray>┃ <gray>Claim your milestone rewards.'
-        - ''
-        - '<dark_gray>┕ <gradient:#FCA5A5:#DC2626>» Click to open</gradient>'
-        - ''
+      name: '<#F1F5F9>Streak rewards</#F1F5F9>'
+      description: 'Milestones for voting several days in a row, and the rewards you can claim.'
+    leaderboard:
+      name: '<#F1F5F9>Top voters</#F1F5F9>'
+      description: 'Who voted the most, all time and this month.'
     rewards:
-      name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Economy</gradient>'
-      lore:
-        - ''
-        - '<dark_gray>┃ <gray>Jackpot odds, multiplier, party,'
-        - '<dark_gray>┃ <gray>freeze, gift and your points.'
-        - ''
-        - '<dark_gray>┕ <gradient:#D8B4FE:#9333EA>» Click to open</gradient>'
-        - ''
+      name: '<#F1F5F9>Vote rewards</#F1F5F9>'
+      description: 'Lucky vote prizes, the weekend bonus, the vote party, Streak Freezes and gifts.'
     shop:
-      name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Shop</gradient>'
-      lore:
-        - ''
-        - '<dark_gray>┃ <gray>Spend vote points on rewards.'
-        - ''
-        - '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to open</gradient>'
-        - ''
+      name: '<#F1F5F9>Vote shop</#F1F5F9>'
+      description: 'Spend your vote points on crate keys, items and perks.'
 
+# ── Top voters ───────────────────────────────────────────────────────────────
 vote_leaderboard:
-  title: '<dark_gray>Vote Leaderboard'
-
-vote_streak:
-  title: '<dark_gray>Vote Streaks'
-
-  pager:
-    prev: '<gradient:#86efac:#16a34a>◄ Previous Page</gradient>'
-    next: '<gradient:#86efac:#16a34a>Next Page ►</gradient>'
-    info: '<gray>Page <white>{page}</white><dark_gray>/</dark_gray><white>{pages}</white>'
-
-  # ── Track view ──
+  title: '<gradient:#5EEAD4:#A78BFA>Top voters</gradient>'
+  back: 'Back to the vote menu.'
   header:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>🔥 Streak Rewards</gradient>'
-    lore:
-      - ''
-      - '  <gray>Vote daily to build your streak!'
-      - '  <gray>Reach milestones for bonus rewards.'
-      - ''
-
-  your_streak:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>🔥 Your Streak</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>Current:</gray> <gradient:#86efac:#16a34a>{current}</gradient> <gray>{current_label}'
-      - '<dark_gray>┃ <gray>Highest:</gray> <gradient:#fde047:#f59e0b>{highest}</gradient> <gray>{highest_label}'
-      - ''
-      - '  <gray>Vote daily to keep it going!'
-      - ''
-
-  how_it_works:
-    name: '<gradient:#86efac:#16a34a>How It Works</gradient>'
-    lore:
-      - ''
-      - '  <gray>Vote every day to build'
-      - '  <gray>your streak. Reach milestones'
-      - '  <gray>to earn bonus rewards!'
-      - ''
-      - '  <gradient:#fca5a5:#dc2626>Missing a day resets'
-      - '  <gradient:#fca5a5:#dc2626>your streak!'
-      - ''
-
-  progress:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>Progress</gradient>'
-    lore:
-      - ''
-      - '  <gray>Next milestone:</gray> <white>Day {next}'
-      - ''
-      - '  {bar}'
-      - '  <gradient:#86efac:#16a34a>{current}</gradient> <dark_gray>/</dark_gray> <white>{next}'
-      - ''
-
-  rewards_summary:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>Rewards</gradient>'
-
-  loading: '  <gray>Loading...'
-  day_label: 'day'
-  days_label: 'days'
-  rewards_header: '  <gradient:#d8b4fe:#9333ea>Rewards:'
-  milestones_label: '  <gray>Milestones:</gray> <white>{count}'
-  unlocked_label: '  <gray>Unlocked:</gray> <gradient:#86efac:#16a34a>{count}'
-  claimable_label: '  <gray>Claimable:</gray> <gradient:#fde047:#f59e0b>{count}'
-  remaining_label: '  <gray>Remaining:</gray> <gradient:#fca5a5:#dc2626>{count}'
-  days_to_go: '  <dark_gray>{remaining} {label} to go'
-
-  # ── Milestone states ──
-  milestone:
-    name: 'Day {day}'
-    claimed:
-      status: '  <gradient:#86efac:#16a34a>✔ Claimed!</gradient>'
-    claimable:
-      status: '  <gradient:#fde047:#f59e0b>▶ Click to claim!</gradient>'
-    unlocked:
-      status: '  <gradient:#86efac:#16a34a>✔ Unlocked!</gradient>'
-    next:
-      status: '  <gradient:#fde047:#f59e0b>▶ Next milestone!</gradient>'
-    locked:
-      status: '  <gradient:#fca5a5:#dc2626>✘ Locked</gradient>'
-
-  # ── Detail view ──
-  detail:
-    header: '{status_gradient}Day {day} - {status}'
-    subtitle: '  <gray>Streak milestone rewards for day <white>{day}'
-    reward_type: '  <gray>Type: <white>{type}'
-    back_button: '<gray>← Back to Streaks'
-    claim_button:
-      name: '<gradient:#86efac:#16a34a>✔ Claim Rewards</gradient>'
-      lore:
-        - ''
-        - '  <gray>Click to claim your'
-        - '  <gray>Day {day} milestone rewards!'
-        - ''
-    already_claimed:
-      name: '<gradient:#86efac:#16a34a>✔ Already Claimed</gradient>'
-      lore:
-        - ''
-        - '  <gray>You already collected these rewards.'
-        - ''
-    locked_status:
-      name: '<gradient:#86EFAC:#22C55E:#16A34A>✘ Locked</gradient>'
-      lore:
-        - ''
-        - '  <gray>Reach a {day}-day streak to unlock.'
-        - '  <dark_gray>{remaining} {label} to go'
-        - ''
-
-  # ── Claim result messages ──
-  claim:
-    success: '<gradient:#86efac:#16a34a>✔</gradient> <green>Claimed Day {day} streak rewards!'
-    already_claimed: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Already claimed.'
-    not_reached: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>You haven''t reached this milestone yet.'
-    failed: '<gradient:#fca5a5:#dc2626>✘</gradient> <red>Failed to claim rewards. Please try again.'
-
-vote_rewards:
-  title: '<dark_gray>Vote Economy'
-  # Every panel below also accepts `lore_extra` for server-specific notes.
-  # ── Header (slot 4) - merged with the live Points balance (V-11.3) ────────
-  # Placeholders: {points}
-  header:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Economy</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>Vote Points: <gradient:#86EFAC:#22C55E:#16A34A>{points}</gradient>'
-      - ''
-      - '<dark_gray>┃ <gray>Spend points on:'
-      - '<dark_gray>┕ <gray>❄ Streak Freezes <dark_gray>/vote freeze'
-      - '<dark_gray>┕ <gray>✦ Reward shop <dark_gray>/vote shop'
-      - ''
-  # Lucky Vote summary tile - full per-outcome catalog lives in VoteLuckyView
-  # under the vote_lucky.* keys further down.
-  # Placeholders for summary-lore: {outcomes}
-  lucky:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>★ Lucky Vote</gradient>'
-    empty-lore:
-      - ''
-      - '<dark_gray>┃ <gray>No lucky rewards configured.'
-      - ''
-    summary-lore:
-      - ''
-      - '<dark_gray>┃ <gray>Every vote rolls one prize from'
-      - '<dark_gray>┃ <gray>a weighted jackpot pool.'
-      - ''
-      - '<dark_gray>┃ <gray>Outcomes available: <gradient:#86EFAC:#22C55E:#16A34A>{outcomes}</gradient>'
-      - ''
-      - '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to see every odds + drop count</gradient>'
-      - ''
-  multiplier:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>⚡ Weekend Multiplier</gradient>'
-    status-active:   '<dark_gray>┃ <gray>Status: <gradient:#86EFAC:#22C55E>ACTIVE</gradient>'
-    status-inactive: '<dark_gray>┃ <gray>Status: <dark_gray>inactive</dark_gray>'
-    current: '<dark_gray>┃ <gray>Current: <yellow>{factor}×</yellow>'
-    weekend: '<dark_gray>┃ <gray>Weekend factor: <yellow>{factor}×</yellow>'
-    days:    '<dark_gray>┃ <gray>Days: <#C084FC>{days}'
-  party:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Party</gradient>'
-    disabled: '<dark_gray>┃ <gray>Vote parties are disabled.'
-    progress: '<dark_gray>┃ <gray>Progress: <gradient:#86EFAC:#22C55E>{current}</gradient><dark_gray>/<#C084FC>{target}'
-    remaining: '<dark_gray>┃ <gray>Remaining: <#C084FC>{remaining}'
-    rewards-header: '<dark_gray>┃ <gray>On completion you get:'
-    reward-entry: '<dark_gray>┕ {reward}'
-    none: '<dark_gray>┃ <gray>No party rewards configured.'
-    view-all: '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to view all party rewards</gradient>'
-  points:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Points</gradient>'
-    balance: '<dark_gray>┃ <gray>Balance: <gradient:#D8B4FE:#9333EA>{points}</gradient>'
-    hint: '<dark_gray>┃ <gray>Earn by voting; spend on Freezes or Shop.'
-  freeze:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>❄ Streak Freeze</gradient>'
-    disabled: '<dark_gray>┃ <gray>Streak Freezes are disabled.'
-    how:      '<dark_gray>┃ <gray>Protects your streak when you miss a vote.'
-    owned:    '<dark_gray>┃ <gray>Owned: <gradient:#A5F3FC:#06B6D4>{owned}</gradient><dark_gray>/<#C084FC>{max}'
-    cost:     '<dark_gray>┃ <gray>Cost: <gradient:#D8B4FE:#9333EA>{cost} points</gradient>'
-    duration: '<dark_gray>┃ <gray>Covers: <#C084FC>{duration}h <gray>per freeze'
-    buy-hint: '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to buy</gradient> <dark_gray>(or /vote freeze)'
-  gift:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Gift</gradient>'
-    disabled: '<dark_gray>┃ <gray>Vote gifting is disabled.'
-    how:      '<dark_gray>┃ <gray>Keep a friend''s streak alive.'
-    limit:    '<dark_gray>┃ <gray>Gifts left today: <gradient:#86EFAC:#22C55E>{remaining}</gradient><dark_gray>/<#C084FC>{limit}'
-    require-vote: '<dark_gray>┃ <gray>Requires: <#C084FC>you voted today'
-    usage: '<dark_gray>┕ <gray>Use <gradient:#86EFAC:#22C55E>/vote gift <player|random></gradient>'
-  shop:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Shop</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>Spend your vote points on rewards.'
-      - '<dark_gray>┃ <gray>Crate keys, items & perks.'
-      - ''
-      - '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to open the shop</gradient>'
-      - ''
-  text:
-    header: '<dark_gray>━━━━ <gradient:#FDE047:#F59E0B>Vote Economy</gradient> <dark_gray>━━━━'
-    lucky-entry: '<dark_gray>┃ <gray>{reward} <yellow>{chance}%</yellow> <dark_gray>({won}× won)'
-    multiplier: '<dark_gray>┃ <gray>Multiplier: <yellow>{factor}×</yellow> <dark_gray>({status})'
-    party: '<dark_gray>┃ <gray>Vote Party: <green>{current}</green><dark_gray>/<#C084FC>{target} <dark_gray>({remaining} left)'
-
-# ── Lucky Vote sub-GUI (VoteLuckyView, V-11.7) ────────────────────────────────
-# Per-outcome detail view opened from the Lucky Vote summary tile in /vote rewards.
-# Every chance/lucky-pool entry across default + streak + site + party reward
-# lists is rendered as its own tile (sorted highest chance first).
-vote_lucky:
-  title: '<dark_gray>Lucky Vote Outcomes'
-  # Header tile (slot 4)
-  # Placeholders: {count}
-  header:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>★ Lucky Vote</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>Outcomes across every reward list.'
-      - '<dark_gray>┃ <gray>Total: <gradient:#86EFAC:#22C55E:#16A34A>{count}</gradient>'
-      - ''
-      - '<dark_gray>┃ <gray>Higher chance = sorted first.'
-      - ''
-  empty:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>★ No outcomes configured</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>No chance or lucky rewards are set up.'
-      - '<dark_gray>┕ <dark_gray>Operators: edit <#C084FC>rewards.yml<dark_gray>.'
-      - ''
-  # Per-entry tile.
-  # Placeholders: {reward} {chance} {won} {rarity}
+    name: '<gradient:#5EEAD4:#A78BFA>Top voters</gradient> <dark_gray>|</dark_gray> <#F1F5F9>{value}</#F1F5F9>'
+    description: 'The 50 players with the most votes. Vote every day to climb the list.'
+  mode:
+    all-time: 'All time'
+    monthly: 'This month'
+  place: '#{value}'
+  not-listed: 'Not in the top {value}'
+  unknown-player: 'Unknown'
+  you: '<#4ADE80>●</#4ADE80> <#F1F5F9>This is you</#F1F5F9>'
   entry:
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>Chance: <gradient:#86EFAC:#22C55E:#16A34A>{chance}%</gradient>'
-      - '<dark_gray>┃ <gray>Lifetime drops: <#C084FC>{won}'
-      - '<dark_gray>┃ <gray>Rarity: {rarity}'
-      - ''
-  page-prev: '<gradient:#86EFAC:#22C55E:#16A34A>« Previous</gradient>'
-  page-next: '<gradient:#86EFAC:#22C55E:#16A34A>Next »</gradient>'
-  page-indicator:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>Page {page} / {total}</gradient>'
-    lore: '<dark_gray>┃ <gray>Showing <#C084FC>{from}<gray>-<#C084FC>{to}<gray> of <#C084FC>{count}'
+    name: '<#A78BFA>#{rank}</#A78BFA> <dark_gray>|</dark_gray> <#F1F5F9>{player}</#F1F5F9>'
+    name-podium: '<#FBBF24>#{rank}</#FBBF24> <dark_gray>|</dark_gray> <gradient:#5EEAD4:#A78BFA>{player}</gradient>'
+  pending:
+    name: '<#F1F5F9>Loading</#F1F5F9>'
+    description: 'The list is loading. It shows up in a moment.'
+  empty:
+    name: '<#F1F5F9>No votes yet</#F1F5F9>'
+    description: 'Nobody has voted in this period yet. Be the first.'
 
-# ── Vote Party reward catalog (VotePartyView) ─────────────────────────────────
+# ── Streak rewards ───────────────────────────────────────────────────────────
+vote_streak:
+  title: '<gradient:#5EEAD4:#A78BFA>Streak rewards</gradient>'
+  back: 'Back to the vote menu.'
+  header:
+    name: '<gradient:#5EEAD4:#A78BFA>Vote streak</gradient> <dark_gray>|</dark_gray> <#F1F5F9>{value}</#F1F5F9>'
+    description: 'Vote every day to grow your streak. Each milestone pays once. Skip a day and the streak starts over, unless a Streak Freeze covers it.'
+  filter:
+    all: 'All milestones'
+    claimable: 'Ready to claim'
+    reached: 'Reached'
+    locked: 'Not reached yet'
+  pending:
+    name: '<#F1F5F9>Loading</#F1F5F9>'
+    description: 'Your streak is loading. It shows up in a moment.'
+  empty:
+    name: '<#F1F5F9>No milestones</#F1F5F9>'
+    description: 'The server has not set up any streak milestones.'
+  none-in-filter:
+    name: '<#F1F5F9>Nothing here</#F1F5F9>'
+    description: 'No milestone fits this filter. Left-click the filter to change it.'
+  milestone:
+    description: 'Paid once when your best streak reaches {day} days.'
+    name-claimed: '<#F1F5F9>Day {day}</#F1F5F9> <dark_gray>|</dark_gray> <#4ADE80>Claimed</#4ADE80>'
+    name-claimable: '<#F1F5F9>Day {day}</#F1F5F9> <dark_gray>|</dark_gray> <#A78BFA>Ready</#A78BFA>'
+    name-reached: '<#F1F5F9>Day {day}</#F1F5F9> <dark_gray>|</dark_gray> <#4ADE80>Paid out</#4ADE80>'
+    name-next: '<#F1F5F9>Day {day}</#F1F5F9> <dark_gray>|</dark_gray> <#FBBF24>Next</#FBBF24>'
+    name-locked: '<#F1F5F9>Day {day}</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Locked</#F87171>'
+    state-claimed: '<#4ADE80>[OK]</#4ADE80> <#4ADE80>Claimed</#4ADE80>'
+    state-claimable: '<#A78BFA>[+]</#A78BFA> <#F1F5F9>Ready to claim</#F1F5F9>'
+    state-reached: '<#4ADE80>[OK]</#4ADE80> <#4ADE80>Paid out when you reached it</#4ADE80>'
+    state-next: '<#FBBF24>[!]</#FBBF24> <#94A3B8>{value} to go</#94A3B8>'
+    state-locked: '<#F87171>[X]</#F87171> <#94A3B8>Locked, {value} to go</#94A3B8>'
+    action-claim: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Left-click to claim, right-click for details</#F1F5F9>'
+    action-details: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Click for details</#F1F5F9>'
+  detail:
+    back: 'Back to all milestones.'
+    reward-name: '{reward}'
+    reward-description: 'Part of the day {day} reward.'
+    claim-action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Click to claim</#F1F5F9>'
+    claim-claimable:
+      name: '<#F1F5F9>Claim day {day}</#F1F5F9>'
+      description: 'Adds every reward on this page to your inventory and account.'
+    claim-claimed:
+      name: '<#F1F5F9>Day {day}</#F1F5F9> <dark_gray>|</dark_gray> <#4ADE80>Claimed</#4ADE80>'
+      description: 'You already collected these rewards.'
+    claim-reached:
+      name: '<#F1F5F9>Day {day}</#F1F5F9> <dark_gray>|</dark_gray> <#4ADE80>Paid out</#4ADE80>'
+      description: 'These rewards were paid out when your streak reached day {day}.'
+    claim-next:
+      name: '<#F1F5F9>Day {day}</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Locked</#F87171>'
+      description: 'Reach a {day}-day streak to claim these rewards.'
+    claim-locked:
+      name: '<#F1F5F9>Day {day}</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Locked</#F87171>'
+      description: 'Reach a {day}-day streak to claim these rewards.'
+  claim:
+    success: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Day {day} streak rewards claimed.</#F1F5F9>'
+    already_claimed: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>You already claimed this milestone.</#F1F5F9>'
+    not_reached: '<#F87171>[X]</#F87171> <#F1F5F9>Your streak has not reached this milestone yet.</#F1F5F9>'
+    failed: '<#F87171>[X]</#F87171> <#F1F5F9>The rewards could not be claimed. Try again.</#F1F5F9>'
+
+# ── Vote rewards ─────────────────────────────────────────────────────────────
+vote_rewards:
+  title: '<gradient:#5EEAD4:#A78BFA>Vote rewards</gradient>'
+  back: 'Back to the vote menu.'
+  header:
+    name: '<gradient:#5EEAD4:#A78BFA>Vote rewards</gradient> <dark_gray>|</dark_gray> {value}'
+    description: 'What a vote pays on top of the normal rewards, and what you can do with vote points.'
+  lucky:
+    name: '<#F1F5F9>Lucky vote</#F1F5F9> <dark_gray>|</dark_gray> <#A78BFA>{value} prizes</#A78BFA>'
+    name-off: '<#F1F5F9>Lucky vote</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Off</#F87171>'
+    description: 'Every vote also draws one prize from a weighted pool.'
+    description-off: 'This server has no lucky vote prizes.'
+    action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Click to see every prize</#F1F5F9>'
+  multiplier:
+    name-on: '<#F1F5F9>Weekend bonus</#F1F5F9> <dark_gray>|</dark_gray> <#4ADE80>Active</#4ADE80>'
+    name-idle: '<#F1F5F9>Weekend bonus</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>Not today</#94A3B8>'
+    name-off: '<#F1F5F9>Weekend bonus</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Off</#F87171>'
+    description: 'On weekend days every vote pays more points and larger rewards.'
+    description-off: 'This server has no weekend bonus.'
+    state-on: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>The bonus applies to votes right now</#F1F5F9>'
+    state-off: '<#94A3B8>○</#94A3B8> <#94A3B8>The bonus starts on the next weekend day</#94A3B8>'
+  party:
+    name: '<#F1F5F9>Vote party</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+    name-off: '<#F1F5F9>Vote party</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Off</#F87171>'
+    description: 'When the server reaches {target} votes together, everyone who voted gets party rewards and prize draws.'
+    description-off: 'Vote parties are turned off on this server.'
+    action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Click to see the party prizes</#F1F5F9>'
+  freeze:
+    name: '<#F1F5F9>Streak Freeze</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+    name-off: '<#F1F5F9>Streak Freeze</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Off</#F87171>'
+    description: 'A freeze saves your streak once when you miss a day. It is used up on its own.'
+    description-off: 'Streak Freezes are turned off on this server.'
+    state-full: '<#4ADE80>[OK]</#4ADE80> <#94A3B8>You hold the most you can own</#94A3B8>'
+    state-short: '<#FBBF24>[!]</#FBBF24> <#94A3B8>{value} more points needed</#94A3B8>'
+    action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Click to buy one</#F1F5F9>'
+  gift:
+    name: '<#F1F5F9>Vote gift</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+    name-off: '<#F1F5F9>Vote gift</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Off</#F87171>'
+    description: 'Give a friend a streak day. It keeps their streak alive for today.'
+    description-off: 'Vote gifts are turned off on this server.'
+    needs-vote: 'Your vote today'
+    action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Type /vote gift <player|random></#F1F5F9>'
+  shop:
+    name: '<#F1F5F9>Vote shop</#F1F5F9>'
+    description: 'Spend your vote points on crate keys, items and perks.'
+  text:
+    header: '<gradient:#5EEAD4:#A78BFA>Vote rewards</gradient>'
+    lucky-entry: '<#A78BFA>+</#A78BFA> {reward} <dark_gray>|</dark_gray> <#F1F5F9>{chance}</#F1F5F9> <#94A3B8>won {won}x</#94A3B8>'
+    multiplier: '<#94A3B8>Weekend bonus</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{factor}</#F1F5F9> <#94A3B8>{status}</#94A3B8>'
+    party: '<#94A3B8>Vote party</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{current} / {target}</#F1F5F9> <#94A3B8>{remaining} left</#94A3B8>'
+    active: 'active'
+    inactive: 'not active'
+
+# ── Lucky vote prizes ────────────────────────────────────────────────────────
+vote_lucky:
+  title: '<gradient:#5EEAD4:#A78BFA>Lucky vote</gradient>'
+  back: 'Back to vote rewards.'
+  header:
+    name: '<gradient:#5EEAD4:#A78BFA>Lucky vote</gradient> <dark_gray>|</dark_gray> <#F1F5F9>{value} prizes</#F1F5F9>'
+    description: 'Every vote draws one of these prizes. The chance is the real drop rate, highest first.'
+  prize-description: 'One of the prizes a vote can draw.'
+  empty:
+    name: '<#F1F5F9>No prizes</#F1F5F9>'
+    description: 'This server has no lucky vote prizes. Operators add them in rewards.yml.'
+
+# ── Vote party prizes ────────────────────────────────────────────────────────
 vote_party:
-  title: '<gradient:#86EFAC:#22C55E:#16A34A>Vote Party Rewards</gradient>'
-  disabled: '  <dark_gray>Vote parties are disabled.'
+  title: '<gradient:#5EEAD4:#A78BFA>Vote party</gradient>'
+  back: 'Back to vote rewards.'
   header:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Party ✦</gradient>'
-    lore: '<gray>3 guaranteed draws + bonus rolls per party.</gray>'
-  progress: '<dark_gray>┃ <gray>Progress:</gray> <gradient:#86efac:#16a34a>{current}</gradient><dark_gray>/</dark_gray><white>{target}</white>'
-  remaining: '<dark_gray>┃ <gray>Remaining:</gray> <white>{remaining}</white>'
-  entry-chance: '<dark_gray>┃ <gray>Chance:</gray> <gradient:#86efac:#16a34a>{chance}%</gradient>'
-  entry-won: '<dark_gray>┃ <gray>Pulled:</gray> <white>{won}×</white>'
+    name: '<gradient:#5EEAD4:#A78BFA>Vote party</gradient> <dark_gray>|</dark_gray> {value}'
+    name-off: '<gradient:#5EEAD4:#A78BFA>Vote party</gradient> <dark_gray>|</dark_gray> <#F87171>Off</#F87171>'
+    description: 'When the party goal is reached, every voter draws prizes from this pool.'
+    description-off: 'Vote parties are turned off on this server.'
+  prize-description: 'One of the prizes a vote party can draw.'
   empty:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ No party pool configured</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>The server has not set up any'
-      - '<dark_gray>┃ <gray>party rewards yet.'
-      - ''
-      - '<dark_gray>┕ <dark_gray>Operators: edit <#C084FC>rewards.yml<dark_gray>.'
-      - ''
-  page:
-    prev: '<gradient:#fde047:#f59e0b>← Previous Page</gradient>'
-    next: '<gradient:#fde047:#f59e0b>Next Page →</gradient>'
-    indicator: '<gradient:#a5f3fc:#06b6d4>Page {page} / {pages}</gradient>'
-    showing: '  <gray>Showing {from}–{to} of {total}</gray>'
+    name: '<#F1F5F9>No prize pool</#F1F5F9>'
+    description: 'This server has no party prize pool. Operators add it in rewards.yml.'
+  titles:
+    spin: '<gradient:#5EEAD4:#A78BFA>Vote party</gradient>'
+    reveal: '<gradient:#5EEAD4:#A78BFA>Party rewards</gradient>'
+    reveal-subtitle: '<#F1F5F9>You won {count} prizes</#F1F5F9>'
   rewarded:
-    header: '<gradient:#fde047:#f59e0b>✦ Vote Party!</gradient> <gray>You received:</gray>'
-    entry: '<dark_gray>┕ <gray>{reward}</gray>'
+    header: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Vote party rewards:</#F1F5F9>'
+    entry: '<#A78BFA>+</#A78BFA> {reward}'
 
-# ── Vote-Token Shop (VoteShopView) ────────────────────────────────────────────
+# ── Vote shop ────────────────────────────────────────────────────────────────
 vote_shop:
-  title: '<gradient:#86EFAC:#22C55E:#16A34A>Vote Shop</gradient>'
-  # Every tile here also accepts `lore_extra` for server-specific notes.
-  # ── Header tile (slot 4) - live points balance ───────────────────────────
-  # Placeholders: {points}
+  title: '<gradient:#5EEAD4:#A78BFA>Vote shop</gradient>'
+  back: 'Back to vote rewards.'
   header:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Tokens</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>Balance: <gradient:#D8B4FE:#9333EA>{points}</gradient> <gray>points'
-      - ''
-      - '<dark_gray>┃ <gray>Earn points by voting daily.'
-      - '<dark_gray>┃ <gray>Spend them on the rewards below.'
-      - ''
-
-  # ── Shop tile - one per listing ─────────────────────────────────────────
-  # Placeholders: {item} {reward} {cost} {balance} {missing}
-  # The {reward} placeholder is rendered by VoteRewardDescriber, so it carries
-  # full styling for items (with translatable names), commands ("Dragon Crate
-  # Key"), currency, XP, etc.
+    name: '<gradient:#5EEAD4:#A78BFA>Vote shop</gradient> <dark_gray>|</dark_gray> {value}'
+    description: 'Every vote earns vote points. Spend them here; the price is taken when you buy.'
+  filter:
+    all: 'Everything'
+    affordable: 'Can buy now'
+    keys: 'Crate keys'
+    items: 'Items'
+    other: 'Perks and more'
   tile:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>{item}</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>You get:'
-      - '<dark_gray>┕ {reward}'
-      - ''
-      - '<dark_gray>┃ <gray>Cost: <gradient:#D8B4FE:#9333EA>{cost}</gradient> <gray>points'
-      - '<dark_gray>┃ <gray>Your balance: <#C084FC>{balance}'
-      - ''
-    # Footer appended depending on affordability.
-    footer-buy: '<dark_gray>┕ <gradient:#86EFAC:#22C55E>» Click to buy</gradient>'
-    footer-need: '<dark_gray>┕ <gradient:#FCA5A5:#DC2626>» Need {missing} more points</gradient>'
-
-  # ── Empty-shop placeholder ───────────────────────────────────────────────
-  # Shown when no items are configured. Door, not barrier - see V-00 design.
+    name: '<#F1F5F9>{item}</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+    action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Click to buy</#F1F5F9>'
+    short: '<#FBBF24>[!]</#FBBF24> <#94A3B8>{missing} more points needed</#94A3B8>'
   empty:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>✦ Shop being restocked</gradient>'
-    lore:
-      - ''
-      - '<dark_gray>┃ <gray>No items are listed right now.'
-      - '<dark_gray>┃ <gray>Check back soon!'
-      - ''
-
-  # ── Pagination ──────────────────────────────────────────────────────────
-  # Placeholders: {page} {total}
-  page-prev:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>« Previous page</gradient>'
-    lore: '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
-  page-next:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>Next page »</gradient>'
-    lore: '<dark_gray>┃ <gray>Page <#C084FC>{page}<gray>/<#C084FC>{total}'
-  # ── Centre-of-bottom-row page indicator (V-10) ──────────────────────────
-  # Placeholders: {page} {total} {from} {to} {count}
-  page-indicator:
-    name: '<gradient:#86EFAC:#22C55E:#16A34A>Page {page} / {total}</gradient>'
-    lore: '<dark_gray>┃ <gray>Showing <#C084FC>{from}<gray>-<#C084FC>{to}<gray> of <#C084FC>{count}'
-
-  # ── Purchase feedback (chat receipt + title) ────────────────────────────
-  # Placeholders: {item} {reward} {cost} {balance}
+    name: '<#F1F5F9>Nothing for sale</#F1F5F9>'
+    description: 'The shop has no items right now. Check back later.'
+  none-in-filter:
+    name: '<#F1F5F9>Nothing here</#F1F5F9>'
+    description: 'No item fits this filter. Left-click the filter to change it.'
   purchase:
-    chat-header: '<dark_gray>━━━━ <gradient:#86EFAC:#22C55E:#16A34A>✦ Vote Shop Purchase</gradient> <dark_gray>━━━━'
-    chat-item:    '<dark_gray>┃ <gray>Item: <gradient:#D8B4FE:#9333EA>{item}</gradient>'
-    chat-reward:  '<dark_gray>┃ <gray>Reward: {reward}'
-    chat-cost:    '<dark_gray>┃ <gray>Paid: <gradient:#D8B4FE:#9333EA>{cost}</gradient> <gray>points'
-    chat-balance: '<dark_gray>┕ <gray>Balance: <#C084FC>{balance}<gray> points'
-    title:    '<gradient:#86EFAC:#22C55E:#16A34A>✦ Purchased!</gradient>'
-    subtitle: '<gradient:#D8B4FE:#9333EA>{item}</gradient>'
+    chat: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Bought</#F1F5F9> <#A78BFA>{item}</#A78BFA> <#F1F5F9>for</#F1F5F9> <#A78BFA>{cost} points</#A78BFA><#F1F5F9>. Balance:</#F1F5F9> <#A78BFA>{balance}</#A78BFA>'
+    title: '<gradient:#5EEAD4:#A78BFA>Bought</gradient>'
+    subtitle: '<#F1F5F9>{item}</#F1F5F9>'
+  not-enough: '<#F87171>[X]</#F87171> <#F1F5F9>You need</#F1F5F9> <#A78BFA>{missing}</#A78BFA> <#F1F5F9>more points for</#F1F5F9> <#A78BFA>{item}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+  no-profile: '<#F87171>[X]</#F87171> <#F1F5F9>Vote once before you shop.</#F1F5F9>'
+  error: '<#F87171>[X]</#F87171> <#F1F5F9>The purchase did not go through. Try again.</#F1F5F9>'
+  grant-failed: '<#F87171>[X]</#F87171> <#F1F5F9>The reward could not be delivered. Your points were refunded.</#F1F5F9>'
+  players-only: '<#F87171>[X]</#F87171> <#F1F5F9>Only players can use the vote shop.</#F1F5F9>'
+  unavailable: '<#F87171>[X]</#F87171> <#F1F5F9>The vote shop is not available right now.</#F1F5F9>'
 
-  # ── Error toasts ────────────────────────────────────────────────────────
-  not-enough: '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>You need <white>{missing}</white> more vote points for that.</red>'
-  no-profile: '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>Vote at least once first.</red>'
-  error:      '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>Purchase failed. Try again.</red>'
-  grant-failed: '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>The reward could not be delivered - your points were refunded.</red>'
-  players-only: '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>Only players can use the Vote Shop.</red>'
-  unavailable:  '<gradient:#FCA5A5:#DC2626>✘</gradient> <red>The Vote Shop is unavailable right now.</red>'
-
-# ── Reward label templates (VoteRewardDescriber) ──────────────────────────────
-# Editable label fragments embedded into reward lists (lucky vote, streak tiles,
-# vote-party loot). {amount}/{material}/{unit}/{crate} are substituted in code;
-# {material} is a Minecraft translation key rendered via <lang:…> per client.
+# ── Reward labels ────────────────────────────────────────────────────────────
+# One line per reward, used in lore, chat and Bedrock forms. Coins and Crystals
+# show the MythBlock currency icon in GUIs; {unit} is used where icons cannot
+# render. {material} is a Minecraft item key shown in each client's language.
 reward_describe:
-  item: '<gradient:#93c5fd:#2563eb>{amount}× <lang:{material}></gradient>'
-  currency: '<gradient:#FFD700:#FFA500>◆ {amount} {unit}</gradient>'
-  experience-points: '<gradient:#86efac:#16a34a>✦ {amount} XP</gradient>'
-  experience-levels: '<gradient:#86efac:#16a34a>✦ {amount} levels</gradient>'
-  crate-key: '<gradient:#a5f3fc:#06b6d4>{amount}× {crate} Key</gradient>'
-  island-radius: '<gradient:#86efac:#16a34a>✦ +{amount} Island Radius</gradient>'
-  fly-coupon: '<gradient:#93c5fd:#3b82f6>✦ {count}× {minutes}m Fly Time</gradient>'
-  special: '<gradient:#d8b4fe:#9333ea>✦ Special Reward</gradient>'
-  # Pools. lucky-pool describes the pool itself (catalogue view);
-  # lucky-win describes what a draw actually paid out.
-  lucky-pool: '<gradient:#fde047:#f59e0b>✦ 1 of {count} Jackpot Prizes</gradient>'
-  lucky-win: '<gradient:#fde047:#f59e0b>✦ Jackpot</gradient> <dark_gray>»</dark_gray> {reward}'
-  chance: '{reward} <dark_gray>(</dark_gray><gray>{chance}%</gray><dark_gray>)</dark_gray>'
+  item: '<#F1F5F9>{amount}x <lang:{material}></#F1F5F9>'
+  currency: '<#F1F5F9>{amount} {unit}</#F1F5F9>'
+  unit:
+    coins: 'Coins'
+    crystals: 'Crystals'
+    credits: 'Crystals'
+  experience-points: '<#F1F5F9>{amount} XP</#F1F5F9>'
+  experience-levels: '<#F1F5F9>{amount} levels</#F1F5F9>'
+  crate-key: '<#F1F5F9>{amount}x {crate} Crate key</#F1F5F9>'
+  island-radius: '<#F1F5F9>+{amount} island radius</#F1F5F9>'
+  fly-coupon: '<#F1F5F9>{count}x {minutes} min flight coupon</#F1F5F9>'
+  special: '<#F1F5F9>Special reward</#F1F5F9>'
+  lucky-pool: '<#F1F5F9>1 of {count} lucky prizes</#F1F5F9>'
+  lucky-win: '{reward}'
+  chance: '{reward} <#94A3B8>({chance}%)</#94A3B8>'
 
-# ── /vote help ──────────────────────────────────────────────────────────────
-# Rendered by HelpRenderer. Placeholders:
-#   banner             : (none)
-#   entry              : {command}, {args}, {description}  ({args} can be empty)
-#   entry-args         : {args}                            (the raw signature)
-#   hover-base         : {full}, {description}
-#   hover-aliases      : {aliases}
-#   hover-action-*     : (none)
+# ── /vote help ───────────────────────────────────────────────────────────────
 vote_help:
-  banner: '<dark_gray>━━━━━━ <gradient:#86EFAC:#22C55E:#16A34A>Vote Commands</gradient> <dark_gray>━━━━━━'
-  entry: '  <dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>{command}</gradient> {args}<dark_gray> ┃ <gray>{description}</gray>'
-  entry-args: '<dark_gray><white>{args}</white></dark_gray>'
-  hover-base: '<gradient:#86EFAC:#22C55E:#16A34A>{full}</gradient><newline><gray>{description}</gray>'
-  hover-aliases: '<dark_gray>Aliases: </dark_gray><gray>{aliases}</gray>'
-  hover-action-run: '<dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>Click to run</gradient>'
-  hover-action-suggest: '<dark_gray>»</dark_gray> <gradient:#86EFAC:#22C55E>Click to fill</gradient>'
+  banner: '<gradient:#5EEAD4:#A78BFA>Vote commands</gradient> <dark_gray>|</dark_gray> <#94A3B8>Click a line to use it</#94A3B8>'
+  entry: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{command}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>{description}</#94A3B8>'
+  entry-with-args: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{command}</#F1F5F9> <#C4B5FD>{args}</#C4B5FD> <dark_gray>|</dark_gray> <#94A3B8>{description}</#94A3B8>'
+  hover-base: '<#F1F5F9>{full}</#F1F5F9><newline><#94A3B8>{description}</#94A3B8>'
+  hover-aliases: '<#94A3B8>Aliases</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{aliases}</#F1F5F9>'
+  hover-action-run: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Click to run</#F1F5F9>'
+  hover-action-suggest: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Click to fill in</#F1F5F9>'
   desc:
     vote: 'Open the vote menu'
-    sites: 'List all vote sites with links'
-    stats: 'View vote statistics (opens the menu for yourself)'
-    top: 'Open the all-time leaderboard'
-    rewards: 'Jackpot odds, multiplier, freeze, gift, points'
+    sites: 'List every vote site with its link'
+    stats: 'Show vote stats; opens the menu for yourself'
+    top: 'Show the top voters'
+    rewards: 'Lucky vote, weekend bonus, vote party, freezes and gifts'
     shop: 'Spend vote points on rewards'
-    freeze: 'Buy a Streak Freeze (you start with one free)'
-    gift: 'Gift a streak day to a friend'
-    help: 'Show this help'
+    freeze: 'Buy a Streak Freeze (your first one is free)'
+    gift: 'Give a friend a streak day'
+    help: 'Show this list'
 
-# ── /jexvote help (admin) ────────────────────────────────────────────────────
-# Same shape as vote_help; deliberate red gradient + [ADMIN] badge so the two
-# helps don't look near-identical (the previous green vs red was too subtle).
+# ── /jexvote help and admin output ───────────────────────────────────────────
 vote_admin:
-  banner: '<dark_gray>━━━━ <gradient:#FCA5A5:#DC2626>JExVote Admin</gradient> <dark_gray>┃</dark_gray> <gradient:#FBBF24:#F59E0B>[ADMIN]</gradient> <dark_gray>━━━━'
-  entry: '  <dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>{command}</gradient> {args}<dark_gray> ┃ <gray>{description}</gray>'
-  entry-args: '<dark_gray><white>{args}</white></dark_gray>'
-  hover-base: '<gradient:#FCA5A5:#DC2626>{full}</gradient> <gradient:#FBBF24:#F59E0B>[ADMIN]</gradient><newline><gray>{description}</gray>'
-  hover-aliases: '<dark_gray>Aliases: </dark_gray><gray>{aliases}</gray>'
-  hover-action-run: '<dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>Click to run</gradient>'
-  hover-action-suggest: '<dark_gray>»</dark_gray> <gradient:#FCA5A5:#DC2626>Click to fill</gradient>'
+  banner: '<gradient:#5EEAD4:#A78BFA>JExVote admin</gradient> <dark_gray>|</dark_gray> <#FBBF24>Staff only</#FBBF24>'
+  entry: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{command}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>{description}</#94A3B8>'
+  entry-with-args: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{command}</#F1F5F9> <#C4B5FD>{args}</#C4B5FD> <dark_gray>|</dark_gray> <#94A3B8>{description}</#94A3B8>'
+  hover-base: '<#F1F5F9>{full}</#F1F5F9><newline><#94A3B8>{description}</#94A3B8>'
+  hover-aliases: '<#94A3B8>Aliases</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{aliases}</#F1F5F9>'
+  hover-action-run: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Click to run</#F1F5F9>'
+  hover-action-suggest: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Click to fill in</#F1F5F9>'
+  row: '<#94A3B8>{label}</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{value}</#F1F5F9>'
+  label:
+    edition: 'Edition'
+    version: 'Version'
+    sites: 'Vote sites'
+    port: 'Votifier port'
+    token: 'v2 token'
+  info:
+    title: '<gradient:#5EEAD4:#A78BFA>JExVote</gradient> <dark_gray>|</dark_gray> <#F1F5F9>Server info</#F1F5F9>'
+    edition-free: 'Free'
+    edition-premium: 'Premium'
+  key:
+    title: '<gradient:#5EEAD4:#A78BFA>Votifier setup</gradient> <dark_gray>|</dark_gray> <#F1F5F9>For vote sites</#F1F5F9>'
+    missing: '<#F87171>[X]</#F87171> <#F1F5F9>The public key does not exist yet. Start the server once so the Votifier server can create it.</#F1F5F9>'
+    no-token: 'none'
+    one-line: "<#C4B5FD>Public key, one line (most sites)</#C4B5FD> <click:copy_to_clipboard:'{key}'><hover:show_text:'<#94A3B8>Copies the key</#94A3B8>'><#A78BFA>[copy]</#A78BFA></hover></click>"
+    raw: '<#F1F5F9>{key}</#F1F5F9>'
+    pem: '<#C4B5FD>Public key, PEM (for sites that want BEGIN/END lines)</#C4B5FD>'
+    hint: '<#94A3B8>Paste one of them into the Votifier public key field of the vote site.</#94A3B8>'
+  debug:
+    title: '<gradient:#5EEAD4:#A78BFA>Vote services</gradient> <dark_gray>|</dark_gray> <#F1F5F9>Site check</#F1F5F9>'
+    site-receiving: "<#4ADE80>[OK]</#4ADE80> <#F1F5F9>{site}</#F1F5F9> <dark_gray>|</dark_gray> <#A78BFA>'{service}'</#A78BFA> <#94A3B8>last vote {ago}</#94A3B8>"
+    site-silent: "<#FBBF24>[!]</#FBBF24> <#F1F5F9>{site}</#F1F5F9> <dark_gray>|</dark_gray> <#A78BFA>'{service}'</#A78BFA> <#94A3B8>no votes received yet</#94A3B8>"
+    orphan-header: '<#F87171>[X]</#F87171> <#F1F5F9>These services sent votes but match no site. Set a site''s service-name to one of them:</#F1F5F9>'
+    orphan: "<#A78BFA>▸</#A78BFA> <#F1F5F9>'{service}'</#F1F5F9> <#94A3B8>last vote {ago}</#94A3B8>"
+    all-matched: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Every received vote matches a configured site.</#F1F5F9>'
   desc:
     info: 'Show edition, version, site count and Votifier port'
     reload: 'Reload config.yml, rewards.yml and sites.yml'
-    reset: "Reset a player's vote stats"
-    resetmonthly: 'Reset monthly vote counts for everyone'
-    fakevote: 'Simulate a vote for testing'
-    key: 'Show the Votifier public key, PEM, port and token'
-    setstreak: "Set a player's vote streak"
-    help: 'Show this help'
+    reset: 'Reset the vote stats of a player'
+    resetmonthly: 'Reset the monthly votes of everyone'
+    fakevote: 'Send a test vote'
+    key: 'Show the Votifier public key, port and token'
+    setstreak: 'Set the streak of a player'
+    help: 'Show this list'
 
-# ── Built-in JExCommand keys ──────────────────────────────────────────────────
-
+# ── JExCommand built-in messages ─────────────────────────────────────────────
 jexcommand:
   error:
-    no-permission:        "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Missing permission <white>{permission}</white>."
-    player-only:          "<gradient:#fca5a5:#dc2626>✘</gradient> <red>This command is player-only."
-    console-only:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>This command is console-only."
-    invalid-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Invalid argument <white>{value}</white> for <white>{name}</white>."
-    missing-argument:     "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Missing argument <white>{name}</white>."
-    too-many-arguments:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Too many arguments - unexpected <white>{value}</white>."
-    invalid-long:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> is not a whole number."
-    invalid-double:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> is not a number."
-    not-positive-long:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> must be positive."
-    not-positive-double:  "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> must be positive."
-    invalid-uuid:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> is not a valid UUID."
-    invalid-enum:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red><white>{value}</white> is not one of: <gray>{options}</gray>."
-    expected-single-word: "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Expected a single word, got <white>{value}</white>."
-    player-not-online:    "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Player <white>{value}</white> is not online."
-    player-unknown:       "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Unknown player <white>{value}</white>."
-    internal:             "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Internal error: <white>{message}</white></red>"
-    unknown-subcommand:   "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Unknown subcommand <white>{name}</white>."
-    unknown-type:         "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Unknown argument type <white>{type}</white>."
-  usage: "<gradient:#a5f3fc:#06b6d4>▸</gradient> <gray>Usage: <white>{usage}</white>"
+    no-permission: '<#F87171>[X]</#F87171> <#F1F5F9>You are missing the permission</#F1F5F9> <#A78BFA>{permission}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    player-only: '<#F87171>[X]</#F87171> <#F1F5F9>Only players can use this command.</#F1F5F9>'
+    console-only: '<#F87171>[X]</#F87171> <#F1F5F9>Only the console can use this command.</#F1F5F9>'
+    invalid-argument: '<#F87171>[X]</#F87171> <#A78BFA>{value}</#A78BFA> <#F1F5F9>is not valid for</#F1F5F9> <#A78BFA>{name}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    missing-argument: '<#F87171>[X]</#F87171> <#F1F5F9>Missing</#F1F5F9> <#A78BFA>{name}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    too-many-arguments: '<#F87171>[X]</#F87171> <#F1F5F9>Too many arguments, did not expect</#F1F5F9> <#A78BFA>{value}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    invalid-long: '<#F87171>[X]</#F87171> <#A78BFA>{value}</#A78BFA> <#F1F5F9>is not a whole number.</#F1F5F9>'
+    invalid-double: '<#F87171>[X]</#F87171> <#A78BFA>{value}</#A78BFA> <#F1F5F9>is not a number.</#F1F5F9>'
+    not-positive-long: '<#F87171>[X]</#F87171> <#A78BFA>{value}</#A78BFA> <#F1F5F9>must be above 0.</#F1F5F9>'
+    not-positive-double: '<#F87171>[X]</#F87171> <#A78BFA>{value}</#A78BFA> <#F1F5F9>must be above 0.</#F1F5F9>'
+    invalid-uuid: '<#F87171>[X]</#F87171> <#A78BFA>{value}</#A78BFA> <#F1F5F9>is not a valid UUID.</#F1F5F9>'
+    invalid-enum: '<#F87171>[X]</#F87171> <#A78BFA>{value}</#A78BFA> <#F1F5F9>is not one of</#F1F5F9> <#94A3B8>{options}</#94A3B8><#F1F5F9>.</#F1F5F9>'
+    expected-single-word: '<#F87171>[X]</#F87171> <#F1F5F9>Expected one word, got</#F1F5F9> <#A78BFA>{value}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    player-not-online: '<#F87171>[X]</#F87171> <#A78BFA>{value}</#A78BFA> <#F1F5F9>is not online.</#F1F5F9>'
+    player-unknown: '<#F87171>[X]</#F87171> <#F1F5F9>No player named</#F1F5F9> <#A78BFA>{value}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+    internal: '<#F87171>[X]</#F87171> <#F1F5F9>Something went wrong:</#F1F5F9> <#94A3B8>{message}</#94A3B8>'
+    unknown-subcommand: '<#F87171>[X]</#F87171> <#F1F5F9>Unknown command</#F1F5F9> <#A78BFA>{name}</#A78BFA><#F1F5F9>. Try /vote help.</#F1F5F9>'
+    unknown-type: '<#F87171>[X]</#F87171> <#F1F5F9>Unknown argument type</#F1F5F9> <#A78BFA>{type}</#A78BFA><#F1F5F9>.</#F1F5F9>'
+  usage: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Use</#F1F5F9> <#A78BFA>{usage}</#A78BFA>'
 
 command:
   vote:
-    description: 'Open the vote menu or view vote sites'
+    description: 'Open the vote menu or list the vote sites'
   votes:
-    description: 'View your vote statistics'
+    description: 'Show your vote stats'
   votetop:
-    description: 'View the vote leaderboard'
+    description: 'Show the top voters'
   votereload:
-    description: 'Reload JExVote configuration'
+    description: 'Reload the JExVote configuration'
   votereset:
-    description: 'Reset a player''s vote statistics'
+    description: 'Reset the vote stats of a player'
 
-# ── Bedrock forms (Cumulus) ──────────────────────────────────────────
+# ── Bedrock forms (plain text, no colours or icons) ─────────────────────────
 bedrock:
+  row: '{label}: {value}'
   overview:
-    title: 'Vote Overview'
-    header: 'Your Vote Stats'
-    total-votes: 'Total Votes'
-    monthly-votes: 'Monthly Votes'
-    points: 'Vote Points'
-    streak: 'Streak'
-    highest: 'Best'
-    last-vote: 'Last Vote'
-    sites-header: 'Vote Sites'
-    sites-ready: 'sites ready to vote'
-    votable: 'Ready'
+    title: 'Vote'
+    sites-ready: '{ready} of {total} vote sites are ready.'
+    site-ready: '{site} - ready'
+    site-cooldown: '{site} - again in {time}'
+    site-link: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Vote on {site}:</#F1F5F9> <#A78BFA>{url}</#A78BFA>'
   nav:
-    leaderboard: 'Leaderboard'
-    streaks: 'Streaks'
-    rewards: 'Rewards'
-    shop: 'Shop'
+    leaderboard: 'Top voters'
+    streaks: 'Streak rewards'
+    rewards: 'Vote rewards'
+    shop: 'Vote shop'
     back: 'Back'
   leaderboard:
-    title: 'Vote Leaderboard'
-    header: 'Top Voters - All Time'
-    votes: 'votes'
-    streak-label: 'Streak'
+    title: 'Top voters'
+    header: 'The players with the most votes, all time.'
+    entry: '#{rank} {player} - {votes} votes, streak {streak}'
+    empty: 'Nobody has voted yet.'
   streaks:
-    title: 'Vote Streaks'
-    header: 'Your Streak Progress'
-    current: 'Current Streak'
-    highest: 'Highest Streak'
+    title: 'Streak rewards'
+    header: 'Vote every day to grow your streak. Each milestone pays once.'
     milestones: 'Milestones'
-    day: 'Day'
-    claimed: 'Claimed'
-    claimable: 'Ready to claim!'
-    locked: 'Locked'
-    claim-day: 'Claim Day'
-    claim-success: 'Streak reward for day {day} claimed!'
-    claim-failed: 'Could not claim this reward.'
+    claim-button: 'Claim day {day}'
+    line-claimed: 'Day {day}: [OK] claimed'
+    line-claimable: 'Day {day}: [+] ready to claim'
+    line-reached: 'Day {day}: [OK] paid out'
+    line-locked: 'Day {day}: [X] locked'
   rewards:
-    title: 'Vote Rewards'
-    header: 'Reward Hub'
-    points: 'Vote Points'
-    multiplier: 'Multiplier'
-    party: 'Vote Party Progress'
-    freeze-owned: 'Streak Freezes Owned'
-    lucky-catalog: 'Lucky Vote Catalog'
-    party-catalog: 'Party Reward Pool'
-    buy-freeze: 'Buy Streak Freeze'
+    title: 'Vote rewards'
+    header: 'What a vote pays on top, and what vote points buy.'
+    lucky-catalog: 'Lucky vote prizes'
+    party-catalog: 'Vote party prizes'
+    buy-freeze-cost: 'Buy a Streak Freeze ({cost} points)'
   lucky:
-    title: 'Lucky Vote Catalog'
-    header: 'Chance-based vote rewards'
-    pool-header: 'Lucky Pool'
+    title: 'Lucky vote'
+    header: 'Every vote draws one of these prizes.'
+  prize:
+    entry: '{chance}% - {reward} (won {won}x)'
+    empty: 'No prizes are set up.'
   party:
-    title: 'Vote Party Rewards'
-    header: 'Party Reward Pool'
-    progress: 'Progress'
-    remaining: 'remaining'
-    rewards: 'Rewards'
+    title: 'Vote party'
+    header: 'When the party goal is reached, every voter gets rewards.'
+    rewards: 'Every voter gets'
+    pool: 'Prize draws'
+    entry: '+ {reward}'
   shop:
-    title: 'Vote Token Shop'
-    header: 'Spend your vote points'
-    balance: 'Your Balance'
-    confirm-title: 'Confirm Purchase'
+    title: 'Vote shop'
+    header: 'Spend your vote points.'
+    entry-affordable: '[+] {item} - {cost} points: {reward}'
+    entry-short: '[!] {item} - {cost} points: {reward}'
+    button: '{item} ({cost} points)'
+    confirm-title: 'Confirm purchase'
     confirm-body: 'Buy {item} for {cost} vote points?'
     confirm-buy: 'Buy'
     confirm-cancel: 'Cancel'
-    bought: 'Purchased {item} for {cost} points!'
-    not-enough: 'Not enough vote points.'
-    error: 'Purchase failed.'
-    grant-failed: 'Reward could not be delivered - points refunded.'
+    bought: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Bought {item} for {cost} points.</#F1F5F9>'
+    not-enough: '<#F87171>[X]</#F87171> <#F1F5F9>You need more vote points for {item}.</#F1F5F9>'
+    error: '<#F87171>[X]</#F87171> <#F1F5F9>The purchase did not go through. Try again.</#F1F5F9>'
+    grant-failed: '<#F87171>[X]</#F87171> <#F1F5F9>The reward could not be delivered. Your points were refunded.</#F1F5F9>'
   votesetstreak:
-    description: 'Set a player''s vote streak'
+    description: 'Set the streak of a player'

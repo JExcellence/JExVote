@@ -7,12 +7,13 @@ import de.jexcellence.vote.VoteEdition;
 import de.jexcellence.vote.command.help.HelpRenderer;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
+import de.jexcellence.vote.gui.style.VoteFormat;
 import de.jexcellence.vote.model.Vote;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.MultiplierService;
 import de.jexcellence.vote.service.VoteService;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -21,14 +22,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class VoteAdminHandler {
 
-    private static final MiniMessage MM = MiniMessage.miniMessage();
-    private static final String C_WHITE = "</white>";
     private static final String PARAM_PLAYER = "player";
+    private static final String PARAM_SERVICE = "service";
+    private static final String PARAM_AGO = "ago";
+    private static final String PARAM_KEY = "key";
+    private static final String PORT = "port";
+    private static final String DEBUG = "vote_admin.debug.";
+    private static final String INFO = "vote_admin.info.";
+    private static final String KEY_INFO = "vote_admin.key.";
 
     private final JavaPlugin plugin;
     private final VoteEdition edition;
@@ -64,26 +72,24 @@ public final class VoteAdminHandler {
     }
 
     /**
-     * Prints, per configured site, its {@code service-name} and whether votes with that
-     * name have actually been received - then lists any received service names that match
-     * NO configured site (the mismatches to fix, so their cooldowns can track).
+     * Prints, per configured site, its {@code service-name} and whether votes with that name have been
+     * received, then lists received service names that match no configured site (the mismatches to fix).
      */
     private void onDebugServices(@NotNull CommandContext ctx) {
-        var sender = ctx.sender();
+        CommandSender sender = ctx.sender();
         Map<String, VoteSite> sites = voteService.getVoteSites();
         voteService.receivedServiceNames().thenAccept(received -> {
-            sender.sendMessage(MM.deserialize(
-                    "<gradient:#fde047:#f59e0b><bold>Vote Service Diagnostics</bold></gradient>"));
-            java.util.Set<String> matched = matchConfiguredSites(sender, sites, received);
+            r18n().msg(DEBUG + "title").send(sender);
+            Set<String> matched = matchConfiguredSites(sender, sites, received);
             reportOrphanServices(sender, received, matched);
         });
     }
 
-    private java.util.@NotNull Set<String> matchConfiguredSites(
-            @NotNull org.bukkit.command.CommandSender sender,
-            @NotNull Map<String, VoteSite> sites,
-            @NotNull Map<String, Long> received) {
-        java.util.Set<String> matched = new java.util.HashSet<>();
+    private @NotNull Set<String> matchConfiguredSites(@NotNull CommandSender sender,
+                                                      @NotNull Map<String, VoteSite> sites,
+                                                      @NotNull Map<String, Long> received) {
+        Player viewer = sender instanceof Player player ? player : null;
+        Set<String> matched = new HashSet<>();
         for (VoteSite site : sites.values()) {
             long last = -1L;
             for (Map.Entry<String, Long> rec : received.entrySet()) {
@@ -92,46 +98,32 @@ public final class VoteAdminHandler {
                     matched.add(rec.getKey());
                 }
             }
-            String status = last >= 0
-                    ? "<green>✓ receiving</green> <dark_gray>(last " + agoText(last) + ")</dark_gray>"
-                    : "<yellow>⚠ no votes recorded yet</yellow>";
-            sender.sendMessage(MM.deserialize("  <white>" + site.id() + "</white> <dark_gray>»</dark_gray> <aqua>'"
-                    + site.serviceName() + "'</aqua> <dark_gray>-</dark_gray> " + status));
+            var line = last >= 0
+                    ? r18n().msg(DEBUG + "site-receiving").with(PARAM_AGO, VoteFormat.agoEpoch(viewer, last))
+                    : r18n().msg(DEBUG + "site-silent");
+            line.with("site", site.id()).with(PARAM_SERVICE, site.serviceName()).send(sender);
         }
         return matched;
     }
 
-    private void reportOrphanServices(@NotNull org.bukkit.command.CommandSender sender,
-                                       @NotNull Map<String, Long> received,
-                                       @NotNull java.util.Set<String> matched) {
+    private void reportOrphanServices(@NotNull CommandSender sender,
+                                      @NotNull Map<String, Long> received,
+                                      @NotNull Set<String> matched) {
+        Player viewer = sender instanceof Player player ? player : null;
         boolean anyOrphan = false;
         for (Map.Entry<String, Long> rec : received.entrySet()) {
-            if (matched.contains(rec.getKey())) {
-                continue;
+            if (!matched.contains(rec.getKey())) {
+                if (!anyOrphan) {
+                    r18n().msg(DEBUG + "orphan-header").send(sender);
+                    anyOrphan = true;
+                }
+                r18n().msg(DEBUG + "orphan").with(PARAM_SERVICE, rec.getKey())
+                        .with(PARAM_AGO, VoteFormat.agoEpoch(viewer, rec.getValue())).send(sender);
             }
-            if (!anyOrphan) {
-                sender.sendMessage(MM.deserialize(
-                        "<red>Received but matching NO site - set a site's service-name to one of these:</red>"));
-                anyOrphan = true;
-            }
-            sender.sendMessage(MM.deserialize("  <red>✗</red> <white>'" + rec.getKey()
-                    + "'</white> <dark_gray>(last " + agoText(rec.getValue()) + ")</dark_gray>"));
         }
         if (!anyOrphan) {
-            sender.sendMessage(MM.deserialize("  <gray>All received votes map to a configured site.</gray>"));
+            r18n().msg(DEBUG + "all-matched").send(sender);
         }
-    }
-
-    /** Compact "3d ago" / "5h ago" / "12m ago" from an epoch-seconds timestamp. */
-    private static @NotNull String agoText(long epochSeconds) {
-        long secs = Math.max(0L, Instant.now().getEpochSecond() - epochSeconds);
-        if (secs >= 86400L) {
-            return (secs / 86400L) + "d ago";
-        }
-        if (secs >= 3600L) {
-            return (secs / 3600L) + "h ago";
-        }
-        return Math.max(1L, secs / 60L) + "m ago";
     }
 
     private void onHelp(@NotNull CommandContext ctx) {
@@ -158,55 +150,46 @@ public final class VoteAdminHandler {
 
     @SuppressWarnings("deprecation")
     private void onInfo(@NotNull CommandContext ctx) {
-        String version = plugin.getDescription().getVersion();
-        String editionName = edition instanceof VoteEdition.PremiumEdition ? "Premium" : "Free";
-        var sender = ctx.sender();
+        CommandSender sender = ctx.sender();
+        String editionKey = edition instanceof VoteEdition.PremiumEdition ? "premium" : "free";
+        r18n().msg(INFO + "title").send(sender);
+        sendAdminRow(sender, "edition", r18n().msg(INFO + "edition-" + editionKey).text(null));
+        sendAdminRow(sender, "version", plugin.getDescription().getVersion());
+        sendAdminRow(sender, "sites", String.valueOf(voteService.getVoteSites().size()));
+        sendAdminRow(sender, PORT, String.valueOf(voteConfig.getServerPort()));
+    }
 
-        sender.sendMessage(MM.deserialize(
-                "<dark_gray>━━━━ <gradient:#fde047:#f59e0b>JExVote</gradient> <dark_gray>━━━━"));
-        sender.sendMessage(MM.deserialize(
-                "  <gray>Edition:</gray> <gradient:#86efac:#16a34a>" + editionName + "</gradient>"));
-        sender.sendMessage(MM.deserialize(
-                "  <gray>Version:</gray> <white>" + version + C_WHITE));
-        sender.sendMessage(MM.deserialize(
-                "  <gray>Vote sites:</gray> <white>" + voteService.getVoteSites().size() + C_WHITE));
-        sender.sendMessage(MM.deserialize(
-                "  <gray>Votifier port:</gray> <white>" + voteConfig.getServerPort() + C_WHITE));
+    private static void sendAdminRow(@NotNull CommandSender sender, @NotNull String label, @NotNull String value) {
+        r18n().msg("vote_admin.row")
+                .with("label", r18n().msg("vote_admin.label." + label).text(null))
+                .with("value", value)
+                .send(sender);
     }
 
     /**
-     * Prints the Votifier connection details a vote site needs: port, v2 token, and the
-     * RSA public key in both one-line (X.509 base64) and PEM form. The key is read from
-     * {@code rsa/public.key}, generated on first server start.
+     * Prints the Votifier connection details a vote site needs: port, v2 token, and the RSA public key in
+     * one-line (X.509 base64) and PEM form. The key is read from {@code rsa/public.key}, generated on first
+     * server start.
      */
     private void onKey(@NotNull CommandContext ctx) {
-        var sender = ctx.sender();
+        CommandSender sender = ctx.sender();
         Path keyFile = plugin.getDataFolder().toPath().resolve("rsa/public.key");
         String raw;
         try {
             raw = Files.readString(keyFile).replaceAll("\\s+", "");
         } catch (IOException e) {
-            sender.sendMessage(MM.deserialize(
-                    "<red>Could not read the public key - the Votifier server must start at least once to generate it."));
+            r18n().msg(KEY_INFO + "missing").prefix().send(sender);
             return;
         }
-
         String token = voteConfig.getServerToken();
-        sender.sendMessage(MM.deserialize(
-                "<dark_gray>━━━━ <gradient:#fde047:#f59e0b>Votifier Setup</gradient> <dark_gray>━━━━"));
-        sender.sendMessage(MM.deserialize(
-                "  <gray>Port:</gray> <white>" + voteConfig.getServerPort() + C_WHITE));
-        sender.sendMessage(MM.deserialize(
-                "  <gray>v2 token:</gray> <white>" + (token.isEmpty() ? "(none)" : token) + C_WHITE));
-        sender.sendMessage(MM.deserialize(
-                "  <gray>Public key (one line - most sites): "
-                        + "<click:copy_to_clipboard:'" + raw + "'><hover:show_text:'Click to copy'><green>[copy]</green></hover></click>"));
-        sender.sendMessage(MM.deserialize("<white>" + raw + C_WHITE));
-        sender.sendMessage(MM.deserialize(
-                "  <gray>Public key (PEM - if the site wants BEGIN/END headers):"));
-        sender.sendMessage(MM.deserialize("<white>" + toPem(raw).replace("\n", "<newline>") + C_WHITE));
-        sender.sendMessage(MM.deserialize(
-                "  <dark_gray>Paste one of these into the site's Votifier public-key field."));
+        r18n().msg(KEY_INFO + "title").send(sender);
+        sendAdminRow(sender, PORT, String.valueOf(voteConfig.getServerPort()));
+        sendAdminRow(sender, "token", token.isEmpty() ? r18n().msg(KEY_INFO + "no-token").text(null) : token);
+        r18n().msg(KEY_INFO + "one-line").with(PARAM_KEY, raw).send(sender);
+        r18n().msg(KEY_INFO + "raw").with(PARAM_KEY, raw).send(sender);
+        r18n().msg(KEY_INFO + "pem").send(sender);
+        r18n().msg(KEY_INFO + "raw").with(PARAM_KEY, toPem(raw).replace("\n", "<newline>")).send(sender);
+        r18n().msg(KEY_INFO + "hint").send(sender);
     }
 
     /** Wraps a base64 X.509 key in PEM armor with 64-char lines. */
@@ -248,9 +231,7 @@ public final class VoteAdminHandler {
             if (Boolean.TRUE.equals(success)) {
                 r18n().msg("vote.reset.success").prefix().with(PARAM_PLAYER, name).send(ctx.sender());
             } else {
-                ctx.sender().sendMessage(MM.deserialize(
-                        "<gradient:#fca5a5:#dc2626>✘</gradient> <red>No vote data found for</red> <white>"
-                                + name + C_WHITE));
+                r18n().msg("vote.reset.not_found").prefix().with(PARAM_PLAYER, name).send(ctx.sender());
             }
         });
     }
@@ -268,12 +249,10 @@ public final class VoteAdminHandler {
         Vote vote = new Vote(playerName, service, "127.0.0.1", Instant.now());
         voteService.processVote(vote).thenAccept(success -> {
             if (Boolean.TRUE.equals(success)) {
-                ctx.sender().sendMessage(MM.deserialize(
-                        "<gradient:#86efac:#16a34a>✔</gradient> <gray>Fake vote submitted for</gray> <white>"
-                                + playerName + C_WHITE + " <gray>on</gray> <white>" + service + C_WHITE));
+                r18n().msg("vote.fakevote.success").prefix()
+                        .with(PARAM_PLAYER, playerName).with(PARAM_SERVICE, service).send(ctx.sender());
             } else {
-                ctx.sender().sendMessage(MM.deserialize(
-                        "<gradient:#fca5a5:#dc2626>✘</gradient> <red>Failed to submit fake vote</red>"));
+                r18n().msg("vote.fakevote.failed").prefix().send(ctx.sender());
             }
         });
     }

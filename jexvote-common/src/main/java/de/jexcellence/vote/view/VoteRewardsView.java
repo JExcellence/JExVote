@@ -1,14 +1,14 @@
 package de.jexcellence.vote.view;
 
+import de.jexcellence.jexplatform.gui.component.CardLore;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
-import de.jexcellence.jexplatform.utility.item.ItemBuilder;
 import de.jexcellence.jexplatform.view.RewardViewHelper;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
+import de.jexcellence.vote.gui.style.VoteFormat;
 import de.jexcellence.vote.reward.ChanceReward;
-import de.jexcellence.vote.reward.LuckyReward;
 import de.jexcellence.vote.service.MultiplierService;
 import de.jexcellence.vote.service.RewardStatsService;
 import de.jexcellence.vote.service.StreakFreezeService;
@@ -27,33 +27,37 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * "Vote Economy" overview - Lucky Vote / chance rewards (with odds + drop
- * counts), weekend-multiplier status, and vote-party progress + the rewards you
- * earn. Fully i18n + the shared gradient palette; text summary mirrors the GUI.
+ * Vote rewards ({@code /vote rewards}): the wallet header, then one card each for Lucky Vote, the weekend
+ * bonus, the vote party, Streak Freezes, gifting and the shop. Live counts load asynchronously and the view
+ * redraws in place. {@link #sendTextSummary} prints the same facts for the console.
  *
  * @author JExcellence
  */
 public final class VoteRewardsView extends VoteBaseView {
 
-    // ── Slot layout (V-11.3/V-11.4) ──────────────────────────────────────
-    // Slot 4 (the header EMERALD) now also shows the live points balance,
-    // so the separate NETHER_STAR Points tile is gone. Shop nav moved to
-    // the bottom-row centre (slot 49) so it sits next to the close button.
-    private static final int SLOT_HEADER = 4;
-    private static final int SLOT_FREEZE = 30;
-    private static final int SLOT_GIFT   = 32;
-    private static final int SLOT_SHOP   = 49;
+    private static final String KEY = "vote_rewards.";
+    private static final String LABEL = VoteCards.COMMON + "label.";
     private static final String TAG_BUY_FREEZE = "buy_freeze";
     private static final String TAG_OPEN_PARTY = "open_party";
-    private static final String TAG_OPEN_SHOP  = "open_shop";
+    private static final String TAG_OPEN_SHOP = "open_shop";
     private static final String TAG_OPEN_LUCKY = "open_lucky";
-    private static final String PARAM_FACTOR = "factor";
-    private static final String PARAM_REMAINING = "remaining";
+    private static final String PARAM_VALUE = "value";
+    private static final String PARAM_COST = "cost";
+    private static final String PARAM_MAX = "max";
+    private static final String TONE_ACCENT = "accent";
+    private static final String DESCRIPTION = ".description";
+    private static final int SLOT_LUCKY = 20;
+    private static final int SLOT_MULTIPLIER = 22;
+    private static final int SLOT_PARTY = 24;
+    private static final int SLOT_FREEZE = 29;
+    private static final int SLOT_GIFT = 31;
+    private static final int SLOT_SHOP = 33;
 
     private final Holder holder = new Holder();
     private final JavaPlugin plugin;
@@ -65,11 +69,22 @@ public final class VoteRewardsView extends VoteBaseView {
     private final RewardStatsService stats;
     private final StreakFreezeService freezeService;
     private final VoteGiftService giftService;
+    private final Map<UUID, Wallet> walletByViewer = new ConcurrentHashMap<>();
 
-    private VoteOverviewView overviewView;
+    private @Nullable VoteOverviewView overviewView;
     private @Nullable VotePartyView partyView;
     private @Nullable VoteShopView shopView;
     private @Nullable VoteLuckyView luckyView;
+
+    /**
+     * The viewer's live counts.
+     *
+     * @param points        vote points
+     * @param freezes       owned Streak Freezes
+     * @param giftsLeft     gifts left today
+     */
+    private record Wallet(int points, int freezes, int giftsLeft) {
+    }
 
     @SuppressWarnings("java:S107")
     public VoteRewardsView(@NotNull JavaPlugin plugin,
@@ -93,305 +108,259 @@ public final class VoteRewardsView extends VoteBaseView {
 
     public void setOverviewView(@NotNull VoteOverviewView view) { this.overviewView = view; }
 
-    /** Wires the clickable party icon to the dedicated party reward catalog. */
     public void setPartyView(@NotNull VotePartyView view) { this.partyView = view; }
 
-    /** Wires the clickable shop icon to the vote-token shop. */
     public void setShopView(@NotNull VoteShopView view) { this.shopView = view; }
 
-    /** Wires the clickable Lucky Vote icon to the dedicated outcomes sub-view. */
     public void setLuckyView(@NotNull VoteLuckyView view) { this.luckyView = view; }
 
-    @Override protected @NotNull String title()          { return "vote_rewards.title"; }
-    @Override protected int rows()                        { return 6; }
+    @Override protected @NotNull String title() { return KEY + "title"; }
+    @Override protected int rows() { return 6; }
     @Override protected @NotNull InventoryHolder holder() { return holder; }
 
     @Override
-    protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
-        frame(inv, Material.LIME_STAINED_GLASS_PANE);
-
-        // Header (slot 4) - also carries the live Points balance now (V-11.3).
-        // The old NETHER_STAR Points tile at slot 13 is gone.
-        inv.setItem(SLOT_HEADER, headerTile(viewer, -1));
-
-        inv.setItem(20, luckyIcon(viewer));
-        inv.setItem(22, multiplierIcon(viewer));
-        inv.setItem(24, partyIcon(viewer));
-
-        // Live owned/remaining are filled in asynchronously by
-        // refreshLiveCounts(); these are the immediate placeholders.
-        inv.setItem(SLOT_FREEZE, freezeIcon(viewer, -1));
-        inv.setItem(SLOT_GIFT, giftIcon(viewer, -1));
-
-        // Shop nav at the bottom-row centre (V-11.4) - sits beside the close
-        // button rather than tucked into row 3.
-        if (shopView != null) {
-            inv.setItem(SLOT_SHOP, shopIcon(viewer));
-        }
-
-        navBar(inv, overviewView != null);
-    }
-
-    /**
-     * Merged header (slot 4): brand title + the live Vote Points balance +
-     * the spending hint that used to live on the separate Points tile.
-     */
-    private @NotNull ItemStack headerTile(@NotNull Player viewer, int points) {
-        String pointsText = points < 0 ? "…" : String.valueOf(points);
-        List<Component> lore = new ArrayList<>(plain(msg("vote_rewards.header.lore")
-                .with("points", pointsText).toComponents(viewer)));
-        appendLoreExtra(lore, "vote_rewards.header", viewer);
-        return ItemBuilder.of(Material.EMERALD)
-                .name(ic("vote_rewards.header.name", viewer))
-                .glow(true)
-                .lore(lore)
-                .build();
-    }
-
-    private @NotNull ItemStack shopIcon(@NotNull Player viewer) {
-        List<Component> lore = new ArrayList<>(ics("vote_rewards.shop.lore", viewer));
-        appendLoreExtra(lore, "vote_rewards.shop", viewer);
-        ItemStack icon = ItemBuilder.of(Material.EMERALD_BLOCK)
-                .name(ic("vote_rewards.shop.name", viewer))
-                .glow(true)
-                .lore(lore)
-                .build();
-        tag(icon, TAG_OPEN_SHOP);
-        return icon;
-    }
-
-    @Override
     public void open(@NotNull Player viewer) {
+        walletByViewer.remove(viewer.getUniqueId());
         super.open(viewer);
-        refreshLiveCounts(viewer);
+        refreshWallet(viewer);
     }
 
-    /**
-     * Loads the player's owned freeze count and remaining gifts off-thread,
-     * then updates the freeze/gift icons on the main thread if the view is
-     * still open.
-     */
-    private void refreshLiveCounts(@NotNull Player viewer) {
+    private void refreshWallet(@NotNull Player viewer) {
         UUID uuid = viewer.getUniqueId();
-        CompletableFuture<Integer> ownedFuture = freezeService.getOwned(uuid);
-        CompletableFuture<Integer> remainingFuture = giftService.remainingToday(viewer);
-        CompletableFuture<Integer> pointsFuture = freezeService.getPoints(uuid);
-
-        CompletableFuture.allOf(ownedFuture, remainingFuture, pointsFuture).thenRun(() ->
-                scheduler.runAtEntity(viewer, () -> {
-                    Inventory top = viewer.getOpenInventory().getTopInventory();
-                    if (top.getHolder() != holder) {
-                        return;
-                    }
-                    top.setItem(SLOT_HEADER, headerTile(viewer, pointsFuture.join()));
-                    top.setItem(SLOT_FREEZE, freezeIcon(viewer, ownedFuture.join()));
-                    top.setItem(SLOT_GIFT, giftIcon(viewer, remainingFuture.join()));
-                })).exceptionally(ex -> {
+        CompletableFuture<Integer> points = freezeService.getPoints(uuid);
+        CompletableFuture<Integer> owned = freezeService.getOwned(uuid);
+        CompletableFuture<Integer> gifts = giftService.remainingToday(viewer);
+        CompletableFuture.allOf(points, owned, gifts).thenRun(() -> scheduler.runAtEntity(viewer, () -> {
+            walletByViewer.put(uuid, new Wallet(points.join(), owned.join(), gifts.join()));
+            if (isViewing(viewer)) {
+                rerender(viewer);
+            }
+        })).exceptionally(ex -> {
             plugin.getLogger().fine(() -> "Failed to refresh vote reward live counts: " + ex.getMessage());
             return null;
         });
     }
 
-    // ── Section icons ───────────────────────────────────────────────
-
-    /**
-     * Lucky Vote summary tile (V-11.7). Previously crammed every outcome into
-     * its own lore line, producing a long unreadable list. Now shows just a
-     * compact summary + a "click to open" prompt; the full per-outcome catalog
-     * lives in {@link VoteLuckyView}.
-     */
-    private @NotNull ItemStack luckyIcon(@NotNull Player viewer) {
-        List<ChanceReward> chances = collect(ChanceReward.class);
-        List<LuckyReward> luckies = collect(LuckyReward.class);
-
-        // Total number of player-visible outcomes across every reward list:
-        // one row per ChanceReward, one row per LuckyReward.Entry.
-        int outcomes = chances.size()
-                + luckies.stream().mapToInt(lr -> lr.getEntries().size()).sum();
-        boolean configured = outcomes > 0;
-
-        List<Component> lore;
-        if (!configured) {
-            lore = new ArrayList<>(ics("vote_rewards.lucky.empty-lore", viewer));
-        } else {
-            lore = new ArrayList<>(plain(msg("vote_rewards.lucky.summary-lore")
-                    .with("outcomes", String.valueOf(outcomes))
-                    .toComponents(viewer)));
+    @Override
+    protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
+        Wallet wallet = walletByViewer.get(viewer.getUniqueId());
+        navBar(inv, viewer, overviewView == null ? null : KEY + "back");
+        inv.setItem(SLOT_HEADER, header(viewer, wallet));
+        inv.setItem(SLOT_LUCKY, luckyCard(viewer));
+        inv.setItem(SLOT_MULTIPLIER, multiplierCard(viewer));
+        inv.setItem(SLOT_PARTY, partyCard(viewer));
+        inv.setItem(SLOT_FREEZE, freezeCard(viewer, wallet));
+        inv.setItem(SLOT_GIFT, giftCard(viewer, wallet));
+        if (shopView != null && voteConfig.isFeatureShop()) {
+            inv.setItem(SLOT_SHOP, shopCard(viewer));
         }
-        appendLoreExtra(lore, "vote_rewards.lucky", viewer);
-
-        ItemStack tile = ItemBuilder.of(Material.SPONGE)
-                .name(ic("vote_rewards.lucky.name", viewer))
-                .glow(configured)
-                .lore(lore)
-                .build();
-        if (configured && luckyView != null) {
-            tag(tile, TAG_OPEN_LUCKY);
-        }
-        return tile;
     }
 
-    private @NotNull ItemStack multiplierIcon(@NotNull Player viewer) {
-        boolean active = multipliers.isActive();
-        MultiplierService.Settings s = settings();
+    // ── Cards ─────────────────────────────────────────────────────────
 
-        List<Component> lore = new ArrayList<>();
-        lore.add(Component.empty());
-        lore.add(active ? ic("vote_rewards.multiplier.status-active", viewer)
-                        : ic("vote_rewards.multiplier.status-inactive", viewer));
-        lore.add(msg("vote_rewards.multiplier.current")
-                .with(PARAM_FACTOR, fmt(multipliers.current())).itemComponent(viewer));
-        lore.add(msg("vote_rewards.multiplier.weekend")
-                .with(PARAM_FACTOR, fmt(s.weekendFactor())).itemComponent(viewer));
-        String days = s.weekendDays().stream()
-                .map(d -> d.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH))
-                .reduce((a, b) -> a + ", " + b).orElse("-");
-        lore.add(msg("vote_rewards.multiplier.days").with("days", days).itemComponent(viewer));
-        lore.add(Component.empty());
-        appendLoreExtra(lore, "vote_rewards.multiplier", viewer);
-        return ItemBuilder.of(Material.CLOCK)
-                .name(ic("vote_rewards.multiplier.name", viewer))
-                .glow(active)
-                .lore(lore)
-                .build();
-    }
-
-    private @NotNull ItemStack partyIcon(@NotNull Player viewer) {
-        List<Component> lore = new ArrayList<>();
-        lore.add(Component.empty());
-        if (party == null) {
-            lore.add(ic("vote_rewards.party.disabled", viewer));
+    private @NotNull ItemStack header(@NotNull Player viewer, @Nullable Wallet wallet) {
+        List<Component> rows = new ArrayList<>();
+        if (wallet == null) {
+            rows.add(VoteCards.rowOf(viewer, LABEL + "vote-points", VoteCards.loading(viewer)));
         } else {
-            int current = party.getCurrentVotes();
-            int target = party.getTargetVotes();
-            lore.add(msg("vote_rewards.party.progress")
-                    .with("current", String.valueOf(current))
-                    .with("target", String.valueOf(target)).itemComponent(viewer));
-            lore.add(msg("vote_rewards.party.remaining")
-                    .with(PARAM_REMAINING, String.valueOf(party.getRemainingVotes())).itemComponent(viewer));
-            lore.add(lore("  " + progressBar(current, target, 20)));
-            lore.add(Component.empty());
-            lore.add(ic("vote_rewards.party.rewards-header", viewer));
-            List<AbstractReward> rewards = rewardConfig.getVotePartyRewards();
-            if (rewards.isEmpty()) {
-                lore.add(ic("vote_rewards.party.none", viewer));
-            } else {
-                for (AbstractReward reward : rewards) {
-                    for (AbstractReward atomic : RewardViewHelper.flatten(reward)) {
-                        lore.add(msg("vote_rewards.party.reward-entry")
-                                .with("reward", VoteRewardDescriber.describe(atomic)).itemComponent(viewer));
-                    }
-                }
+            rows.add(VoteCards.rowOf(viewer, LABEL + "vote-points", VoteCards.points(viewer, wallet.points())));
+            if (voteConfig.getFreezeSettings().enabled()) {
+                rows.add(VoteCards.rowOf(viewer, LABEL + "freezes",
+                        VoteCards.ofTotal(viewer, wallet.freezes(), freezeService.resolveMax(viewer))));
+            }
+            if (voteConfig.getGiftSettings().enabled()) {
+                rows.add(VoteCards.rowOf(viewer, LABEL + "gifts-left",
+                        VoteCards.ofTotal(viewer, wallet.giftsLeft(), giftService.resolveDailyLimit(viewer))));
             }
         }
-        if (partyView != null) {
-            lore.add(Component.empty());
-            lore.add(ic("vote_rewards.party.view-all", viewer));
-        }
-        lore.add(Component.empty());
-        appendLoreExtra(lore, "vote_rewards.party", viewer);
-        ItemStack icon = ItemBuilder.of(Material.TOTEM_OF_UNDYING)
-                .name(ic("vote_rewards.party.name", viewer))
-                .glow(party != null)
-                .lore(lore)
-                .build();
-        if (partyView != null) {
-            tag(icon, TAG_OPEN_PARTY);
-        }
-        return icon;
+        CardLore lore = CardLore.create()
+                .block(VoteCards.paragraphOf(viewer, KEY + "header.description"))
+                .section(VoteCards.section(viewer, "wallet"), rows);
+        appendLoreExtra(lore, KEY + "header", viewer);
+        String points = wallet == null ? VoteCards.loading(viewer) : VoteCards.points(viewer, wallet.points());
+        return VoteCards.card(Material.NETHER_STAR,
+                VoteCards.ic(VoteCards.msg(KEY + "header.name").with(PARAM_VALUE, points), viewer), lore.build());
     }
 
-    private @NotNull ItemStack freezeIcon(@NotNull Player viewer, int owned) {
-        VoteConfig.FreezeSettings fs = voteConfig.getFreezeSettings();
-        List<Component> lore = new ArrayList<>();
-        lore.add(Component.empty());
-
-        if (!fs.enabled()) {
-            lore.add(ic("vote_rewards.freeze.disabled", viewer));
-            lore.add(Component.empty());
-            appendLoreExtra(lore, "vote_rewards.freeze", viewer);
-            return ItemBuilder.of(Material.PACKED_ICE)
-                    .name(ic("vote_rewards.freeze.name", viewer))
-                    .lore(lore)
-                    .build();
+    private @NotNull ItemStack luckyCard(@NotNull Player viewer) {
+        List<VotePrizeCatalogView.Prize> prizes = new ArrayList<>();
+        VoteLuckyView.addFrom(prizes, rewardConfig.getDefaultRewards());
+        rewardConfig.getSiteRewards().values().forEach(list -> VoteLuckyView.addFrom(prizes, list));
+        rewardConfig.getStreakRewards().values().forEach(list -> VoteLuckyView.addFrom(prizes, list));
+        VoteLuckyView.addFrom(prizes, rewardConfig.getVotePartyRewards());
+        String base = KEY + "lucky";
+        if (prizes.isEmpty()) {
+            return disabledCard(viewer, base + ".name-off", base + ".description-off");
         }
+        double rarest = prizes.stream().mapToDouble(VotePrizeCatalogView.Prize::percent).min().orElse(0.0);
+        CardLore lore = CardLore.create()
+                .block(VoteCards.paragraphOf(viewer, base + DESCRIPTION))
+                .section(VoteCards.section(viewer, "pool"), List.of(
+                        VoteCards.rowOf(viewer, LABEL + "prizes", VoteCards.number(viewer, prizes.size())),
+                        VoteCards.rowOf(viewer, LABEL + "rarest", VoteCards.value(viewer,
+                                VotePrizeCatalogView.percentText(viewer, rarest)))));
+        if (luckyView != null) {
+            lore.block(List.of(VoteCards.ic(viewer, base + ".action")));
+        }
+        appendLoreExtra(lore, base, viewer);
+        ItemStack card = VoteCards.card(Material.RABBIT_FOOT, VoteCards.ic(VoteCards.msg(base + ".name")
+                .with(PARAM_VALUE, VoteFormat.number(viewer, prizes.size())), viewer), lore.build());
+        if (luckyView != null) {
+            tag(card, TAG_OPEN_LUCKY);
+        }
+        return card;
+    }
 
-        lore.add(ic("vote_rewards.freeze.how", viewer));
+    private @NotNull ItemStack multiplierCard(@NotNull Player viewer) {
+        String base = KEY + "multiplier";
+        if (!voteConfig.isWeekendMultiplierEnabled()) {
+            return disabledCard(viewer, base + ".name-off", base + ".description-off");
+        }
+        boolean active = multipliers.isActive();
+        CardLore lore = CardLore.create()
+                .block(VoteCards.paragraphOf(viewer, base + DESCRIPTION))
+                .section(VoteCards.section(viewer, "bonus"), List.of(
+                        VoteCards.rowOf(viewer, LABEL + "now", VoteCards.tone(viewer, active ? "ok" : "plain",
+                                VoteFormat.multiplier(viewer, multipliers.current()))),
+                        VoteCards.rowOf(viewer, LABEL + "weekend", VoteCards.tone(viewer, TONE_ACCENT,
+                                VoteFormat.multiplier(viewer, voteConfig.getWeekendMultiplierFactor()))),
+                        VoteCards.rowOf(viewer, LABEL + "days", VoteCards.value(viewer,
+                                VoteFormat.dayNames(viewer, voteConfig.getWeekendMultiplierDays())))))
+                .block(List.of(VoteCards.ic(viewer, active ? base + ".state-on" : base + ".state-off")));
+        appendLoreExtra(lore, KEY + "multiplier", viewer);
+        ItemStack card = VoteCards.card(Material.CLOCK,
+                VoteCards.ic(viewer, active ? base + ".name-on" : base + ".name-idle"), lore.build());
+        return active ? VoteCards.glint(card) : card;
+    }
+
+    private @NotNull ItemStack partyCard(@NotNull Player viewer) {
+        String base = KEY + "party";
+        if (party == null) {
+            return disabledCard(viewer, base + ".name-off", base + ".description-off");
+        }
+        int current = party.getCurrentVotes();
+        int target = party.getTargetVotes();
+        List<Component> fixed = new ArrayList<>();
+        for (AbstractReward reward : rewardConfig.getVotePartyRewards()) {
+            for (AbstractReward atomic : RewardViewHelper.flatten(reward)) {
+                fixed.add(VoteCards.reward(viewer, VoteRewardDescriber.describe(atomic, viewer)));
+            }
+        }
+        CardLore lore = CardLore.create()
+                .block(VoteCards.paragraph(viewer, VoteCards.msg(base + DESCRIPTION)
+                        .with("target", VoteFormat.number(viewer, target)).text(viewer)))
+                .section(VoteCards.section(viewer, "progress"), List.of(
+                        VoteCards.bar(viewer, current, target),
+                        VoteCards.rowOf(viewer, LABEL + "votes", VoteCards.ofTotal(viewer, current, target)),
+                        VoteCards.rowOf(viewer, LABEL + "votes-left", VoteCards.number(viewer, party.getRemainingVotes()))))
+                .section(VoteCards.section(viewer, "every-voter"), fixed);
+        if (partyView != null) {
+            lore.block(List.of(VoteCards.ic(viewer, base + ".action")));
+        }
+        appendLoreExtra(lore, base, viewer);
+        ItemStack card = VoteCards.card(Material.CAKE, VoteCards.ic(VoteCards.msg(base + ".name")
+                .with(PARAM_VALUE, VoteCards.ofTotal(viewer, current, target)), viewer), lore.build());
+        if (partyView != null) {
+            tag(card, TAG_OPEN_PARTY);
+        }
+        return card;
+    }
+
+    private @NotNull ItemStack freezeCard(@NotNull Player viewer, @Nullable Wallet wallet) {
+        VoteConfig.FreezeSettings settings = voteConfig.getFreezeSettings();
+        String base = KEY + "freeze";
+        if (!settings.enabled()) {
+            return disabledCard(viewer, base + ".name-off", base + ".description-off");
+        }
         int max = freezeService.resolveMax(viewer);
-        lore.add(msg("vote_rewards.freeze.owned")
-                .with("owned", owned < 0 ? "…" : String.valueOf(owned))
-                .with("max", String.valueOf(max)).itemComponent(viewer));
-        lore.add(msg("vote_rewards.freeze.cost")
-                .with("cost", String.valueOf(fs.costPoints())).itemComponent(viewer));
-        lore.add(msg("vote_rewards.freeze.duration")
-                .with("duration", String.valueOf(fs.durationHours())).itemComponent(viewer));
-        lore.add(Component.empty());
-        lore.add(ic("vote_rewards.freeze.buy-hint", viewer));
-        appendLoreExtra(lore, "vote_rewards.freeze", viewer);
-
-        ItemStack icon = ItemBuilder.of(Material.BLUE_ICE)
-                .name(ic("vote_rewards.freeze.name", viewer))
-                .glow(owned > 0)
-                .lore(lore)
-                .build();
-        tag(icon, TAG_BUY_FREEZE);
-        return icon;
+        String owned = wallet == null ? VoteCards.loading(viewer) : VoteCards.ofTotal(viewer, wallet.freezes(), max);
+        CardLore lore = CardLore.create()
+                .block(VoteCards.paragraphOf(viewer, base + DESCRIPTION))
+                .section(VoteCards.section(viewer, "freeze"), List.of(
+                        VoteCards.rowOf(viewer, LABEL + "owned", owned),
+                        VoteCards.rowOf(viewer, LABEL + "price", VoteCards.points(viewer, settings.costPoints())),
+                        VoteCards.rowOf(viewer, LABEL + "covers", VoteCards.value(viewer,
+                                VoteFormat.duration(viewer, settings.durationHours() * 3600L)))))
+                .block(List.of(freezeState(viewer, wallet, max, settings.costPoints())));
+        appendLoreExtra(lore, base, viewer);
+        String name = wallet == null ? VoteCards.loading(viewer) : VoteCards.ofTotal(viewer, wallet.freezes(), max);
+        ItemStack card = VoteCards.card(Material.BLUE_ICE,
+                VoteCards.ic(VoteCards.msg(base + ".name").with(PARAM_VALUE, name), viewer), lore.build());
+        tag(card, TAG_BUY_FREEZE);
+        return card;
     }
 
-    private @NotNull ItemStack giftIcon(@NotNull Player viewer, int remaining) {
-        VoteConfig.GiftSettings gs = voteConfig.getGiftSettings();
-        List<Component> lore = new ArrayList<>();
-        lore.add(Component.empty());
-
-        if (!gs.enabled()) {
-            lore.add(ic("vote_rewards.gift.disabled", viewer));
-            lore.add(Component.empty());
-            appendLoreExtra(lore, "vote_rewards.gift", viewer);
-            return ItemBuilder.of(Material.NAME_TAG)
-                    .name(ic("vote_rewards.gift.name", viewer))
-                    .lore(lore)
-                    .build();
+    private @NotNull Component freezeState(@NotNull Player viewer, @Nullable Wallet wallet, int max, int cost) {
+        String base = KEY + "freeze.";
+        if (wallet != null && wallet.freezes() >= max) {
+            return VoteCards.ic(viewer, base + "state-full");
         }
+        if (wallet != null && wallet.points() < cost) {
+            return VoteCards.ic(VoteCards.msg(base + "state-short")
+                    .with(PARAM_VALUE, VoteFormat.number(viewer, (long) cost - wallet.points())), viewer);
+        }
+        return VoteCards.ic(viewer, base + "action");
+    }
 
-        lore.add(ic("vote_rewards.gift.how", viewer));
+    private @NotNull ItemStack giftCard(@NotNull Player viewer, @Nullable Wallet wallet) {
+        VoteConfig.GiftSettings settings = voteConfig.getGiftSettings();
+        String base = KEY + "gift";
+        if (!settings.enabled()) {
+            return disabledCard(viewer, base + ".name-off", base + ".description-off");
+        }
         int limit = giftService.resolveDailyLimit(viewer);
-        lore.add(msg("vote_rewards.gift.limit")
-                .with(PARAM_REMAINING, remaining < 0 ? "…" : String.valueOf(remaining))
-                .with("limit", String.valueOf(limit)).itemComponent(viewer));
-        if (gs.requireVoteToday()) {
-            lore.add(ic("vote_rewards.gift.require-vote", viewer));
+        String left = wallet == null ? VoteCards.loading(viewer) : VoteCards.ofTotal(viewer, wallet.giftsLeft(), limit);
+        List<Component> rows = new ArrayList<>();
+        rows.add(VoteCards.rowOf(viewer, LABEL + "gifts-left", left));
+        if (settings.requireVoteToday()) {
+            rows.add(VoteCards.rowOf(viewer, LABEL + "needs", VoteCards.value(viewer,
+                    VoteCards.text(viewer, base + ".needs-vote"))));
         }
-        lore.add(Component.empty());
-        lore.add(ic("vote_rewards.gift.usage", viewer));
-        appendLoreExtra(lore, "vote_rewards.gift", viewer);
-
-        return ItemBuilder.of(Material.PLAYER_HEAD)
-                .name(ic("vote_rewards.gift.name", viewer))
-                .glow(remaining > 0)
-                .lore(lore)
-                .build();
+        CardLore lore = CardLore.create()
+                .block(VoteCards.paragraphOf(viewer, base + DESCRIPTION))
+                .section(VoteCards.section(viewer, "today"), rows)
+                .block(List.of(VoteCards.ic(viewer, base + ".action")));
+        appendLoreExtra(lore, base, viewer);
+        return VoteCards.card(Material.NAME_TAG,
+                VoteCards.ic(VoteCards.msg(base + ".name").with(PARAM_VALUE, left), viewer), lore.build());
     }
+
+    private @NotNull ItemStack shopCard(@NotNull Player viewer) {
+        String base = KEY + "shop";
+        CardLore lore = CardLore.create()
+                .block(VoteCards.paragraphOf(viewer, base + DESCRIPTION))
+                .block(List.of(VoteCards.ic(viewer, VoteCards.COMMON + "action.open")));
+        appendLoreExtra(lore, base, viewer);
+        ItemStack card = VoteCards.card(Material.EMERALD, VoteCards.ic(viewer, base + ".name"), lore.build());
+        tag(card, TAG_OPEN_SHOP);
+        return card;
+    }
+
+    /** A switched-off feature: red dye, same name family, one sentence why. */
+    private @NotNull ItemStack disabledCard(@NotNull Player viewer, @NotNull String nameKey,
+                                            @NotNull String descriptionKey) {
+        return VoteCards.card(Material.RED_DYE, VoteCards.ic(viewer, nameKey),
+                CardLore.create().block(VoteCards.paragraphOf(viewer, descriptionKey)).build());
+    }
+
+    // ── Clicks ────────────────────────────────────────────────────────
 
     @Override
     protected void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked) {
         String tag = tagOf(clicked);
-        if ("back".equals(tag) && overviewView != null) {
-            overviewView.open(viewer);
+        if (tag == null) {
             return;
         }
-        if (TAG_OPEN_PARTY.equals(tag) && partyView != null) {
-            partyView.open(viewer);
-            return;
-        }
-        if (TAG_OPEN_LUCKY.equals(tag) && luckyView != null) {
-            luckyView.open(viewer);
-            return;
-        }
-        if (TAG_OPEN_SHOP.equals(tag) && shopView != null) {
-            shopView.open(viewer);
-            return;
-        }
-        if (TAG_BUY_FREEZE.equals(tag)) {
+        VoteBaseView target = switch (tag) {
+            case TAG_BACK -> overviewView;
+            case TAG_OPEN_PARTY -> partyView;
+            case TAG_OPEN_LUCKY -> luckyView;
+            case TAG_OPEN_SHOP -> shopView;
+            default -> null;
+        };
+        if (target != null) {
+            target.open(viewer);
+        } else if (TAG_BUY_FREEZE.equals(tag)) {
             buyFreeze(viewer);
         }
     }
@@ -400,88 +369,81 @@ public final class VoteRewardsView extends VoteBaseView {
         int cost = freezeService.settings().costPoints();
         int max = freezeService.resolveMax(viewer);
         freezeService.purchase(viewer).thenAccept(result -> {
-            switch (result) {
-                case SUCCESS -> msg("vote.freeze.bought").prefix()
-                        .with("cost", String.valueOf(cost)).send(viewer);
-                case DISABLED -> msg("vote.freeze.disabled").prefix().send(viewer);
-                case AT_MAX -> msg("vote.freeze.at_max").prefix()
-                        .with("max", String.valueOf(max)).send(viewer);
-                case NOT_ENOUGH_POINTS -> msg("vote.freeze.not_enough").prefix()
-                        .with("cost", String.valueOf(cost)).send(viewer);
-                case NO_PROFILE -> msg("vote.freeze.no_profile").prefix().send(viewer);
-                default -> msg("vote.freeze.error").prefix().send(viewer);
-            }
-            // Refresh the owned count after a purchase attempt.
-            scheduler.runAtEntity(viewer, () -> refreshLiveCounts(viewer));
+            sendFreezeResult(viewer, result, cost, max);
+            scheduler.runAtEntity(viewer, () -> refreshWallet(viewer));
         });
     }
 
-    // ── Text summary (console / chat) ───────────────────────────────
-
-    public void sendTextSummary(@NotNull CommandSender sender) {
+    /**
+     * Sends the chat line for a Streak Freeze purchase. Shared by the command, this view and the Bedrock form.
+     *
+     * @param player the buyer
+     * @param result the purchase result
+     * @param cost   the price in vote points
+     * @param max    the buyer's freeze cap
+     */
+    public static void sendFreezeResult(@NotNull Player player, @NotNull StreakFreezeService.PurchaseResult result,
+                                        int cost, int max) {
         R18nManager r18n = R18nManager.getInstance();
-        r18n.msg("vote_rewards.text.header").send(sender);
+        switch (result) {
+            case SUCCESS -> r18n.msg("vote.freeze.bought").with(PARAM_COST, cost).prefix().send(player);
+            case DISABLED -> r18n.msg("vote.freeze.disabled").prefix().send(player);
+            case AT_MAX -> r18n.msg("vote.freeze.at_max").with(PARAM_MAX, max).prefix().send(player);
+            case NOT_ENOUGH_POINTS -> r18n.msg("vote.freeze.not_enough").with(PARAM_COST, cost).prefix().send(player);
+            case NO_PROFILE -> r18n.msg("vote.freeze.no_profile").prefix().send(player);
+            default -> r18n.msg("vote.freeze.error").prefix().send(player);
+        }
+    }
 
-        for (ChanceReward cr : collect(ChanceReward.class)) {
-            r18n.msg("vote_rewards.text.lucky-entry").prefix()
-                    .with("reward", VoteRewardDescriber.describe(cr.getReward()))
-                    .with("chance", percent(cr.getChance()))
-                    .with("won", String.valueOf(countFor(cr.getId())))
+    // ── Console summary ───────────────────────────────────────────────
+
+    /**
+     * Prints the reward facts as a chat panel: header, then one row per chance reward, the multiplier and the
+     * party progress.
+     *
+     * @param sender who receives it
+     */
+    public void sendTextSummary(@NotNull CommandSender sender) {
+        Player viewer = sender instanceof Player player ? player : null;
+        R18nManager r18n = R18nManager.getInstance();
+        r18n.msg(KEY + "text.header").send(sender);
+        for (VotePrizeCatalogView.Prize prize : chancePrizes()) {
+            r18n.msg(KEY + "text.lucky-entry")
+                    .with("reward", VoteRewardDescriber.describe(prize.reward(), viewer))
+                    .with("chance", VotePrizeCatalogView.percentText(viewer, prize.percent()))
+                    .with("won", VoteFormat.number(viewer, prize.id() == null ? 0L : stats.getCount(prize.id())))
                     .send(sender);
         }
-
-        r18n.msg("vote_rewards.text.multiplier").prefix()
-                .with("status", multipliers.isActive() ? "active" : "inactive")
-                .with(PARAM_FACTOR, fmt(multipliers.current()))
+        r18n.msg(KEY + "text.multiplier")
+                .with("status", r18n.msg(multipliers.isActive() ? KEY + "text.active" : KEY + "text.inactive")
+                        .text(viewer))
+                .with("factor", VoteFormat.multiplier(viewer, multipliers.current()))
                 .send(sender);
-
         if (party != null) {
-            r18n.msg("vote_rewards.text.party").prefix()
-                    .with("current", String.valueOf(party.getCurrentVotes()))
-                    .with("target", String.valueOf(party.getTargetVotes()))
-                    .with(PARAM_REMAINING, String.valueOf(party.getRemainingVotes()))
+            r18n.msg(KEY + "text.party")
+                    .with("current", VoteFormat.number(viewer, party.getCurrentVotes()))
+                    .with("target", VoteFormat.number(viewer, party.getTargetVotes()))
+                    .with("remaining", VoteFormat.number(viewer, party.getRemainingVotes()))
                     .send(sender);
         }
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────
-
-    private long countFor(@Nullable String id) {
-        return id == null ? 0L : stats.getCount(id);
-    }
-
-    private <T extends AbstractReward> @NotNull List<T> collect(@NotNull Class<T> type) {
-        List<T> out = new ArrayList<>();
-        addMatching(rewardConfig.getDefaultRewards(), type, out);
-        rewardConfig.getSiteRewards().values().forEach(list -> addMatching(list, type, out));
-        rewardConfig.getStreakRewards().values().forEach(list -> addMatching(list, type, out));
-        addMatching(rewardConfig.getVotePartyRewards(), type, out);
-        return out;
-    }
-
-    private static <T extends AbstractReward> void addMatching(@NotNull List<AbstractReward> source,
-                                                               @NotNull Class<T> type,
-                                                               @NotNull List<T> out) {
-        for (AbstractReward reward : source) {
-            if (type.isInstance(reward)) out.add(type.cast(reward));
+    private @NotNull List<VotePrizeCatalogView.Prize> chancePrizes() {
+        List<VotePrizeCatalogView.Prize> prizes = new ArrayList<>();
+        List<List<AbstractReward>> lists = new ArrayList<>();
+        lists.add(rewardConfig.getDefaultRewards());
+        lists.addAll(rewardConfig.getSiteRewards().values());
+        lists.addAll(rewardConfig.getStreakRewards().values());
+        lists.add(rewardConfig.getVotePartyRewards());
+        for (List<AbstractReward> list : lists) {
+            for (AbstractReward reward : list) {
+                if (reward instanceof ChanceReward chance) {
+                    prizes.add(new VotePrizeCatalogView.Prize(chance.getId(), chance.getChance() * 100.0,
+                            chance.getReward()));
+                }
+            }
         }
-    }
-
-    private @NotNull MultiplierService.Settings settings() {
-        return new MultiplierService.Settings(
-                voteConfig.isWeekendMultiplierEnabled(),
-                voteConfig.getWeekendMultiplierFactor(),
-                voteConfig.getWeekendMultiplierDays(),
-                voteConfig.getWeekendMultiplierTimezone());
-    }
-
-    private static @NotNull String percent(double chance) {
-        return fmt(chance * 100.0);
-    }
-
-    private static @NotNull String fmt(double value) {
-        if (value == Math.floor(value)) return String.valueOf((long) value);
-        return String.format(Locale.ROOT, "%.1f", value);
+        return prizes;
     }
 
     private static final class Holder implements InventoryHolder {

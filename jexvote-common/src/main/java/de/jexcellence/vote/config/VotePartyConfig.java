@@ -7,8 +7,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -57,7 +55,8 @@ public final class VotePartyConfig {
     }
 
     /**
-     * Title settings for Vote Party animations.
+     * Title settings for Vote Party animations. A blank title means "use the translated default"
+     * ({@code vote_party.titles.*}), so only servers that set their own text in rewards.yml override it.
      */
     public record TitleSettings(
             @NotNull String spinTitle,
@@ -68,9 +67,9 @@ public final class VotePartyConfig {
             @NotNull Duration fadeOut
     ) {
         public static final TitleSettings DEFAULTS = new TitleSettings(
-                "<gradient:#fde047:#f59e0b>★ VOTE PARTY ★</gradient>",
-                "<gradient:#86efac:#16a34a>✦ REWARDS! ✦</gradient>",
-                "<gray>You won <gradient:#fde047:#f59e0b>{count}</gradient> rewards!</gray>",
+                "",
+                "",
+                "",
                 Duration.ofMillis(0),
                 Duration.ofMillis(200),
                 Duration.ofMillis(0)

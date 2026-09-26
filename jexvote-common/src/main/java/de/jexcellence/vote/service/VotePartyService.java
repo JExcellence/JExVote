@@ -17,6 +17,7 @@ import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.reward.LuckyReward;
 import de.jexcellence.vote.reward.RewardStats;
 import de.jexcellence.vote.view.VoteRewardDescriber;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -322,7 +323,7 @@ public class VotePartyService {
         for (AbstractReward reward : rewards) {
             for (AbstractReward atomic : RewardViewHelper.flatten(reward)) {
                 r18n.msg("vote_party.rewarded.entry")
-                        .with("reward", VoteRewardDescriber.describe(atomic))
+                        .with("reward", VoteRewardDescriber.describe(atomic, player))
                         .send(player);
             }
         }
@@ -422,10 +423,10 @@ public class VotePartyService {
         var titleSettings = partyConfig.getTitleSettings();
 
         LuckyReward.Entry spin = picks.get(ThreadLocalRandom.current().nextInt(picks.size()));
-        String name = VoteRewardDescriber.describe(spin.reward());
+        String name = VoteRewardDescriber.describe(spin.reward(), player);
 
         player.showTitle(Title.title(
-                MiniMessage.miniMessage().deserialize(titleSettings.spinTitle()),
+                titleText(player, titleSettings.spinTitle(), "vote_party.titles.spin", 0),
                 MiniMessage.miniMessage().deserialize(name),
                 Title.Times.times(titleSettings.fadeIn(), titleSettings.stay(), titleSettings.fadeOut())));
 
@@ -438,15 +439,27 @@ public class VotePartyService {
         var soundSettings = partyConfig.getSoundSettings();
         var titleSettings = partyConfig.getTitleSettings();
 
-        String subtitle = titleSettings.revealSubtitle()
-                .replace("{count}", String.valueOf(picks.size()));
+        int count = picks.size();
         player.showTitle(Title.title(
-                MiniMessage.miniMessage().deserialize(titleSettings.revealTitle()),
-                MiniMessage.miniMessage().deserialize(subtitle),
+                titleText(player, titleSettings.revealTitle(), "vote_party.titles.reveal", count),
+                titleText(player, titleSettings.revealSubtitle(), "vote_party.titles.reveal-subtitle", count),
                 Title.Times.times(Duration.ofMillis(100), titleSettings.stay(), Duration.ofMillis(400))));
 
         Sound revealSound = Sound.valueOf(soundSettings.revealSound());
         player.playSound(player, revealSound, soundSettings.revealVolume(), soundSettings.revealPitch());
+    }
+
+    /**
+     * A title line: the operator's text from rewards.yml when set, otherwise the translated default.
+     * {@code {count}} is replaced in both.
+     */
+    private static @NotNull Component titleText(@NotNull Player player, @NotNull String configured,
+                                                @NotNull String translationKey, int count) {
+        if (configured.isBlank()) {
+            return R18nManager.getInstance().msg(translationKey)
+                    .with("count", String.valueOf(count)).toComponent(player);
+        }
+        return MiniMessage.miniMessage().deserialize(configured.replace("{count}", String.valueOf(count)));
     }
 
     private @NotNull VotePartyEntity getOrCreateActiveParty() {

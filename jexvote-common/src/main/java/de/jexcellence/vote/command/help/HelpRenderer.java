@@ -4,7 +4,6 @@ import de.jexcellence.jextranslate.R18nManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -23,11 +22,10 @@ import java.util.List;
  * {@code vote_admin}):
  * <ul>
  *   <li>{@code <prefix>.banner} - header line shown once at the top.</li>
- *   <li>{@code <prefix>.entry} - one line per command. Placeholders:
- *       {@code {command}}, {@code {args}}, {@code {description}}.</li>
- *   <li>{@code <prefix>.entry-args} - wrapper used to format the args block
- *       ({@code {args}}); rendered into the {@code {args}} placeholder of
- *       {@code entry}, or empty when the command has no args.</li>
+ *   <li>{@code <prefix>.entry} - one line per command without arguments. Placeholders:
+ *       {@code {command}}, {@code {description}}.</li>
+ *   <li>{@code <prefix>.entry-with-args} - the same for a command with arguments; adds
+ *       {@code {args}}.</li>
  *   <li>{@code <prefix>.hover-base} - hover tooltip header line. Placeholders:
  *       {@code {full}}, {@code {description}}.</li>
  *   <li>{@code <prefix>.hover-aliases} - alias hover line. Placeholder:
@@ -94,7 +92,6 @@ public final class HelpRenderer {
      */
     public void render(@NotNull CommandSender sender, @NotNull List<Entry> entries) {
         R18nManager r18n = R18nManager.getInstance();
-        // Resolve everything in the viewer's own locale (null = console → default locale).
         Player viewer = sender instanceof Player player ? player : null;
         r18n.msg(prefix + ".banner").send(sender);
         for (Entry entry : entries) {
@@ -104,21 +101,13 @@ public final class HelpRenderer {
 
     private @NotNull Component renderEntry(@NotNull Entry entry, @Nullable Player viewer) {
         R18nManager r18n = R18nManager.getInstance();
-        String description = r18n.msg(entry.descriptionKey()).toString(viewer);
-        // The entry line embeds {args} into another MiniMessage template, so we
-        // need the args block as a serialized MiniMessage fragment - not a
-        // raw component (which would lose its styling on re-parse).
-        String renderedArgs = entry.args().isBlank()
-                ? ""
-                : MiniMessage.miniMessage().serialize(
-                        r18n.msg(prefix + ".entry-args")
-                                .with("args", entry.args()).itemComponent(viewer));
-
-        Component line = r18n.msg(prefix + ".entry")
+        String description = r18n.msg(entry.descriptionKey()).text(viewer);
+        Component line = (entry.args().isBlank()
+                ? r18n.msg(prefix + ".entry")
+                : r18n.msg(prefix + ".entry-with-args").with("args", entry.args()))
                 .with("command", entry.command())
-                .with("args", renderedArgs)
                 .with("description", description)
-                .itemComponent(viewer);
+                .toComponent(viewer);
 
         String full = entry.args().isBlank()
                 ? entry.command()

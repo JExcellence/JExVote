@@ -287,14 +287,12 @@ public class VoteRewardService {
             String json = objectMapper.writeValueAsString(rewardMap);
             AbstractReward reward = objectMapper.readValue(json, AbstractReward.class);
 
-            // A pool only knows what it paid out after it has drawn, so it is asked
-            // for the winner rather than described up front.
             if (reward instanceof LuckyReward lucky) {
                 return lucky.grantAndReport(player).thenApply(won ->
-                        won == null ? null : VoteRewardDescriber.describeLuckyWin(won));
+                        won == null ? null : VoteRewardDescriber.describeLuckyWin(won, player));
             }
             return reward.grant(player).thenApply(success ->
-                    Boolean.TRUE.equals(success) ? VoteRewardDescriber.describe(reward) : null);
+                    Boolean.TRUE.equals(success) ? VoteRewardDescriber.describe(reward, player) : null);
         } catch (Exception ex) {
             String typeId = (String) rewardMap.get("type");
             logger.log(Level.WARNING, ex, () -> String.format("Failed to deserialize reward type: %s", typeId));

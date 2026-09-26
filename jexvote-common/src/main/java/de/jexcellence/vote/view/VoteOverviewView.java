@@ -1,16 +1,14 @@
 package de.jexcellence.vote.view;
 
+import de.jexcellence.jexplatform.gui.component.CardLore;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
-import de.jexcellence.jexplatform.utility.item.HeadBuilder;
-import de.jexcellence.jexplatform.utility.item.ItemBuilder;
 import de.jexcellence.vote.api.event.VoteRewardClaimedEvent;
+import de.jexcellence.vote.api.model.VoteSnapshot;
 import de.jexcellence.vote.config.VoteConfig;
+import de.jexcellence.vote.gui.style.VoteFormat;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.VoteService;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -22,8 +20,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,64 +27,49 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Main vote overview GUI. Shows player stats, vote sites, and navigation
- * to leaderboard / streak views.
+ * The vote menu ({@code /vote}): the player's vote profile as the header, one card per vote site with its
+ * live cooldown, and navigation cards to streaks, the leaderboard, rewards and the shop. Stats and cooldowns
+ * load asynchronously and the view redraws in place; a landed vote refreshes the open menu.
+ *
+ * @author JExcellence
  */
 public class VoteOverviewView extends VoteBaseView {
 
-    /*
-     * Slot grid (6 × 9):
-     *   0  1  2  3  4  5  6  7  8
-     *   9 10 11 12 13 14 15 16 17
-     *  18 19 20 21 22 23 24 25 26
-     *  27 28 29 30 31 32 33 34 35
-     *  36 37 38 39 40 41 42 43 44
-     *  45 46 47 48 49 50 51 52 53
-     */
-
-    // ── Slot layout ──────────────────────────────────────────────────────
-    // Row 0 (header)         - slot 4
-    // Row 1 (stats)          - slots 11 / 13 / 15  (Identity / Points / Streak)
-    // Row 3 (vote sites)     - slots 29-33 (5 centered), paging at 27/35
-    // Row 5 (nav)            - 45 close, 46/48/50/52 buttons
-    private static final int SLOT_HEADER       = 4;
-    private static final int SLOT_IDENTITY     = 11;
-    private static final int SLOT_POINTS       = 13;
-    private static final int SLOT_STREAK       = 15;
-    private static final int SLOT_PAGE_PREV    = 27;
-    private static final int SLOT_PAGE_NEXT    = 35;
-    private static final int[] SITE_SLOTS      = { 29, 30, 31, 32, 33 };
-    private static final int SLOT_CLOSE        = 45;
-    private static final int SLOT_NAV_LB       = 46;
-    private static final int SLOT_NAV_STREAKS  = 48;
-    private static final int SLOT_NAV_REWARDS  = 50;
-    private static final int SLOT_NAV_SHOP     = 52;
-
-    private static final String TAG_LEADERBOARD = "leaderboard";
-    private static final String TAG_STREAKS     = "streaks";
-    private static final String TAG_REWARDS     = "rewards";
-    private static final String TAG_SHOP        = "shop";
-    private static final String TAG_PAGE_PREV   = "page-prev";
-    private static final String TAG_PAGE_NEXT   = "page-next";
+    private static final String KEY = "vote_overview.";
+    private static final String LABEL = VoteCards.COMMON + "label.";
     private static final String TAG_SITE_PREFIX = "site:";
-
-    private static final int SITES_PER_PAGE = SITE_SLOTS.length;
-
-    /**
-     * Per-viewer page index of the vote-site row. Cleared on close to keep
-     * the map small (only one row of state per active GUI).
-     */
-    private final Map<UUID, Integer> sitePage = new ConcurrentHashMap<>();
+    private static final String PARAM_VALUE = "value";
+    private static final String PARAM_SITE = "site";
+    private static final int[] SITE_ROWS = {2, 3};
+    private static final int SITES_PER_ROW = 7;
+    private static final int SITES_PER_PAGE = SITE_ROWS.length * SITES_PER_ROW;
+    private static final int NAV_ROW_CENTER = 40;
 
     private final Holder holder = new Holder();
     private final VoteService voteService;
     private final PlatformScheduler scheduler;
     private final VoteConfig voteConfig;
+    private final Map<UUID, Integer> sitePage = new ConcurrentHashMap<>();
+    private final Map<UUID, ViewerData> dataByViewer = new ConcurrentHashMap<>();
 
-    private VoteLeaderboardView leaderboardView;
-    private VoteStreakView streakView;
-    private VoteRewardsView rewardsView;
-    private VoteShopView shopView;
+    private @Nullable VoteLeaderboardView leaderboardView;
+    private @Nullable VoteStreakView streakView;
+    private @Nullable VoteRewardsView rewardsView;
+    private @Nullable VoteShopView shopView;
+
+    /**
+     * Async data the menu shows once loaded.
+     *
+     * @param stats     the player's vote snapshot
+     * @param rank      all-time rank, or {@code -1}
+     * @param cooldowns seconds until each service can be voted on again
+     */
+    private record ViewerData(@NotNull VoteSnapshot stats, int rank, @NotNull Map<String, Long> cooldowns) {
+    }
+
+    /** A navigation card: its icon, translation base and click tag. */
+    private record NavCard(@NotNull Material icon, @NotNull String key, @NotNull String navTag) {
+    }
 
     public VoteOverviewView(@NotNull JavaPlugin plugin,
                             @NotNull VoteService voteService,
@@ -98,285 +79,192 @@ public class VoteOverviewView extends VoteBaseView {
         this.scheduler = PlatformScheduler.of(plugin);
     }
 
-    /**
-     * Sets the leaderboard view for navigation.
-     *
-     * @param view the leaderboard view
-     */
     public void setLeaderboardView(@NotNull VoteLeaderboardView view) { this.leaderboardView = view; }
 
-    /**
-     * Sets the streak view for navigation.
-     *
-     * @param view the streak view
-     */
     public void setStreakView(@NotNull VoteStreakView view) { this.streakView = view; }
 
-    /**
-     * Sets the rewards/economy view for navigation.
-     *
-     * @param view the rewards view
-     */
     public void setRewardsView(@NotNull VoteRewardsView view) { this.rewardsView = view; }
 
-    /**
-     * Sets the vote-token shop view for navigation.
-     *
-     * @param view the shop view
-     */
     public void setShopView(@NotNull VoteShopView view) { this.shopView = view; }
 
-    @Override protected @NotNull String title()           { return "vote_overview.title"; }
-    @Override protected int rows()                         { return 6; }
-    @Override protected @NotNull InventoryHolder holder()  { return holder; }
+    @Override protected @NotNull String title() { return KEY + "title"; }
+    @Override protected int rows() { return 6; }
+    @Override protected @NotNull InventoryHolder holder() { return holder; }
+
+    @Override
+    public void open(@NotNull Player viewer) {
+        dataByViewer.remove(viewer.getUniqueId());
+        super.open(viewer);
+        load(viewer);
+    }
+
+    private void load(@NotNull Player viewer) {
+        UUID uuid = viewer.getUniqueId();
+        var statsFuture = voteService.getPlayerStats(uuid);
+        var rankFuture = voteService.getAllTimeRank(uuid);
+        var cooldownFuture = voteService.voteCooldownsSeconds(uuid);
+        statsFuture.thenCombine(rankFuture, (stats, rank) -> new ViewerData(stats, rank, Map.of()))
+                .thenCombine(cooldownFuture, (data, cooldowns) -> new ViewerData(data.stats(), data.rank(), cooldowns))
+                .thenAccept(data -> scheduler.runAtEntity(viewer, () -> {
+                    if (isViewing(viewer)) {
+                        dataByViewer.put(uuid, data);
+                        rerender(viewer);
+                    }
+                }));
+    }
 
     @Override
     protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
+        ViewerData data = dataByViewer.get(viewer.getUniqueId());
+        navBar(inv, viewer, null);
+        inv.setItem(SLOT_HEADER, header(viewer, data));
+        renderSites(inv, viewer, data);
+        renderNavigation(inv, viewer);
+    }
 
-        // ── 1-wide frame; content sits in the centered interior ──
-        frame(inv, Material.LIME_STAINED_GLASS_PANE);
+    // ── Header ────────────────────────────────────────────────────────
 
-        // ── Header (slot 4) ────────────────────────────────────────
-        inv.setItem(SLOT_HEADER, ItemBuilder.of(Material.EMERALD)
-                .name(ic("vote_overview.header.name", viewer))
-                .glow(true)
-                .lore(ics("vote_overview.header.lore", viewer))
-                .build());
-
-        // ── Stat tiles (slots 11/13/15): placeholders, then async fill ──
-        // Loading state: pass -1/null so each tile renders "…" sentinels.
-        inv.setItem(SLOT_IDENTITY, identityTile(viewer, null, -1, -1));
-        inv.setItem(SLOT_POINTS, pointsTile(viewer, -1));
-        inv.setItem(SLOT_STREAK, streakTile(viewer, -1, -1, -1));
-
-        voteService.getPlayerStats(viewer.getUniqueId()).thenAccept(stats ->
-                scheduler.runAtEntity(viewer, () -> {
-                    Inventory top = viewer.getOpenInventory().getTopInventory();
-                    if (top.getHolder() != holder) {
-                        return; // GUI was closed before async returned
-                    }
-                    int streak = stats.currentStreak();
-                    int next = nextMilestone(streak);
-                    top.setItem(SLOT_IDENTITY, identityTile(viewer, stats.lastVoteAt(),
-                            stats.totalVotes(), stats.monthlyVotes()));
-                    top.setItem(SLOT_POINTS, pointsTile(viewer, stats.votePoints()));
-                    top.setItem(SLOT_STREAK, streakTile(viewer, streak, stats.highestStreak(), next));
-                }));
-
-        // ── Sites (paginated, slots 29-33) ─────────────────────────
-        renderSites(inv, viewer);
-
-        // ── Bottom nav (slots 45/46/48/50/52) ──────────────────────
-        inv.setItem(SLOT_CLOSE, closeButton());
-        if (voteConfig.isFeatureLeaderboard()) {
-            inv.setItem(SLOT_NAV_LB, navTile(viewer, Material.GOLD_BLOCK, "vote_overview.nav.leaderboard", TAG_LEADERBOARD));
+    private @NotNull ItemStack header(@NotNull Player viewer, @Nullable ViewerData data) {
+        CardLore lore = CardLore.create().block(VoteCards.paragraphOf(viewer, KEY + "header.description"));
+        if (data == null) {
+            lore.section(VoteCards.section(viewer, "votes"),
+                    List.of(VoteCards.rowOf(viewer, LABEL + "status", VoteCards.loading(viewer))));
+        } else {
+            VoteSnapshot stats = data.stats();
+            lore.section(VoteCards.section(viewer, "votes"), voteRows(viewer, data))
+                    .section(VoteCards.section(viewer, "streak"), streakRows(viewer, stats))
+                    .section(VoteCards.section(viewer, "wallet"), List.of(VoteCards.rowOf(viewer,
+                            LABEL + "vote-points", VoteCards.points(viewer, stats.votePoints()))));
         }
-        if (voteConfig.isFeatureStreaks()) {
-            inv.setItem(SLOT_NAV_STREAKS, navTile(viewer, Material.MAGMA_CREAM, "vote_overview.nav.streaks", TAG_STREAKS));
+        appendLoreExtra(lore, KEY + "header", viewer);
+        ItemStack head = VoteCards.head(viewer.getUniqueId());
+        return VoteCards.card(head, VoteCards.ic(VoteCards.msg(KEY + "header.name")
+                .with("player", viewer.getName()), viewer), lore.build());
+    }
+
+    private @NotNull List<Component> voteRows(@NotNull Player viewer, @NotNull ViewerData data) {
+        VoteSnapshot stats = data.stats();
+        List<Component> rows = new ArrayList<>();
+        rows.add(VoteCards.rowOf(viewer, LABEL + "votes-total", VoteCards.number(viewer, stats.totalVotes())));
+        rows.add(VoteCards.rowOf(viewer, LABEL + "votes-month", VoteCards.number(viewer, stats.monthlyVotes())));
+        rows.add(VoteCards.rowOf(viewer, LABEL + "last-vote",
+                VoteCards.value(viewer, VoteFormat.ago(viewer, stats.lastVoteAt()))));
+        if (data.rank() > 0) {
+            rows.add(VoteCards.rowOf(viewer, LABEL + "rank", VoteCards.tone(viewer, "accent",
+                    VoteCards.msg(KEY + "rank").with(PARAM_VALUE, data.rank()).text(viewer))));
         }
-        inv.setItem(SLOT_NAV_REWARDS, navTile(viewer, Material.SPONGE, "vote_overview.nav.rewards", TAG_REWARDS));
-        if (voteConfig.isFeatureShop()) {
-            inv.setItem(SLOT_NAV_SHOP, navTile(viewer, Material.EMERALD_BLOCK, "vote_overview.nav.shop", TAG_SHOP));
+        return rows;
+    }
+
+    private @NotNull List<Component> streakRows(@NotNull Player viewer, @NotNull VoteSnapshot stats) {
+        List<Component> rows = new ArrayList<>();
+        rows.add(VoteCards.rowOf(viewer, LABEL + "streak", VoteCards.days(viewer, stats.currentStreak())));
+        rows.add(VoteCards.rowOf(viewer, LABEL + "best-streak", VoteCards.days(viewer, stats.highestStreak())));
+        int next = streakView == null ? 0 : streakView.nextMilestone(stats.highestStreak());
+        if (next > 0) {
+            rows.add(VoteCards.bar(viewer, stats.currentStreak(), next));
+            rows.add(VoteCards.rowOf(viewer, LABEL + "next-milestone", VoteCards.value(viewer,
+                    VoteCards.msg(VoteCards.COMMON + "value.day").with(PARAM_VALUE, next).text(viewer))));
         }
+        return rows;
     }
 
-    // ── Tile builders ────────────────────────────────────────────────
+    // ── Sites ─────────────────────────────────────────────────────────
 
-    /**
-     * Identity tile: name + lifetime totals. Pass {@code total} and
-     * {@code monthly} as -1 (with {@code lastVoteAt == null}) to render the
-     * "…" loading placeholder before async stats arrive.
-     */
-    private @NotNull ItemStack identityTile(@NotNull Player viewer, @Nullable Instant lastVoteAt,
-                                            int total, int monthly) {
-        boolean loaded = total >= 0 && monthly >= 0;
-        String totalText = loaded ? String.valueOf(total) : "…";
-        String monthlyText = loaded ? String.valueOf(monthly) : "…";
-        String lastVoted = loaded ? formatLastVoted(viewer, lastVoteAt) : "…";
-        List<Component> lore = new ArrayList<>(plain(msg("vote_overview.identity.lore")
-                .with("total", totalText)
-                .with("monthly", monthlyText)
-                .with("last_voted", lastVoted)
-                .toComponents(viewer)));
-        appendLoreExtra(lore, "vote_overview.identity", viewer);
-        return HeadBuilder.fromPlayer(viewer)
-                .name(plain(msg("vote_overview.identity.name")
-                        .with("player", viewer.getName()).itemComponent(viewer)))
-                .lore(lore)
-                .build();
-    }
-
-    private @NotNull ItemStack pointsTile(@NotNull Player viewer, int points) {
-        String pointsText = points < 0 ? "…" : String.valueOf(points);
-        List<Component> lore = new ArrayList<>(plain(msg("vote_overview.points.lore")
-                .with("points", pointsText).toComponents(viewer)));
-        appendLoreExtra(lore, "vote_overview.points", viewer);
-        return ItemBuilder.of(Material.NETHER_STAR)
-                .name(ic("vote_overview.points.name", viewer))
-                .glow(points > 0)
-                .lore(lore)
-                .build();
-    }
-
-    private @NotNull ItemStack streakTile(@NotNull Player viewer, int streak, int highest, int next) {
-        boolean loaded = streak >= 0 && next > 0;
-        String streakText = loaded ? String.valueOf(streak) : "…";
-        String highestText = loaded ? String.valueOf(highest) : "…";
-        String nextText = loaded ? String.valueOf(next) : "…";
-        String bar = loaded ? progressBar(streak, next, 10) : "";
-        List<Component> lore = new ArrayList<>(plain(msg("vote_overview.streak.lore")
-                .with("streak", streakText)
-                .with("highest", highestText)
-                .with("next", nextText)
-                .with("bar", bar)
-                .toComponents(viewer)));
-        appendLoreExtra(lore, "vote_overview.streak", viewer);
-        return ItemBuilder.of(Material.BLAZE_POWDER)
-                .name(ic("vote_overview.streak.name", viewer))
-                .glow(loaded && streak >= 7)
-                .lore(lore)
-                .build();
-    }
-
-    private @NotNull ItemStack navTile(@NotNull Player viewer, @NotNull Material icon,
-                                       @NotNull String keyBase, @NotNull String navTag) {
-        List<Component> lore = new ArrayList<>(ics(keyBase + ".lore", viewer));
-        appendLoreExtra(lore, keyBase, viewer);
-        ItemStack tile = ItemBuilder.of(icon)
-                .name(ic(keyBase + ".name", viewer))
-                .glow(true)
-                .lore(lore)
-                .build();
-        tag(tile, navTag);
-        return tile;
-    }
-
-    // ── Site row ─────────────────────────────────────────────────────
-
-    private void renderSites(@NotNull Inventory inv, @NotNull Player viewer) {
+    private void renderSites(@NotNull Inventory inv, @NotNull Player viewer, @Nullable ViewerData data) {
         List<VoteSite> sites = new ArrayList<>(voteService.getVoteSites().values());
-        int totalPages = Math.max(1, (sites.size() + SITES_PER_PAGE - 1) / SITES_PER_PAGE);
-        int page = clampPage(sitePage.getOrDefault(viewer.getUniqueId(), 0), totalPages);
+        if (sites.isEmpty()) {
+            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.RED_DYE, KEY + "no-sites"));
+            return;
+        }
+        int pages = Math.max(1, (sites.size() + SITES_PER_PAGE - 1) / SITES_PER_PAGE);
+        int page = clampPage(sitePage.getOrDefault(viewer.getUniqueId(), 0), pages);
         sitePage.put(viewer.getUniqueId(), page);
-
-        int start = page * SITES_PER_PAGE;
-        for (int i = 0; i < SITES_PER_PAGE; i++) {
-            int siteIdx = start + i;
-            int slot = SITE_SLOTS[i];
-            if (siteIdx < sites.size()) {
-                inv.setItem(slot, siteTile(viewer, sites.get(siteIdx), -1L)); // -1 = loading
-            } else {
-                inv.setItem(slot, emptySiteTile(viewer));
+        List<VoteSite> shown = sites.subList(page * SITES_PER_PAGE, Math.min(sites.size(), (page + 1) * SITES_PER_PAGE));
+        for (int row = 0; row < SITE_ROWS.length; row++) {
+            int from = row * SITES_PER_ROW;
+            int count = Math.clamp(shown.size() - from, 0, SITES_PER_ROW);
+            int start = SITE_ROWS[row] * 9 + 1 + (SITES_PER_ROW - count) / 2;
+            for (int i = 0; i < count; i++) {
+                VoteSite site = shown.get(from + i);
+                Long seconds = data == null ? null : data.cooldowns().getOrDefault(site.serviceName(), 0L);
+                inv.setItem(start + i, siteCard(viewer, site, seconds));
             }
         }
-
-        if (totalPages > 1) {
-            inv.setItem(SLOT_PAGE_PREV, pageButton(viewer, "vote_overview.page-prev", TAG_PAGE_PREV, page, totalPages));
-            inv.setItem(SLOT_PAGE_NEXT, pageButton(viewer, "vote_overview.page-next", TAG_PAGE_NEXT, page, totalPages));
-        } else {
-            inv.setItem(SLOT_PAGE_PREV, null);
-            inv.setItem(SLOT_PAGE_NEXT, null);
-        }
-
-        final int fPage = page;
-        final int fStart = start;
-        final int fTotalPages = totalPages;
-        voteService.voteCooldownsSeconds(viewer.getUniqueId()).thenAccept(cooldowns ->
-                scheduler.runAtEntity(viewer, () ->
-                        applySiteCooldowns(viewer, sites, cooldowns, fPage, fStart, fTotalPages)));
-    }
-
-    private void applySiteCooldowns(@NotNull Player viewer, @NotNull List<VoteSite> sites,
-                                       @NotNull Map<String, Long> cooldowns,
-                                       int expectedPage, int start, int totalPages) {
-        Inventory top = viewer.getOpenInventory().getTopInventory();
-        if (top.getHolder() != holder) {
-            return;
-        }
-        if (clampPage(sitePage.getOrDefault(viewer.getUniqueId(), 0), totalPages) != expectedPage) {
-            return;
-        }
-        for (int i = 0; i < SITES_PER_PAGE; i++) {
-            int siteIdx = start + i;
-            if (siteIdx < sites.size()) {
-                VoteSite site = sites.get(siteIdx);
-                long secs = cooldowns.getOrDefault(site.serviceName(), 0L);
-                top.setItem(SITE_SLOTS[i], siteTile(viewer, site, secs));
-            }
-        }
+        pagination(inv, viewer, page, pages);
     }
 
     /**
-     * @param secondsUntilNext -1 = still loading, 0 = votable now, &gt;0 = cooldown seconds.
-     *                         Drives the votable/cooldown status line + a green ready icon.
+     * @param secondsUntilNext {@code null} while loading, {@code 0} when the site can be voted on now
      */
-    private @NotNull ItemStack siteTile(@NotNull Player viewer, @NotNull VoteSite site, long secondsUntilNext) {
-        boolean ready = secondsUntilNext == 0;
-        List<Component> lore = new ArrayList<>(plain(msg("vote_overview.site.lore")
-                .with("site", site.displayName())
-                .with("service", site.serviceName())
-                .with("points", String.valueOf(site.pointsPerVote()))
-                .toComponents(viewer)));
-        if (secondsUntilNext < 0) {
-            lore.add(plain(ic("vote_overview.site.status-checking", viewer)));
-        } else if (ready) {
-            lore.add(plain(ic("vote_overview.site.status-ready", viewer)));
+    private @NotNull ItemStack siteCard(@NotNull Player viewer, @NotNull VoteSite site,
+                                        @Nullable Long secondsUntilNext) {
+        String state;
+        String status;
+        Material icon;
+        if (secondsUntilNext == null) {
+            state = "checking";
+            status = VoteCards.loading(viewer);
+            icon = Material.PAPER;
+        } else if (secondsUntilNext <= 0L) {
+            state = "ready";
+            status = VoteCards.tone(viewer, "ok", VoteCards.text(viewer, KEY + "site.status-ready"));
+            icon = Material.LIME_DYE;
         } else {
-            lore.add(plain(msg("vote_overview.site.status-cooldown")
-                    .with("time", formatCooldown(secondsUntilNext)).itemComponent(viewer)));
+            state = "cooldown";
+            status = VoteCards.tone(viewer, "warn", VoteFormat.duration(viewer, secondsUntilNext));
+            icon = Material.RED_DYE;
         }
-        // Green when ready to vote, plain paper while on cooldown (title gradient still
-        // differentiates each site).
-        ItemStack tile = ItemBuilder.of(ready ? Material.LIME_DYE : Material.PAPER)
-                .name(plain(msg("vote_overview.site.name")
-                        .with("site", site.displayName()).itemComponent(viewer)))
-                .glow(ready)
-                .lore(lore)
-                .build();
-        tag(tile, TAG_SITE_PREFIX + site.serviceName());
-        return tile;
+        List<Component> rows = List.of(
+                VoteCards.rowOf(viewer, LABEL + "vote-points", VoteCards.tone(viewer, "accent",
+                        VoteCards.msg(VoteCards.COMMON + "value.plus").with(PARAM_VALUE, site.pointsPerVote())
+                                .text(viewer))),
+                VoteCards.rowOf(viewer, "cooldown".equals(state) ? LABEL + "again-in" : LABEL + "status", status));
+        CardLore lore = CardLore.create()
+                .block(VoteCards.paragraph(viewer, VoteCards.msg(KEY + "site.description")
+                        .with(PARAM_SITE, site.displayName()).text(viewer)))
+                .section(VoteCards.section(viewer, "this-vote"), rows);
+        if (site.voteUrl() != null) {
+            lore.block(List.of(VoteCards.ic(viewer, KEY + "site.action")));
+        }
+        appendLoreExtra(lore, KEY + "site", viewer);
+        Component name = VoteCards.ic(VoteCards.msg(KEY + "site.name-" + state)
+                .with(PARAM_SITE, site.displayName()), viewer);
+        ItemStack card = VoteCards.card(icon, name, lore.build());
+        tag(card, TAG_SITE_PREFIX + site.serviceName());
+        return card;
     }
 
-    /** Compact "2h 5m" / "45m" / "30s" cooldown display. */
-    private static @NotNull String formatCooldown(long seconds) {
-        long s = Math.max(0L, seconds);
-        long hours = s / 3600L;
-        long minutes = (s % 3600L) / 60L;
-        if (hours > 0) {
-            return minutes > 0 ? hours + "h " + minutes + "m" : hours + "h";
+    // ── Navigation ────────────────────────────────────────────────────
+
+    private void renderNavigation(@NotNull Inventory inv, @NotNull Player viewer) {
+        List<NavCard> cards = new ArrayList<>();
+        if (voteConfig.isFeatureStreaks() && streakView != null) {
+            cards.add(new NavCard(Material.BLAZE_POWDER, KEY + "nav.streaks", "streaks"));
         }
-        if (minutes > 0) {
-            return minutes + "m";
+        if (voteConfig.isFeatureLeaderboard() && leaderboardView != null) {
+            cards.add(new NavCard(Material.GOLDEN_HELMET, KEY + "nav.leaderboard", "leaderboard"));
         }
-        return s + "s";
+        if (rewardsView != null) {
+            cards.add(new NavCard(Material.CHEST, KEY + "nav.rewards", "rewards"));
+        }
+        if (voteConfig.isFeatureShop() && shopView != null) {
+            cards.add(new NavCard(Material.EMERALD, KEY + "nav.shop", "shop"));
+        }
+        int start = NAV_ROW_CENTER - (cards.size() - 1);
+        for (int i = 0; i < cards.size(); i++) {
+            NavCard nav = cards.get(i);
+            CardLore lore = CardLore.create()
+                    .block(VoteCards.paragraphOf(viewer, nav.key() + ".description"))
+                    .block(List.of(VoteCards.ic(viewer, VoteCards.COMMON + "action.open")));
+            appendLoreExtra(lore, nav.key(), viewer);
+            ItemStack card = VoteCards.card(nav.icon(), VoteCards.ic(viewer, nav.key() + ".name"), lore.build());
+            tag(card, nav.navTag());
+            inv.setItem(start + i * 2, card);
+        }
     }
 
-    private @NotNull ItemStack emptySiteTile(@NotNull Player viewer) {
-        return ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
-                .name(ic("vote_overview.site-empty.name", viewer))
-                .lore(ics("vote_overview.site-empty.lore", viewer))
-                .build();
-    }
-
-    private @NotNull ItemStack pageButton(@NotNull Player viewer, @NotNull String keyBase,
-                                          @NotNull String navTag, int page, int totalPages) {
-        ItemStack btn = ItemBuilder.of(Material.ARROW)
-                .name(ic(keyBase + ".name", viewer))
-                .lore(plain(msg(keyBase + ".lore")
-                        .with("page", String.valueOf(page + 1))
-                        .with("total", String.valueOf(totalPages))
-                        .toComponents(viewer)))
-                .build();
-        tag(btn, navTag);
-        return btn;
-    }
-
-    private static int clampPage(int page, int totalPages) {
-        if (page < 0) {
-            return 0;
-        }
-        return Math.min(page, totalPages - 1);
-    }
+    // ── Clicks ────────────────────────────────────────────────────────
 
     @Override
     protected void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked) {
@@ -384,122 +272,53 @@ public class VoteOverviewView extends VoteBaseView {
         if (id == null) {
             return;
         }
-        if (handleNavigation(viewer, id)) {
-            return;
-        }
-        if (handlePaging(viewer, id)) {
-            return;
-        }
         if (id.startsWith(TAG_SITE_PREFIX)) {
-            handleSiteClick(viewer, id.substring(TAG_SITE_PREFIX.length()));
+            sendSiteLink(viewer, id.substring(TAG_SITE_PREFIX.length()));
+        } else if (TAG_PAGE_PREV.equals(id) || TAG_PAGE_NEXT.equals(id)) {
+            sitePage.merge(viewer.getUniqueId(), TAG_PAGE_PREV.equals(id) ? -1 : 1, Integer::sum);
+            rerender(viewer);
+        } else {
+            openNavigation(viewer, id);
         }
     }
 
-    private boolean handleNavigation(@NotNull Player viewer, @NotNull String id) {
-        if (TAG_LEADERBOARD.equals(id) && leaderboardView != null) {
-            leaderboardView.open(viewer);
-            return true;
+    private void openNavigation(@NotNull Player viewer, @NotNull String id) {
+        VoteBaseView target = switch (id) {
+            case "leaderboard" -> leaderboardView;
+            case "streaks" -> streakView;
+            case "rewards" -> rewardsView;
+            case "shop" -> shopView;
+            default -> null;
+        };
+        if (target != null) {
+            target.open(viewer);
         }
-        if (TAG_STREAKS.equals(id) && streakView != null) {
-            streakView.open(viewer);
-            return true;
-        }
-        if (TAG_REWARDS.equals(id) && rewardsView != null) {
-            rewardsView.open(viewer);
-            return true;
-        }
-        if (TAG_SHOP.equals(id) && shopView != null) {
-            shopView.open(viewer);
-            return true;
-        }
-        return false;
     }
 
-    private boolean handlePaging(@NotNull Player viewer, @NotNull String id) {
-        UUID uuid = viewer.getUniqueId();
-        if (TAG_PAGE_PREV.equals(id)) {
-            sitePage.put(uuid, Math.max(0, sitePage.getOrDefault(uuid, 0) - 1));
-            renderSites(viewer.getOpenInventory().getTopInventory(), viewer);
-            return true;
-        }
-        if (TAG_PAGE_NEXT.equals(id)) {
-            sitePage.put(uuid, sitePage.getOrDefault(uuid, 0) + 1);
-            renderSites(viewer.getOpenInventory().getTopInventory(), viewer);
-            return true;
-        }
-        return false;
-    }
-
-    private void handleSiteClick(@NotNull Player viewer, @NotNull String serviceName) {
-        VoteSite site = voteService.getVoteSites().values().stream()
-                .filter(s -> serviceName.equals(s.serviceName()))
-                .findFirst().orElse(null);
+    private void sendSiteLink(@NotNull Player viewer, @NotNull String serviceName) {
+        VoteSite site = voteService.findSiteByServiceName(serviceName);
         if (site == null || site.voteUrl() == null) {
             return;
         }
         viewer.closeInventory();
-        viewer.sendMessage(
-                MM.deserialize("<gradient:#86EFAC:#22C55E>✔</gradient> <gray>Vote on</gray> <gradient:#A5F3FC:#06B6D4>"
-                                + site.displayName() + "</gradient><gray>:</gray> ")
-                        .append(Component.text(site.voteUrl(), NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.openUrl(site.voteUrl()))
-                                .hoverEvent(HoverEvent.showText(
-                                        Component.text("Click to open in browser", NamedTextColor.YELLOW)))));
+        msg("vote.site-link").prefix()
+                .with(PARAM_SITE, site.displayName())
+                .with("url", site.voteUrl())
+                .send(viewer);
     }
 
     /**
-     * Formats {@code lastVoteAt} as a short "X days ago" / "today" string,
-     * resolving from the {@code vote_overview.points-never} i18n key when the
-     * player has never voted. Resolution is server-default-locale (placeholders
-     * carry no localized data themselves).
-     */
-    private @NotNull String formatLastVoted(@NotNull Player viewer, @Nullable Instant lastVoteAt) {
-        if (lastVoteAt == null) {
-            return MM.serialize(ic("vote_overview.points-never", viewer));
-        }
-        Duration since = Duration.between(lastVoteAt, Instant.now());
-        long days = since.toDays();
-        if (days >= 1) {
-            return days + " day(s) ago";
-        }
-        long hours = since.toHours();
-        if (hours >= 1) {
-            return hours + "h ago";
-        }
-        long minutes = Math.max(1, since.toMinutes());
-        return minutes + "m ago";
-    }
-
-    // ── Helpers ─────────────────────────────────────────────────
-
-    /**
-     * Returns the next milestone day based on the current streak.
+     * Refreshes the open menu when the viewer's own vote lands, so the site they just voted on shows its
+     * cooldown right away.
      *
-     * @param streak the current vote streak
-     * @return the next milestone day
-     */
-    private static int nextMilestone(int streak) {
-        for (int m : new int[]{7, 14, 30, 60, 90, 120, 180, 365}) {
-            if (streak < m) return m;
-        }
-        return 365;
-    }
-
-    /**
-     * Live-refresh the site tiles when the viewer's own vote lands, so the site they just
-     * voted on flips to its cooldown status immediately instead of only on the next reopen.
+     * @param event the claimed-reward event
      */
     @EventHandler
     public void onVoteRewardClaimed(@NotNull VoteRewardClaimedEvent event) {
         Player player = Bukkit.getPlayer(event.getPlayerUuid());
-        if (player == null || !player.isOnline()) {
-            return;
+        if (player != null && isViewing(player)) {
+            load(player);
         }
-        Inventory top = player.getOpenInventory().getTopInventory();
-        if (top.getHolder() != holder) {
-            return; // overview not open for this player
-        }
-        renderSites(top, player);
     }
 
     private static final class Holder implements InventoryHolder {

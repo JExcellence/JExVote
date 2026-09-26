@@ -1,307 +1,197 @@
 package de.jexcellence.vote.view;
 
+import de.jexcellence.jexplatform.gui.component.CardLore;
+import de.jexcellence.jexplatform.gui.component.FilterHopperButton;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
-import de.jexcellence.jexplatform.utility.item.HeadBuilder;
-import de.jexcellence.jexplatform.utility.item.ItemBuilder;
 import de.jexcellence.vote.api.model.VoteSnapshot;
 import de.jexcellence.vote.service.VoteLeaderboardService;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.WeakHashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Paginated all-time vote leaderboard with manual pagination
- * (raw Bukkit inventory, same pattern as JExOneblock's BiomeView).
+ * Top voters, all time or this month (shared filter). The header shows the viewer's own place; every entry is
+ * the player's head with their vote totals. Loads asynchronously and redraws in place.
+ *
+ * @author JExcellence
  */
 public class VoteLeaderboardView extends VoteBaseView {
 
-    private static final int PAGE_SIZE = 21; // 3 rows × 7 cols
+    private static final String KEY = "vote_leaderboard.";
+    private static final String LABEL = VoteCards.COMMON + "label.";
+    private static final String PARAM_VALUE = "value";
+    private static final int LIMIT = 50;
+    private static final String[] MODES = {"all-time", "monthly"};
 
     private final Holder holder = new Holder();
     private final VoteLeaderboardService leaderboardService;
     private final PlatformScheduler scheduler;
-    private final WeakHashMap<UUID, Integer> pageByViewer = new WeakHashMap<>();
-    private final WeakHashMap<UUID, List<VoteSnapshot>> dataByViewer = new WeakHashMap<>();
+    private final FilterHopperButton modeFilter = new FilterHopperButton("vote-leaderboard-mode", MODES.length);
+    private final Map<UUID, Integer> pageByViewer = new ConcurrentHashMap<>();
+    private final Map<UUID, List<VoteSnapshot>> dataByViewer = new ConcurrentHashMap<>();
 
-    private VoteOverviewView overviewView;
+    private @Nullable VoteOverviewView overviewView;
 
-    public VoteLeaderboardView(@NotNull JavaPlugin plugin,
-                               @NotNull VoteLeaderboardService leaderboardService) {
+    public VoteLeaderboardView(@NotNull JavaPlugin plugin, @NotNull VoteLeaderboardService leaderboardService) {
         this.leaderboardService = leaderboardService;
         this.scheduler = PlatformScheduler.of(plugin);
     }
 
-    /**
-     * Sets the overview view for back navigation.
-     *
-     * @param view the overview view to navigate back to
-     */
-    public void setOverviewView(@NotNull VoteOverviewView view) { this.overviewView = view; }
+    /** Sets the overview view for back navigation. */
+    public void setOverviewView(@NotNull VoteOverviewView view) {
+        this.overviewView = view;
+    }
 
-    @Override protected @NotNull String title()           { return "vote_leaderboard.title"; }
-    @Override protected int rows()                         { return 6; }
-    @Override protected @NotNull InventoryHolder holder()  { return holder; }
+    @Override protected @NotNull String title() { return KEY + "title"; }
+    @Override protected int rows() { return 6; }
+    @Override protected @NotNull InventoryHolder holder() { return holder; }
+
+    @Override
+    public void open(@NotNull Player viewer) {
+        dataByViewer.remove(viewer.getUniqueId());
+        super.open(viewer);
+        load(viewer);
+    }
+
+    private void load(@NotNull Player viewer) {
+        UUID uuid = viewer.getUniqueId();
+        CompletableFuture<List<VoteSnapshot>> future = modeFilter.index(uuid) == 1
+                ? leaderboardService.getMonthlyTop(LIMIT)
+                : leaderboardService.getAllTimeTop(LIMIT);
+        future.thenAccept(data -> scheduler.runAtEntity(viewer, () -> {
+            if (isViewing(viewer)) {
+                dataByViewer.put(uuid, data);
+                rerender(viewer);
+            }
+        }));
+    }
 
     @Override
     protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
-
-        // ── 1-wide frame; podium + leaderboard sit in the interior ──
-        frame(inv, Material.YELLOW_STAINED_GLASS_PANE);
-
-        // Podium tile names use the brand glyph (no <bold>) so they stay in
-        // visual harmony with the rest of the V-00-styled GUI. The leaderboard
-        // entries below remain bold for emphasis on the top-3 player names.
-        inv.setItem(2, ItemBuilder.of(Material.DIAMOND)
-                .name(name("<gradient:#FFD700:#FFA500>★ 1st Place</gradient>"))
-                .lore(List.of(lore("<dark_gray>┃ <gray>Diamond rank")))
-                .build());
-
-        inv.setItem(4, ItemBuilder.of(Material.GOLDEN_APPLE)
-                .name(name("<gradient:#FDE047:#F59E0B>❖ Top Voters</gradient>"))
-                .glow(true)
-                .lore(List.of(
-                        Component.empty(),
-                        lore("<dark_gray>┃ <gray>All-time vote leaderboard"),
-                        lore("<dark_gray>┃ <gray>Vote daily to climb!"),
-                        Component.empty()))
-                .build());
-
-        inv.setItem(6, ItemBuilder.of(Material.GOLD_INGOT)
-                .name(name("<gradient:#C0C0C0:#A8A8A8>★ 2nd Place</gradient>"))
-                .lore(List.of(lore("<dark_gray>┃ <gray>Gold rank")))
-                .build());
-
-        // ── Row 5: Navigation (back top-left, close bottom-left) ──
-        navBar(inv, overviewView != null);
-
-        // ── Loading indicator ───────────────────────────────────
-        inv.setItem(22, ItemBuilder.of(Material.CLOCK)
-                .name(name("<gray>Loading leaderboard..."))
-                .build());
-
-        // ── Async: load data and populate ───────────────────────
-        leaderboardService.getAllTimeTop(50).thenAccept(data ->
-                scheduler.runAtEntity(viewer, () -> {
-                    Inventory top = viewer.getOpenInventory().getTopInventory();
-                    if (top.getHolder() != holder) return;
-
-                    dataByViewer.put(viewer.getUniqueId(), data);
-                    pageByViewer.putIfAbsent(viewer.getUniqueId(), 0);
-                    renderPage(top, viewer);
-                }));
+        navBar(inv, viewer, overviewView == null ? null : KEY + "back");
+        int mode = modeFilter.index(viewer.getUniqueId());
+        inv.setItem(SLOT_FILTER, filterButton(viewer, mode));
+        List<VoteSnapshot> data = dataByViewer.get(viewer.getUniqueId());
+        inv.setItem(SLOT_HEADER, header(viewer, mode, data));
+        if (data == null) {
+            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.CLOCK, KEY + "pending"));
+            return;
+        }
+        if (data.isEmpty()) {
+            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.PAPER, KEY + "empty"));
+            return;
+        }
+        int pages = pageCount(data.size());
+        int page = clampPage(pageByViewer.getOrDefault(viewer.getUniqueId(), 0), pages);
+        pageByViewer.put(viewer.getUniqueId(), page);
+        int[] slots = bodySlots();
+        int from = page * pageSize();
+        for (int i = 0; i < slots.length && from + i < data.size(); i++) {
+            inv.setItem(slots[i], entry(viewer, from + i + 1, data.get(from + i)));
+        }
+        pagination(inv, viewer, page, pages);
     }
 
-    private void renderPage(@NotNull Inventory inv, @NotNull Player viewer) {
-        List<VoteSnapshot> data = dataByViewer.get(viewer.getUniqueId());
-        if (data == null) return;
+    private @NotNull ItemStack header(@NotNull Player viewer, int mode, @Nullable List<VoteSnapshot> data) {
+        String modeLabel = VoteCards.text(viewer, KEY + "mode." + MODES[mode]);
+        List<Component> rows = new ArrayList<>();
+        rows.add(VoteCards.rowOf(viewer, LABEL + "showing", VoteCards.value(viewer, modeLabel)));
+        rows.add(VoteCards.rowOf(viewer, LABEL + "your-place", ownPlace(viewer, data)));
+        CardLore lore = CardLore.create()
+                .block(VoteCards.paragraphOf(viewer, KEY + "header.description"))
+                .section(VoteCards.section(viewer, "now"), rows);
+        appendLoreExtra(lore, KEY + "header", viewer);
+        return VoteCards.card(Material.GOLDEN_HELMET,
+                VoteCards.ic(VoteCards.msg(KEY + "header.name").with(PARAM_VALUE, modeLabel), viewer), lore.build());
+    }
 
-        int page = pageByViewer.getOrDefault(viewer.getUniqueId(), 0);
-        int totalPages = Math.max(1, (int) Math.ceil((double) data.size() / PAGE_SIZE));
-        page = Math.max(0, Math.min(page, totalPages - 1));
-        pageByViewer.put(viewer.getUniqueId(), page);
-
-        int from = page * PAGE_SIZE;
-        int to = Math.min(data.size(), from + PAGE_SIZE);
-
-        // Content slots: rows 1–3, cols 1–7
-        int[] grid = {
-                10, 11, 12, 13, 14, 15, 16,
-                19, 20, 21, 22, 23, 24, 25,
-                28, 29, 30, 31, 32, 33, 34
-        };
-
-        // Fill content
-        for (int i = 0; i < grid.length; i++) {
-            int dataIdx = from + i;
-            if (dataIdx < to) {
-                inv.setItem(grid[i], renderEntry(dataIdx, data.get(dataIdx)));
-            } else {
-                inv.setItem(grid[i], ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
-                        .name(Component.empty()).build());
+    private @NotNull String ownPlace(@NotNull Player viewer, @Nullable List<VoteSnapshot> data) {
+        if (data == null) {
+            return VoteCards.loading(viewer);
+        }
+        for (int i = 0; i < data.size(); i++) {
+            if (viewer.getUniqueId().equals(data.get(i).playerUuid())) {
+                return VoteCards.tone(viewer, "accent", VoteCards.msg(KEY + "place")
+                        .with(PARAM_VALUE, i + 1).text(viewer));
             }
         }
-
-        // ── Canonical pagination slots (V-10) ────────────────────────
-        // prev=47, indicator=49, next=53 - same across Leaderboard, Party
-        // and Shop so players never have to relearn where the arrows are.
-        if (page > 0) {
-            ItemStack prev = ItemBuilder.of(Material.ARROW)
-                    .name(name("<gradient:#fde047:#f59e0b>« Previous Page</gradient>"))
-                    .lore(List.of(lore("<dark_gray>┃ <gray>Page " + page + " / " + totalPages)))
-                    .build();
-            tag(prev, "page-prev");
-            inv.setItem(47, prev);
-        } else {
-            inv.setItem(47, filler());
-        }
-
-        inv.setItem(49, ItemBuilder.of(Material.PAPER)
-                .name(name("<gradient:#a5f3fc:#06b6d4>Page " + (page + 1) + " / " + totalPages + "</gradient>"))
-                .lore(List.of(
-                        Component.empty(),
-                        lore("<dark_gray>┃ <gray>Showing " + (from + 1) + "–" + to + " of " + data.size()),
-                        Component.empty()))
-                .build());
-
-        if (page + 1 < totalPages) {
-            ItemStack next = ItemBuilder.of(Material.ARROW)
-                    .name(name("<gradient:#fde047:#f59e0b>Next Page »</gradient>"))
-                    .lore(List.of(lore("<dark_gray>┃ <gray>Page " + (page + 2) + " / " + totalPages)))
-                    .build();
-            tag(next, "page-next");
-            inv.setItem(53, next);
-        } else {
-            inv.setItem(53, filler());
-        }
+        return VoteCards.tone(viewer, "muted", VoteCards.msg(KEY + "not-listed")
+                .with(PARAM_VALUE, LIMIT).text(viewer));
     }
 
-    /**
-     * Renders a single leaderboard entry with rank, player info, and vote statistics.
-     *
-     * @param index the zero-based index in the leaderboard
-     * @param entry the vote snapshot data for this player
-     * @return the rendered ItemStack
-     */
-    private @NotNull ItemStack renderEntry(int index, @NotNull VoteSnapshot entry) {
-        int rank = index + 1;
-        String playerName = entry.playerName() != null ? entry.playerName() : "Unknown";
-        String rankGrad = rankGradient(rank);
-        String rankSym = rankSymbol(rank);
-
-        Component displayName = name(
-                rankGrad + rankSym + " #" + rank + "</gradient> <white>" + playerName);
-
-        String voteBar = buildVoteBar(entry.totalVotes());
-
-        List<Component> itemLore = List.of(
-                Component.empty(),
-                lore("  <dark_gray>▸</dark_gray> <gray>Total Votes:</gray> <gradient:#86efac:#16a34a>" + entry.totalVotes()),
-                lore("  <dark_gray>▸</dark_gray> <gray>Monthly:</gray> <gradient:#a5f3fc:#06b6d4>" + entry.monthlyVotes()),
-                lore("  <dark_gray>▸</dark_gray> <gray>Streak:</gray> <gradient:#fde047:#f59e0b>" + entry.currentStreak()),
-                lore("  <dark_gray>▸</dark_gray> <gray>Points:</gray> <gradient:#d8b4fe:#9333ea>" + entry.votePoints()),
-                Component.empty(),
-                lore("  " + voteBar),
-                Component.empty()
-        );
-
-        if (rank <= 3) {
-            // HeadBuilder (unlike ItemBuilder) doesn't strip the default
-            // item-meta italic; wrap explicitly so the top-3 names + lore
-            // don't render cursive.
-            return HeadBuilder.fromPlayer(Bukkit.getOfflinePlayer(entry.playerUuid()))
-                    .name(plain(displayName))
-                    .lore(plain(itemLore))
-                    .build();
+    private @NotNull ItemStack filterButton(@NotNull Player viewer, int active) {
+        List<String> labels = new ArrayList<>(MODES.length);
+        for (String mode : MODES) {
+            labels.add(VoteCards.text(viewer, KEY + "mode." + mode));
         }
-        return ItemBuilder.of(rankMaterial(rank))
-                .name(displayName)
-                .lore(itemLore)
-                .build();
+        ItemStack button = VoteCards.filter(viewer, labels, active);
+        tag(button, FilterHopperButton.TAG);
+        return button;
+    }
+
+    private @NotNull ItemStack entry(@NotNull Player viewer, int rank, @NotNull VoteSnapshot snapshot) {
+        String playerName = snapshot.playerName() != null
+                ? snapshot.playerName() : VoteCards.text(viewer, KEY + "unknown-player");
+        List<Component> rows = List.of(
+                VoteCards.rowOf(viewer, LABEL + "votes-total", VoteCards.number(viewer, snapshot.totalVotes())),
+                VoteCards.rowOf(viewer, LABEL + "votes-month", VoteCards.number(viewer, snapshot.monthlyVotes())),
+                VoteCards.rowOf(viewer, LABEL + "streak", VoteCards.days(viewer, snapshot.currentStreak())),
+                VoteCards.rowOf(viewer, LABEL + "vote-points", VoteCards.points(viewer, snapshot.votePoints())));
+        CardLore lore = CardLore.create().section(VoteCards.section(viewer, "votes"), rows);
+        if (viewer.getUniqueId().equals(snapshot.playerUuid())) {
+            lore.block(List.of(VoteCards.ic(viewer, KEY + "you")));
+        }
+        String nameKey = rank <= 3 ? KEY + "entry.name-podium" : KEY + "entry.name";
+        Component name = VoteCards.ic(VoteCards.msg(nameKey).with("rank", rank).with("player", playerName), viewer);
+        ItemStack card = VoteCards.card(VoteCards.head(snapshot.playerUuid()), name, lore.build());
+        if (rank <= 3) {
+            card.setAmount(rank);
+        }
+        return card;
     }
 
     @Override
     protected void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked) {
-        String id = tagOf(clicked);
+        onClick(viewer, slot, clicked, ClickType.LEFT);
+    }
 
-        if ("back".equals(id) && overviewView != null) {
-            pageByViewer.remove(viewer.getUniqueId());
-            dataByViewer.remove(viewer.getUniqueId());
+    @Override
+    protected void onClick(@NotNull Player viewer, int slot, @NotNull ItemStack clicked, @NotNull ClickType type) {
+        String tag = tagOf(clicked);
+        UUID uuid = viewer.getUniqueId();
+        if (TAG_BACK.equals(tag) && overviewView != null) {
+            pageByViewer.remove(uuid);
+            dataByViewer.remove(uuid);
             overviewView.open(viewer);
-            return;
-        }
-
-        if ("page-prev".equals(id)) {
-            pageByViewer.merge(viewer.getUniqueId(), -1, Integer::sum);
-            Inventory top = viewer.getOpenInventory().getTopInventory();
-            if (top.getHolder() == holder) renderPage(top, viewer);
-            return;
-        }
-
-        if ("page-next".equals(id)) {
-            pageByViewer.merge(viewer.getUniqueId(), 1, Integer::sum);
-            Inventory top = viewer.getOpenInventory().getTopInventory();
-            if (top.getHolder() == holder) renderPage(top, viewer);
+        } else if (FilterHopperButton.TAG.equals(tag)) {
+            modeFilter.cycle(uuid, !type.isRightClick());
+            pageByViewer.remove(uuid);
+            dataByViewer.remove(uuid);
+            rerender(viewer);
+            load(viewer);
+        } else if (TAG_PAGE_PREV.equals(tag)) {
+            pageByViewer.merge(uuid, -1, Integer::sum);
+            rerender(viewer);
+        } else if (TAG_PAGE_NEXT.equals(tag)) {
+            pageByViewer.merge(uuid, 1, Integer::sum);
+            rerender(viewer);
         }
     }
 
-    // ── Helpers ─────────────────────────────────────────────────
-
-    /**
-     * Returns the material for a given rank.
-     *
-     * @param rank the rank position (1-based)
-     * @return the Material to display
-     */
-    private static Material rankMaterial(int rank) {
-        return switch (rank) {
-            case 1 -> Material.DIAMOND_BLOCK;
-            case 2 -> Material.GOLD_BLOCK;
-            case 3 -> Material.IRON_BLOCK;
-            case 4, 5 -> Material.EMERALD;
-            default -> Material.PAPER;
-        };
-    }
-
-    /**
-     * Returns the MiniMessage gradient string for a given rank.
-     *
-     * @param rank the rank position (1-based)
-     * @return the gradient string
-     */
-    private static String rankGradient(int rank) {
-        return switch (rank) {
-            case 1 -> "<gradient:#FFD700:#FFA500>";
-            case 2 -> "<gradient:#C0C0C0:#A8A8A8>";
-            case 3 -> "<gradient:#CD7F32:#B87333>";
-            default -> "<gradient:#86efac:#16a34a>";
-        };
-    }
-
-    /**
-     * Returns the symbol for a given rank.
-     *
-     * @param rank the rank position (1-based)
-     * @return the rank symbol
-     */
-    private static String rankSymbol(int rank) {
-        return switch (rank) {
-            case 1 -> "👑";
-            case 2 -> "⭐";
-            case 3 -> "✦";
-            default -> "▸";
-        };
-    }
-
-    /**
-     * Builds a visual vote bar using logarithmic scaling.
-     *
-     * @param votes the total vote count
-     * @return the MiniMessage string for the vote bar
-     */
-    private static String buildVoteBar(int votes) {
-        int bars = 10;
-        int filled = votes <= 0 ? 0 : Math.min(bars, Math.max(1, (int) (Math.log10((double) votes + 1) * 3)));
-        var sb = new StringBuilder("<dark_gray>[</dark_gray>");
-        for (int i = 0; i < bars; i++) {
-            sb.append(i < filled ? "<gradient:#fde047:#f59e0b>|</gradient>" : "<dark_gray>|</dark_gray>");
-        }
-        sb.append("<dark_gray>]</dark_gray> <gray>").append(votes).append(" votes</gray>");
-        return sb.toString();
-    }
-
-    /**
-     * Inventory holder for the leaderboard view.
-     */
     private static final class Holder implements InventoryHolder {
         @Override public @NotNull Inventory getInventory() {
             throw new UnsupportedOperationException();
