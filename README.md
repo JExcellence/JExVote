@@ -5,7 +5,7 @@
 # JExVote
 ### All-in-One Vote Rewards & Engagement
 
-Built-in Votifier · Streaks · Streak Freezes · Vote Gifting · Jackpot · Vote Party · Vote Shop · Bedrock Forms · REST API · Multi-language
+Built-in Votifier | Streaks | Streak Freezes | Vote Gifting | Jackpot | Vote Party | Vote Shop | Bedrock Forms | REST API | Multi-language
 
 *Supports Votifier v1 (RSA) and NuVotifier v2 (HMAC). No external Votifier plugin required.*
 
@@ -13,9 +13,9 @@ Built-in Votifier · Streaks · Streak Freezes · Vote Gifting · Jackpot · Vot
 
 ---
 
-> **Status:** BUILT (free + premium editions). **Last verified:** 2026-09-17. **Related:** [../README.md](../README.md). Built: `jexvote-{api,common,free,premium}` modules with a self-contained Votifier v1/v2 server.
+> **Status:** BUILT (free + premium editions). **Last verified:** 2026-09-26. **Related:** [../README.md](../README.md). Built: `jexvote-{api,common,free,premium}` modules with a self-contained Votifier v1/v2 server.
 
-## ■ What is JExVote?
+## What is JExVote?
 
 JExVote handles everything around server voting: receiving votes from voting sites, rewarding players, tracking streaks, and showing statistics. It ships with its own Votifier-compatible server built in, so you do not need NuVotifier or any other listener plugin. Point your vote sites at the configured port and JExVote does the rest.
 
@@ -23,7 +23,7 @@ Votes trigger configurable rewards, feed a streak system that brings players bac
 
 ---
 
-## ■ Feature Overview
+## Feature Overview
 
 - **Built-in Votifier server**: Supports v1 (RSA-encrypted) and v2 (HMAC-SHA256) out of the box. No NuVotifier dependency.
 - **14 reward types**: Commands, items, XP, currency, permissions, sounds, particles, titles, teleports, composite bundles, choice menus, custom hooks, plus **chance** and **lucky** (weighted jackpot) rewards.
@@ -50,12 +50,12 @@ Votes trigger configurable rewards, feed a streak system that brings players bac
 
 ---
 
-## ■ Engagement Systems
+## Engagement Systems
 
-### ❄ Streak Freezes
+### Streak Freezes
 A Streak Freeze keeps a streak alive when a player misses a day. It is fully automatic: if a vote arrives after the streak would have broken, the needed freezes are spent and the streak continues. Every player starts with one free freeze (they are told on their first vote), and more are bought with vote points through `/vote freeze`. Cost, the owned cap, and how long one freeze covers are all configurable, and `jexvote.freeze.max.<n>` raises the cap per rank.
 
-### 🎁 Vote Gifting
+### Vote Gifting
 Players keep a friend's streak going when that friend cannot log in.
 
 - `/vote gift <player>` gifts a streak day to a specific player.
@@ -63,30 +63,44 @@ Players keep a friend's streak going when that friend cannot log in.
 
 A gift advances only the receiver's streak. The gifter keeps their own vote and rewards. The daily limit defaults to one (raise it with `jexvote.gift.daily.<n>`), gifting can require the gifter to have voted that day, and a player can only be gifted once per day.
 
-### 🎰 Vote Jackpot
+### Vote Jackpot
 Every vote rolls one prize from a weighted pool. The rewards menu lists each outcome with its exact drop chance and how many times it has dropped. The default pool runs from small coin wins up to a top-tier crate key, and it is fully editable in `rewards.yml`.
 
-### 🎉 Vote Party *(Premium)*
+### Vote Party *(Premium)*
 A shared, server-wide counter. When votes reach the target, every player who contributed is rewarded (online players right away, offline players on next login), then the counter resets.
 
 ---
 
-## ■ GUIs
+## GUIs
 
-![Vote Overview](attachment-961877)
-**Vote Overview** - the main menu players see when they type `/vote`. Shows personal stats, a progress bar for the current streak, all configured vote sites with clickable links, vote points, and navigation to the leaderboard and streak views.
+Every menu follows the JExcellence suite layout: back at the top-left slot, the header card in the top middle,
+the Filter button (hopper minecart) at the top-right, a 28-slot body, page arrows at the bottom middle and Close
+at the bottom-left. Cards read as a short purpose sentence, titled `Label | value` sections and one action line.
+Locked or switched-off entries show a red dye with the reason. Coin and Crystal amounts use the MythBlock
+currency icons. All text comes from `translations/<locale>.yml`.
 
-![Leaderboard](attachment-961878)
-**Leaderboard** - a paginated all-time leaderboard with player heads for the top 3. Each entry shows total votes, monthly votes, streak, vote points, and a visual vote bar. Use the arrow buttons to change pages.
+- **Vote menu** (`/vote`): your head with a vote profile (all-time and monthly votes, last vote, rank, streak,
+  best streak, next milestone with a progress bar, vote points), one card per vote site with its live status
+  (ready, or votable again in 2 h 5 min), and cards to the streak, leaderboard, rewards and shop menus.
+  Clicking a site sends a clickable vote link in chat.
+- **Top voters**: the top 50 as player heads with all-time votes, monthly votes, streak and vote points. The
+  filter switches between all time and this month; the header shows your own place.
+- **Streak rewards**: the streak header (current, best, next milestone, reached and ready-to-claim counts) and
+  one card per milestone with its rewards and state (claimed, ready, paid out, next, locked). Left-click a ready
+  milestone to claim it, right-click any milestone for a detail page with every reward. The filter shows all,
+  ready to claim, reached or not reached yet.
+- **Vote rewards** (`/vote rewards`): your wallet (vote points, Streak Freezes, gifts left) and cards for Lucky
+  Vote, the weekend bonus, the vote party, Streak Freezes (click to buy), gifting and the shop.
+- **Lucky vote** and **Vote party** prize lists: one card per prize with its real chance, rarity and how often
+  the server has won it. The filter narrows the list by rarity (common to legendary).
+- **Vote shop**: balance header, filter (everything, can buy now, crate keys, items, perks and more) and one
+  card per item with what it gives, the price and whether you can afford it. A purchase answers with one chat
+  line and a short title.
 
-![Streak Progress](attachment-961879)
-**Streak Progress** - shows the current streak, highest streak, and every configured milestone. Achieved milestones glow green, the next target is highlighted yellow, and locked ones are red. A 20-segment bar shows how close the player is to the next reward, with each tier's full reward list on hover.
+Bedrock players get the same content as Cumulus forms (overview, top voters, streaks with claim buttons,
+rewards, lucky and party prize lists, shop with a confirmation step).
 
-*The rewards menu (Lucky Vote odds, weekend multiplier, vote party, Streak Freeze, Vote Gift and vote points) opens from `/vote rewards`.*
-
----
-
-## ■ Setup Guide
+## Setup Guide
 
 <details>
 <summary>Step 1 - Install</summary>
@@ -187,7 +201,7 @@ Run `/jexvote fakevote <yourname>` to trigger a test vote and confirm rewards, b
 
 ---
 
-## ■ Reward Types
+## Reward Types
 
 <details>
 <summary>View all 14 reward types</summary>
@@ -213,7 +227,7 @@ Run `/jexvote fakevote <yourname>` to trigger a test vote and confirm rewards, b
 
 ---
 
-## ■ Commands & Permissions
+## Commands & Permissions
 
 **Player Commands**
 
@@ -263,7 +277,7 @@ jexvote.gift.daily.<n>            Raise the daily gift limit to <n>
 
 ---
 
-## ■ Configuration Reference
+## Configuration Reference
 
 <details>
 <summary>config.yml - Full reference</summary>
@@ -290,18 +304,14 @@ offline-vote-queue: true
 # ── Streaks ──
 streak:
   timeout-hours: 36           # Hours before a streak resets
-  claim-mode: 'auto'          # auto | manual
+  claim-mode: 'manual'        # manual (claim in the streak menu) | auto
   freeze:
     enabled: true
     free-amount: 1            # Free freezes granted on first vote
     cost-points: 5            # Vote points per purchased freeze
     default-max: 3            # Owned cap (raise per rank with jexvote.freeze.max.<n>)
     duration-hours: 24        # Grace one freeze covers
-  bonus-commands:
-    7:
-      - "give {player} diamond 3"
-    30:
-      - "broadcast &6{player} &7hit a &630-day &7vote streak!"
+  bonus-commands: {}          # Optional: day -> list of console commands
 
 # ── Vote Gifting ──
 vote-gift:
@@ -332,7 +342,7 @@ records:
 
 ---
 
-## ■ Streak System
+## Streak System
 
 Streaks track how many days in a row a player has voted. The timeout is configurable. By default a player has 36 hours between votes before the streak resets, which gives some buffer beyond a strict 24-hour window. Streak Freezes extend that buffer automatically when a day is missed.
 
@@ -343,11 +353,11 @@ Milestones can trigger two things, independently:
 
 Both fire at the same milestone if you configure both. The default setup is an escalating crate ladder: each day tier grants XP, coins, a crate key, and useful gear, building up to the top-tier crate at day 30.
 
-Streak progress shows in every GUI: the overview has a bar toward the next milestone, and the dedicated streak view breaks down each tier with achieved, upcoming, and locked status.
+Streak progress shows in the vote menu header (bar toward the next milestone) and in the streak menu, which lists every milestone with its rewards and state. With `claim-mode: manual` players claim reached milestones there; reached milestones stay claimable after a streak breaks, because they count from the best streak.
 
 ---
 
-## ■ Votifier Protocol
+## Votifier Protocol
 
 JExVote includes a fully self-contained Votifier server. There is no need to install NuVotifier or any third-party listener.
 
@@ -358,25 +368,25 @@ JExVote auto-detects the protocol version per connection. The RSA keypair is gen
 
 ---
 
-## ■ Language & Localization
+## Language & Localization
 
-JExVote ships with English (en_US), German (de_DE), Czech (cs_CZ), and Slovak (sk_SK). The language is auto-detected per player from their client locale, and item names in the rewards menu use the player's own client language. To force one locale for the whole server, set it in the plugin's translation config:
+JExVote ships with English (en_US) and German (de_DE) for every message and menu; Czech (cs_CZ) and Slovak (sk_SK) cover part of the text and fall back to English for the rest. The language is auto-detected per player from their client locale, and item names in the rewards menu use the player's own client language. To force one locale for the whole server, set it in the plugin's translation config:
 
 ```yaml
 # Leave empty for auto-detection.
 force-locale: 'de_DE'
 ```
 
-Add custom translations by placing a `<locale>.yml` file in the `translations/` folder. Missing keys fall back to English.
+Add custom translations by placing a `<locale>.yml` file in the `translations/` folder. Missing keys fall back to English. Bundled translation files are only written when they do not exist yet, so after an update merge new keys into your existing files. The vote party titles use `vote_party.titles.*` unless `vote-party.titles.spin`, `reveal` or `reveal-subtitle` are set in `rewards.yml`.
 
 ---
 
-## ■ Dependencies
+## Dependencies
 
 **Required**
 
-- Paper 1.20.4+ (or Spigot / Folia)
-- Java 21+
+- Paper 1.21+ (or Spigot / Folia)
+- Java 25+
 
 **Optional (soft dependencies)**
 
@@ -400,4 +410,5 @@ Free edition is limited to 5 vote sites. Premium unlocks unlimited sites, the vo
 
 ## Changelog
 
+- 2026-09-26: menus, lore and messages rebuilt on the suite design rules (shared layout, filters, currency icons, translated time and number formats); GUI section rewritten, image placeholders removed.
 - 2026-09-17: doc-quality pass (status banner + cross-links).
