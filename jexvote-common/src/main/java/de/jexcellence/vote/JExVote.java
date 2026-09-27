@@ -1,5 +1,6 @@
 package de.jexcellence.vote;
 
+import de.jexcellence.vote.config.TranslationFileMerger;
 import de.jexcellence.vote.command.CommandTreeMerger;
 import com.raindropcentral.commands.CommandFactory;
 import com.raindropcentral.commands.v2.argument.ArgumentType;
@@ -91,6 +92,9 @@ import java.util.logging.Logger;
  */
 public abstract class JExVote {
 
+    private static final String DEFAULT_LOCALE = "en_US";
+    private static final String[] EXTRA_LOCALES = {"de_DE", "cs_CZ", "sk_SK"};
+
     private final JavaPlugin plugin;
     private final String edition;
     private final Logger logger;
@@ -171,11 +175,18 @@ public abstract class JExVote {
         voteConfig.load();
     }
 
+    private static @NotNull List<String> allLocales() {
+        List<String> locales = new ArrayList<>(List.of(EXTRA_LOCALES));
+        locales.add(0, DEFAULT_LOCALE);
+        return locales;
+    }
+
     public void onEnable() {
         try {
+            TranslationFileMerger.addMissingKeys(plugin, allLocales());
             platform = JExPlatform.builder(plugin)
                     .withLogLevel(LogLevel.INFO)
-                    .enableTranslations("en_US", "de_DE", "cs_CZ", "sk_SK")
+                    .enableTranslations(DEFAULT_LOCALE, EXTRA_LOCALES)
                     .enableMetrics(metricsId())
                     .enableRewards()
                     .build();
