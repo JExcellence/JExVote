@@ -15,6 +15,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 
 /**
  * Translation files are copied into the data folder once, so an update never reaches them and new menu texts show
@@ -25,6 +26,8 @@ import java.util.logging.Level;
 public final class TranslationFileMerger {
 
     private static final String DIRECTORY = "translations";
+    private static final Pattern BOOLEAN_KEY = Pattern.compile(
+            "(?m)^([ \\t]*)(on|off|yes|no|y|n|true|false|On|Off|Yes|No|True|False|ON|OFF|YES|NO|TRUE|FALSE)(:(?:[ \\t]|$))");
 
     private TranslationFileMerger() {
     }
@@ -42,6 +45,7 @@ public final class TranslationFileMerger {
         if (!live.isFile()) {
             return;
         }
+        quoteBooleanKeys(plugin, live);
         try (InputStream in = plugin.getResource(resourcePath)) {
             if (in == null) {
                 return;
@@ -64,6 +68,31 @@ public final class TranslationFileMerger {
         } catch (IOException ex) {
             plugin.getLogger().log(Level.WARNING, ex, () -> "Could not update " + resourcePath);
         }
+    }
+
+    /**
+     * YAML reads unquoted keys such as {@code on}, {@code off}, {@code yes} or {@code no} as booleans, and one such
+     * key makes the whole translation file fail to load. Quotes them in place so the file loads again.
+     */
+    private static void quoteBooleanKeys(@NotNull JavaPlugin plugin, @NotNull File live) {
+        try {
+            String raw = Files.readString(live.toPath(), StandardCharsets.UTF_8);
+            String fixed = quoteBooleanKeys(raw);
+            if (!fixed.equals(raw)) {
+                File backup = new File(live.getPath() + ".bak-" + System.currentTimeMillis());
+                Files.copy(live.toPath(), backup.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                Files.writeString(live.toPath(), fixed, StandardCharsets.UTF_8);
+                plugin.getLogger().log(Level.WARNING, () -> "Quoted boolean-like keys in " + live.getName()
+                        + " so it loads again (backup: " + backup.getName() + ")");
+            }
+        } catch (IOException ex) {
+            plugin.getLogger().log(Level.WARNING, ex, () -> "Could not check " + live.getName());
+        }
+    }
+
+    /** Quotes unquoted boolean-like mapping keys; package-visible for tests. */
+    static @NotNull String quoteBooleanKeys(@NotNull String yaml) {
+        return BOOLEAN_KEY.matcher(yaml).replaceAll("$1'$2'$3");
     }
 
     private static @NotNull YamlConfiguration load(@NotNull InputStream in) throws IOException {

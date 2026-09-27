@@ -579,8 +579,8 @@ vote_admin:
       placeholders-off: 'Nicht installiert'
       bedrock-on: 'Floodgate gefunden, Bedrock-Spieler bekommen Formulare'
       bedrock-off: 'Floodgate nicht installiert'
-      on: 'An'
-      off: 'In der config.yml aus'
+      feature-on: 'An'
+      feature-off: 'In der config.yml aus'
       premium: 'Nur in der Premium-Edition'
     tip:
       key: "<#A78BFA>▸</#A78BFA> <click:run_command:'/jexvote key'><hover:show_text:'<#94A3B8>Klicke zum Ausführen</#94A3B8>'><#F1F5F9>/jexvote key</#F1F5F9></hover></click> <dark_gray>|</dark_gray> <#94A3B8>Port, Token und öffentlicher Schlüssel für die Vote-Seiten</#94A3B8>"

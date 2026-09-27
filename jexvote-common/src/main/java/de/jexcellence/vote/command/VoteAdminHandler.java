@@ -54,8 +54,8 @@ public final class VoteAdminHandler {
     private static final String TONE_BAD = "bad";
     private static final String TONE_WARN = "warn";
     private static final String TONE_PLAIN = "plain";
-    private static final String VALUE_ON = "on";
-    private static final String VALUE_OFF = "off";
+    private static final String VALUE_ON = "feature-on";
+    private static final String VALUE_OFF = "feature-off";
 
     private final JavaPlugin plugin;
     private final VoteService voteService;
