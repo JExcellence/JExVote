@@ -32,7 +32,7 @@ public final class VotePartyView extends VotePrizeCatalogView {
     private final Holder holder = new Holder();
     private final VoteRewardConfig rewardConfig;
     private final @Nullable VotePartyService party;
-    private @Nullable VoteRewardsView rewardsView;
+    private @Nullable VoteOverviewView overviewView;
 
     public VotePartyView(@NotNull VoteRewardConfig rewardConfig,
                          @Nullable VotePartyService party,
@@ -42,25 +42,25 @@ public final class VotePartyView extends VotePrizeCatalogView {
         this.party = party;
     }
 
-    /** Wires the back button to the rewards view. */
-    public void setRewardsView(@NotNull VoteRewardsView view) {
-        this.rewardsView = view;
+    /** Wires the back button to the vote menu. */
+    public void setOverviewView(@NotNull VoteOverviewView view) {
+        this.overviewView = view;
     }
 
     @Override protected @NotNull String title() { return KEY + "title"; }
     @Override protected @NotNull InventoryHolder holder() { return holder; }
     @Override protected @NotNull String prizePurposeKey() { return KEY + "prize-description"; }
-    @Override protected @NotNull String emptyKey() { return KEY + "empty"; }
+    @Override protected @NotNull String emptyKey() { return KEY + "no-pool"; }
 
     @Override
     protected @Nullable String backDescriptionKey() {
-        return rewardsView == null ? null : KEY + "back";
+        return overviewView == null ? null : KEY + "back-to-menu";
     }
 
     @Override
     protected void openParent(@NotNull Player viewer) {
-        if (rewardsView != null) {
-            rewardsView.open(viewer);
+        if (overviewView != null) {
+            overviewView.open(viewer);
         }
     }
 
@@ -92,8 +92,11 @@ public final class VotePartyView extends VotePrizeCatalogView {
                             VoteCards.rowOf(viewer, VoteCards.COMMON + "label.votes",
                                     VoteCards.ofTotal(viewer, current, target)),
                             VoteCards.rowOf(viewer, VoteCards.COMMON + "label.votes-left",
-                                    VoteCards.number(viewer, party.getRemainingVotes()))))
-                    .section(VoteCards.section(viewer, "every-voter"), fixedRewards(viewer));
+                                    VoteCards.number(viewer, party.getRemainingVotes()))));
+            List<Component> fixed = fixedRewards(viewer);
+            if (!fixed.isEmpty()) {
+                lore.section(VoteCards.section(viewer, "every-voter"), fixed);
+            }
         }
         appendLoreExtra(lore, KEY + "header", viewer);
         return VoteCards.card(Material.CAKE, name, lore.build());

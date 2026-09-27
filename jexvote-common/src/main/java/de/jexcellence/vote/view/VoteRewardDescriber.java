@@ -10,6 +10,7 @@ import de.jexcellence.jexplatform.reward.impl.ItemReward;
 import de.jexcellence.jexplatform.view.RewardViewHelper;
 import de.jexcellence.jextranslate.MessageBuilder;
 import de.jexcellence.jextranslate.R18nManager;
+import de.jexcellence.vote.config.CurrencyDisplay;
 import de.jexcellence.vote.gui.style.VoteFormat;
 import de.jexcellence.vote.reward.ChanceReward;
 import de.jexcellence.vote.reward.LuckyReward;
@@ -19,13 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Turns a reward into one short line for lore, chat and Bedrock forms: {@code 2x Diamond},
  * {@code 1x Void Crate key}, {@code +5 island radius}, or the coin / crystal icon with the amount.
  *
  * <p>Every label is a {@code reward_describe.*} translation template; this class only picks the template and
- * fills it. {@link #describe} returns a MiniMessage fragment for Java surfaces (currency as the MythBlock icon),
+ * fills it. {@link #describe} returns a MiniMessage fragment for Java surfaces (currency as the coin / crystal
+ * icon when {@link CurrencyDisplay#icons()} is on, otherwise the currency name),
  * {@link #describeText} spells the currency out for Bedrock forms, where the resource-pack icon does not
  * render. {@link #icon} picks the material that best shows the reward in a GUI.
  *
@@ -38,7 +41,18 @@ public final class VoteRewardDescriber {
     private static final String TYPE_CURRENCY = "currency";
     private static final String CRATE_WORD = "crate";
 
+    private static final AtomicReference<CurrencyDisplay> DISPLAY = new AtomicReference<>(CurrencyDisplay.PLAIN);
+
     private VoteRewardDescriber() {
+    }
+
+    /**
+     * Sets how currency rewards are written (icons or names). Called on start and on reload.
+     *
+     * @param display the resolved currency display
+     */
+    public static void configure(@NotNull CurrencyDisplay display) {
+        DISPLAY.set(display);
     }
 
     /** Describes a reward in the server's default language (currency as icon). */
@@ -101,13 +115,30 @@ public final class VoteRewardDescriber {
                                                     boolean icons) {
         String amount = VoteFormat.decimal(viewer, currency.getAmount());
         CurrencyType type = MythCurrencyFormat.fromIdentifier(currency.getCurrency());
-        if (icons && type != null && type != CurrencyType.SEASON_POINTS && type != CurrencyType.TOKENS) {
+        CurrencyDisplay display = DISPLAY.get();
+        if (icons && display.icons() && type != null
+                && type != CurrencyType.SEASON_POINTS && type != CurrencyType.TOKENS) {
             return MythCurrencyFormat.compact(type, amount, viewer);
         }
-        String unitKey = KEY + "unit." + currency.getCurrency().toLowerCase(Locale.ROOT);
-        MessageBuilder unit = R18nManager.getInstance().msg(unitKey);
-        String unitText = unit.exists(viewer) ? unit.text(viewer) : prettyWord(currency.getCurrency());
-        return template(TYPE_CURRENCY).with(AMOUNT, amount).with("unit", unitText).miniMessage(viewer);
+        return template(TYPE_CURRENCY).with(AMOUNT, amount)
+                .with("unit", currencyName(currency.getCurrency(), viewer)).miniMessage(viewer);
+    }
+
+    /**
+     * The display name of a currency id: the operator name from {@code display.currency-names}, then the
+     * {@code reward_describe.unit.<id>} translation, then the id itself with a capital first letter.
+     *
+     * @param currencyId the currency id of a reward
+     * @param viewer     the viewer, for their language
+     * @return the name
+     */
+    public static @NotNull String currencyName(@NotNull String currencyId, @Nullable Player viewer) {
+        String configured = DISPLAY.get().nameOf(currencyId);
+        if (configured != null) {
+            return configured;
+        }
+        MessageBuilder unit = R18nManager.getInstance().msg(KEY + "unit." + currencyId.toLowerCase(Locale.ROOT));
+        return unit.exists(viewer) ? unit.text(viewer) : prettyWord(currencyId);
     }
 
     private static @NotNull String describeCommand(@NotNull CommandReward command, @Nullable Player viewer) {

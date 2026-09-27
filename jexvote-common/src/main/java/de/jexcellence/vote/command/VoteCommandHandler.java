@@ -5,7 +5,7 @@ import com.raindropcentral.commands.v2.CommandHandler;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.model.VoteSnapshot;
 import de.jexcellence.vote.command.help.HelpRenderer;
-import de.jexcellence.vote.config.VoteConfig;
+import de.jexcellence.vote.config.VoteFeatures;
 import de.jexcellence.vote.gui.style.VoteFormat;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.StreakFreezeService;
@@ -23,6 +23,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -36,7 +37,7 @@ public final class VoteCommandHandler {
 
     private final VoteService voteService;
     private final VoteLeaderboardService leaderboardService;
-    private final VoteConfig voteConfig;
+    private final VoteFeatures features;
     private final VoteOverviewView overviewView;
     private final VoteRewardsView rewardsView;
     private final VoteLeaderboardView leaderboardView;
@@ -48,7 +49,7 @@ public final class VoteCommandHandler {
     @SuppressWarnings("java:S107")
     public VoteCommandHandler(@NotNull VoteService voteService,
                               @NotNull VoteLeaderboardService leaderboardService,
-                              @NotNull VoteConfig voteConfig,
+                              @NotNull VoteFeatures features,
                               @NotNull VoteOverviewView overviewView,
                               @NotNull VoteRewardsView rewardsView,
                               @NotNull VoteLeaderboardView leaderboardView,
@@ -56,7 +57,7 @@ public final class VoteCommandHandler {
                               @NotNull VoteGiftService voteGiftService) {
         this.voteService = voteService;
         this.leaderboardService = leaderboardService;
-        this.voteConfig = voteConfig;
+        this.features = features;
         this.overviewView = overviewView;
         this.rewardsView = rewardsView;
         this.leaderboardView = leaderboardView;
@@ -94,7 +95,7 @@ public final class VoteCommandHandler {
             r18n().msg("vote.shop.players_only").prefix().send(ctx.sender());
             return;
         }
-        if (!voteConfig.isFeatureShop() || shopView == null) {
+        if (!features.shop() || shopView == null) {
             r18n().msg("vote.shop.unavailable").prefix().send(player);
             return;
         }
@@ -129,6 +130,10 @@ public final class VoteCommandHandler {
 
     private void onFreeze(@NotNull CommandContext ctx) {
         Player player = ctx.asPlayer().orElseThrow();
+        if (!features.freezes()) {
+            r18n().msg("vote.freeze.disabled").prefix().send(player);
+            return;
+        }
         int cost = streakFreezeService.settings().costPoints();
         int max = streakFreezeService.resolveMax(player);
         streakFreezeService.purchase(player)
@@ -137,6 +142,10 @@ public final class VoteCommandHandler {
 
     private void onGift(@NotNull CommandContext ctx) {
         Player player = ctx.asPlayer().orElseThrow();
+        if (!features.gifts()) {
+            r18n().msg("vote.gift.disabled").prefix().send(player);
+            return;
+        }
         String target = ctx.get(PARAM_TARGET, String.class).orElse("").trim();
         if (target.isEmpty()) {
             r18n().msg("vote.gift.usage").prefix().send(player);
@@ -147,7 +156,11 @@ public final class VoteCommandHandler {
         if (target.equalsIgnoreCase("random")) {
             future = voteGiftService.giftRandom(player);
         } else {
-            OfflinePlayer offline = Bukkit.getOfflinePlayer(target);
+            OfflinePlayer offline = Bukkit.getOfflinePlayerIfCached(target);
+            if (offline == null) {
+                r18n().msg("vote.gift.target_not_found").prefix().with(PARAM_TARGET, target).send(player);
+                return;
+            }
             future = voteGiftService.gift(player, offline);
         }
         future.thenAccept(outcome -> handleGiftOutcome(player, outcome));
@@ -191,26 +204,28 @@ public final class VoteCommandHandler {
     }
 
     private void onHelp(@NotNull CommandContext ctx) {
-        List<HelpRenderer.Entry> entries = List.of(
-                HelpRenderer.Entry.of("/vote", "", "vote_help.desc.vote",
-                        List.of("v"), HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/vote sites", "", "vote_help.desc.sites",
-                        HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/vote stats", "[player]", "vote_help.desc.stats",
-                        List.of("info"), HelpRenderer.Action.SUGGEST),
-                HelpRenderer.Entry.of("/vote top", "[count]", "vote_help.desc.top",
-                        List.of("leaderboard", "lb"), HelpRenderer.Action.SUGGEST),
-                HelpRenderer.Entry.of("/vote rewards", "", "vote_help.desc.rewards",
-                        List.of("economy", "eco"), HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/vote shop", "", "vote_help.desc.shop",
-                        List.of("store", "tokens"), HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/vote freeze", "", "vote_help.desc.freeze",
-                        List.of("freezes"), HelpRenderer.Action.RUN),
-                HelpRenderer.Entry.of("/vote gift", "<player|random>", "vote_help.desc.gift",
-                        HelpRenderer.Action.SUGGEST),
-                HelpRenderer.Entry.of("/vote help", "", "vote_help.desc.help",
-                        HelpRenderer.Action.RUN)
-        );
+        List<HelpRenderer.Entry> entries = new ArrayList<>();
+        entries.add(HelpRenderer.Entry.of("/vote", "", "vote_help.desc.vote", List.of("v"), HelpRenderer.Action.RUN));
+        entries.add(HelpRenderer.Entry.of("/vote sites", "", "vote_help.desc.sites", HelpRenderer.Action.RUN));
+        entries.add(HelpRenderer.Entry.of("/vote stats", "[player]", "vote_help.desc.stats",
+                List.of("info"), HelpRenderer.Action.SUGGEST));
+        entries.add(HelpRenderer.Entry.of("/vote top", "[count]", "vote_help.desc.top",
+                List.of("leaderboard", "lb"), HelpRenderer.Action.SUGGEST));
+        entries.add(HelpRenderer.Entry.of("/vote rewards", "", "vote_help.desc.rewards-menu",
+                List.of("economy", "eco"), HelpRenderer.Action.RUN));
+        if (features.shop()) {
+            entries.add(HelpRenderer.Entry.of("/vote shop", "", "vote_help.desc.shop",
+                    List.of("store", "tokens"), HelpRenderer.Action.RUN));
+        }
+        if (features.freezes()) {
+            entries.add(HelpRenderer.Entry.of("/vote freeze", "", "vote_help.desc.freeze",
+                    List.of("freezes"), HelpRenderer.Action.RUN));
+        }
+        if (features.gifts()) {
+            entries.add(HelpRenderer.Entry.of("/vote gift", "<player|random>", "vote_help.desc.gift",
+                    HelpRenderer.Action.SUGGEST));
+        }
+        entries.add(HelpRenderer.Entry.of("/vote help", "", "vote_help.desc.help", HelpRenderer.Action.RUN));
         new HelpRenderer("vote_help").render(ctx.sender(), entries);
     }
 
@@ -267,7 +282,7 @@ public final class VoteCommandHandler {
 
     private void onTop(@NotNull CommandContext ctx) {
         Player self = ctx.asPlayer().orElse(null);
-        if (self != null && voteConfig.isFeatureLeaderboard()) {
+        if (self != null && features.leaderboard()) {
             if (isBedrock(self)) {
                 bedrockForms.openLeaderboard(self);
                 return;

@@ -15,6 +15,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 
 /**
@@ -51,11 +53,11 @@ public abstract class VoteBaseView implements Listener {
     protected static final int SLOT_BACK = 0;
     protected static final int SLOT_HEADER = 4;
     protected static final int SLOT_FILTER = 8;
-    protected static final int SLOT_CENTER = 22;
+    protected static final int SLOT_CENTER = VoteLayout.centreSlot();
+    protected static final int SLOT_CLOSE = 45;
     protected static final int SLOT_PAGE_PREV = 48;
     protected static final int SLOT_PAGE_NEXT = 50;
 
-    private static final int[] BODY_SLOTS = buildBodySlots();
 
     protected abstract @NotNull String title();
 
@@ -146,6 +148,26 @@ public abstract class VoteBaseView implements Listener {
     private static boolean isContentItem(@Nullable ItemStack clicked) {
         return clicked != null && clicked.getType() != Material.AIR
                 && clicked.getType() != Material.BLACK_STAINED_GLASS_PANE;
+    }
+
+    /**
+     * Drops the per-viewer state of a player who left, so the maps do not grow with every visitor.
+     *
+     * @param event the quit event
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onViewerQuit(@NotNull PlayerQuitEvent event) {
+        forget(event.getPlayer().getUniqueId());
+    }
+
+    /**
+     * Removes what this view remembers about a viewer (page, loaded data). Views with per-viewer state override
+     * it.
+     *
+     * @param viewer the viewer's UUID
+     */
+    protected void forget(@NotNull UUID viewer) {
+        // Views without per-viewer state keep nothing to drop.
     }
 
     /**
@@ -255,35 +277,48 @@ public abstract class VoteBaseView implements Listener {
         return button;
     }
 
-    /** @return the 28 body slots (rows 1-4, columns 1-7) in reading order. */
-    protected static int @NotNull [] bodySlots() {
-        return BODY_SLOTS.clone();
+    /** Builds the card for one list entry; {@code index} is the entry's position in the whole list. */
+    @FunctionalInterface
+    protected interface EntryCard<T> {
+        @NotNull ItemStack build(int index, @NotNull T entry);
     }
 
-    /** @return how many cards fit on one body page. */
-    protected static int pageSize() {
-        return BODY_SLOTS.length;
-    }
-
-    /** @return the page count for {@code entries} body cards (at least one). */
-    protected static int pageCount(int entries) {
-        return Math.max(1, (entries + BODY_SLOTS.length - 1) / BODY_SLOTS.length);
-    }
-
-    /** @return {@code page} clamped into {@code [0, pages)}. */
-    protected static int clampPage(int page, int pages) {
-        return Math.clamp(page, 0, Math.max(0, pages - 1));
-    }
-
-    private static int @NotNull [] buildBodySlots() {
-        int[] slots = new int[28];
-        int index = 0;
-        for (int row = 1; row <= 4; row++) {
-            for (int column = 1; column <= 7; column++) {
-                slots[index++] = row * 9 + column;
-            }
+    /**
+     * Places one page of a list in the body, centred when the page is not full, and the page arrows.
+     *
+     * @param inv           the inventory
+     * @param viewer        the viewer
+     * @param entries       every entry of the list
+     * @param requestedPage the zero-based page the viewer asked for
+     * @param card          builds the card of one entry
+     * @param <T>           entry type
+     * @return the page actually shown (clamped)
+     */
+    protected <T> int renderPage(@NotNull Inventory inv, @Nullable Player viewer, @NotNull List<T> entries,
+                                 int requestedPage, @NotNull EntryCard<T> card) {
+        int pages = VoteLayout.pageCount(entries.size());
+        int page = VoteLayout.clampPage(requestedPage, pages);
+        int from = page * VoteLayout.PAGE_SIZE;
+        int to = Math.min(entries.size(), from + VoteLayout.PAGE_SIZE);
+        int[] slots = VoteLayout.centred(to - from);
+        for (int i = 0; i < slots.length; i++) {
+            inv.setItem(slots[i], card.build(from + i, entries.get(from + i)));
         }
-        return slots;
+        pagination(inv, viewer, page, pages);
+        return page;
+    }
+
+    /**
+     * Places a small, fixed set of cards (at most one page) centred in the body.
+     *
+     * @param inv   the inventory
+     * @param cards the cards in reading order
+     */
+    protected static void placeCentred(@NotNull Inventory inv, @NotNull List<ItemStack> cards) {
+        int[] slots = VoteLayout.centred(cards.size());
+        for (int i = 0; i < slots.length; i++) {
+            inv.setItem(slots[i], cards.get(i));
+        }
     }
 
     /**

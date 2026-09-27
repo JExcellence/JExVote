@@ -142,7 +142,7 @@ public final class VoteConfig {
     private GiftSettings giftSettings =
             new GiftSettings(true, 1, true, ZoneId.of("UTC"));
     private BedrockSettings bedrockSettings = new BedrockSettings("!", true);
-    private DailyFlySettings dailyFlySettings = new DailyFlySettings(true, 15);
+    private DailyFlySettings dailyFlySettings = new DailyFlySettings(false, 15);
     private List<String> dailyRewardCommands = List.of();
 
     private VoteRestApiConfig restApiConfig = VoteRestApiConfig.DISABLED;
@@ -151,6 +151,8 @@ public final class VoteConfig {
     private boolean featureShop = true;
     private boolean featureLeaderboard = true;
     private boolean featureEffects = true;
+    private CurrencyDisplay.Style currencyStyle = CurrencyDisplay.Style.AUTO;
+    private Map<String, String> currencyNames = Map.of();
 
     public VoteConfig(@NotNull JavaPlugin plugin) {
         this.plugin = plugin;
@@ -210,7 +212,25 @@ public final class VoteConfig {
         loadBedrock(config);
         loadRestApi(config);
         loadFeatureToggles(config);
+        loadDisplay(config);
         loadVoteSites();
+    }
+
+    private void loadDisplay(@NotNull YamlConfiguration config) {
+        currencyStyle = CurrencyDisplay.Style.parse(config.getString("display.currency-style", "auto"));
+        ConfigurationSection names = config.getConfigurationSection("display.currency-names");
+        if (names == null) {
+            currencyNames = Map.of();
+            return;
+        }
+        Map<String, String> parsed = new LinkedHashMap<>();
+        for (String id : names.getKeys(false)) {
+            String name = names.getString(id, "");
+            if (name != null && !name.isBlank()) {
+                parsed.put(id.toLowerCase(Locale.ROOT), name);
+            }
+        }
+        currencyNames = Map.copyOf(parsed);
     }
 
     private void loadFeatureToggles(@NotNull YamlConfiguration config) {
@@ -222,7 +242,7 @@ public final class VoteConfig {
 
     /**
      * Loads the {@code api:} section that powers the embedded REST API
-     * consumed by the Mythblock web backend. Disabled by default. The
+     * for a server website. Disabled by default. The
      * secret supports {@code $ENV:VAR_NAME} so the shared HMAC secret can
      * be supplied via the environment (same value as JExOneblock's API).
      */
@@ -276,7 +296,7 @@ public final class VoteConfig {
         boolean replaceSpaces = config.getBoolean("bedrock.replace-spaces", true);
         bedrockSettings = new BedrockSettings(prefix == null ? "" : prefix, replaceSpaces);
         dailyFlySettings = new DailyFlySettings(
-                config.getBoolean("vote-gift.daily-fly.enabled", true),
+                config.getBoolean("vote-gift.daily-fly.enabled", false),
                 Math.max(1, config.getInt("vote-gift.daily-fly.minutes", 15)));
         dailyRewardCommands = List.copyOf(config.getStringList("vote-gift.daily-reward.commands"));
     }
@@ -480,4 +500,10 @@ public final class VoteConfig {
     public boolean isFeatureShop() { return featureShop; }
     public boolean isFeatureLeaderboard() { return featureLeaderboard; }
     public boolean isFeatureEffects() { return featureEffects; }
+
+    /** @return the configured {@code display.currency-style}. */
+    public @NotNull CurrencyDisplay.Style getCurrencyStyle() { return currencyStyle; }
+
+    /** @return operator currency names from {@code display.currency-names} (lower-case ids). */
+    public @NotNull Map<String, String> getCurrencyNames() { return currencyNames; }
 }

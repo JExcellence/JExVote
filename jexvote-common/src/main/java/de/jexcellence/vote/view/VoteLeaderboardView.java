@@ -61,6 +61,12 @@ public class VoteLeaderboardView extends VoteBaseView {
     @Override protected @NotNull InventoryHolder holder() { return holder; }
 
     @Override
+    protected void forget(@NotNull UUID viewer) {
+        pageByViewer.remove(viewer);
+        dataByViewer.remove(viewer);
+    }
+
+    @Override
     public void open(@NotNull Player viewer) {
         dataByViewer.remove(viewer.getUniqueId());
         super.open(viewer);
@@ -95,15 +101,9 @@ public class VoteLeaderboardView extends VoteBaseView {
             inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.PAPER, KEY + "empty"));
             return;
         }
-        int pages = pageCount(data.size());
-        int page = clampPage(pageByViewer.getOrDefault(viewer.getUniqueId(), 0), pages);
+        int page = renderPage(inv, viewer, data, pageByViewer.getOrDefault(viewer.getUniqueId(), 0),
+                (index, snapshot) -> entry(viewer, index + 1, snapshot));
         pageByViewer.put(viewer.getUniqueId(), page);
-        int[] slots = bodySlots();
-        int from = page * pageSize();
-        for (int i = 0; i < slots.length && from + i < data.size(); i++) {
-            inv.setItem(slots[i], entry(viewer, from + i + 1, data.get(from + i)));
-        }
-        pagination(inv, viewer, page, pages);
     }
 
     private @NotNull ItemStack header(@NotNull Player viewer, int mode, @Nullable List<VoteSnapshot> data) {

@@ -53,7 +53,7 @@ public final class VoteShopView extends VoteBaseView {
     private final Map<UUID, Integer> pageIndex = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> cachedBalance = new ConcurrentHashMap<>();
 
-    private @Nullable VoteRewardsView rewardsView;
+    private @Nullable VoteOverviewView overviewView;
 
     public VoteShopView(@NotNull JavaPlugin plugin, @NotNull VoteShopService shopService) {
         this.plugin = plugin;
@@ -61,14 +61,20 @@ public final class VoteShopView extends VoteBaseView {
         this.shopService = shopService;
     }
 
-    /** Wires the back button to the rewards view. */
-    public void setRewardsView(@NotNull VoteRewardsView view) {
-        this.rewardsView = view;
+    /** Wires the back button to the vote menu. */
+    public void setOverviewView(@NotNull VoteOverviewView view) {
+        this.overviewView = view;
     }
 
     @Override protected @NotNull String title() { return KEY + "title"; }
     @Override protected int rows() { return 6; }
     @Override protected @NotNull InventoryHolder holder() { return holder; }
+
+    @Override
+    protected void forget(@NotNull UUID viewer) {
+        pageIndex.remove(viewer);
+        cachedBalance.remove(viewer);
+    }
 
     @Override
     public void open(@NotNull Player viewer) {
@@ -78,7 +84,7 @@ public final class VoteShopView extends VoteBaseView {
 
     @Override
     protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
-        navBar(inv, viewer, rewardsView == null ? null : KEY + "back");
+        navBar(inv, viewer, overviewView == null ? null : KEY + "back-to-menu");
         Integer balance = cachedBalance.get(viewer.getUniqueId());
         List<VoteShopItem> items = shopService.items();
         inv.setItem(SLOT_HEADER, header(viewer, balance, items));
@@ -93,22 +99,16 @@ public final class VoteShopView extends VoteBaseView {
             inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.PAPER, KEY + "none-in-filter"));
             return;
         }
-        int pages = pageCount(shown.size());
-        int page = clampPage(pageIndex.getOrDefault(viewer.getUniqueId(), 0), pages);
+        int page = renderPage(inv, viewer, shown, pageIndex.getOrDefault(viewer.getUniqueId(), 0),
+                (index, item) -> itemCard(viewer, item, balance));
         pageIndex.put(viewer.getUniqueId(), page);
-        int[] slots = bodySlots();
-        int from = page * pageSize();
-        for (int i = 0; i < slots.length && from + i < shown.size(); i++) {
-            inv.setItem(slots[i], itemCard(viewer, shown.get(from + i), balance));
-        }
-        pagination(inv, viewer, page, pages);
     }
 
     private static boolean matches(int filter, @NotNull VoteShopItem item, @Nullable Integer balance) {
         boolean crateKey = VoteRewardDescriber.isCrateKey(item.reward());
         boolean physicalItem = item.reward() instanceof ItemReward;
         return switch (FILTERS[filter]) {
-            case "affordable" -> balance != null && balance >= item.cost();
+            case "affordable" -> balance == null || balance >= item.cost();
             case "keys" -> crateKey;
             case "items" -> physicalItem;
             case "other" -> !crateKey && !physicalItem;
@@ -199,8 +199,8 @@ public final class VoteShopView extends VoteBaseView {
             return;
         }
         UUID uuid = viewer.getUniqueId();
-        if (TAG_BACK.equals(tag) && rewardsView != null) {
-            rewardsView.open(viewer);
+        if (TAG_BACK.equals(tag) && overviewView != null) {
+            overviewView.open(viewer);
         } else if (FilterHopperButton.TAG.equals(tag)) {
             categoryFilter.cycle(uuid, !type.isRightClick());
             pageIndex.remove(uuid);

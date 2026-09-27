@@ -83,6 +83,11 @@ public abstract class VotePrizeCatalogView extends VoteBaseView {
     }
 
     @Override
+    protected void forget(@NotNull UUID viewer) {
+        pageByViewer.remove(viewer);
+    }
+
+    @Override
     protected void render(@NotNull Inventory inv, @NotNull Player viewer) {
         List<Prize> all = new ArrayList<>(prizes());
         all.sort(Comparator.comparingDouble(Prize::percent).reversed());
@@ -99,19 +104,13 @@ public abstract class VotePrizeCatalogView extends VoteBaseView {
             inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.PAPER, KEY + "none-in-filter"));
             return;
         }
-        renderPage(inv, viewer, shown);
+        renderPrizes(inv, viewer, shown);
     }
 
-    private void renderPage(@NotNull Inventory inv, @NotNull Player viewer, @NotNull List<Prize> shown) {
-        int pages = pageCount(shown.size());
-        int page = clampPage(pageByViewer.getOrDefault(viewer.getUniqueId(), 0), pages);
+    private void renderPrizes(@NotNull Inventory inv, @NotNull Player viewer, @NotNull List<Prize> shown) {
+        int page = renderPage(inv, viewer, shown, pageByViewer.getOrDefault(viewer.getUniqueId(), 0),
+                (index, prize) -> prizeCard(viewer, prize));
         pageByViewer.put(viewer.getUniqueId(), page);
-        int[] slots = bodySlots();
-        int from = page * pageSize();
-        for (int i = 0; i < slots.length && from + i < shown.size(); i++) {
-            inv.setItem(slots[i], prizeCard(viewer, shown.get(from + i)));
-        }
-        pagination(inv, viewer, page, pages);
     }
 
     private static boolean matches(int filter, @NotNull Prize prize) {

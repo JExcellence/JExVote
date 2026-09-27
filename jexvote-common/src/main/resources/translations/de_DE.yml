@@ -3,7 +3,10 @@
 # Farbsprache (wie im Rest der Suite):
 #   Namen #F1F5F9 | Abschnittstitel #C4B5FD | gedämpfter Text #94A3B8 | Akzent #A78BFA
 #   OK #4ADE80 | Fehler #F87171 | Warnung #FBBF24 | Titel <gradient:#5EEAD4:#A78BFA>
-# Status-Marker: [OK] erledigt, [+] bereit, [!] blockiert oder zu wenig, [X] gesperrt oder fehlgeschlagen.
+# Status-Marker im Chat: [OK] erledigt, [!] blockiert oder zu wenig, [X] fehlgeschlagen oder aus.
+# Menü-Lore nutzt keine Status-Marker: ein gefüllter Punkt zeigt einen aktiven
+# Zustand, ein leerer einen offenen, und jede Karte hat höchstens eine
+# Aktionszeile mit Pfeil.
 # Optional pro Karte: eine Liste unter <Kartenschlüssel>.lore_extra (z. B.
 # vote_overview.header.lore_extra) wird als zusätzlicher Block angezeigt.
 
@@ -15,9 +18,10 @@ _defaults:
 
 # ── Chat-Nachrichten ─────────────────────────────────────────────────────────
 vote:
-  broadcast: '<#A78BFA>[+]</#A78BFA> <#F1F5F9>{player} hat auf {service} gevotet.</#F1F5F9> <#94A3B8>Vote auch mit /vote</#94A3B8>'
+  broadcast: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{player} hat auf {service} gevotet.</#F1F5F9> <#94A3B8>Vote auch mit /vote</#94A3B8>'
   received: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Danke fürs Voten auf {service}. Deine Vote-Serie steht jetzt bei</#F1F5F9> <#A78BFA>{streak}</#A78BFA><#F1F5F9>.</#F1F5F9>'
-  guaranteed_reward: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Für diesen Vote hast du außerdem einen</#F1F5F9> <#A78BFA>Vote-Crate-Key</#A78BFA> <#F1F5F9>bekommen.</#F1F5F9>'
+  guaranteed-rewards: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Jeder Vote bringt außerdem:</#F1F5F9> {rewards}'
+  list-separator: '<#94A3B8>, </#94A3B8>'
   offline-summary: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Deine</#F1F5F9> <#A78BFA>{count}</#A78BFA> <#F1F5F9>Votes, während du offline warst, wurden ausgezahlt:</#F1F5F9><newline>{rewards}'
   offline-summary-empty: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Willkommen zurück. Deine</#F1F5F9> <#A78BFA>{count}</#A78BFA> <#F1F5F9>Offline-Votes wurden gezählt.</#F1F5F9>'
   offline-summary-entry: '<#A78BFA>+</#A78BFA> {reward}'
@@ -28,8 +32,8 @@ vote:
     players_only: '<#F87171>[X]</#F87171> <#F1F5F9>Nur Spieler können den Vote-Shop öffnen.</#F1F5F9>'
     unavailable: '<#F87171>[X]</#F87171> <#F1F5F9>Der Vote-Shop ist auf diesem Server nicht verfügbar.</#F1F5F9>'
   lucky:
-    hit: '<#A78BFA>[+]</#A78BFA> <#F1F5F9>Glücks-Vote! Du hast eine Bonus-Belohnung gewonnen.</#F1F5F9> <#94A3B8>{chance}</#94A3B8>'
-    jackpot: '<#A78BFA>[+]</#A78BFA> <#F1F5F9>Glücks-Vote! Du hast</#F1F5F9> {reward} <#F1F5F9>gewonnen.</#F1F5F9>'
+    hit: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Glücks-Vote! Du hast eine Bonus-Belohnung gewonnen.</#F1F5F9> <#94A3B8>{chance}</#94A3B8>'
+    jackpot: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Glücks-Vote! Du hast</#F1F5F9> {reward} <#F1F5F9>gewonnen.</#F1F5F9>'
   freeze:
     granted: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Du hast</#F1F5F9> <#A78BFA>{amount}</#A78BFA> <#F1F5F9>kostenlosen Streak-Freeze bekommen. Er rettet deine Serie einmal, wenn du einen Tag verpasst. Weitere kaufst du mit</#F1F5F9> <#A78BFA>/vote freeze</#A78BFA><#F1F5F9>.</#F1F5F9>'
     saved: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Ein Streak-Freeze hat deine Serie von</#F1F5F9> <#A78BFA>{streak}</#A78BFA> <#F1F5F9>gerettet. Verbraucht:</#F1F5F9> <#A78BFA>{consumed}</#A78BFA><#F1F5F9>, übrig:</#F1F5F9> <#A78BFA>{remaining}</#A78BFA><#F1F5F9>.</#F1F5F9>'
@@ -39,7 +43,6 @@ vote:
     not_enough: '<#F87171>[X]</#F87171> <#F1F5F9>Ein Streak-Freeze kostet</#F1F5F9> <#A78BFA>{cost} Punkte</#A78BFA><#F1F5F9>. Vote, um mehr zu verdienen.</#F1F5F9>'
     no_profile: '<#F87171>[X]</#F87171> <#F1F5F9>Vote einmal, bevor du einen Streak-Freeze kaufst.</#F1F5F9>'
     error: '<#F87171>[X]</#F87171> <#F1F5F9>Der Kauf hat nicht geklappt. Versuche es erneut.</#F1F5F9>'
-  daily-fly: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Du hast</#F1F5F9> <#A78BFA>15 Min.</#A78BFA> <#F1F5F9>Flugzeit fürs heutige Voten bekommen.</#F1F5F9>'
   gift:
     usage: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Nutze</#F1F5F9> <#A78BFA>/vote gift <Spieler|random></#A78BFA>'
     sent: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Du hast die Serie von</#F1F5F9> <#A78BFA>{target}</#A78BFA> <#F1F5F9>am Leben gehalten. Sie steht jetzt bei</#F1F5F9> <#A78BFA>{streak}</#A78BFA><#F1F5F9>. Geschenke heute übrig:</#F1F5F9> <#A78BFA>{remaining}</#A78BFA>'
@@ -55,7 +58,7 @@ vote:
     error: '<#F87171>[X]</#F87171> <#F1F5F9>Das Geschenk hat nicht geklappt. Versuche es erneut.</#F1F5F9>'
   party:
     progress: '<#94A3B8>Vote-Party</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{current} / {target}</#F1F5F9>'
-    reached: '<#A78BFA>[+]</#A78BFA> <#F1F5F9>Vote-Party #{party} ist geschafft. Alle, die gevotet haben, bekommen Party-Belohnungen.</#F1F5F9>'
+    reached: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Vote-Party #{party} ist geschafft. Alle, die gevotet haben, bekommen Party-Belohnungen.</#F1F5F9>'
   no_permission: '<#F87171>[X]</#F87171> <#F1F5F9>Dafür hast du keine Berechtigung.</#F1F5F9>'
   player_not_found: '<#F87171>[X]</#F87171> <#F1F5F9>Kein Spieler namens</#F1F5F9> <#A78BFA>{player}</#A78BFA><#F1F5F9>.</#F1F5F9>'
   stats:
@@ -111,11 +114,14 @@ gui:
       pool: 'Pool'
       odds: 'Chancen'
       every-voter: 'Jeder Voter bekommt'
+      every-vote: 'Jeder Vote bringt'
       bonus: 'Bonus'
       freeze: 'Deine Freezes'
       today: 'Heute'
       you-get: 'Du bekommst'
       price: 'Preis'
+      spend-on: 'Ausgeben für'
+      site-bonus: 'Extra für diese Seite'
     label:
       status: 'Status'
       votes-total: 'Votes gesamt'
@@ -150,6 +156,10 @@ gui:
       needs: 'Braucht'
       can-buy: 'Kaufbar'
       you-have: 'Du hast'
+      sites-ready: 'Seiten bereit'
+      weekend-bonus: 'Wochenend-Bonus'
+      vote-party: 'Vote-Party'
+      vote-shop: 'Vote-Shop'
     value:
       plain: '<#F1F5F9>{value}</#F1F5F9>'
       accent: '<#A78BFA>{value}</#A78BFA>'
@@ -213,13 +223,26 @@ gui:
 # ── /vote-Menü ───────────────────────────────────────────────────────────────
 vote_overview:
   title: '<gradient:#5EEAD4:#A78BFA>Vote</gradient>'
-  header:
-    name: '<gradient:#5EEAD4:#A78BFA>{player}</gradient> <dark_gray>|</dark_gray> <#F1F5F9>Vote-Profil</#F1F5F9>'
-    description: 'Vote einmal am Tag auf jeder Seite. Jeder Vote bringt Belohnungen und Vote-Punkte und hält deine Serie am Laufen.'
+  intro:
+    name: '<gradient:#5EEAD4:#A78BFA>Für den Server voten</gradient> <dark_gray>|</dark_gray> {value} <#94A3B8>bereit</#94A3B8>'
+    description: 'Vote einmal am Tag auf jeder Seite unten. Jeder Vote bringt Belohnungen und Vote-Punkte und verlängert deine Serie um einen Tag.'
   rank: '#{value}'
+  rank-none: 'Noch ohne Platz'
   no-sites:
     name: '<#F1F5F9>Keine Vote-Seiten</#F1F5F9>'
     description: 'Der Server hat noch keine Vote-Seiten eingerichtet.'
+  votes:
+    name: '<#F1F5F9>{player}</#F1F5F9> <dark_gray>|</dark_gray> <#A78BFA>{value}</#A78BFA> <#94A3B8>Votes</#94A3B8>'
+    description: 'Deine Votes auf diesem Server.'
+  points:
+    name: '<#F1F5F9>Vote-Punkte</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+    description: 'Jeder Vote bringt dir Vote-Punkte aufs Guthaben.'
+    shop-items: '{value} Angebote'
+    action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Klicke, um den Vote-Shop zu öffnen</#F1F5F9>'
+  streak:
+    name: '<#F1F5F9>Vote-Serie</#F1F5F9> <dark_gray>|</dark_gray> <#A78BFA>{value}</#A78BFA>'
+    description: 'Tage in Folge, an denen du gevotet hast. Meilensteine bringen Extra-Belohnungen.'
+    action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Klicke für die Serien-Belohnungen</#F1F5F9>'
   site:
     name-checking: '<#F1F5F9>{site}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>Wird geprüft</#94A3B8>'
     name-ready: '<#F1F5F9>{site}</#F1F5F9> <dark_gray>|</dark_gray> <#4ADE80>Bereit</#4ADE80>'
@@ -227,6 +250,7 @@ vote_overview:
     description: 'Vote auf {site} für den Server. Die Belohnungen kommen wenige Sekunden nach dem Vote.'
     status-ready: 'Jetzt bereit'
     action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Klicke für den Vote-Link</#F1F5F9>'
+    no-link: '<#94A3B8>Für diese Seite ist noch kein Vote-Link eingetragen</#94A3B8>'
   nav:
     streaks:
       name: '<#F1F5F9>Serien-Belohnungen</#F1F5F9>'
@@ -236,10 +260,13 @@ vote_overview:
       description: 'Wer am meisten gevotet hat, insgesamt und diesen Monat.'
     rewards:
       name: '<#F1F5F9>Vote-Belohnungen</#F1F5F9>'
-      description: 'Glücks-Vote-Preise, Wochenend-Bonus, Vote-Party, Streak-Freezes und Geschenke.'
+      description: 'Was jeder Vote bringt und wofür du Vote-Punkte nutzen kannst.'
     shop:
       name: '<#F1F5F9>Vote-Shop</#F1F5F9>'
-      description: 'Gib deine Vote-Punkte für Crate-Keys, Items und Perks aus.'
+      description: 'Gib deine Vote-Punkte für die Angebote des Servers aus.'
+    party:
+      name: '<#F1F5F9>Vote-Party</#F1F5F9>'
+      description: 'Das gemeinsame Server-Ziel. Ist es erreicht, bekommen alle, die gevotet haben, Party-Belohnungen.'
 
 # ── Top-Voter ────────────────────────────────────────────────────────────────
 vote_leaderboard:
@@ -293,11 +320,11 @@ vote_streak:
     name-reached: '<#F1F5F9>Tag {day}</#F1F5F9> <dark_gray>|</dark_gray> <#4ADE80>Ausgezahlt</#4ADE80>'
     name-next: '<#F1F5F9>Tag {day}</#F1F5F9> <dark_gray>|</dark_gray> <#FBBF24>Als Nächstes</#FBBF24>'
     name-locked: '<#F1F5F9>Tag {day}</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Gesperrt</#F87171>'
-    state-claimed: '<#4ADE80>[OK]</#4ADE80> <#4ADE80>Abgeholt</#4ADE80>'
-    state-claimable: '<#A78BFA>[+]</#A78BFA> <#F1F5F9>Bereit zum Abholen</#F1F5F9>'
-    state-reached: '<#4ADE80>[OK]</#4ADE80> <#4ADE80>Beim Erreichen ausgezahlt</#4ADE80>'
-    state-next: '<#FBBF24>[!]</#FBBF24> <#94A3B8>Noch {value}</#94A3B8>'
-    state-locked: '<#F87171>[X]</#F87171> <#94A3B8>Gesperrt, noch {value}</#94A3B8>'
+    status-claimed: '<#4ADE80>●</#4ADE80> <#4ADE80>Abgeholt</#4ADE80>'
+    status-claimable: '<#A78BFA>●</#A78BFA> <#F1F5F9>Bereit zum Abholen</#F1F5F9>'
+    status-reached: '<#4ADE80>●</#4ADE80> <#4ADE80>Beim Erreichen ausgezahlt</#4ADE80>'
+    status-next: '<#FBBF24>○</#FBBF24> <#94A3B8>Noch {value}</#94A3B8>'
+    status-locked: '<#94A3B8>○</#94A3B8> <#94A3B8>Gesperrt, noch {value}</#94A3B8>'
     action-claim: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Linksklick zum Abholen, Rechtsklick für Details</#F1F5F9>'
     action-details: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Klicke für Details</#F1F5F9>'
   detail:
@@ -332,45 +359,33 @@ vote_rewards:
   back: 'Zurück zum Vote-Menü.'
   header:
     name: '<gradient:#5EEAD4:#A78BFA>Vote-Belohnungen</gradient> <dark_gray>|</dark_gray> {value}'
-    description: 'Was ein Vote zusätzlich zu den normalen Belohnungen bringt und wofür du Vote-Punkte nutzen kannst.'
+    description: 'Was ein Vote bringt und wofür du Vote-Punkte nutzen kannst.'
+  every-vote:
+    name: '<#F1F5F9>Jeder Vote</#F1F5F9>'
+    description: 'Das bekommst du für jeden Vote auf einer beliebigen Seite.'
+    description-points: 'Jeder Vote bringt Vote-Punkte. Weitere Item-Belohnungen pro Vote hat der Server nicht.'
+    site-note: 'Manche Seiten zahlen extra. Das Vote-Menü zeigt es auf der Karte der Seite.'
   lucky:
     name: '<#F1F5F9>Glücks-Vote</#F1F5F9> <dark_gray>|</dark_gray> <#A78BFA>{value} Preise</#A78BFA>'
-    name-off: '<#F1F5F9>Glücks-Vote</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Aus</#F87171>'
-    description: 'Jeder Vote zieht zusätzlich einen Preis aus einem gewichteten Pool.'
-    description-off: 'Dieser Server hat keine Glücks-Vote-Preise.'
+    description: 'Votes können zusätzlich einen Preis aus einem gewichteten Pool ziehen.'
     action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Klicke, um alle Preise zu sehen</#F1F5F9>'
   multiplier:
     name-on: '<#F1F5F9>Wochenend-Bonus</#F1F5F9> <dark_gray>|</dark_gray> <#4ADE80>Aktiv</#4ADE80>'
     name-idle: '<#F1F5F9>Wochenend-Bonus</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>Heute nicht</#94A3B8>'
-    name-off: '<#F1F5F9>Wochenend-Bonus</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Aus</#F87171>'
-    description: 'An Wochenendtagen bringt jeder Vote mehr Punkte und größere Belohnungen.'
-    description-off: 'Dieser Server hat keinen Wochenend-Bonus.'
-    state-on: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Der Bonus gilt gerade für jeden Vote</#F1F5F9>'
-    state-off: '<#94A3B8>○</#94A3B8> <#94A3B8>Der Bonus startet am nächsten Wochenendtag</#94A3B8>'
-  party:
-    name: '<#F1F5F9>Vote-Party</#F1F5F9> <dark_gray>|</dark_gray> {value}'
-    name-off: '<#F1F5F9>Vote-Party</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Aus</#F87171>'
-    description: 'Erreicht der Server gemeinsam {target} Votes, bekommen alle, die gevotet haben, Party-Belohnungen und Preisziehungen.'
-    description-off: 'Vote-Partys sind auf diesem Server ausgeschaltet.'
-    action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Klicke für die Party-Preise</#F1F5F9>'
+    description-scope: 'An Bonustagen bringt jeder Vote mehr Vote-Punkte, XP und Währung.'
+    status-on: '<#4ADE80>●</#4ADE80> <#F1F5F9>Der Bonus gilt gerade für jeden Vote</#F1F5F9>'
+    status-off: '<#94A3B8>○</#94A3B8> <#94A3B8>Der Bonus startet am nächsten Bonustag</#94A3B8>'
   freeze:
     name: '<#F1F5F9>Streak-Freeze</#F1F5F9> <dark_gray>|</dark_gray> {value}'
-    name-off: '<#F1F5F9>Streak-Freeze</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Aus</#F87171>'
     description: 'Ein Freeze rettet deine Serie einmal, wenn du einen Tag verpasst. Er wird von selbst verbraucht.'
-    description-off: 'Streak-Freezes sind auf diesem Server ausgeschaltet.'
-    state-full: '<#4ADE80>[OK]</#4ADE80> <#94A3B8>Du besitzt schon die Höchstzahl</#94A3B8>'
-    state-short: '<#FBBF24>[!]</#FBBF24> <#94A3B8>Noch {value} Punkte nötig</#94A3B8>'
+    status-full: '<#4ADE80>●</#4ADE80> <#94A3B8>Du besitzt schon die Höchstzahl</#94A3B8>'
+    status-short: '<#FBBF24>○</#FBBF24> <#94A3B8>Noch {value} Punkte nötig</#94A3B8>'
     action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Klicke, um einen zu kaufen</#F1F5F9>'
   gift:
     name: '<#F1F5F9>Vote-Geschenk</#F1F5F9> <dark_gray>|</dark_gray> {value}'
-    name-off: '<#F1F5F9>Vote-Geschenk</#F1F5F9> <dark_gray>|</dark_gray> <#F87171>Aus</#F87171>'
     description: 'Schenke einem Freund einen Serientag. So bleibt seine Serie heute erhalten.'
-    description-off: 'Vote-Geschenke sind auf diesem Server ausgeschaltet.'
     needs-vote: 'Dein Vote heute'
     action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Tippe /vote gift <Spieler|random></#F1F5F9>'
-  shop:
-    name: '<#F1F5F9>Vote-Shop</#F1F5F9>'
-    description: 'Gib deine Vote-Punkte für Crate-Keys, Items und Perks aus.'
   text:
     header: '<gradient:#5EEAD4:#A78BFA>Vote-Belohnungen</gradient>'
     lucky-entry: '<#A78BFA>+</#A78BFA> {reward} <dark_gray>|</dark_gray> <#F1F5F9>{chance}</#F1F5F9> <#94A3B8>{won}x gewonnen</#94A3B8>'
@@ -389,21 +404,21 @@ vote_lucky:
   prize-description: 'Einer der Preise, die ein Vote ziehen kann.'
   empty:
     name: '<#F1F5F9>Keine Preise</#F1F5F9>'
-    description: 'Dieser Server hat keine Glücks-Vote-Preise. Betreiber tragen sie in rewards.yml ein.'
+    description: 'Dieser Server hat keine Glücks-Vote-Preise.'
 
 # ── Vote-Party-Preise ────────────────────────────────────────────────────────
 vote_party:
   title: '<gradient:#5EEAD4:#A78BFA>Vote-Party</gradient>'
-  back: 'Zurück zu den Vote-Belohnungen.'
+  back-to-menu: 'Zurück zum Vote-Menü.'
   header:
     name: '<gradient:#5EEAD4:#A78BFA>Vote-Party</gradient> <dark_gray>|</dark_gray> {value}'
     name-off: '<gradient:#5EEAD4:#A78BFA>Vote-Party</gradient> <dark_gray>|</dark_gray> <#F87171>Aus</#F87171>'
-    description: 'Ist das Party-Ziel erreicht, zieht jeder Voter Preise aus diesem Pool.'
+    description: 'Jeder Vote auf dem Server zählt fürs Ziel. Ist es erreicht, bekommen alle, die gevotet haben, die Belohnungen unten und ziehen Preise aus diesem Pool.'
     description-off: 'Vote-Partys sind auf diesem Server ausgeschaltet.'
   prize-description: 'Einer der Preise, die eine Vote-Party ziehen kann.'
-  empty:
-    name: '<#F1F5F9>Kein Preispool</#F1F5F9>'
-    description: 'Dieser Server hat keinen Party-Preispool. Betreiber tragen ihn in rewards.yml ein.'
+  no-pool:
+    name: '<#F1F5F9>Keine Preisziehungen</#F1F5F9>'
+    description: 'Diese Party hat keine zusätzlichen Preisziehungen. Jeder Voter bekommt die Belohnungen auf der Kopfkarte.'
   titles:
     spin: '<gradient:#5EEAD4:#A78BFA>Vote-Party</gradient>'
     reveal: '<gradient:#5EEAD4:#A78BFA>Party-Belohnungen</gradient>'
@@ -415,7 +430,7 @@ vote_party:
 # ── Vote-Shop ────────────────────────────────────────────────────────────────
 vote_shop:
   title: '<gradient:#5EEAD4:#A78BFA>Vote-Shop</gradient>'
-  back: 'Zurück zu den Vote-Belohnungen.'
+  back-to-menu: 'Zurück zum Vote-Menü.'
   header:
     name: '<gradient:#5EEAD4:#A78BFA>Vote-Shop</gradient> <dark_gray>|</dark_gray> {value}'
     description: 'Jeder Vote bringt Vote-Punkte. Gib sie hier aus; der Preis wird beim Kauf abgezogen.'
@@ -428,7 +443,7 @@ vote_shop:
   tile:
     name: '<#F1F5F9>{item}</#F1F5F9> <dark_gray>|</dark_gray> {value}'
     action: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Klicke zum Kaufen</#F1F5F9>'
-    short: '<#FBBF24>[!]</#FBBF24> <#94A3B8>Noch {missing} Punkte nötig</#94A3B8>'
+    short: '<#FBBF24>○</#FBBF24> <#94A3B8>Noch {missing} Punkte nötig</#94A3B8>'
   empty:
     name: '<#F1F5F9>Nichts im Angebot</#F1F5F9>'
     description: 'Der Shop hat gerade keine Items. Schau später wieder vorbei.'
@@ -447,10 +462,11 @@ vote_shop:
   unavailable: '<#F87171>[X]</#F87171> <#F1F5F9>Der Vote-Shop ist gerade nicht verfügbar.</#F1F5F9>'
 
 # ── Belohnungs-Beschriftungen ────────────────────────────────────────────────
-# Eine Zeile pro Belohnung für Lore, Chat und Bedrock-Formulare. Coins und
-# Crystals zeigen im GUI das MythBlock-Währungssymbol; {unit} gilt dort, wo
-# keine Symbole möglich sind. {material} ist ein Minecraft-Itemschlüssel in der
-# Sprache des jeweiligen Clients.
+# Eine Zeile pro Belohnung für Lore, Chat und Bedrock-Formulare. {unit} ist der
+# Währungsname: display.currency-names in der config.yml, sonst
+# reward_describe.unit.<id>, sonst die ID. Mit JExEconomy können Coins und
+# Crystals stattdessen als Symbol erscheinen (display.currency-style). {material}
+# ist ein Minecraft-Itemschlüssel in der Sprache des jeweiligen Clients.
 reward_describe:
   item: '<#F1F5F9>{amount}x <lang:{material}></#F1F5F9>'
   currency: '<#F1F5F9>{amount} {unit}</#F1F5F9>'
@@ -458,6 +474,7 @@ reward_describe:
     coins: 'Coins'
     crystals: 'Crystals'
     credits: 'Crystals'
+    money: 'Geld'
   experience-points: '<#F1F5F9>{amount} XP</#F1F5F9>'
   experience-levels: '<#F1F5F9>{amount} Level</#F1F5F9>'
   crate-key: '<#F1F5F9>{amount}x {crate}-Crate-Key</#F1F5F9>'
@@ -482,9 +499,9 @@ vote_help:
     sites: 'Listet alle Vote-Seiten mit Link'
     stats: 'Zeigt Vote-Statistiken; für dich selbst öffnet sich das Menü'
     top: 'Zeigt die Top-Voter'
-    rewards: 'Glücks-Vote, Wochenend-Bonus, Vote-Party, Freezes und Geschenke'
+    rewards-menu: 'Was ein Vote bringt und wofür Vote-Punkte gut sind'
     shop: 'Vote-Punkte für Belohnungen ausgeben'
-    freeze: 'Einen Streak-Freeze kaufen (der erste ist gratis)'
+    freeze: 'Einen Streak-Freeze mit Vote-Punkten kaufen'
     gift: 'Einem Freund einen Serientag schenken'
     help: 'Zeigt diese Liste'
 
@@ -499,15 +516,69 @@ vote_admin:
   hover-action-suggest: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Klicke zum Einfügen</#F1F5F9>'
   row: '<#94A3B8>{label}</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{value}</#F1F5F9>'
   label:
-    edition: 'Edition'
-    version: 'Version'
-    sites: 'Vote-Seiten'
     port: 'Votifier-Port'
     token: 'v2-Token'
-  info:
-    title: '<gradient:#5EEAD4:#A78BFA>JExVote</gradient> <dark_gray>|</dark_gray> <#F1F5F9>Server-Info</#F1F5F9>'
-    edition-free: 'Free'
-    edition-premium: 'Premium'
+  status:
+    title: '<gradient:#5EEAD4:#A78BFA>JExVote</gradient> <dark_gray>|</dark_gray> <#F1F5F9>Server-Status</#F1F5F9>'
+    heading: '<#C4B5FD>{name}</#C4B5FD>'
+    row: '<#94A3B8>{label}</#94A3B8> <dark_gray>|</dark_gray> {value}'
+    section:
+      setup: 'Einrichtung'
+      features: 'Funktionen'
+      integrations: 'Anbindungen'
+      next: 'Nächste Schritte'
+    label:
+      edition: 'Edition'
+      version: 'Version'
+      votifier: 'Votifier'
+      sites: 'Vote-Seiten'
+      links: 'Vote-Links'
+      last-vote: 'Letzter empfangener Vote'
+      streaks: 'Vote-Serien'
+      leaderboard: 'Top-Voter'
+      shop: 'Vote-Shop'
+      party: 'Vote-Party'
+      weekend: 'Wochenend-Bonus'
+      freeze: 'Streak-Freeze'
+      gifts: 'Vote-Geschenke'
+      reconciliation: 'Offline-Vote-Prüfung'
+      proxy: 'Netzwerk-Sync'
+      rest-api: 'REST-API'
+      economy: 'Wirtschaft'
+      placeholders: 'PlaceholderAPI'
+      bedrock: 'Bedrock-Formulare'
+    value:
+      edition-free: 'Free, lädt bis zu {max} Vote-Seiten'
+      edition-premium: 'Premium'
+      votifier-on: 'Lauscht auf Port {port}'
+      votifier-off: 'Läuft nicht, siehe Konsolen-Log'
+      sites-loaded: '{count} geladen'
+      sites-limited: '{loaded} von {configured} geladen, die Free-Edition lädt {max}'
+      sites-none: 'Keine, trage sie in sites.yml ein'
+      links-missing: '{count} Seite(n) ohne vote-url'
+      last-vote-never: 'Noch keiner, teste mit /jexvote fakevote'
+      streaks-manual: 'An, Meilensteine werden in /vote abgeholt'
+      streaks-auto: 'An, Meilensteine zahlen beim Erreichen aus'
+      shop-on: 'An, {count} Angebote'
+      party-on: 'An, {current} / {target} Votes'
+      party-restart: 'In der config.yml an, Server neu starten, um sie zu starten'
+      weekend-on: 'An, {factor} am {days}'
+      rest-on: 'An, Port {port}'
+      rest-failed: 'Eingeschaltet, läuft aber nicht, siehe Konsolen-Log'
+      economy-jexeconomy: 'JExEconomy'
+      economy-vault: 'Vault'
+      economy-none: 'Keine gefunden, Währungsbelohnungen zahlen nichts aus'
+      placeholders-on: 'Verbunden, %jexvote_...%-Platzhalter funktionieren'
+      placeholders-off: 'Nicht installiert'
+      bedrock-on: 'Floodgate gefunden, Bedrock-Spieler bekommen Formulare'
+      bedrock-off: 'Floodgate nicht installiert'
+      on: 'An'
+      off: 'In der config.yml aus'
+      premium: 'Nur in der Premium-Edition'
+    tip:
+      key: "<#A78BFA>▸</#A78BFA> <click:run_command:'/jexvote key'><hover:show_text:'<#94A3B8>Klicke zum Ausführen</#94A3B8>'><#F1F5F9>/jexvote key</#F1F5F9></hover></click> <dark_gray>|</dark_gray> <#94A3B8>Port, Token und öffentlicher Schlüssel für die Vote-Seiten</#94A3B8>"
+      debug: "<#A78BFA>▸</#A78BFA> <click:run_command:'/jexvote debug-services'><hover:show_text:'<#94A3B8>Klicke zum Ausführen</#94A3B8>'><#F1F5F9>/jexvote debug-services</#F1F5F9></hover></click> <dark_gray>|</dark_gray> <#94A3B8>prüft, ob die Dienstnamen zu sites.yml passen</#94A3B8>"
+      test: "<#A78BFA>▸</#A78BFA> <click:suggest_command:'/jexvote fakevote '><hover:show_text:'<#94A3B8>Klicke zum Einfügen</#94A3B8>'><#F1F5F9>/jexvote fakevote <Spieler></#F1F5F9></hover></click> <dark_gray>|</dark_gray> <#94A3B8>sendet einen Test-Vote</#94A3B8>"
   key:
     title: '<gradient:#5EEAD4:#A78BFA>Votifier-Einrichtung</gradient> <dark_gray>|</dark_gray> <#F1F5F9>Für Vote-Seiten</#F1F5F9>'
     missing: '<#F87171>[X]</#F87171> <#F1F5F9>Der öffentliche Schlüssel existiert noch nicht. Starte den Server einmal, damit der Votifier-Server ihn anlegt.</#F1F5F9>'
@@ -524,12 +595,13 @@ vote_admin:
     orphan: "<#A78BFA>▸</#A78BFA> <#F1F5F9>'{service}'</#F1F5F9> <#94A3B8>letzter Vote {ago}</#94A3B8>"
     all-matched: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Jeder empfangene Vote passt zu einer eingerichteten Seite.</#F1F5F9>'
   desc:
-    info: 'Zeigt Edition, Version, Seitenanzahl und Votifier-Port'
+    overview: 'Server-Status: Votifier, Seiten, Funktionen, Anbindungen'
     reload: 'Lädt config.yml, rewards.yml und sites.yml neu'
     reset: 'Setzt die Vote-Statistik eines Spielers zurück'
     resetmonthly: 'Setzt die Monats-Votes aller Spieler zurück'
     fakevote: 'Sendet einen Test-Vote'
     key: 'Zeigt Votifier-Schlüssel, Port und Token'
+    debug-services: 'Prüft, welche Dienstnamen die Vote-Seiten senden'
     setstreak: 'Setzt die Serie eines Spielers'
     help: 'Zeigt diese Liste'
 
@@ -567,12 +639,16 @@ command:
     description: 'Lädt die JExVote-Konfiguration neu'
   votereset:
     description: 'Setzt die Vote-Statistik eines Spielers zurück'
+  votesetstreak:
+    description: 'Setzt die Serie eines Spielers'
 
 # ── Bedrock-Formulare (reiner Text, ohne Farben oder Symbole) ────────────────
 bedrock:
   row: '{label}: {value}'
   overview:
     title: 'Vote'
+    intro: 'Vote einmal am Tag auf jeder Seite. Jeder Vote bringt Belohnungen und Vote-Punkte und verlängert deine Serie um einen Tag.'
+    no-sites: 'Der Server hat noch keine Vote-Seiten eingerichtet.'
     sites-ready: '{ready} von {total} Vote-Seiten sind bereit.'
     site-ready: '{site} - bereit'
     site-cooldown: '{site} - wieder in {time}'
@@ -582,10 +658,14 @@ bedrock:
     streaks: 'Serien-Belohnungen'
     rewards: 'Vote-Belohnungen'
     shop: 'Vote-Shop'
+    party: 'Vote-Party'
     back: 'Zurück'
   leaderboard:
     title: 'Top-Voter'
-    header: 'Die Spieler mit den meisten Votes insgesamt.'
+    header-all-time: 'Die Spieler mit den meisten Votes insgesamt.'
+    header-monthly: 'Die Spieler mit den meisten Votes diesen Monat.'
+    show-all-time: 'Gesamt anzeigen'
+    show-monthly: 'Diesen Monat anzeigen'
     entry: '#{rank} {player} - {votes} Votes, Serie {streak}'
     empty: 'Noch hat niemand gevotet.'
   streaks:
@@ -593,15 +673,15 @@ bedrock:
     header: 'Vote jeden Tag, damit deine Serie wächst. Jeder Meilenstein zahlt einmal aus.'
     milestones: 'Meilensteine'
     claim-button: 'Tag {day} abholen'
-    line-claimed: 'Tag {day}: [OK] abgeholt'
-    line-claimable: 'Tag {day}: [+] bereit zum Abholen'
-    line-reached: 'Tag {day}: [OK] ausgezahlt'
-    line-locked: 'Tag {day}: [X] gesperrt'
+    status-claimed: 'Tag {day} - abgeholt'
+    status-claimable: 'Tag {day} - bereit zum Abholen'
+    status-reached: 'Tag {day} - ausgezahlt'
+    status-locked: 'Tag {day} - gesperrt'
   rewards:
     title: 'Vote-Belohnungen'
-    header: 'Was ein Vote zusätzlich bringt und was Vote-Punkte kaufen.'
+    header: 'Was ein Vote bringt und was Vote-Punkte kaufen.'
+    every-vote: 'Jeder Vote bringt'
     lucky-catalog: 'Glücks-Vote-Preise'
-    party-catalog: 'Vote-Party-Preise'
     buy-freeze-cost: 'Streak-Freeze kaufen ({cost} Punkte)'
   lucky:
     title: 'Glücks-Vote'
@@ -618,8 +698,8 @@ bedrock:
   shop:
     title: 'Vote-Shop'
     header: 'Gib deine Vote-Punkte aus.'
-    entry-affordable: '[+] {item} - {cost} Punkte: {reward}'
-    entry-short: '[!] {item} - {cost} Punkte: {reward}'
+    line-affordable: '{item} - {cost} Punkte: {reward}'
+    line-short: '{item} - {cost} Punkte (zu wenig): {reward}'
     button: '{item} ({cost} Punkte)'
     confirm-title: 'Kauf bestätigen'
     confirm-body: '{item} für {cost} Vote-Punkte kaufen?'
@@ -629,5 +709,3 @@ bedrock:
     not-enough: '<#F87171>[X]</#F87171> <#F1F5F9>Dir fehlen Vote-Punkte für {item}.</#F1F5F9>'
     error: '<#F87171>[X]</#F87171> <#F1F5F9>Der Kauf hat nicht geklappt. Versuche es erneut.</#F1F5F9>'
     grant-failed: '<#F87171>[X]</#F87171> <#F1F5F9>Die Belohnung konnte nicht zugestellt werden. Deine Punkte wurden erstattet.</#F1F5F9>'
-  votesetstreak:
-    description: 'Setzt die Serie eines Spielers'

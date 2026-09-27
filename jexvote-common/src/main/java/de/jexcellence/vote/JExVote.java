@@ -10,10 +10,14 @@ import de.jexcellence.jexplatform.reward.RewardRegistry;
 import de.jexcellence.jexplatform.reward.RewardType;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.JExVoteAPI;
+import de.jexcellence.vote.command.AdminStatus;
 import de.jexcellence.vote.command.R18nCommandMessages;
 import de.jexcellence.vote.command.VoteAdminHandler;
 import de.jexcellence.vote.command.VoteCommandHandler;
+import de.jexcellence.vote.config.CurrencyDisplay;
 import de.jexcellence.vote.config.VoteConfig;
+import de.jexcellence.vote.config.VoteEffectsConfig;
+import de.jexcellence.vote.config.VoteFeatures;
 import de.jexcellence.vote.config.VotePartyConfig;
 import de.jexcellence.vote.config.VoteRewardConfig;
 import de.jexcellence.vote.rest.VoteRestApiServer;
@@ -52,7 +56,9 @@ import de.jexcellence.vote.service.ProxyVoteSyncService;
 import de.jexcellence.vote.service.OutboxProxyEventBus;
 import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.model.VoteSite;
+import de.jexcellence.vote.view.VoteBaseView;
 import de.jexcellence.vote.view.VoteLeaderboardView;
+import de.jexcellence.vote.view.VoteRewardDescriber;
 import de.jexcellence.vote.service.VoteShopService;
 import de.jexcellence.vote.view.VoteOverviewView;
 import de.jexcellence.vote.view.VoteLuckyView;
@@ -71,8 +77,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.security.KeyPair;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -96,6 +100,7 @@ public abstract class JExVote {
     private VoteConfig voteConfig;
     private VoteRewardConfig rewardConfig;
     private VotePartyConfig partyConfig;
+    private VoteEffectsConfig effectsConfig;
 
     private VotePlayerRepository playerRepository;
     private VoteRecordRepository recordRepository;
@@ -126,6 +131,9 @@ public abstract class JExVote {
     private VoteLeaderboardView leaderboardView;
     private VoteRewardsView rewardsView;
     private VoteShopView shopView;
+    private VoteShopService shopService;
+    private VoteFeatures features;
+    private boolean bedrockFormsHooked;
 
     /**
      * Creates a new JExVote instance.
@@ -170,6 +178,7 @@ public abstract class JExVote {
                     .build();
 
             platform.initialize();
+            features = new VoteFeatures(edition(), voteConfig);
             initializeDatabase();
             initializeRepositories();
             initializeServices();
@@ -215,7 +224,7 @@ public abstract class JExVote {
     }
 
     /**
-     * Starts the embedded REST API (consumed by the Mythblock web backend)
+     * Starts the embedded REST API (for a server website)
      * if enabled in config. No-op when {@code api.enabled} is false.
      */
     private void initializeRestApiServer() {
@@ -296,6 +305,7 @@ public abstract class JExVote {
 
         rewardConfig = new VoteRewardConfig(plugin, rewardRegistry);
         rewardConfig.load();
+        applyCurrencyDisplay();
 
         partyConfig = new VotePartyConfig(plugin);
         partyConfig.load();
@@ -329,20 +339,12 @@ public abstract class JExVote {
         }
 
         VoteBroadcastService broadcastService = new VoteBroadcastService(voteConfig);
+        effectsConfig = new VoteEffectsConfig(plugin);
+        effectsConfig.load();
+        broadcastService.setEffects(effectsConfig);
         leaderboardService = new VoteLeaderboardService(playerRepository);
 
-        // Enforce edition site limit
-        Map<String, VoteSite> sites = voteConfig.getVoteSites();
-        int maxSites = edition().maxVoteSites();
-        if (maxSites > 0 && sites.size() > maxSites) {
-            int configuredCount = sites.size();
-            logger.log(Level.WARNING, () -> String.format("Free edition supports up to %d vote sites, but %d are configured. Only the first %d will be loaded.", maxSites, configuredCount, maxSites));
-            var limited = new LinkedHashMap<String, VoteSite>();
-            sites.entrySet().stream()
-                    .limit(maxSites)
-                    .forEach(entry -> limited.put(entry.getKey(), entry.getValue()));
-            sites = Collections.unmodifiableMap(limited);
-        }
+        Map<String, VoteSite> sites = loadedSites();
 
         votePartyService = createVotePartyService(broadcastService);
 
@@ -357,6 +359,11 @@ public abstract class JExVote {
                 voteConfig.getBedrockSettings(),
                 voteConfig.getDailyFlySettings(),
                 voteConfig.getDailyRewardCommands());
+
+        rewardService.setSiteIdResolver(service -> {
+            VoteSite site = voteService.findSiteByServiceName(service);
+            return site == null ? null : site.id();
+        });
 
         // Reward SPI (V2): registry holds third-party providers (inert on Free), the
         // executor turns their platform-free descriptors into real grants. Wired into
@@ -391,6 +398,65 @@ public abstract class JExVote {
         voteService.purgeOldRecords();
         // One-time, idempotent free Streak Freeze back-fill for existing players
         voteService.initializeFreezesForExistingPlayers();
+    }
+
+    /**
+     * The configured sites with the edition limit applied. Logs a warning naming the limit when sites were
+     * dropped, so the operator knows why a site is missing.
+     */
+    private @NotNull Map<String, VoteSite> loadedSites() {
+        Map<String, VoteSite> configured = voteConfig.getVoteSites();
+        Map<String, VoteSite> loaded = edition().limitSites(configured);
+        if (loaded.size() < configured.size()) {
+            final int max = edition().maxVoteSites();
+            final int configuredCount = configured.size();
+            logger.log(Level.WARNING, () -> String.format(
+                    "The Free edition loads up to %d vote sites, but sites.yml defines %d. Only the first %d are "
+                            + "used; JExVote Premium has no site limit.", max, configuredCount, max));
+        }
+        return loaded;
+    }
+
+    /** Applies {@code display.currency-style}: coin / crystal icons only where JExEconomy provides them. */
+    private void applyCurrencyDisplay() {
+        boolean jexEconomy = Bukkit.getPluginManager().getPlugin("JExEconomy") != null;
+        VoteRewardDescriber.configure(CurrencyDisplay.resolve(
+                voteConfig.getCurrencyStyle(), jexEconomy, voteConfig.getCurrencyNames()));
+    }
+
+    /**
+     * Reloads config.yml, rewards.yml and sites.yml and applies them to every running service: sites (with the
+     * edition limit), rewards, streak settings, the weekend bonus, freezes, the vote party and the currency
+     * display. The Votifier port, the database and starting or stopping the vote party need a restart.
+     */
+    public void reload() {
+        voteConfig.load();
+        rewardConfig.load();
+        partyConfig.load();
+        effectsConfig.load();
+        applyCurrencyDisplay();
+        rewardService.setStreaksEnabled(voteConfig.isFeatureStreaks());
+        voteService.reload(
+                loadedSites(),
+                voteConfig.getStreakTimeoutHours(),
+                voteConfig.getStreakCommands(),
+                voteConfig.getRecordRetentionDays(),
+                voteConfig.getStreakClaimMode() == VoteConfig.StreakClaimMode.MANUAL,
+                new MultiplierService.Settings(
+                        voteConfig.isWeekendMultiplierEnabled(),
+                        voteConfig.getWeekendMultiplierFactor(),
+                        voteConfig.getWeekendMultiplierDays(),
+                        voteConfig.getWeekendMultiplierTimezone()),
+                voteConfig.getFreezeSettings(),
+                rewardConfig.getDefaultRewards(),
+                rewardConfig.getGuaranteedRewards(),
+                rewardConfig.getStreakRewards(),
+                rewardConfig.getSiteRewards(),
+                voteConfig.getCommandsOnVote());
+        if (votePartyService != null) {
+            votePartyService.reload(rewardConfig.getVotePartyRewards(), rewardConfig.getVotePartyPool(),
+                    voteConfig.getVotePartyTarget());
+        }
     }
 
     private @Nullable VotePartyService createVotePartyService(@NotNull VoteBroadcastService broadcastService) {
@@ -496,68 +562,79 @@ public abstract class JExVote {
         saveDefaultResource("commands/vote.yml");
         saveDefaultResource("commands/jexvote.yml");
 
-        var voteCommandHandler = new VoteCommandHandler(voteService, leaderboardService, voteConfig, overviewView,
+        var voteCommandHandler = new VoteCommandHandler(voteService, leaderboardService, features, overviewView,
                 rewardsView, leaderboardView, streakFreezeService, voteGiftService);
         voteCommandHandler.setShopView(shopView);
 
         var bedrockBridge = new BedrockFormBridge();
         if (bedrockBridge.isAvailable()) {
-            var bedrockForms = new VoteBedrockForms(bedrockBridge, voteService, voteConfig,
+            var bedrockForms = new VoteBedrockForms(bedrockBridge, voteService, features,
                     leaderboardService, rewardService, rewardConfig,
                     streakClaimService, multiplierService, rewardStatsService,
                     streakFreezeService, voteGiftService);
             bedrockForms.setPartyService(votePartyService);
-            bedrockForms.setShopService(new VoteShopService(plugin, playerRepository, rewardService, rewardConfig));
+            bedrockForms.setShopService(shopService);
             voteCommandHandler.setBedrockForms(bedrockForms);
+            bedrockFormsHooked = true;
         }
         factory.registerTree(new File(plugin.getDataFolder(), "commands/vote.yml"),
                 voteCommandHandler.handlerMap(),
                 messages, registry);
         factory.registerTree(new File(plugin.getDataFolder(), "commands/jexvote.yml"),
-                new VoteAdminHandler(plugin, edition(), voteService, voteConfig, rewardConfig).handlerMap(),
+                new VoteAdminHandler(plugin, voteService, voteConfig, features, adminStatus()).handlerMap(),
                 messages, registry);
 
         factory.registerAllCommandsAndListeners();
         logger.info("Registered 2 command trees: /vote, /jexvote");
     }
 
+    /** The live state {@code /jexvote info} reports, read at the moment the command runs. */
+    private @NotNull AdminStatus adminStatus() {
+        return new AdminStatus() {
+            @Override public boolean votifierRunning() { return votifierServer != null && votifierServer.isRunning(); }
+            @Override public boolean restApiRunning() { return restApiServer != null && restApiServer.isRunning(); }
+            @Override public boolean placeholdersHooked() { return placeholders != null; }
+            @Override public boolean bedrockFormsHooked() { return bedrockFormsHooked; }
+            @Override public @Nullable VotePartyService party() { return votePartyService; }
+            @Override public int configuredSiteCount() { return voteConfig.getVoteSites().size(); }
+            @Override public int shopItemCount() { return rewardConfig.getVoteShopItems().size(); }
+            @Override public void reload() { JExVote.this.reload(); }
+        };
+    }
+
     private void registerViews() {
         var pm = Bukkit.getPluginManager();
 
-        overviewView = new VoteOverviewView(plugin, voteService, voteConfig);
+        shopService = new VoteShopService(plugin, playerRepository, rewardService, rewardConfig);
+        overviewView = new VoteOverviewView(plugin, voteService, features, rewardConfig, streakFreezeService);
         leaderboardView = new VoteLeaderboardView(plugin, leaderboardService);
         var streakView = new VoteStreakView(plugin, voteService, rewardService, streakClaimService);
-        rewardsView = new VoteRewardsView(plugin, voteConfig, rewardConfig,
-                multiplierService, votePartyService, rewardStatsService,
-                streakFreezeService, voteGiftService);
+        rewardsView = new VoteRewardsView(plugin, features, rewardConfig, multiplierService,
+                rewardStatsService, streakFreezeService, voteGiftService);
         var partyView = new VotePartyView(rewardConfig, votePartyService, rewardStatsService);
-        var shopService = new VoteShopService(plugin, playerRepository, rewardService, rewardConfig);
         shopView = new VoteShopView(plugin, shopService);
         var luckyView = new VoteLuckyView(rewardConfig, rewardStatsService);
 
-        // Wire cross-navigation references
+        overviewView.setMultipliers(multiplierService);
+        overviewView.setParty(votePartyService);
         overviewView.setLeaderboardView(leaderboardView);
         overviewView.setStreakView(streakView);
         overviewView.setRewardsView(rewardsView);
+        overviewView.setShopView(shopView);
+        overviewView.setPartyView(partyView);
         leaderboardView.setOverviewView(overviewView);
         streakView.setOverviewView(overviewView);
+        rewardsView.setParty(votePartyService);
         rewardsView.setOverviewView(overviewView);
-        rewardsView.setPartyView(partyView);
-        rewardsView.setShopView(shopView);
         rewardsView.setLuckyView(luckyView);
-        overviewView.setShopView(shopView);
-        partyView.setRewardsView(rewardsView);
-        shopView.setRewardsView(rewardsView);
+        partyView.setOverviewView(overviewView);
+        shopView.setOverviewView(overviewView);
         luckyView.setRewardsView(rewardsView);
 
-        // Register as Bukkit listeners (raw inventory click handling)
-        pm.registerEvents(overviewView, plugin);
-        pm.registerEvents(leaderboardView, plugin);
-        pm.registerEvents(streakView, plugin);
-        pm.registerEvents(rewardsView, plugin);
-        pm.registerEvents(partyView, plugin);
-        pm.registerEvents(shopView, plugin);
-        pm.registerEvents(luckyView, plugin);
+        for (VoteBaseView view : List.of(overviewView, leaderboardView, streakView, rewardsView, partyView,
+                shopView, luckyView)) {
+            pm.registerEvents(view, plugin);
+        }
     }
 
     private void registerPlaceholders() {

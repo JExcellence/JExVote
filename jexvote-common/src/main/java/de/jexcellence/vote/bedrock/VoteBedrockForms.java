@@ -5,7 +5,7 @@ import de.jexcellence.jexplatform.view.RewardViewHelper;
 import de.jexcellence.jextranslate.MessageBuilder;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.model.VoteSnapshot;
-import de.jexcellence.vote.config.VoteConfig;
+import de.jexcellence.vote.config.VoteFeatures;
 import de.jexcellence.vote.config.VoteRewardConfig;
 import de.jexcellence.vote.config.VoteShopItem;
 import de.jexcellence.vote.gui.style.VoteFormat;
@@ -60,7 +60,7 @@ public final class VoteBedrockForms {
 
     private final BedrockFormBridge bridge;
     private final VoteService voteService;
-    private final VoteConfig voteConfig;
+    private final VoteFeatures features;
     private final VoteLeaderboardService leaderboardService;
     private final VoteRewardService rewardService;
     private final VoteRewardConfig rewardConfig;
@@ -75,7 +75,7 @@ public final class VoteBedrockForms {
     @SuppressWarnings("java:S107")
     public VoteBedrockForms(@NotNull BedrockFormBridge bridge,
                             @NotNull VoteService voteService,
-                            @NotNull VoteConfig voteConfig,
+                            @NotNull VoteFeatures features,
                             @NotNull VoteLeaderboardService leaderboardService,
                             @NotNull VoteRewardService rewardService,
                             @NotNull VoteRewardConfig rewardConfig,
@@ -86,7 +86,7 @@ public final class VoteBedrockForms {
                             @NotNull VoteGiftService giftService) {
         this.bridge = bridge;
         this.voteService = voteService;
-        this.voteConfig = voteConfig;
+        this.features = features;
         this.leaderboardService = leaderboardService;
         this.rewardService = rewardService;
         this.rewardConfig = rewardConfig;
@@ -142,17 +142,26 @@ public final class VoteBedrockForms {
     private @NotNull String overviewBody(@NotNull Player player, @NotNull VoteSnapshot snapshot,
                                          @NotNull List<VoteSite> sites, @NotNull Map<String, Long> cooldowns) {
         long ready = sites.stream().filter(site -> cooldowns.getOrDefault(site.serviceName(), 0L) <= 0L).count();
-        return String.join(NEWLINE,
-                row(player, "streak", VoteFormat.days(player, snapshot.currentStreak())),
-                row(player, "best-streak", VoteFormat.days(player, snapshot.highestStreak())),
-                row(player, "vote-points", VoteFormat.number(player, snapshot.votePoints())),
-                row(player, "votes-total", VoteFormat.number(player, snapshot.totalVotes())),
-                row(player, "last-vote", VoteFormat.ago(player, snapshot.lastVoteAt())),
-                "",
-                msg(KEY + "overview.sites-ready")
-                        .with("ready", VoteFormat.number(player, ready))
-                        .with("total", VoteFormat.number(player, sites.size()))
-                        .toPlainString(player));
+        List<String> lines = new ArrayList<>();
+        lines.add(text(player, KEY + "overview.intro"));
+        lines.add("");
+        lines.add(row(player, "votes-total", VoteFormat.number(player, snapshot.totalVotes())));
+        lines.add(row(player, "last-vote", VoteFormat.ago(player, snapshot.lastVoteAt())));
+        lines.add(row(player, "vote-points", VoteFormat.number(player, snapshot.votePoints())));
+        if (features.streaks()) {
+            lines.add(row(player, "streak", VoteFormat.days(player, snapshot.currentStreak())));
+            lines.add(row(player, "best-streak", VoteFormat.days(player, snapshot.highestStreak())));
+        }
+        lines.add("");
+        if (sites.isEmpty()) {
+            lines.add(text(player, KEY + "overview.no-sites"));
+        } else {
+            lines.add(msg(KEY + "overview.sites-ready")
+                    .with("ready", VoteFormat.number(player, ready))
+                    .with("total", VoteFormat.number(player, sites.size()))
+                    .toPlainString(player));
+        }
+        return String.join(NEWLINE, lines);
     }
 
     private @NotNull String siteButton(@NotNull Player player, @NotNull VoteSite site, long seconds) {
@@ -166,19 +175,23 @@ public final class VoteBedrockForms {
 
     private @NotNull List<Runnable> addOverviewNavButtons(@NotNull SimpleForm.Builder form, @NotNull Player player) {
         List<Runnable> actions = new ArrayList<>();
-        if (voteConfig.isFeatureLeaderboard()) {
-            form.button(text(player, KEY + "nav.leaderboard"));
-            actions.add(() -> openLeaderboard(player));
-        }
-        if (voteConfig.isFeatureStreaks()) {
+        if (features.streaks()) {
             form.button(text(player, KEY + "nav.streaks"));
             actions.add(() -> openStreaks(player));
         }
         form.button(text(player, KEY + "nav.rewards"));
         actions.add(() -> openRewards(player));
-        if (voteConfig.isFeatureShop() && shopService != null) {
+        if (features.leaderboard()) {
+            form.button(text(player, KEY + "nav.leaderboard"));
+            actions.add(() -> openLeaderboard(player));
+        }
+        if (features.shop() && shopService != null) {
             form.button(text(player, KEY + "nav.shop"));
             actions.add(() -> openShop(player));
+        }
+        if (features.party() && partyService != null) {
+            form.button(text(player, KEY + "nav.party"));
+            actions.add(() -> openParty(player));
         }
         return actions;
     }
@@ -204,15 +217,24 @@ public final class VoteBedrockForms {
     // ── Leaderboard ──────────────────────────────────────────────────────
 
     public void openLeaderboard(@NotNull Player player) {
-        leaderboardService.getAllTimeTop(LEADERBOARD_LIMIT).thenAccept(entries -> {
-            StringBuilder body = new StringBuilder(text(player, KEY + "leaderboard.header")).append(NEWLINE);
+        openLeaderboard(player, false);
+    }
+
+    private void openLeaderboard(@NotNull Player player, boolean monthly) {
+        CompletableFuture<List<VoteSnapshot>> top = monthly
+                ? leaderboardService.getMonthlyTop(LEADERBOARD_LIMIT)
+                : leaderboardService.getAllTimeTop(LEADERBOARD_LIMIT);
+        top.thenAccept(entries -> {
+            String mode = monthly ? "monthly" : "all-time";
+            StringBuilder body = new StringBuilder(text(player, KEY + "leaderboard.header-" + mode)).append(NEWLINE);
             int rank = 1;
             for (VoteSnapshot entry : entries) {
                 String name = entry.playerName() != null ? entry.playerName() : text(player, "vote.unknown-player");
+                int votes = monthly ? entry.monthlyVotes() : entry.totalVotes();
                 body.append(NEWLINE).append(msg(KEY + "leaderboard.entry")
                         .with("rank", rank)
                         .with("player", name)
-                        .with("votes", VoteFormat.number(player, entry.totalVotes()))
+                        .with("votes", VoteFormat.number(player, votes))
                         .with("streak", VoteFormat.days(player, entry.currentStreak()))
                         .toPlainString(player));
                 rank++;
@@ -223,8 +245,15 @@ public final class VoteBedrockForms {
             SimpleForm form = SimpleForm.builder()
                     .title(text(player, KEY + "leaderboard.title"))
                     .content(body.toString())
+                    .button(text(player, KEY + "leaderboard.show-" + (monthly ? "all-time" : "monthly")))
                     .button(text(player, NAV_BACK))
-                    .validResultHandler(response -> openOverview(player))
+                    .validResultHandler(response -> {
+                        if (response.clickedButtonId() == 0) {
+                            openLeaderboard(player, !monthly);
+                        } else {
+                            openOverview(player);
+                        }
+                    })
                     .build();
             bridge.sendForm(player, form);
         });
@@ -276,7 +305,7 @@ public final class VoteBedrockForms {
             } else {
                 state = "locked";
             }
-            body.append(NEWLINE).append(msg(KEY + "streaks.line-" + state).with(PARAM_DAY, day).toPlainString(player));
+            body.append(NEWLINE).append(msg(KEY + "streaks.status-" + state).with(PARAM_DAY, day).toPlainString(player));
         }
         return claimableDays;
     }
@@ -314,33 +343,30 @@ public final class VoteBedrockForms {
         lines.add(text(player, KEY + "rewards.header"));
         lines.add("");
         lines.add(row(player, "vote-points", VoteFormat.number(player, points)));
-        if (freezeService.settings().enabled()) {
+        if (features.freezes()) {
             lines.add(row(player, "freezes", VoteFormat.number(player, owned)));
         }
-        if (giftService.settings().enabled()) {
+        if (features.gifts()) {
             lines.add(row(player, "gifts-left", VoteFormat.number(player, giftsLeft)));
         }
-        if (multipliers.isActive()) {
-            lines.add(row(player, "now", VoteFormat.multiplier(player, multipliers.current())));
+        if (features.weekendBonus() && multipliers.isActive()) {
+            lines.add(row(player, "weekend-bonus", VoteFormat.multiplier(player, multipliers.current())));
         }
-        if (partyService != null) {
-            lines.add(row(player, "votes", partyService.currentVotes() + " / " + partyService.targetVotes()));
+        List<String> perVote = everyVoteLines(player);
+        if (!perVote.isEmpty()) {
+            lines.add("");
+            lines.add(text(player, KEY + "rewards.every-vote"));
+            lines.addAll(perVote);
         }
         SimpleForm.Builder form = SimpleForm.builder()
                 .title(text(player, KEY + "rewards.title"))
                 .content(String.join(NEWLINE, lines));
         List<Runnable> actions = new ArrayList<>();
-        form.button(text(player, KEY + "rewards.lucky-catalog"));
-        actions.add(() -> openLucky(player));
-        if (partyService != null) {
-            form.button(text(player, KEY + "rewards.party-catalog"));
-            actions.add(() -> openParty(player));
+        if (!luckyPrizes().isEmpty()) {
+            form.button(text(player, KEY + "rewards.lucky-catalog"));
+            actions.add(() -> openLucky(player));
         }
-        if (voteConfig.isFeatureShop() && shopService != null) {
-            form.button(text(player, KEY + "nav.shop"));
-            actions.add(() -> openShop(player));
-        }
-        if (freezeService.settings().enabled()) {
+        if (features.freezes()) {
             form.button(msg(KEY + "rewards.buy-freeze-cost")
                     .with(PARAM_COST, VoteFormat.number(player, freezeService.settings().costPoints()))
                     .toPlainString(player));
@@ -350,6 +376,27 @@ public final class VoteBedrockForms {
         actions.add(() -> openOverview(player));
         form.validResultHandler(response -> runAction(actions, response.clickedButtonId()));
         return form.build();
+    }
+
+    private @NotNull List<String> everyVoteLines(@NotNull Player player) {
+        List<AbstractReward> perVote = new ArrayList<>(rewardConfig.getDefaultRewards());
+        perVote.addAll(rewardConfig.getGuaranteedRewards());
+        List<String> lines = new ArrayList<>();
+        for (AbstractReward reward : perVote) {
+            for (AbstractReward atomic : RewardViewHelper.flatten(reward)) {
+                lines.add(msg(KEY + "party.entry").with(PARAM_REWARD, rewardText(player, atomic)).toPlainString(player));
+            }
+        }
+        return lines;
+    }
+
+    private @NotNull List<Prize> luckyPrizes() {
+        List<Prize> prizes = new ArrayList<>();
+        VoteLuckyView.addFrom(prizes, rewardConfig.getDefaultRewards());
+        rewardConfig.getStreakRewards().values().forEach(list -> VoteLuckyView.addFrom(prizes, list));
+        rewardConfig.getSiteRewards().values().forEach(list -> VoteLuckyView.addFrom(prizes, list));
+        VoteLuckyView.addFrom(prizes, rewardConfig.getVotePartyRewards());
+        return prizes;
     }
 
     private static void runAction(@NotNull List<Runnable> actions, int index) {
@@ -370,17 +417,13 @@ public final class VoteBedrockForms {
     // ── Lucky catalog ────────────────────────────────────────────────────
 
     public void openLucky(@NotNull Player player) {
-        List<Prize> prizes = new ArrayList<>();
-        VoteLuckyView.addFrom(prizes, rewardConfig.getDefaultRewards());
-        rewardConfig.getStreakRewards().values().forEach(list -> VoteLuckyView.addFrom(prizes, list));
-        rewardConfig.getSiteRewards().values().forEach(list -> VoteLuckyView.addFrom(prizes, list));
-        VoteLuckyView.addFrom(prizes, rewardConfig.getVotePartyRewards());
-        sendPrizeForm(player, KEY + "lucky.title", KEY + "lucky.header", prizes);
+        sendPrizeForm(player, KEY + "lucky.title", text(player, KEY + "lucky.header"), luckyPrizes(),
+                () -> openRewards(player));
     }
 
-    private void sendPrizeForm(@NotNull Player player, @NotNull String titleKey, @NotNull String headerKey,
-                               @NotNull List<Prize> prizes) {
-        StringBuilder body = new StringBuilder(text(player, headerKey)).append(NEWLINE);
+    private void sendPrizeForm(@NotNull Player player, @NotNull String titleKey, @NotNull String header,
+                               @NotNull List<Prize> prizes, @NotNull Runnable back) {
+        StringBuilder body = new StringBuilder(header).append(NEWLINE);
         prizes.stream().sorted(Comparator.comparingDouble(Prize::percent).reversed()).forEach(prize -> {
             long won = prize.id() == null ? 0L : stats.getCount(prize.id());
             body.append(NEWLINE).append(msg(KEY + "prize.entry")
@@ -396,7 +439,7 @@ public final class VoteBedrockForms {
                 .title(text(player, titleKey))
                 .content(body.toString())
                 .button(text(player, NAV_BACK))
-                .validResultHandler(response -> openRewards(player))
+                .validResultHandler(response -> back.run())
                 .build();
         bridge.sendForm(player, form);
     }
@@ -427,7 +470,7 @@ public final class VoteBedrockForms {
                     .append(NEWLINE).append(String.join(NEWLINE, fixed));
         }
         header.append(NEWLINE).append(NEWLINE).append(text(player, KEY + "party.pool"));
-        sendPrizeForm(player, KEY + "party.title", header.toString(), prizes);
+        sendPrizeForm(player, KEY + "party.title", header.toString(), prizes, () -> openOverview(player));
     }
 
     // ── Shop ─────────────────────────────────────────────────────────────
@@ -444,7 +487,7 @@ public final class VoteBedrockForms {
                     .append(NEWLINE);
             SimpleForm.Builder form = SimpleForm.builder().title(text(player, KEY + "shop.title"));
             for (VoteShopItem item : items) {
-                String stateKey = points >= item.cost() ? "shop.entry-affordable" : "shop.entry-short";
+                String stateKey = points >= item.cost() ? "shop.line-affordable" : "shop.line-short";
                 body.append(NEWLINE).append(msg(KEY + stateKey)
                         .with(PARAM_ITEM, BedrockFormText.plain(item.name()))
                         .with(PARAM_COST, VoteFormat.number(player, item.cost()))
@@ -462,7 +505,7 @@ public final class VoteBedrockForms {
                 if (index < items.size()) {
                     openShopConfirm(player, shop, items.get(index));
                 } else {
-                    openRewards(player);
+                    openOverview(player);
                 }
             });
             bridge.sendForm(player, form.build());

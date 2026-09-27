@@ -47,7 +47,8 @@ public class VoteStreakView extends VoteBaseView {
     private static final String TAG_DETAIL_BACK = "detail-back";
     private static final String PARAM_DAY = "day";
     private static final String PARAM_VALUE = "value";
-    private static final String[] FILTERS = {"all", "claimable", "reached", "locked"};
+    private static final String[] FILTERS_MANUAL = {"all", "claimable", "reached", "locked"};
+    private static final String[] FILTERS_AUTO = {"all", "reached", "locked"};
     private static final int SLOT_CLAIM = 49;
     private static final int MAX_STACK = 64;
 
@@ -59,7 +60,8 @@ public class VoteStreakView extends VoteBaseView {
     private final VoteRewardService rewardService;
     private final StreakClaimService claimService;
     private final PlatformScheduler scheduler;
-    private final FilterHopperButton stateFilter = new FilterHopperButton("vote-streak-state", FILTERS.length);
+    private final FilterHopperButton manualFilter = new FilterHopperButton("vote-streak-state", FILTERS_MANUAL.length);
+    private final FilterHopperButton autoFilter = new FilterHopperButton("vote-streak-state-auto", FILTERS_AUTO.length);
     private final Map<UUID, ViewerState> stateByViewer = new ConcurrentHashMap<>();
 
     private @Nullable VoteOverviewView overviewView;
@@ -81,6 +83,11 @@ public class VoteStreakView extends VoteBaseView {
     @Override protected @NotNull String title() { return KEY + "title"; }
     @Override protected int rows() { return 6; }
     @Override protected @NotNull InventoryHolder holder() { return holder; }
+
+    @Override
+    protected void forget(@NotNull UUID viewer) {
+        stateByViewer.remove(viewer);
+    }
 
     /**
      * The next milestone above the best streak, used by the vote menu header.
@@ -146,29 +153,34 @@ public class VoteStreakView extends VoteBaseView {
             inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.CLOCK, KEY + "pending"));
             return;
         }
-        int filter = stateFilter.index(viewer.getUniqueId());
-        inv.setItem(SLOT_FILTER, filterButton(viewer, filter));
-        List<Integer> days = milestones.keySet().stream()
-                .filter(day -> matches(filter, stateOf(day, state)))
-                .toList();
-        if (days.isEmpty()) {
-            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.PAPER,
-                    milestones.isEmpty() ? KEY + "empty" : KEY + "none-in-filter"));
+        if (milestones.isEmpty()) {
+            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.RED_DYE, KEY + "empty"));
             return;
         }
-        int pages = pageCount(days.size());
-        state.page = clampPage(state.page, pages);
-        int[] slots = bodySlots();
-        int from = state.page * pageSize();
-        for (int i = 0; i < slots.length && from + i < days.size(); i++) {
-            int day = days.get(from + i);
-            inv.setItem(slots[i], milestoneCard(viewer, day, milestones.get(day), state, true));
+        String[] filters = filters();
+        int filter = stateFilter().index(viewer.getUniqueId());
+        inv.setItem(SLOT_FILTER, filterButton(viewer, filters, filter));
+        List<Integer> days = milestones.keySet().stream()
+                .filter(day -> matches(filters[filter], stateOf(day, state)))
+                .toList();
+        if (days.isEmpty()) {
+            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.PAPER, KEY + "none-in-filter"));
+            return;
         }
-        pagination(inv, viewer, state.page, pages);
+        state.page = renderPage(inv, viewer, days, state.page,
+                (index, day) -> milestoneCard(viewer, day, milestones.get(day), state, true));
     }
 
-    private static boolean matches(int filter, @NotNull MilestoneState state) {
-        return switch (FILTERS[filter]) {
+    private @NotNull String[] filters() {
+        return rewardService.isManualStreakClaim() ? FILTERS_MANUAL : FILTERS_AUTO;
+    }
+
+    private @NotNull FilterHopperButton stateFilter() {
+        return rewardService.isManualStreakClaim() ? manualFilter : autoFilter;
+    }
+
+    private static boolean matches(@NotNull String filter, @NotNull MilestoneState state) {
+        return switch (filter) {
             case "claimable" -> state == MilestoneState.CLAIMABLE;
             case "reached" -> state == MilestoneState.CLAIMED || state == MilestoneState.REACHED;
             case "locked" -> state == MilestoneState.NEXT || state == MilestoneState.LOCKED;
@@ -176,9 +188,9 @@ public class VoteStreakView extends VoteBaseView {
         };
     }
 
-    private @NotNull ItemStack filterButton(@NotNull Player viewer, int active) {
-        List<String> labels = new ArrayList<>(FILTERS.length);
-        for (String filter : FILTERS) {
+    private @NotNull ItemStack filterButton(@NotNull Player viewer, @NotNull String[] filters, int active) {
+        List<String> labels = new ArrayList<>(filters.length);
+        for (String filter : filters) {
             labels.add(VoteCards.text(viewer, KEY + "filter." + filter));
         }
         ItemStack button = VoteCards.filter(viewer, labels, active);
@@ -279,7 +291,7 @@ public class VoteStreakView extends VoteBaseView {
                                                 @NotNull ViewerState state, boolean onTrack) {
         List<Component> lines = new ArrayList<>();
         String remaining = VoteFormat.days(viewer, Math.max(0, day - state.current));
-        lines.add(VoteCards.ic(VoteCards.msg(KEY + "milestone.state-" + stateKey(milestone))
+        lines.add(VoteCards.ic(VoteCards.msg(KEY + "milestone.status-" + stateKey(milestone))
                 .with(PARAM_VALUE, remaining), viewer));
         if (onTrack) {
             String actionKey = milestone == MilestoneState.CLAIMABLE ? "milestone.action-claim" : "milestone.action-details";
@@ -315,10 +327,11 @@ public class VoteStreakView extends VoteBaseView {
         inv.setItem((rows() - 1) * 9, closeButton(viewer));
         inv.setItem(SLOT_HEADER, milestoneCard(viewer, day, rewards, state, false));
         List<AbstractReward> flat = flatten(rewards);
-        int[] slots = bodySlots();
-        for (int i = 0; i < slots.length && i < flat.size(); i++) {
-            inv.setItem(slots[i], rewardCard(viewer, day, flat.get(i)));
+        List<ItemStack> cards = new ArrayList<>();
+        for (AbstractReward reward : flat.subList(0, Math.min(flat.size(), VoteLayout.PAGE_SIZE))) {
+            cards.add(rewardCard(viewer, day, reward));
         }
+        placeCentred(inv, cards);
         inv.setItem(SLOT_CLAIM, claimCard(viewer, day, stateOf(day, state), state));
     }
 
@@ -391,7 +404,7 @@ public class VoteStreakView extends VoteBaseView {
             case TAG_PAGE_PREV -> state.page = Math.max(0, state.page - 1);
             case TAG_PAGE_NEXT -> state.page++;
             case FilterHopperButton.TAG -> {
-                stateFilter.cycle(viewer.getUniqueId(), !type.isRightClick());
+                stateFilter().cycle(viewer.getUniqueId(), !type.isRightClick());
                 state.page = 0;
             }
             default -> {
