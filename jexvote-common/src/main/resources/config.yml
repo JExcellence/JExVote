@@ -1,283 +1,245 @@
 # ╔═══════════════════════════════════════════════════════════════╗
-# ║                    JExVote Configuration                     ║
+# ║                    JExVote Configuration                      ║
 # ╠═══════════════════════════════════════════════════════════════╣
-# ║  All-in-one vote listener with built-in Votifier protocol    ║
-# ║  support (v1 RSA + v2 HMAC). No NuVotifier needed.          ║
+# ║  All-in-one vote listener with a built-in Votifier server     ║
+# ║  (v1 RSA + v2 token). You do not need NuVotifier.             ║
+# ║                                                               ║
+# ║  Quick start:                                                 ║
+# ║   1. Open the Votifier port below in your firewall / panel.   ║
+# ║   2. Add your vote sites in sites.yml.                        ║
+# ║   3. Run /jexvote key and paste the key on each vote site.    ║
+# ║   4. Run /jexvote info to check that everything is running.   ║
+# ║   5. Test with /jexvote fakevote <player>.                    ║
+# ║  Rewards live in rewards.yml. Reload with /jexvote reload.    ║
 # ╚═══════════════════════════════════════════════════════════════╝
 
-# ── Feature Toggles ─────────────────────────────────────────────
-# Master switches for optional subsystems. Disable a feature to hide
-# its GUI navigation and stop its processing entirely. Edition-level
-# gates (Free vs Premium) still apply on top of these.
+# ── Features ────────────────────────────────────────────────────
+# Switch whole features on or off. A feature that is off is hidden
+# from /vote, the Bedrock forms and /vote help. The Free edition
+# has no shop, vote party or weekend bonus whatever is set here;
+# /jexvote info shows what is on and why.
 features:
-  # Vote streak tracking (streak counter, milestone rewards, streak
-  # GUI tab). When disabled: votes still count and grant default
-  # rewards, but no streak counter is maintained, the streak nav
-  # button is hidden, and streak-rewards in rewards.yml are ignored.
+  # Vote streaks: the streak counter, streak milestones (streak-rewards
+  # in rewards.yml), Streak Freezes and vote gifts. When off, votes still
+  # count and pay their rewards.
   streaks: true
-  # Vote-token shop (/vote shop, shop nav button in overview GUI).
+  # Vote shop (/vote shop): players spend vote points on the items in
+  # the vote-shop section of rewards.yml. Premium edition only.
   shop: true
-  # Leaderboard GUI (/vote top opens a GUI instead of text-only).
+  # Top voters menu (/vote top). When off, /vote top prints a chat list.
   leaderboard: true
-  # Vote effects (sounds and titles on vote / streak / milestone).
+  # Sounds and titles on votes, streak days and milestones (vote-effects below).
   effects: true
 
 # ── Votifier Server ─────────────────────────────────────────────
-# The built-in vote receiver. Compatible with all vote sites
-# that support the Votifier or NuVotifier protocol.
+# The built-in vote receiver. Works with every vote site that supports
+# Votifier or NuVotifier. On a network, run it on the backend that
+# should receive the votes (or on each backend with its own port).
 votifier:
-  # Leave empty to bind on all interfaces (0.0.0.0)
+  # Address to listen on. Empty = all interfaces (0.0.0.0).
   host: ''
-  # Port the Votifier server listens on (default: 8192)
-  # Must match the port configured on vote listing sites.
+  # Port the vote sites send votes to (default 8192). Enter the same
+  # port on every vote site and open it in your firewall.
   port: 8192
-  # Shared secret for Votifier v2 protocol (HMAC-SHA256).
-  # Leave empty on first run - a token will be auto-generated.
-  # Copy this token to your vote site configuration.
+  # Shared secret for Votifier v2 sites. Leave it empty: a token is
+  # created on first start and saved here. /jexvote key shows it.
   token: ''
 
 # ── Broadcast ───────────────────────────────────────────────────
-# Public chat announcement when someone votes.
+# Chat line "<player> voted on <site>" when a vote arrives.
 broadcast:
-  # Who receives the broadcast:
-  #   all    - all online players including the voter
-  #   others - all online players EXCEPT the voter
-  #   none   - disable broadcasts entirely
+  # Who sees it:
+  #   all    - everyone online, the voter included
+  #   others - everyone except the voter
+  #   none   - no broadcast
   mode: 'all'
-  # Minimum seconds between broadcasts (anti-spam).
-  # If a vote arrives within this window, the broadcast is silently skipped.
-  # Set to 0 to broadcast every vote. (1800 = 30 minutes)
+  # Minimum seconds between two broadcasts. Votes inside the window
+  # are not announced (they still count). 0 = announce every vote.
   cooldown: 0
 
 # ── Private Message ─────────────────────────────────────────────
-# Personal "thank you" message sent only to the voter.
+# The "Thanks for voting" message sent only to the voter.
 private-message:
-  # Whether the voter receives a private thank-you message
   enabled: true
 
 # ── Offline Vote Queue ──────────────────────────────────────────
-# When a player votes while offline, queue their rewards
-# and deliver them on next login.
+# A vote from a player who is offline is stored and paid out the next
+# time they join, with one summary of everything they got.
 offline-vote-queue: true
 
 # ── Vote Streak ─────────────────────────────────────────────────
 streak:
-  # Hours before a streak is considered broken.
-  # Default 36h gives a generous buffer for daily voting.
+  # Hours without a vote before a streak breaks. 36 leaves room for
+  # players who vote at different times of the day.
   timeout-hours: 36
 
-  # How streak milestone rewards are delivered:
-  #   manual - player claims each milestone reward on click in the /vote streak GUI (default)
-  #   auto   - granted immediately when the streak milestone is reached
+  # How streak milestone rewards (streak-rewards in rewards.yml) are paid:
+  #   manual - the player claims each milestone in /vote > Streak rewards
+  #   auto   - paid the moment the streak reaches the milestone
   claim-mode: 'manual'
 
-  # ── Streak Freeze (Duolingo-style) ────────────────────────────
-  # A Streak Freeze protects a player's streak when they miss a vote.
-  # Freezes auto-equip: if a vote arrives after the streak would have
-  # broken, the needed freezes are consumed automatically and the
-  # streak survives - no player action required.
+  # ── Streak Freeze ─────────────────────────────────────────────
+  # A Streak Freeze saves a streak when a player misses a day. It is
+  # used up on its own: when a vote arrives after the streak would have
+  # broken, the needed freezes are consumed and the streak goes on.
   freeze:
-    # Master switch.
     enabled: true
-    # Free freezes granted once, on first profile creation (and back-filled
-    # one time to existing players). 1 = everyone starts protected once.
+    # Free freezes every player gets once, when they vote for the first time.
     free-amount: 1
-    # Vote points charged per purchased freeze (/vote freeze).
+    # Vote points one freeze costs (/vote freeze or the Vote rewards menu).
     cost-points: 5
-    # Max freezes a player may own without a permission override.
-    # A player with 'jexvote.freeze.max.<n>' may own up to <n> instead
-    # (the highest matching node wins).
+    # Most freezes a player can own. A player with the permission
+    # 'jexvote.freeze.max.<n>' can own up to <n> (the highest wins).
     default-max: 3
-    # Grace time a single freeze covers. Each freeze absorbs one window of
-    # this many hours beyond the normal streak timeout. Missing more than
-    # one window consumes multiple freezes.
+    # Hours one freeze covers beyond the normal timeout. A longer gap
+    # uses several freezes.
     duration-hours: 24
 
-# Offline-vote reconciliation.
-# Votifier is real-time: a vote cast while the server is fully OFFLINE never
-# reaches it and is lost - and the missed day breaks the streak. When enabled,
-# a player joining is checked against each site's status API; a vote they cast
-# during downtime is detected and credited through the normal pipeline (reward,
-# points, streak day), deduped against already-counted votes so nothing doubles.
-# Only sites with an 'api-url' set (see sites.yml) are checked.
-reconciliation:
-  # Master switch. OFF by default - it needs per-site API URLs + keys in sites.yml.
-  enabled: false
-  # Minimum minutes between reconciliation sweeps for one player (rate-limits the
-  # site APIs; a player relogging repeatedly won't hammer them).
-  player-cooldown-minutes: 30
-  # Per-site HTTP request timeout in seconds.
-  timeout-seconds: 8
-
-  # Bonus commands executed at specific streak milestones - IN ADDITION to
-  # rewards.yml's streak-rewards, unconditionally (not gated by claim-mode).
-  #
-  # Left empty by default. Every "reward" belongs in rewards.yml's
-  # `streak-rewards:` block (typed, i18n-shown in `/vote streak`, sound-
-  # tracked, MythStyle-rendered). This block only exists for RAW server-
-  # specific commands that don't fit AbstractReward - e.g. running a
-  # per-region `region addmember` grant on day 30. Don't put `give diamond`
-  # or `say "…"` here: streak milestones already grant items via rewards.yml
-  # and fire a themed broadcast; vanilla `say` output would clash with the
-  # MythStyle brand and duplicate the already-granted items.
-  #
-  # If you're upgrading and your live config still has stale day-7/14/30
-  # diamond commands from an older ship, delete them - the streak rewards
-  # already cover them.
-  # Placeholders: {player}, {service}, {streak}
+  # Extra console commands on exact streak days, run on top of the
+  # streak-rewards in rewards.yml and whatever the claim-mode is. Use it
+  # for commands that are not a reward type. Placeholders: {player},
+  # {service}, {streak}. Example:
+  #   bonus-commands:
+  #     30:
+  #       - 'lp user {player} permission settemp my.perk true 7d'
   bonus-commands: {}
 
+# ── Offline-vote reconciliation ─────────────────────────────────
+# Votifier is real time: a vote cast while your server is offline never
+# arrives. When this is on, a joining player is checked against each
+# site's status API, and a vote they cast during the downtime is counted
+# (reward, points, streak day) without doubling a vote that did arrive.
+# Only sites with an 'api-url' in sites.yml are checked.
+reconciliation:
+  # Off by default: it needs an api-url and api-key per site.
+  enabled: false
+  # Minutes between two checks for the same player (protects the site APIs).
+  player-cooldown-minutes: 30
+  # HTTP timeout per site in seconds.
+  timeout-seconds: 8
+
 # ── Commands on Vote ────────────────────────────────────────────
-# Raw console commands executed on EVERY vote (in addition to the typed
-# rewards in rewards.yml → default-rewards).
-#
-# Prefer rewards.yml for anything expressible as an AbstractReward
-# (currency, xp, item, command, permission, sound, title, composite, chance,
-# lucky). Only put strings here for raw commands that don't fit that model
-# - e.g. a Discord-webhook curl, a WorldGuard region tag, a custom plugin
-# CLI. Every entry runs UNCONDITIONALLY on every vote, so a bad line spams.
-#
-# Placeholders: {player}, {service}, {streak}
+# Console commands run on EVERY vote, on top of the rewards in
+# rewards.yml. Prefer rewards.yml (items, XP, money, commands with a
+# description the menus can show); use this list for commands that are
+# not a reward. Placeholders: {player}, {service}, {streak}. Example:
+#   commands-on-vote:
+#     - 'discordsrv broadcast #votes {player} voted on {service}'
 commands-on-vote: []
-#  - 'give {player} diamond 1'                # prefer: rewards.yml → item
-#  - 'economy give {player} coins 100'        # prefer: rewards.yml → currency
 
 # ── Vote Records ────────────────────────────────────────────────
 records:
-  # How long to keep individual vote records (days).
-  # Set to 0 to keep forever.
+  # Days to keep single vote records (used for cooldowns and
+  # /jexvote debug-services). 0 = keep forever.
   retention-days: 90
 
-# ── Proxy / network vote sync (Premium) ─────────────────────────
-# For a multi-backend network where all servers share ONE database.
-# Votes, points, streaks and the vote-party counter are already
-# DB-authoritative (every backend reads/writes the same rows), so a
-# network is correct with zero extra setup. The only thing that lags
-# is each backend's in-memory live party bar / broadcasts.
-#
-# Two layers make it network-wide, both on the shared DB - NO Redis or
-# other third-party service required:
-#   * Fast layer: a DB-backed "outbox" event bus. Backends write party
-#     progress/completion events to a small table and poll it every few
-#     seconds, so the live bar and the "party reached" broadcast are
-#     near-instant across servers. Old rows auto-purge.
-#   * Safety net: a slower reconcile that re-reads the authoritative
-#     party row (and runs on player join), so the bar stays correct even
-#     if an event was missed.
-# Requires Premium.
+# ── Network sync (Premium) ──────────────────────────────────────
+# For several backends that share ONE database. Votes, points and
+# streaks are already correct on a shared database; this only keeps
+# the live vote party counter and its broadcasts in step on every
+# backend. It uses the shared database, no Redis needed.
 proxy:
   enabled: false
-  # Stable id for THIS backend (must differ per server). Blank = a random
-  # id is generated each start (fine; it just means a restart briefly
-  # re-reads its own recent events, which is harmless).
+  # A unique id for THIS backend. Empty = a random id each start.
   server-id: ""
-  # Fast layer: how often (seconds) to poll the outbox for new events.
+  # Seconds between two checks for new party events.
   event-poll-seconds: 2
-  # Safety net: how often (seconds) to re-read the authoritative party row.
+  # Seconds between two full re-reads of the party counter.
   reconcile-seconds: 60
-  # How long (minutes) to keep outbox event rows before purging them.
+  # Minutes to keep party events before they are deleted.
   event-retention-minutes: 10
 
-# ── Multipliers (Premium) ───────────────────────────────────────
-# Scales vote rewards during configured windows.
-# Applies to: vote POINTS (exact) and top-level numeric reward
-# amounts (xp/currency). NOTE: amounts nested inside composite/
-# chance/lucky rewards are NOT scaled - only their own top-level
-# 'amount' field is. Requires the Premium edition.
+# ── Weekend bonus (Premium) ─────────────────────────────────────
+# On the listed days every vote pays more: vote points and the top-level
+# amount of xp and currency rewards are multiplied. Amounts inside
+# composite, chance or lucky rewards are not multiplied.
 multipliers:
   weekend:
-    # Master switch for the weekend multiplier.
     enabled: false
-    # The factor applied during the weekend window to vote points + coin/XP
-    # reward amounts. Kept at 1.2 so this stays a minor additive-style nudge
-    # rather than a full multiplicative income lever (economy doc cap = 2).
+    # Multiplier on bonus days, for example 1.5 = 50 % more.
     factor: 1.2
-    # Which days count as "weekend" (English DayOfWeek names).
+    # Bonus days (English day names).
     days:
       - SATURDAY
       - SUNDAY
-    # Timezone used to determine the current day.
+    # Time zone that decides which day it is.
     timezone: 'UTC'
 
 # ── Vote Party (Premium) ────────────────────────────────────────
-# A shared, server-wide vote counter. When it reaches the target,
-# every player who contributed to that party is rewarded (online
-# players immediately, offline players on next login), then the
-# counter resets for the next party.
-# Party rewards are configured in rewards.yml under 'vote-party-rewards'.
-# Requires the Premium edition.
+# A shared server counter. Every vote counts; when the target is
+# reached, every player who voted for this party gets the party rewards
+# (online now, offline on their next join) and the counter starts over.
+# Rewards: vote-party-rewards and vote-party-pool in rewards.yml.
+# Starting or stopping the party needs a server restart; a new target
+# applies to the next party after /jexvote reload.
 vote-party:
-  # Premium-only feature. On the Free edition this stays disabled regardless.
   enabled: true
-  # Number of votes required to complete a party.
+  # Votes needed for one party.
   target: 100
 
-# ── Vote Gifting ────────────────────────────────────────────────
-# Lets active voters keep a friend's streak alive. A gift advances ONLY
-# the receiver's streak (+1 and resets their timeout) - no reward items
-# move, and the gifter keeps their own vote and rewards in full.
-#   /vote gift <player>  - gift a specific player
-#   /vote gift random    - gift a random online player (never yourself)
-# ── Bedrock (Geyser/Floodgate) vote matching ─────────────────────────────────
-# Bedrock players vote with their gamertag, but join through Floodgate with a
-# prefixed in-game name (and spaces may be swapped for '_'). Vote resolution
-# tries the prefixed/normalized variants so their votes credit the right player.
-# Match these to your Floodgate config (username-prefix / replace-spaces).
+# ── Bedrock (Geyser / Floodgate) ────────────────────────────────
+# Bedrock players vote with their gamertag, but join with the Floodgate
+# prefix in their name. Match these to your Floodgate config so their
+# votes reach the right player. Bedrock players get forms instead of
+# chest menus when Floodgate is installed.
 bedrock:
-  # The Floodgate username prefix (default "!"). Set to "" if you run no prefix.
+  # The username-prefix from your Floodgate config.yml.
+  # Set "" when you use no prefix.
   name-prefix: "!"
-  # Also try a variant with spaces replaced by '_' (Floodgate replace-spaces).
+  # Also try the name with spaces replaced by '_' (Floodgate replace-spaces).
   replace-spaces: true
 
+# ── Vote gifts ──────────────────────────────────────────────────
+# A player who voted today can keep a friend's streak alive: the gift
+# moves only the receiver's streak forward by one day. No items move and
+# the gifter keeps their own vote and rewards.
+#   /vote gift <player>  - gift a player
+#   /vote gift random    - gift a random online player
 vote-gift:
-  # Daily first-vote flight reward: the first vote of each day grants a
-  # fly-time coupon (delivered as a dupe-proof item, redeemed for island flight).
-  daily-fly:
-    enabled: true
-    minutes: 15
-  # Optional daily first-vote reward: console commands run once on the first vote
-  # of the day (alongside daily-fly). {player} is replaced with the voter's name.
-  # Leave the list empty to disable - nothing runs when unset.
+  enabled: true
+  # Gifts per player per day. A player with 'jexvote.gift.daily.<n>'
+  # can send up to <n> (the highest wins).
+  daily-limit: 1
+  # The gifter must have voted today before they can gift.
+  require-vote-today: true
+  # Time zone of the day boundary for the daily limit and "voted today".
+  timezone: 'UTC'
+  # Console commands run once per player per day, on their first vote of
+  # the day. {player} is the voter's name. Empty = nothing runs. Example:
+  #   commands:
+  #     - 'give {player} diamond 1'
   daily-reward:
     commands: []
-    # Example:
-    # commands:
-    #   - "crates givekey {player} VoteCrate 1"
-    #   - "eco give {player} 500"
-  # Master switch (player-to-player gifting below).
-  enabled: true
-  # Gifts a player may send per day. A player with 'jexvote.gift.daily.<n>'
-  # may send up to <n> instead (the highest matching node wins).
-  daily-limit: 1
-  # Require the gifter to have voted today before they can gift
-  # (matches "redirect today's live vote"). Set false to allow gifting
-  # without voting first.
-  require-vote-today: true
-  # Day-boundary timezone for both the daily gift limit and the
-  # "voted today" check.
-  timezone: 'UTC'
 
-# NOTE: There is no '/vote fly' redemption command. Flight is sold in the
-# vote-token shop instead - see the 'temp-fly' and 'event-fly' entries in
-# rewards.yml (open with /vote shop). Removed the dead 'fly:' block that used
-# to advertise a '/vote fly' / '/vote eventfly' command that was never wired.
+# ── Display ─────────────────────────────────────────────────────
+display:
+  # How currency rewards are written in menus:
+  #   auto  - coin / crystal icons when JExEconomy is installed, names otherwise
+  #   icons - always the icons (needs the JExcellence resource pack)
+  #   names - always plain names, for example "500 Coins"
+  currency-style: auto
+  # Display names for currency ids used in rewards.yml. Ids that are not
+  # listed use the translation reward_describe.unit.<id>, else the id.
+  # Example:
+  #   currency-names:
+  #     money: 'Dollars'
+  currency-names: {}
 
-# ── Vote Effects ─────────────────────────────────────────────────────────────
-# Visual and audio effects when a player receives vote rewards.
+# ── Vote Effects ────────────────────────────────────────────────
+# Sounds and titles for the voter. Turn all of them off with
+# features.effects: false. Sound names: https://jd.papermc.io/paper/org/bukkit/Sound.html
 vote-effects:
-  # Sound played on every vote
+  # On every vote
   vote:
     sound: ENTITY_PLAYER_LEVELUP
     volume: 1.0
     pitch: 1.0
-
-  # Sound played when a streak milestone is reached
+  # When the streak grows
   streak:
     sound: ENTITY_PLAYER_LEVELUP
     volume: 1.0
     pitch: 1.2
-
-  # Sound and title played when a streak milestone reward is granted
+  # When a streak milestone is reached (fade-in, stay, fade-out in ticks, 20 = 1 s)
   milestone:
     sound: UI_TOAST_CHALLENGE_COMPLETE
     volume: 1.0
@@ -288,38 +250,28 @@ vote-effects:
     stay: 40
     fade-out: 10
 
-# ── Embedded REST API (consumed by the Mythblock web backend) ────────────────
-# Read-only HTTP endpoints for the vote proxy on mythblock.me. Shares the
-# HMAC-SHA256 scheme with JExOneblock's REST API; the secret must match the
-# web stack's JEXONE_API_SECRET env var.
-#
-# Endpoints (all GET, all HMAC-authenticated):
-#   /sites                          - vote sites configured in sites.yml
-#   /players/{uuid}/cooldown        - per-site cooldowns until next vote
-#   /players/{uuid}/stats           - vote count / streak / lifetime totals
-# Wrong-method → 405. Rate-limit hit → 429 + Retry-After. Bad HMAC → 401.
-#
-# ⚠ NEVER hardcode the secret here - this repo is public. Set the env var
-# on the server process (systemd: `Environment=JEXONE_API_SECRET=…` under
-# the unit's [Service] section) and the `$ENV:` prefix resolves it at
-# load time. If the env var is unset / empty, the API silently refuses to
-# start ("[rest-api] api.secret is empty - refusing to start") - check
-# `/plugins/JExVote` in the server console output to confirm it bound the
-# port.
+# ── REST API ────────────────────────────────────────────────────
+# Read-only HTTP endpoints for a website (vote sites, a player's
+# cooldowns and stats). Every request must be signed with HMAC-SHA256
+# using the secret below. Off by default.
+#   GET /sites                    - the sites from sites.yml
+#   GET /players/{uuid}/cooldown  - seconds until each site can be voted on
+#   GET /players/{uuid}/stats     - votes, streak and points of a player
 api:
-  enabled: true
-  # HTTP port. Nothing else on the server may bind this.
+  enabled: false
+  # HTTP port; nothing else on the machine may use it.
   port: 8096
-  # HMAC-SHA256 shared secret. MUST match the web backend's JEXONE_API_SECRET.
-  secret: "$ENV:JEXONE_API_SECRET"
-  # Access-Control-Allow-Origin for browser calls. Set to your actual public
-  # domain in production; wildcards (`*`) are rejected for security.
-  cors-origin: "https://mythblock.me"
-  # Simple per-IP token bucket. 60 = plenty for a live-status dashboard.
+  # Shared secret. "$ENV:NAME" reads it from the environment variable
+  # NAME, so the secret does not have to be in this file. The API does
+  # not start while the secret is empty.
+  secret: "$ENV:JEXVOTE_API_SECRET"
+  # Value of the Access-Control-Allow-Origin header, for example
+  # "https://example.com". "*" allows every site.
+  cors-origin: "*"
+  # Requests per minute per IP address.
   rate-limit-per-minute: 60
-  # IPs of trusted reverse proxies. When the TCP peer matches one of these,
-  # X-Forwarded-For is read to extract the real client IP for rate limiting.
-  # Leave empty to never trust forwarded headers (safest when not proxied).
+  # Reverse proxies whose X-Forwarded-For header is trusted for the
+  # client IP. Leave empty when the API is not behind a proxy.
   trusted-proxies:
     - "127.0.0.1"
     - "::1"

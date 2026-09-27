@@ -1,0 +1,855 @@
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║                  JExVote - Reward Configuration              ║
+# ╠═══════════════════════════════════════════════════════════════╣
+# ║  Each reward needs a unique key and a 'type' field.          ║
+# ║  Uses JExPlatform's universal reward system.                  ║
+# ║                                                               ║
+# ║  Available reward types:                                      ║
+# ║    command, xp, currency, item, permission, sound, particle,  ║
+# ║    teleport, title, composite, choice, custom,                ║
+# ║    chance, lucky  (JExVote - Lucky Vote)                      ║
+# ╚═══════════════════════════════════════════════════════════════╝
+
+# ── Default Rewards ─────────────────────────────────────────────
+# Granted every time a player votes, regardless of site or streak.
+default-rewards:
+  # Oneblock-relevant baseline: a little XP + coins into the economy every vote.
+  vote-xp:    { type: xp,       amount: 35 }
+  # Nerfed after the Season-1 audit (voting was the #1 coin faucet, ~2.19M):
+  # base 800 -> 500 so mine->sell is the primary income, voting a solid bonus.
+  vote-coins: { type: currency, currency: coins, amount: 500.0 }
+  # Vote Jackpot / "Lucky Vote" (live): every vote also rolls exactly ONE prize
+  # from this weighted pool. Weights sum to EXACTLY 100, so each weight IS its
+  # drop chance in %. Shown in /vote rewards with per-entry odds + drop counts
+  # (id drives the stat).
+  #
+  # Design (2026-07-10 rework): voting is a casual daily habit, so ~78% of rolls
+  # are pocket-change (small coins / XP / a couple diamonds) - a pleasant "thanks
+  # for voting", never a payout. The middle band (~17%) is a nice hit (coin stack,
+  # Vote key, a small +2 island expansion). The rare band (~4%) is real value
+  # (10k coins, 1 netherite scrap, Shadow key). The ultra band (<0.6%) is the
+  # dream: a Void key, a sliver of premium Crystals, and the two real-money-tier
+  # keys pushed to lottery odds - a Dragon key at 0.05% and a Season key at just
+  # 0.01% (~1 in 10 000 votes). Strict rules honoured: no 2× netherite ever
+  # (scrap, x1, rare), Crystals granted sparingly (premium currency), and the
+  # $20-tier keys are practically unreachable here - they live in the shop/ranks.
+  vote-jackpot:
+    type: lucky
+    entries:
+      # -- Common (~78%) - casual "thanks for voting" --
+      - weight: 30          # 30% - pocket change
+        id: 'jackpot-coins-small'
+        reward: { type: currency, currency: coins, amount: 600.0 }
+      - weight: 20          # 20% - a little XP
+        id: 'jackpot-xp'
+        reward: { type: xp, amount: 100 }
+      - weight: 15          # 15% - a couple diamonds
+        id: 'jackpot-diamonds'
+        reward: { type: item, material: DIAMOND, amount: 2 }
+      - weight: 13          # 13% - a tidy coin stack
+        id: 'jackpot-coins-medium'
+        reward: { type: currency, currency: coins, amount: 2500.0 }
+      # -- Uncommon (~17%) - a nice little hit --
+      - weight: 8           # 8% - a fat coin stack
+        id: 'jackpot-coins-large'
+        reward: { type: currency, currency: coins, amount: 5000.0 }
+      - weight: 5           # 5% - a Vote Crate key
+        id: 'jackpot-vote-crate'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'crate give key {player} VoteCrate 1', asConsole: true }
+      - weight: 4           # 4% - a small island expansion (+2 radius, server-capped)
+        id: 'jackpot-region'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'jexoneblock grant-radius {player} 2', asConsole: true }
+      # -- Rare (~4%) - genuine value --
+      - weight: 2           # 2% - the coin jackpot
+        id: 'jackpot-coins-huge'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: currency, currency: coins, amount: 10000.0 }
+      - weight: 1.5         # 1.5% - 1 netherite scrap (never 2 ingots)
+        id: 'jackpot-netherite-scrap'
+        reward: { type: item, material: NETHERITE_SCRAP, amount: 1 }
+      - weight: 0.9         # 0.9% - a Shadow Crate key
+        id: 'jackpot-shadow-crate'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'crate give key {player} ShadowCrate 1', asConsole: true }
+      # -- Ultra-rare (<0.6%) - the dream pulls --
+      - weight: 0.4         # 0.4% - a Void Crate key
+        id: 'jackpot-void-crate'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'crate give key {player} VoidCrate 1', asConsole: true }
+      - weight: 0.14        # 0.14% - 25 Crystals jackpot
+        id: 'jackpot-crystals'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: currency, currency: crystals, amount: 25.0 }
+      - weight: 0.1         # 0.1% - ultra-rare 100 Crystals jackpot
+        id: 'jackpot-crystals-mega'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: currency, currency: crystals, amount: 100.0 }
+      - weight: 0.05        # 0.05% - Dragon Crate key ($20-tier: lottery odds)
+        id: 'jackpot-dragon-crate'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'crate give key {player} DragonCrate 1', asConsole: true }
+      - weight: 0.01        # 0.01% - Season Crate key (~1 in 10 000 votes; the rarest prize)
+        id: 'jackpot-season-crate'
+        announce: 'vote.lucky.jackpot'
+        reward: { type: command, command: 'crate give key {player} SeasonCrate 1', asConsole: true }
+
+# ── Guaranteed Rewards ──────────────────────────────────────────
+# Granted on EVERY vote, IN ADDITION to the single weighted pick from the
+# 'vote-jackpot' pool above and the flat default-rewards. Unlike the jackpot
+# pool (which rolls exactly ONE prize), EVERY entry in this LIST is granted on
+# every single vote - online voters receive it immediately, offline voters get
+# it queued and delivered on next login (exactly once per vote).
+#
+# Ships with one guaranteed prize: a Vote Crate key, so a vote ALWAYS yields a
+# key regardless of the jackpot roll. Admins can add more lines below - each is
+# a universal reward spec (the same shape as a pool entry's 'reward:' block, but
+# with no 'chance'/'weight'). Examples: an item, a currency grant, or another
+# command. See the REWARD TYPE REFERENCE at the bottom of this file.
+guaranteed-rewards:
+  - { type: command, command: 'crate give key {player} VoteCrate 1', asConsole: true }
+
+# ── Streak Rewards ──────────────────────────────────────────────
+# Bonus rewards when a player reaches a specific streak day. IN ADDITION to
+# the default rewards, shown in /vote (Streak Rewards): the milestone grid
+# lists every tier, and clicking one opens its full reward list.
+#
+# Eleven oneblock milestones (1/3/7/14/21/30/60/90/120/180/365) form a loyalty
+# ladder. Redefined 2026-07-11 to author spec: modest early days, a UNIQUE
+# unbreakable crown at day 30, and a long tail that layers in subscription
+# passes and finally the Mythic rank - the further the streak, the bigger the
+# prestige.
+#
+#   Day  Headline
+#   ──── ───────────────────────────────────────────────────────────────────
+#    1   Voter's Iron (8 ingots, warm-up)
+#    3   VoteCrate + 45m flytime + 16 iron
+#    7   VoteCrate ×2 + Voter's Pickaxe (iron, Eff I/Unbr III) + 2💎
+#   14   VoidCrate + VoteCrate ×2 + 10 island radius
+#   21   VoidCrate + VoteCrate ×5 + 8💎 + 30m flytime
+#   30   ★ UNIQUE Devoted Voter's Crown (unbreakable, Prot V, Aqua Affinity V)
+#        + 15 radius + 1 Season key
+#   60   10 radius + VoteCrate ×10 + Sigil pass (cheapest) 30 days
+#   90   10 radius + VoidCrate ×3 + VoteCrate ×5 + 16💎
+#  120   10 radius + VoidCrate ×5 + Aether pass 7 days
+#  180   10 radius + ShadowCrate ×2 + VoidCrate ×2 + Eclipse pass 7 days
+#  365   ★ Dragon key ×10 + Mythic rank 30 days + 50 radius
+#
+# Crate keys: 'crate give key <player> <Crate> <n>' (JExCrates virtual keys).
+# Region: 'jexoneblock grant-radius <player> <n>'. Flight: 'jexoneblock flytime'.
+# Passes: LP group 'jexoneblock.pass.<id>' (sigil<aether<eclipse) via addtemp.
+# Rank: LP group 'mythic' (top rank) via addtemp. addtemp uses 'accumulate' so a
+# reward stacks onto an already-active pass/rank instead of failing.
+streak-rewards:
+
+  # ── Day 1 · Spark ───────────────────────────────────────────────
+  1:
+    streak-1-xp:        { type: xp,       amount: 50 }
+    streak-1-coins:     { type: currency, currency: coins, amount: 1500.0 }
+    streak-1-iron:
+      type: item
+      material: IRON_INGOT
+      amount: 8
+      name: "<#F1F5F9>Voter's Iron</#F1F5F9>"
+      lore:
+        - "<#94A3B8>Paid for a 1-day vote streak.</#94A3B8>"
+
+  # ── Day 3 · Sprout ──────────────────────────────────────────────
+  # No diamonds this early - a starter key, a little coin, some iron, and a
+  # taste of flight. A 3-day habit, not a jackpot.
+  3:
+    streak-3-xp:        { type: xp,       amount: 80 }
+    streak-3-coins:     { type: currency, currency: coins, amount: 2000.0 }
+    streak-3-crate:     { type: command,  command: 'crate give key {player} VoteCrate 1', asConsole: true }
+    # Island flight time - handed out as physical, tradeable 15-minute fly-coupon
+    # items (here 3× 15m = 45m) rather than a direct bank grant, so nothing is
+    # silently lost to the flytime cap: the player redeems each coupon when they
+    # have room. Recipient must be online when the streak fires.
+    streak-3-flytime:   { type: command,  command: 'jexoneblock flycoupon {player} 15 3', asConsole: true }
+    streak-3-iron:
+      type: item
+      material: IRON_INGOT
+      amount: 16
+      name: "<#F1F5F9>Voter's Ingots</#F1F5F9>"
+      lore:
+        - "<#94A3B8>Paid for a 3-day vote streak.</#94A3B8>"
+
+  # ── Day 7 · Settler ─────────────────────────────────────────────
+  # A week earns a modest starter tool (iron, Eff I) + a couple diamonds.
+  7:
+    streak-7-xp:        { type: xp,       amount: 150 }
+    streak-7-coins:     { type: currency, currency: coins, amount: 4000.0 }
+    streak-7-crate:     { type: command,  command: 'crate give key {player} VoteCrate 2', asConsole: true }
+    streak-7-pickaxe:
+      type: item
+      material: IRON_PICKAXE
+      amount: 1
+      name: "<#F1F5F9>Voter's Pickaxe</#F1F5F9>"
+      lore:
+        - "<#94A3B8>Paid for a 7-day vote streak.</#94A3B8>"
+      enchantments:
+        efficiency: 1
+        unbreaking: 3
+      glow: true
+    streak-7-diamonds:  { type: item, material: DIAMOND, amount: 2 }
+
+  # ── Day 14 · Veteran ────────────────────────────────────────────
+  14:
+    streak-14-xp:       { type: xp,       amount: 250 }
+    streak-14-coins:    { type: currency, currency: coins, amount: 8000.0 }
+    streak-14-void-key: { type: command,  command: 'crate give key {player} VoidCrate 1', asConsole: true }
+    streak-14-vote-key: { type: command,  command: 'crate give key {player} VoteCrate 2', asConsole: true }
+    streak-14-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
+
+  # ── Day 21 · Champion ───────────────────────────────────────────
+  21:
+    streak-21-xp:       { type: xp,       amount: 400 }
+    streak-21-coins:    { type: currency, currency: coins, amount: 12000.0 }
+    streak-21-void-key: { type: command,  command: 'crate give key {player} VoidCrate 1', asConsole: true }
+    streak-21-vote-key: { type: command,  command: 'crate give key {player} VoteCrate 5', asConsole: true }
+    streak-21-fly:      { type: command,  command: 'jexoneblock flycoupon {player} 15 2', asConsole: true }
+    streak-21-diamonds: { type: item, material: DIAMOND, amount: 8 }
+
+  # ── Day 30 · Legend ★ UNIQUE ────────────────────────────────────
+  # The signature milestone. A one-of-a-kind unbreakable crown (Protection V,
+  # Aqua Affinity V) you can ONLY get from a 30-day streak, a big island
+  # expansion, and a Season key.
+  30:
+    streak-30-xp:       { type: xp,       amount: 800 }
+    streak-30-coins:    { type: currency, currency: coins, amount: 25000.0 }
+    streak-30-season-key: { type: command, command: 'crate give key {player} SeasonCrate 1', asConsole: true }
+    streak-30-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 15', asConsole: true }
+    streak-30-crown:
+      type: item
+      material: GOLDEN_HELMET
+      amount: 1
+      unbreakable: true
+      name: "<gradient:#FBBF24:#F59E0B>Devoted Voter's Crown</gradient>"
+      lore:
+        - "<#94A3B8>Only players who voted 30 days in a row own this crown.</#94A3B8>"
+        - ""
+        - "<#C4B5FD>Streak milestone</#C4B5FD> <dark_gray>|</dark_gray> <#F1F5F9>Day 30</#F1F5F9>"
+      enchantments:
+        protection: 5
+        aqua_affinity: 5
+      glow: true
+
+  # ── Day 60 · Eternal ────────────────────────────────────────────
+  # Long-tail begins: the cheapest subscription pass (Sigil) for 30 days,
+  # a pile of vote keys, and more island room.
+  60:
+    streak-60-xp:       { type: xp,       amount: 1200 }
+    streak-60-coins:    { type: currency, currency: coins, amount: 25000.0 }
+    streak-60-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
+    streak-60-vote-keys: { type: command, command: 'crate give key {player} VoteCrate 10', asConsole: true }
+    # Sigil = cheapest pass. addtemp/accumulate so it stacks if already active.
+    streak-60-pass:     { type: command,  command: 'lp user {player} parent addtemp jexoneblock.pass.sigil 30d accumulate', asConsole: true }
+
+  # ── Day 90 · Immortal ───────────────────────────────────────────
+  # (Not individually re-specified - a keys+radius step between the Sigil-60
+  # and Aether-120 pass milestones.)
+  90:
+    streak-90-xp:       { type: xp,       amount: 1500 }
+    streak-90-coins:    { type: currency, currency: coins, amount: 25000.0 }
+    streak-90-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
+    streak-90-void-keys: { type: command, command: 'crate give key {player} VoidCrate 3', asConsole: true }
+    streak-90-vote-keys: { type: command, command: 'crate give key {player} VoteCrate 5', asConsole: true }
+    streak-90-diamonds: { type: item, material: DIAMOND, amount: 16 }
+
+  # ── Day 120 · Ascended ──────────────────────────────────────────
+  120:
+    streak-120-xp:      { type: xp,       amount: 2000 }
+    streak-120-coins:   { type: currency, currency: coins, amount: 25000.0 }
+    streak-120-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
+    streak-120-void-keys: { type: command, command: 'crate give key {player} VoidCrate 5', asConsole: true }
+    # Aether = mid pass tier, 7 days.
+    streak-120-pass:    { type: command,  command: 'lp user {player} parent addtemp jexoneblock.pass.aether 7d accumulate', asConsole: true }
+
+  # ── Day 180 · Devoted ───────────────────────────────────────────
+  180:
+    streak-180-xp:      { type: xp,       amount: 3000 }
+    streak-180-coins:   { type: currency, currency: coins, amount: 25000.0 }
+    streak-180-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
+    streak-180-shadow-keys: { type: command, command: 'crate give key {player} ShadowCrate 2', asConsole: true }
+    streak-180-void-keys:   { type: command, command: 'crate give key {player} VoidCrate 2', asConsole: true }
+    # Eclipse = top pass tier, 7 days.
+    streak-180-pass:    { type: command,  command: 'lp user {player} parent addtemp jexoneblock.pass.eclipse 7d accumulate', asConsole: true }
+
+  # ── Day 365 · Undying ★ UNIQUE ──────────────────────────────────
+  # A full unbroken year - the ceiling. Ten Dragon keys, the Mythic rank for
+  # 30 days, and the biggest island expansion on the ladder.
+  365:
+    streak-365-xp:      { type: xp,       amount: 5000 }
+    streak-365-coins:   { type: currency, currency: coins, amount: 25000.0 }
+    streak-365-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 50', asConsole: true }
+    streak-365-dragon-keys: { type: command, command: 'crate give key {player} DragonCrate 10', asConsole: true }
+    # Mythic = top rank group (bare id), 30 days.
+    streak-365-rank:    { type: command,  command: 'lp user {player} parent addtemp mythic 30d accumulate', asConsole: true }
+
+# ── Site-Specific Rewards ───────────────────────────────────────
+# Extra rewards for voting on specific sites.
+# Use the site ID (from sites.yml) as the key.
+site-rewards: {}
+#  minecraft-server-list:
+#    mcsl-bonus:
+#      type: xp
+#      amount: 25
+
+# ── Vote Party Rewards (Premium) ────────────────────────────────
+# Granted to EVERY player who contributed to a vote party when it
+# completes (online players immediately, offline players on next
+# login). Configure the target/toggle under 'vote-party' in config.yml.
+# NOTE: Vote Party is a Premium-edition feature - on the Free edition it
+# stays disabled regardless of these settings.
+#
+# Two parts:
+#   vote-party-rewards : a small GUARANTEED baseline granted to everyone.
+#   vote-party-pool    : a weighted rotation. Each contributor receives 3
+#                        guaranteed draws plus decaying-chance extras
+#                        (75% then −8%/step, hard cap 10 total). Online
+#                        players see a slot-machine reveal animation first.
+vote-party-rewards:
+  # Guaranteed to EVERY contributor when a party completes. Parties fire often
+  # (every 100 votes), so the flat coin grant is kept modest - a participation
+  # thank-you, not the payout. The real prize is the weighted pool roll below.
+  party-xp:    { type: xp,       amount: 200 }
+  party-coins: { type: currency, currency: coins, amount: 2500.0 }
+
+# Weighted party rotation. Redesigned 2026-07-10 (econ pass):
+#   - virtual keys (crate give key), matching the server key model
+#   - Season key REMOVED from the pool - a real-money-tier key, reserved for the
+#     final rank + the shop; it must never fall out of a free party
+#   - Dragon key kept but ultra-rare (grand prize)
+#   - dropped the OP handouts (netherite block, beacon, diamond blocks)
+#   - added PARTY-EXCLUSIVE tools (named/enchanted, no Mending) you can only get
+#     from a vote party
+#   - added BORDER-EXTENSION prizes - win island radius from a party
+# Each entry has a stable 'id' so its drop-% + pull count surface in /vote party.
+vote-party-pool:
+  type: lucky
+  entries:
+    # -- Common - bulk materials & resources (keeps the economy fed) --
+    - { weight: 6,   id: 'party-cobble',       reward: { type: item, material: COBBLESTONE,      amount: 256 } }
+    - { weight: 5,   id: 'party-iron-block',   reward: { type: item, material: IRON_BLOCK,       amount: 4 } }
+    - { weight: 4.5, id: 'party-gold-block',   reward: { type: item, material: GOLD_BLOCK,       amount: 4 } }
+    - { weight: 4.5, id: 'party-coins-small',  reward: { type: currency, currency: coins, amount: 3000.0 } }
+    - { weight: 4,   id: 'party-copper-block', reward: { type: item, material: COPPER_BLOCK,     amount: 16 } }
+    - { weight: 4,   id: 'party-coal-block',   reward: { type: item, material: COAL_BLOCK,       amount: 16 } }
+    - { weight: 4,   id: 'party-redstone',     reward: { type: item, material: REDSTONE_BLOCK,   amount: 8 } }
+    - { weight: 4,   id: 'party-hoppers',      reward: { type: item, material: HOPPER,           amount: 16 } }
+    - { weight: 4,   id: 'party-xp-bottles',   reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 16 } }
+    - { weight: 3.5, id: 'party-lapis-block',  reward: { type: item, material: LAPIS_BLOCK,      amount: 8 } }
+    - { weight: 3.5, id: 'party-oak-logs',     reward: { type: item, material: OAK_LOG,          amount: 64 } }
+    - { weight: 3,   id: 'party-glass',        reward: { type: item, material: GLASS,            amount: 64 } }
+    - { weight: 3,   id: 'party-sand',         reward: { type: item, material: SAND,             amount: 128 } }
+    - { weight: 3,   id: 'party-bonemeal',     reward: { type: item, material: BONE_MEAL,        amount: 32 } }
+    - { weight: 3,   id: 'party-food',         reward: { type: item, material: COOKED_BEEF,      amount: 32 } }
+    - { weight: 3,   id: 'party-obsidian',     reward: { type: item, material: OBSIDIAN,         amount: 16 } }
+    - { weight: 2.5, id: 'party-rails',        reward: { type: item, material: RAIL,             amount: 32 } }
+    - { weight: 2.5, id: 'party-torches',      reward: { type: item, material: TORCH,            amount: 64 } }
+    # -- Uncommon - chase mats, QoL, cosmetics, a vote key --
+    - { weight: 4,   id: 'party-vote-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} VoteCrate 1', asConsole: true } }
+    - { weight: 3.5, id: 'party-diamonds',     reward: { type: item, material: DIAMOND,          amount: 12 } }
+    - { weight: 2.5, id: 'party-emerald',      reward: { type: item, material: EMERALD,          amount: 16 } }
+    - { weight: 2.5, id: 'party-quartz',       reward: { type: item, material: QUARTZ,           amount: 64 } }
+    - { weight: 2.5, id: 'party-ender-pearls', reward: { type: item, material: ENDER_PEARL,      amount: 8 } }
+    - { weight: 2.5, id: 'party-coins-medium', reward: { type: currency, currency: coins, amount: 6000.0 } }
+    - { weight: 2,   id: 'party-concrete',     reward: { type: item, material: WHITE_CONCRETE,   amount: 64 } }
+    - { weight: 2,   id: 'party-amethyst',     reward: { type: item, material: AMETHYST_BLOCK,   amount: 16 } }
+    - { weight: 2,   id: 'party-glowstone',    reward: { type: item, material: GLOWSTONE,        amount: 32 } }
+    - { weight: 2,   id: 'party-xp-large',     reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 32 } }
+    - { weight: 2,   id: 'party-nametags',     reward: { type: item, material: NAME_TAG,         amount: 4 } }
+    # -- Cosmetic flavour (no power) --
+    - { weight: 1.5, id: 'party-fireworks',    reward: { type: item, material: FIREWORK_ROCKET,  amount: 32 } }
+    - { weight: 1.5, id: 'party-disc',         reward: { type: item, material: MUSIC_DISC_BLOCKS, amount: 1 } }
+    - { weight: 1.5, id: 'party-banner',       reward: { type: item, material: PURPLE_BANNER,    amount: 4 } }
+    # -- Party-EXCLUSIVE tools (named + enchanted, no Mending - party-only) --
+    - { weight: 1.5, id: 'party-pickaxe',      announce: 'vote.lucky.jackpot', reward: { type: item, material: DIAMOND_PICKAXE, amount: 1, glow: true, name: '<gradient:#5EEAD4:#A78BFA>Party Pickaxe</gradient>', lore: ['<#94A3B8>Won in a vote party.</#94A3B8>'], enchantments: { efficiency: 4, unbreaking: 3 } } }
+    - { weight: 1.5, id: 'party-blade',        announce: 'vote.lucky.jackpot', reward: { type: item, material: DIAMOND_SWORD, amount: 1, glow: true, name: '<gradient:#5EEAD4:#A78BFA>Party Blade</gradient>', lore: ['<#94A3B8>Won in a vote party.</#94A3B8>'], enchantments: { sharpness: 4, unbreaking: 3 } } }
+    - { weight: 1.2, id: 'party-spade',        announce: 'vote.lucky.jackpot', reward: { type: item, material: DIAMOND_SHOVEL, amount: 1, glow: true, name: '<gradient:#5EEAD4:#A78BFA>Party Spade</gradient>', lore: ['<#94A3B8>Won in a vote party.</#94A3B8>'], enchantments: { efficiency: 4, unbreaking: 3 } } }
+    # -- Rare - netherite mats, larger coin, border extension --
+    - { weight: 2,   id: 'party-netherite-scrap', reward: { type: item, material: NETHERITE_SCRAP, amount: 3 } }
+    - { weight: 1.5, id: 'party-coins-large',  reward: { type: currency, currency: coins, amount: 12000.0 } }
+    - { weight: 1.5, id: 'party-border-small', announce: 'vote.lucky.jackpot', reward: { type: command, command: 'jexoneblock grant-radius {player} 2', asConsole: true } }
+    - { weight: 1,   id: 'party-netherite-ingot', reward: { type: item, material: NETHERITE_INGOT, amount: 1 } }
+    # -- Epic - shadow key, bigger border win --
+    - { weight: 1.2, id: 'party-shadow-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} ShadowCrate 1', asConsole: true } }
+    - { weight: 0.6, id: 'party-border-large', announce: 'vote.lucky.jackpot', reward: { type: command, command: 'jexoneblock grant-radius {player} 5', asConsole: true } }
+    # -- Legendary - void & dragon keys (the grand prizes) --
+    - { weight: 0.8, id: 'party-void-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} VoidCrate 1', asConsole: true } }
+    - { weight: 0.25, id: 'party-dragon-key',  announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} DragonCrate 1', asConsole: true } }
+
+
+# ── Vote Party Animation & Sound Configuration ───────────────────
+# Customize the slot-machine reveal animation when a vote party completes.
+# These settings control the visual and audio experience for online players.
+vote-party:
+  # Animation settings
+  animation:
+    # Number of spin frames before revealing rewards
+    spin-frames: 14
+    # Ticks between each spin frame (20 ticks = 1 second)
+    frame-ticks: 3
+    # Number of guaranteed pool draws per contributor
+    guaranteed-picks: 3
+    # Maximum total pool draws (guaranteed + extras)
+    max-total-picks: 10
+    # Starting chance for extra rolls (decays by extra-step each step)
+    extra-start-chance: 0.75
+    # Chance decay per extra roll step
+    extra-step: 0.08
+
+  # Sound settings
+  sounds:
+    # Sound played during spin animation
+    spin: BLOCK_NOTE_BLOCK_HAT
+    spin-volume: 0.7
+    spin-pitch-base: 1.0
+    spin-pitch-step: 0.1
+    # Sound played on reveal
+    reveal: UI_TOAST_CHALLENGE_COMPLETE
+    reveal-volume: 1.0
+    reveal-pitch: 1.0
+
+  # Title settings. The spin / reveal texts come from the translation files
+  # (vote_party.titles.* in translations/<locale>.yml), so every player sees
+  # them in their language. To override them for everyone, add MiniMessage
+  # strings here, for example:
+  #   spin: '<gradient:#5EEAD4:#A78BFA>Vote party</gradient>'
+  #   reveal: '<gradient:#5EEAD4:#A78BFA>Party rewards</gradient>'
+  #   reveal-subtitle: '<#F1F5F9>You won {count} prizes</#F1F5F9>'
+  titles:
+    # Title timing (milliseconds)
+    fade-in: 0
+    stay: 200
+    fade-out: 0
+
+# ── Vote-Token Shop (/vote shop) ────────────────────────────────
+# The primary sink for vote points (earned ~1 per vote). Rebuilt 2026-07-11:
+# a curated, oneblock-relevant catalog with a per-item `description:` (the
+# MiniMessage lore preview the GUI shows), thematic icons, and fair non-OP
+# pricing. Fields per entry:
+#   name        - display name (MiniMessage-safe plain text)
+#   icon        - GUI material (pick one that PREVIEWS the reward)
+#   cost        - price in vote points
+#   description - lore lines shown on the tile (what you're actually buying)
+#   reward      - the granted reward (item / currency / command)
+#   purchase-*  - optional sound/volume/pitch/messages (defaults are fine)
+#
+# Curation rules: useful oneblock resources, island expansion, flight time,
+# crate keys, and a little cosmetic flavour. The $20-tier Season/Dragon keys
+# are here as LONG-TERM goals (priced high). Removed the odd Shulker/NameTag
+# fillers. Crate keys use 'crate give key'; region uses grant-radius;
+# flight uses the island fly-time bank (jexoneblock flytime) so it matches the
+# in-game "Out of fly time?" hint that points here.
+vote-shop:
+
+  # ── Resources & automation ──────────────────────────────────────
+  iron-bundle:
+    name: "Iron Bundle"
+    icon: IRON_INGOT
+    cost: 10
+    description:
+      - "<#94A3B8>A stack of refined iron - hoppers, rails,"
+      - "<#94A3B8>anvils, and the backbone of any build."
+    reward: { type: item, material: IRON_INGOT, amount: 32 }
+  gold-bundle:
+    name: "Gold Bundle"
+    icon: GOLD_INGOT
+    cost: 12
+    description:
+      - "<#94A3B8>Gold for powered rails, clocks,"
+      - "<#94A3B8>and the finer redstone contraptions."
+    reward: { type: item, material: GOLD_INGOT, amount: 32 }
+  diamond-bundle:
+    name: "Diamond Bundle"
+    icon: DIAMOND
+    cost: 18
+    description:
+      - "<#94A3B8>Eight diamonds - a full set of tools,"
+      - "<#94A3B8>or a head start on enchanting."
+    reward: { type: item, material: DIAMOND, amount: 8 }
+  xp-bundle:
+    name: "Experience Bundle"
+    icon: EXPERIENCE_BOTTLE
+    cost: 12
+    description:
+      - "<#94A3B8>Skip the grind - pop these for"
+      - "<#94A3B8>instant enchanting levels."
+    reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 32 }
+    purchase-pitch: 1.2
+  hopper-bundle:
+    name: "Hopper Bundle"
+    icon: HOPPER
+    cost: 10
+    description:
+      - "<#94A3B8>Automate your one block - pipe drops"
+      - "<#94A3B8>straight into your storage."
+    reward: { type: item, material: HOPPER, amount: 16 }
+  obsidian-bundle:
+    name: "Obsidian Bundle"
+    icon: OBSIDIAN
+    cost: 12
+    description:
+      - "<#94A3B8>Portals, blast-proofing, and the"
+      - "<#94A3B8>foundations that never break."
+    reward: { type: item, material: OBSIDIAN, amount: 16 }
+  coin-pouch:
+    name: "Coin Pouch"
+    icon: GOLD_NUGGET
+    cost: 15
+    description:
+      - "<#94A3B8>Turn your loyalty into spending money."
+      - "<#94A3B8>Straight into your island bank."
+    reward: { type: currency, currency: coins, amount: 20000.0 }
+
+  # ── Island & flight ─────────────────────────────────────────────
+  # Region auto-resolves to the player's island (capped server-side).
+  fly-voucher:
+    name: "Flight Vouchers"
+    icon: FEATHER
+    cost: 18
+    description:
+      - "<#94A3B8>Tradeable island flight coupons."
+      - "<#94A3B8>Redeem each when you have room to spare."
+    reward: { type: command, command: 'jexoneblock flycoupon {player} 15 2', asConsole: true }
+    purchase-sound: ITEM_ELYTRA_FLYING
+  island-radius-small:
+    name: "Island Expansion +5"
+    icon: GRASS_BLOCK
+    cost: 10
+    description:
+      - "<#94A3B8>Push your island border out by 5 blocks"
+      - "<#94A3B8>on every side. Room to grow."
+    reward: { type: command, command: 'jexoneblock grant-radius {player} 5', asConsole: true }
+  island-radius-large:
+    name: "Island Expansion +25"
+    icon: GRASS_BLOCK
+    cost: 40
+    description:
+      - "<#94A3B8>A big leap - +25 blocks on every side."
+      - "<#94A3B8>For the ambitious builder."
+    reward: { type: command, command: 'jexoneblock grant-radius {player} 25', asConsole: true }
+    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
+  event-fly:
+    name: "Event Auto-Fly Perk"
+    icon: PHANTOM_MEMBRANE
+    cost: 250
+    description:
+      - "<#94A3B8>A <gold>permanent</gold> perk - you fly automatically"
+      - "<#94A3B8>but <white>only while an island event is running</white>."
+      - "<#94A3B8>Not free-flight; it switches on for events."
+      - "<#94A3B8>A long-term goal for the devoted voter."
+    reward: { type: command, command: 'lp user {player} permission set jexoneblock.eventfly true', asConsole: true }
+    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
+
+  # ── Crate keys (the chase) ──────────────────────────────────────
+  vote-key:
+    name: "Vote Crate Key"
+    icon: TRIPWIRE_HOOK
+    cost: 12
+    description:
+      - "<#94A3B8>Opens a <#7dd3fc>Vote Crate</#7dd3fc> - the everyday"
+      - "<#94A3B8>crate full of handy loot."
+    reward: { type: command, command: 'crate give key {player} VoteCrate 1', asConsole: true }
+  void-key:
+    name: "Void Crate Key"
+    icon: ENDER_EYE
+    cost: 45
+    description:
+      - "<#94A3B8>Opens a <#a855f7>Void Crate</#a855f7> - rarer loot"
+      - "<#94A3B8>pulled from the edge of the world."
+    reward: { type: command, command: 'crate give key {player} VoidCrate 1', asConsole: true }
+  shadow-key:
+    name: "Shadow Crate Key"
+    icon: ECHO_SHARD
+    cost: 55
+    description:
+      - "<#94A3B8>Opens a <#6c3483>Shadow Crate</#6c3483> - high-tier"
+      - "<#94A3B8>rewards for the dedicated."
+    reward: { type: command, command: 'crate give key {player} ShadowCrate 1', asConsole: true }
+  season-key:
+    name: "Season Crate Key"
+    icon: NETHER_STAR
+    cost: 75
+    description:
+      - "<#94A3B8>Opens a <gold>Season Crate</gold> - a premium,"
+      - "<#94A3B8>real-money-tier crate. A serious goal."
+    reward: { type: command, command: 'crate give key {player} SeasonCrate 1', asConsole: true }
+    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
+  dragon-key:
+    name: "Dragon Crate Key"
+    icon: DRAGON_HEAD
+    cost: 65
+    description:
+      - "<#94A3B8>Opens a <#e74c3c>Dragon Crate</#e74c3c> - the rarest,"
+      - "<#94A3B8>most prestigious crate on the server."
+    reward: { type: command, command: 'crate give key {player} DragonCrate 1', asConsole: true }
+    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
+
+  # ── Season 3 systems + a rare Crystal goal ──────────────────────
+  backpack-upgrader:
+    name: "Backpack Upgrader"
+    icon: CHEST
+    cost: 140
+    description:
+      - "<#94A3B8>Upgrade one backpack up a tier -"
+      - "<#94A3B8>more slots, more perks."
+    reward: { type: command, command: 'backpack upgrader {player}', asConsole: true }
+  cobble-minion:
+    name: "Cobblestone Minion"
+    icon: DISPENSER
+    cost: 20
+    description:
+      - "<#94A3B8>A tireless tier-1 worker that mines"
+      - "<#94A3B8>cobblestone while you are away."
+    reward: { type: command, command: 'jexoneblock minion give {player} cobble_generator 1', asConsole: true }
+  obsidian-breaker:
+    name: "Obsidian Breaker"
+    icon: NETHERITE_PICKAXE
+    cost: 28
+    description:
+      - "<#94A3B8>An instant-mine pickaxe with charges -"
+      - "<#94A3B8>tear through the central block."
+    reward: { type: command, command: 'jexoneblock breaker-give {player} obsidian 1', asConsole: true }
+  ancient-cache:
+    name: "Ancient Cache"
+    icon: BRUSH
+    cost: 16
+    description:
+      - "<#94A3B8>Brush it open for relics, coins and"
+      - "<#94A3B8>archaeology loot."
+    reward: { type: command, command: 'jexoneblock excavate-give {player} cache 1', asConsole: true }
+  excavation-brush:
+    name: "Excavation Brush"
+    icon: BRUSH
+    cost: 12
+    description:
+      - "<#94A3B8>The tool for digging caches and"
+      - "<#94A3B8>suspicious sand."
+    reward: { type: command, command: 'jexoneblock excavate-give {player} brush 1', asConsole: true }
+  crystal-cache:
+    name: "Crystal Cache"
+    icon: AMETHYST_CLUSTER
+    cost: 120
+    description:
+      - "<#94A3B8>A <#c084fc>rare</#c084fc> payout of premium Crystals -"
+      - "<#94A3B8>a serious long-term voting goal."
+    reward: { type: command, command: 'economy give {player} 25 crystals', asConsole: true }
+    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
+
+  # ── Cosmetic flavour ────────────────────────────────────────────
+  fireworks:
+    name: "Celebration Fireworks"
+    icon: FIREWORK_ROCKET
+    cost: 6
+    description:
+      - "<#94A3B8>Light up the sky over your island."
+    reward: { type: item, material: FIREWORK_ROCKET, amount: 32 }
+    purchase-sound: ENTITY_FIREWORK_ROCKET_LAUNCH
+  music-disc:
+    name: "Music Disc"
+    icon: MUSIC_DISC_BLOCKS
+    cost: 10
+    description:
+      - "<#94A3B8>A tune for your island jukebox."
+    reward: { type: item, material: MUSIC_DISC_BLOCKS, amount: 1 }
+    purchase-sound: BLOCK_NOTE_BLOCK_PLING
+  # Permanent cosmetic particle trail - unlocks the GATED trail tier in /trail
+  # (ParticleTrailService). Pure cosmetic, no stats.
+  particle-trail:
+    name: "Particle Trail"
+    icon: FIREWORK_STAR
+    cost: 60
+    description:
+      - "<#94A3B8>Unlock a <#f0abfc>permanent</#f0abfc> cosmetic trail that"
+      - "<#94A3B8>follows you wherever you walk."
+      - "<#94A3B8>Pick your effect in <white>/trail</white>."
+      - "<#94A3B8>Cosmetic only - no stats."
+    reward: { type: command, command: 'lp user {player} permission set jexoneblock.cosmetic.trail true', asConsole: true }
+    purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
+  decorative-lanterns:
+    name: "Decorative Lanterns"
+    icon: SEA_LANTERN
+    cost: 8
+    description:
+      - "<#94A3B8>Clean, glowing light for your builds."
+    reward: { type: item, material: SEA_LANTERN, amount: 16 }
+  froglight-set:
+    name: "Froglight Set"
+    icon: PEARLESCENT_FROGLIGHT
+    cost: 12
+    description:
+      - "<#94A3B8>Rare, colourful light blocks - a proper"
+      - "<#94A3B8>flex for any island centrepiece."
+    reward: { type: item, material: PEARLESCENT_FROGLIGHT, amount: 16 }
+
+# ═════════════════════════════════════════════════════════════════
+# REWARD TYPE REFERENCE
+# ═════════════════════════════════════════════════════════════════
+# Below are commented examples of every available reward type.
+# Copy and paste into default-rewards, streak-rewards, or
+# site-rewards sections as needed.
+#
+# ── command ─────────────────────────────────────────────────────
+# Executes a server command. Use {player} for the player's name.
+#   my-command-reward:
+#     type: command
+#     command: 'give {player} emerald 5'
+#     as-console: true          # true = run as console, false = as player
+#
+# ── xp ──────────────────────────────────────────────────────────
+# Grants vanilla XP points (not levels).
+#   my-xp-reward:
+#     type: xp
+#     amount: 100
+#
+# ── currency ────────────────────────────────────────────────────
+# Deposits money via JExEconomy (requires JExEconomy).
+#   my-currency-reward:
+#     type: currency
+#     currency: 'coins'         # currency identifier from JExEconomy
+#     amount: 500.0
+#
+# ── item ────────────────────────────────────────────────────────
+# Gives an item stack to the player's inventory.
+#   my-item-reward:
+#     type: item
+#     material: DIAMOND_SWORD
+#     amount: 1
+#     name: '<gradient:#fde047:#f59e0b>Vote Sword'
+#     lore:
+#       - '<gray>A reward for voting!'
+#     enchantments:
+#       sharpness: 3
+#       unbreaking: 2
+#
+# ── permission ──────────────────────────────────────────────────
+# Grants a permission node (requires a permission plugin like LuckPerms).
+#   my-permission-reward:
+#     type: permission
+#     permission: 'vote.vip'
+#     duration: '7d'            # optional duration (e.g. 7d, 24h, 30m)
+#     server: 'global'          # optional, LuckPerms server context
+#
+# ── sound ───────────────────────────────────────────────────────
+# Plays a sound effect for the player.
+#   my-sound-reward:
+#     type: sound
+#     sound: 'ENTITY_PLAYER_LEVELUP'
+#     volume: 1.0
+#     pitch: 1.0
+#
+# ── particle ────────────────────────────────────────────────────
+# Spawns particles at the player's location.
+#   my-particle-reward:
+#     type: particle
+#     particle: 'FIREWORK'
+#     count: 30
+#     offset-x: 0.5
+#     offset-y: 1.0
+#     offset-z: 0.5
+#
+# ── title ───────────────────────────────────────────────────────
+# Displays a title and subtitle on the player's screen.
+#   my-title-reward:
+#     type: title
+#     title: '<gold><bold>Thank You!'
+#     subtitle: '<gray>Your vote was counted!'
+#     fade-in: 10               # ticks
+#     stay: 60                  # ticks
+#     fade-out: 10              # ticks
+#
+# ── teleport ────────────────────────────────────────────────────
+# Teleports the player to specific coordinates.
+#   my-teleport-reward:
+#     type: teleport
+#     world: 'world'
+#     x: 0.0
+#     y: 100.0
+#     z: 0.0
+#     yaw: 0.0
+#     pitch: 0.0
+#
+# ── composite ───────────────────────────────────────────────────
+# Bundles multiple rewards into one. All are granted together.
+#   my-composite-reward:
+#     type: composite
+#     rewards:
+#       - type: xp
+#         amount: 100
+#       - type: command
+#         command: 'give {player} diamond 1'
+#         as-console: true
+#       - type: sound
+#         sound: 'ENTITY_PLAYER_LEVELUP'
+#         volume: 1.0
+#         pitch: 1.0
+#
+# ── choice ──────────────────────────────────────────────────────
+# Lets the player pick one reward from a set (opens a GUI).
+#   my-choice-reward:
+#     type: choice
+#     options:
+#       - type: xp
+#         amount: 200
+#       - type: currency
+#         currency: 'coins'
+#         amount: 1000.0
+#       - type: item
+#         material: DIAMOND
+#         amount: 5
+#
+# ── custom ──────────────────────────────────────────────────────
+# Executes a custom reward handler registered by another plugin.
+#   my-custom-reward:
+#     type: custom
+#     handler: 'my_plugin:special_reward'
+#     data:
+#       key1: 'value1'
+#       key2: 42
+#
+# ── chance (Lucky Vote) ─────────────────────────────────────────
+# Grants a single nested reward with a probability (0.0–1.0).
+# Optionally announces a message to the player on a hit. When
+# 'show-chance' is true the {chance} placeholder in the announce
+# message resolves to the percentage (e.g. 10); otherwise it is blank.
+# The optional 'id' tracks how many times this reward has dropped,
+# exposed via %jexvote_reward_count_<id>%.
+#   lucky-diamonds:
+#     type: chance
+#     id: 'lucky-diamonds'      # optional - enables the drop-count placeholder
+#     chance: 0.10              # 10% chance
+#     show-chance: true         # expose the % in the announce message
+#     announce: 'vote.lucky.hit'
+#     reward:
+#       type: command
+#       command: 'give {player} diamond 5'
+#       as-console: true
+#
+# ── lucky (weighted jackpot) ────────────────────────────────────
+# Grants EXACTLY ONE reward from a weighted pool. Higher weight =
+# more likely. Each entry may carry its own announce message.
+#   vote-jackpot:
+#     type: lucky
+#     entries:
+#       - weight: 70            # common
+#         id: 'jackpot-common'  # optional - drop-count via %jexvote_reward_count_jackpot-common%
+#         reward:
+#           type: xp
+#           amount: 50
+#       - weight: 25            # uncommon
+#         id: 'jackpot-uncommon'
+#         announce: 'vote.lucky.hit'
+#         reward:
+#           type: currency
+#           currency: 'coins'
+#           amount: 250.0
+#       - weight: 5             # rare
+#         id: 'jackpot-rare'
+#         announce: 'vote.lucky.hit'
+#         reward:
+#           type: command
+#           command: 'give {player} diamond_block 1'
+#           as-console: true
