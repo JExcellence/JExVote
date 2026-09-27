@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 
 /**
  * Embedded HTTP server exposing JExVote data as a JSON REST API, consumed
- * by the Mythblock web backend. Uses the JDK's built-in {@link HttpServer}
+ * by a server website. Uses the JDK's built-in {@link HttpServer}
  * (zero external dependencies) and mirrors JExOneblock's season API:
  * HMAC-SHA256 auth over {@code <timestamp>.<path>} ({@code X-Signature} +
  * {@code X-Timestamp}, 5-minute replay window), per-IP rate limiting, and
@@ -122,6 +122,11 @@ public final class VoteRestApiServer {
         server.start();
         final int port = config.port();
         logger.log(Level.INFO, () -> String.format("[rest-api] started on port %d", port));
+    }
+
+    /** @return whether the HTTP server was started and is serving. */
+    public boolean isRunning() {
+        return server != null;
     }
 
     /** Gracefully stop the server. Called from {@code onDisable()}. */

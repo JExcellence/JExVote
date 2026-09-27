@@ -57,6 +57,11 @@ public class MultiplierService {
         this.settings.set(newSettings);
     }
 
+    /** @return the current weekend-window settings. */
+    public @NotNull Settings settings() {
+        return settings.get();
+    }
+
     /**
      * Returns the multiplier active right now (1.0 when no rule applies).
      */

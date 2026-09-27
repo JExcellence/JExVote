@@ -1,10 +1,16 @@
 package de.jexcellence.vote.service;
 
+import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.config.VoteConfig;
+import de.jexcellence.vote.config.VoteEffectsConfig;
 import de.jexcellence.vote.gui.style.VoteFormat;
 import de.jexcellence.vote.model.VoteSite;
+import de.jexcellence.vote.view.VoteRewardDescriber;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * Vote chat messages: the public "X voted" broadcast (mode + anti-spam cooldown), the private thank-you, the
@@ -30,9 +38,56 @@ public class VoteBroadcastService {
 
     private final VoteConfig config;
     private final AtomicLong lastBroadcastTime = new AtomicLong(0);
+    private final AtomicReference<VoteEffectsConfig> effects = new AtomicReference<>();
 
     public VoteBroadcastService(@NotNull VoteConfig config) {
         this.config = config;
+    }
+
+    /**
+     * Sets the {@code vote-effects} settings used by {@link #playVoteEffects}.
+     *
+     * @param effectsConfig the loaded effects config
+     */
+    public void setEffects(@NotNull VoteEffectsConfig effectsConfig) {
+        effects.set(effectsConfig);
+    }
+
+    /**
+     * Plays the configured vote sound for the voter: the milestone sound and title when the vote landed on a
+     * streak milestone, the streak sound when the streak grew past day one, the vote sound otherwise. Silent when
+     * {@code features.effects} is off. Runs on the voter's thread.
+     *
+     * @param player    the voter
+     * @param streak    the streak after this vote
+     * @param milestone whether this streak day is a configured milestone
+     */
+    public void playVoteEffects(@NotNull Player player, int streak, boolean milestone) {
+        VoteEffectsConfig loaded = effects.get();
+        if (loaded == null || !config.isFeatureEffects()) {
+            return;
+        }
+        VoteEffectsConfig.VoteEffects settings = loaded.getEffects();
+        boolean streaks = config.isFeatureStreaks();
+        if (streaks && milestone) {
+            playSound(player, settings.milestoneSound(), settings.milestoneVolume(), settings.milestonePitch());
+            MiniMessage mini = MiniMessage.miniMessage();
+            player.showTitle(Title.title(mini.deserialize(settings.milestoneTitle()),
+                    mini.deserialize(settings.milestoneSubtitle()),
+                    Title.Times.times(settings.titleFadeIn(), settings.titleStay(), settings.titleFadeOut())));
+        } else if (streaks && streak > 1) {
+            playSound(player, settings.streakSound(), settings.streakVolume(), settings.streakPitch());
+        } else {
+            playSound(player, settings.voteSound(), settings.voteVolume(), settings.votePitch());
+        }
+    }
+
+    private static void playSound(@NotNull Player player, @NotNull String soundName, float volume, float pitch) {
+        try {
+            player.playSound(player, Sound.valueOf(soundName), volume, pitch);
+        } catch (IllegalArgumentException ex) {
+            player.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, volume, pitch);
+        }
     }
 
     /**
@@ -97,12 +152,17 @@ public class VoteBroadcastService {
      * Tells the voter they received the guaranteed reward (granted on every vote, in addition to the weighted
      * pool). Silent when personal vote messages are disabled.
      *
-     * @param player the voter
+     * @param player  the voter
+     * @param rewards the guaranteed rewards, named in the message
      */
-    public void notifyGuaranteedReward(@NotNull Player player) {
-        if (config.isPrivateMessageEnabled()) {
-            r18n().msg("vote.guaranteed_reward").prefix().send(player);
+    public void notifyGuaranteedReward(@NotNull Player player, @NotNull List<AbstractReward> rewards) {
+        if (!config.isPrivateMessageEnabled() || rewards.isEmpty()) {
+            return;
         }
+        String names = rewards.stream()
+                .map(reward -> VoteRewardDescriber.describe(reward, player))
+                .collect(Collectors.joining(r18n().msg("vote.list-separator").miniMessage(player)));
+        r18n().msg("vote.guaranteed-rewards").with("rewards", names).prefix().send(player);
     }
 
     /**

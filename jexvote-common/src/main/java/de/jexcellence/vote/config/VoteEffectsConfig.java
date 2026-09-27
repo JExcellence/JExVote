@@ -46,11 +46,11 @@ public final class VoteEffectsConfig {
                 "ENTITY_PLAYER_LEVELUP", 1.0f, 1.0f,
                 "ENTITY_PLAYER_LEVELUP", 1.0f, 1.2f,
                 "UI_TOAST_CHALLENGE_COMPLETE", 1.0f, 1.0f,
-                "<gradient:#86efac:#16a34a>Vote Streak!</gradient>",
-                "<gray>You reached a new milestone!</gray>",
-                Duration.ofMillis(10),
-                Duration.ofMillis(40),
-                Duration.ofMillis(10)
+                "<gradient:#5EEAD4:#A78BFA>Vote streak</gradient>",
+                "<#F1F5F9>New milestone reached</#F1F5F9>",
+                ticks(10),
+                ticks(40),
+                ticks(10)
         );
     }
 
@@ -110,10 +110,18 @@ public final class VoteEffectsConfig {
                 (float) section.getDouble("milestone.pitch", VoteEffects.DEFAULTS.milestonePitch()),
                 section.getString("milestone.title", VoteEffects.DEFAULTS.milestoneTitle()),
                 section.getString("milestone.subtitle", VoteEffects.DEFAULTS.milestoneSubtitle()),
-                Duration.ofMillis(section.getLong("milestone.fade-in", VoteEffects.DEFAULTS.titleFadeIn().toMillis())),
-                Duration.ofMillis(section.getLong("milestone.stay", VoteEffects.DEFAULTS.titleStay().toMillis())),
-                Duration.ofMillis(section.getLong("milestone.fade-out", VoteEffects.DEFAULTS.titleFadeOut().toMillis()))
+                ticks(section.getLong("milestone.fade-in", 10L)),
+                ticks(section.getLong("milestone.stay", 40L)),
+                ticks(section.getLong("milestone.fade-out", 10L))
         );
+    }
+
+    /**
+     * @param ticks server ticks (20 per second), as the config documents
+     * @return the same span as a duration; negative values count as zero
+     */
+    static @NotNull Duration ticks(long ticks) {
+        return Duration.ofMillis(Math.max(0L, ticks) * 50L);
     }
 
     private boolean isValidSound(@NotNull String soundName) {

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,6 +40,7 @@ public class VoteRewardService {
     private final MultiplierService multiplierService;
     private volatile boolean manualStreakClaim;
     private volatile boolean streaksEnabled = true;
+    private final AtomicReference<UnaryOperator<String>> siteIdResolver = new AtomicReference<>(service -> null);
 
     @SuppressWarnings("java:S107")
     public VoteRewardService(@NotNull Logger logger,
@@ -71,6 +73,24 @@ public class VoteRewardService {
         this.commandsOnVote.set(commandsOnVote);
     }
 
+    /**
+     * Sets how a vote's service name maps to the id of its site in {@code sites.yml}, so {@code site-rewards}
+     * keyed by site id apply.
+     *
+     * @param resolver service name to site id, returning {@code null} when no site matches
+     */
+    public void setSiteIdResolver(@NotNull UnaryOperator<String> resolver) {
+        siteIdResolver.set(resolver);
+    }
+
+    /**
+     * @param serviceName the service name a vote arrived with
+     * @return the {@code site-rewards} of that site, keyed by service name or site id
+     */
+    public @NotNull List<AbstractReward> siteRewardsFor(@NotNull String serviceName) {
+        return SiteRewardLookup.find(siteRewards.get(), serviceName, siteIdResolver.get().apply(serviceName));
+    }
+
     private static @NotNull ObjectMapper buildRewardMapper(@NotNull RewardRegistry registry) {
         var mapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -91,7 +111,7 @@ public class VoteRewardService {
 
         grantAll(defaultRewards.get(), player, multiplier);
         grantAll(guaranteedRewards.get(), player, multiplier);
-        grantAll(siteRewards.get().getOrDefault(serviceName.toLowerCase(), List.of()), player, multiplier);
+        grantAll(siteRewardsFor(serviceName), player, multiplier);
 
         if (streaksEnabled && !manualStreakClaim) {
             grantAll(streakRewards.get().getOrDefault(currentStreak, List.of()), player, multiplier);
@@ -162,7 +182,7 @@ public class VoteRewardService {
             defaultRewards.get().forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
             guaranteedRewards.get().forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
 
-            siteRewards.get().getOrDefault(serviceName.toLowerCase(), List.of())
+            siteRewardsFor(serviceName)
                     .forEach(reward -> rewardList.add(serializeScaled(reward, multiplier)));
 
             if (streaksEnabled && !manualStreakClaim) {
@@ -336,6 +356,11 @@ public class VoteRewardService {
 
     public @NotNull List<AbstractReward> getDefaultRewards() {
         return defaultRewards.get();
+    }
+
+    /** @return the rewards granted on every vote in addition to the default rewards. */
+    public @NotNull List<AbstractReward> getGuaranteedRewards() {
+        return guaranteedRewards.get();
     }
 
     public boolean hasGuaranteedRewards() {

@@ -1,6 +1,7 @@
 package de.jexcellence.vote.service;
 
 import de.jexcellence.economy.api.EconomyProvider;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -22,7 +23,38 @@ import java.util.logging.Logger;
  */
 public final class RewardEconomy {
 
+    /** Which economy pays {@code currency} rewards. */
+    public enum Provider {
+        /** The JExEconomy plugin with its provider registered. */
+        JEXECONOMY,
+        /** A Vault economy (EssentialsX, CMI and others). */
+        VAULT,
+        /** No economy: currency rewards pay nothing. */
+        NONE
+    }
+
     private final Logger logger;
+
+    /**
+     * Detects the economy that {@link #deposit} would use right now, for the admin status panel.
+     *
+     * @return the active provider
+     */
+    public static @NotNull Provider activeProvider() {
+        try {
+            if (Bukkit.getPluginManager().getPlugin("JExEconomy") != null
+                    && Bukkit.getServicesManager().getRegistration(EconomyProvider.class) != null) {
+                return Provider.JEXECONOMY;
+            }
+            if (Bukkit.getPluginManager().getPlugin("Vault") != null
+                    && Bukkit.getServicesManager().getRegistration(Economy.class) != null) {
+                return Provider.VAULT;
+            }
+        } catch (NoClassDefFoundError ex) {
+            return Provider.NONE;
+        }
+        return Provider.NONE;
+    }
 
     public RewardEconomy(@NotNull Logger logger) {
         this.logger = logger;
@@ -69,8 +101,8 @@ public final class RewardEconomy {
             if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
                 return false;
             }
-            RegisteredServiceProvider<net.milkbowl.vault.economy.Economy> rsp =
-                    Bukkit.getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+            RegisteredServiceProvider<Economy> rsp =
+                    Bukkit.getServicesManager().getRegistration(Economy.class);
             if (rsp == null) {
                 return false;
             }

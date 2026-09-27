@@ -520,6 +520,7 @@ public class VoteService {
         }
         executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
         broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
+        broadcastService.playVoteEffects(onlinePlayer, streak, rewardService.getStreakRewards().containsKey(streak));
         if (firstDailyBonus) {
             for (String command : dailyRewardCommands) {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
@@ -527,7 +528,7 @@ public class VoteService {
             }
         }
         if (rewardService.hasGuaranteedRewards()) {
-            broadcastService.notifyGuaranteedReward(onlinePlayer);
+            broadcastService.notifyGuaranteedReward(onlinePlayer, rewardService.getGuaranteedRewards());
         }
         if (freshFreezeGrant > 0) {
             R18nManager.getInstance().msg("vote.freeze.granted").prefix()

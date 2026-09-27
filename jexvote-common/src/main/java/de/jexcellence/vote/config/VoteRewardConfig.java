@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -93,6 +94,9 @@ public final class VoteRewardConfig {
                 config.set(path, MAX_STREAK_COINS);
                 changed++;
             }
+        }
+        if (changed == 0) {
+            return;
         }
         config.set(STREAK_CAP_MIGRATION, true);
         saveBalanceMigration(config, changed);
@@ -280,7 +284,7 @@ public final class VoteRewardConfig {
             if (siteSection != null) {
                 List<AbstractReward> rewards = loadRewardList(siteSection);
                 if (!rewards.isEmpty()) {
-                    map.put(siteId.toLowerCase(), rewards);
+                    map.put(siteId.toLowerCase(Locale.ROOT), rewards);
                 }
             }
         }

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,6 +32,13 @@ public final class ConfigMigrator {
     private static final Map<String, Integer> FILE_BOUNDARY_DEPTHS = Map.of(
             "sites.yml", 2
     );
+
+    /**
+     * Files that hold the operator's own content (reward lists, shop items). Bundled entries are examples, so
+     * they are neither merged into the file nor used as a runtime fallback: a reward the operator deleted must
+     * stay deleted.
+     */
+    private static final Set<String> CONTENT_FILES = Set.of("rewards.yml");
 
     private ConfigMigrator() {
         // Utility class - no instances
@@ -59,6 +67,10 @@ public final class ConfigMigrator {
             user.load(file);
         } catch (Exception e) {
             logger.log(Level.WARNING, e, () -> String.format("Failed to load %s - using bundled defaults only", fileName));
+        }
+
+        if (isContentFile(fileName)) {
+            return user;
         }
 
         YamlConfiguration defaults = loadBundledDefaults(plugin, fileName);
@@ -131,6 +143,14 @@ public final class ConfigMigrator {
         return (int) missing.stream()
                 .filter(key -> !defaults.isConfigurationSection(key))
                 .count();
+    }
+
+    /**
+     * @param fileName a config file name
+     * @return whether the file is operator content that is never merged with the bundled default
+     */
+    static boolean isContentFile(@NotNull String fileName) {
+        return CONTENT_FILES.contains(fileName.toLowerCase(Locale.ROOT));
     }
 
     private static int boundaryDepth(@NotNull String fileName) {

@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -70,11 +71,11 @@ public class VotePartyService {
     private final VoteRewardService rewardService;
     private final VoteBroadcastService broadcastService;
     private final VotePartyConfig partyConfig;
-    private final List<AbstractReward> partyRewards;
-    private final int target;
+    private final AtomicReference<List<AbstractReward>> partyRewards = new AtomicReference<>(List.of());
+    private final AtomicInteger target = new AtomicInteger();
 
     /** Weighted rotation pool for the guaranteed + decaying-extra draws. */
-    private @Nullable LuckyReward partyPool;
+    private final AtomicReference<LuckyReward> partyPool = new AtomicReference<>();
 
     /** Cross-backend outbox publisher (null unless proxy sync is enabled). */
     private @Nullable ProxyEventPublisher eventPublisher;
@@ -107,8 +108,8 @@ public class VotePartyService {
         this.rewardService = rewardService;
         this.broadcastService = broadcastService;
         this.partyConfig = partyConfig;
-        this.partyRewards = partyRewards;
-        this.target = target;
+        this.partyRewards.set(List.copyOf(partyRewards));
+        this.target.set(target);
 
         VotePartyEntity party = getOrCreateActiveParty();
         this.currentVotes.set(party.getCurrentVotes());
@@ -188,11 +189,11 @@ public class VotePartyService {
         int completedNumber = party.getPartyNumber();
         party.setPartyNumber(completedNumber + 1);
         party.setCurrentVotes(0);
-        party.setTargetVotes(target);
+        party.setTargetVotes(target.get());
         party.setStartedAt(Instant.now());
         partyRepository.update(party); // version-checked; conflict -> retry re-reads
         currentVotes.set(0);
-        targetVotes.set(target);
+        targetVotes.set(target.get());
         return completedNumber;
     }
 
@@ -211,13 +212,13 @@ public class VotePartyService {
             completedNumber = party.getPartyNumber();
             party.setPartyNumber(completedNumber + 1);
             party.setCurrentVotes(0);
-            party.setTargetVotes(target);
+            party.setTargetVotes(target.get());
             party.setStartedAt(Instant.now());
         }
         partyRepository.update(party); // version-checked; a conflict throws -> retry re-reads
         if (completes) {
             currentVotes.set(0);
-            targetVotes.set(target);
+            targetVotes.set(target.get());
         } else {
             currentVotes.set(party.getCurrentVotes());
             publish(ProxyEventTypes.PARTY_PROGRESS,
@@ -273,7 +274,7 @@ public class VotePartyService {
         scheduler.runSync(() -> {
             broadcastService.broadcastPartyReached(completedNumber);
             Bukkit.getPluginManager().callEvent(
-                    new VotePartyCompletedEvent(completedNumber, target, contributorUuids));
+                    new VotePartyCompletedEvent(completedNumber, target.get(), contributorUuids));
         });
         publish(ProxyEventTypes.PARTY_COMPLETE, String.valueOf(completedNumber));
         logger.log(Level.INFO, () -> String.format(
@@ -282,12 +283,26 @@ public class VotePartyService {
 
     /** Injects the weighted party rotation pool (null = no rotation, baseline only). */
     public void setPartyPool(@Nullable LuckyReward partyPool) {
-        this.partyPool = partyPool;
+        this.partyPool.set(partyPool);
+    }
+
+    /**
+     * Applies reloaded party settings. The rewards and the pool apply to the next completed party; the new
+     * target applies when the running party completes, so a party in progress keeps its goal.
+     *
+     * @param rewards the baseline rewards every contributor gets
+     * @param pool    the prize pool, or {@code null} for baseline only
+     * @param goal    votes needed for the next party
+     */
+    public void reload(@NotNull List<AbstractReward> rewards, @Nullable LuckyReward pool, int goal) {
+        partyRewards.set(List.copyOf(rewards));
+        partyPool.set(pool);
+        target.set(goal);
     }
 
     private void rewardContributor(@NotNull UUID uuid) {
         List<LuckyReward.Entry> picks = rollPartyEntries();
-        List<AbstractReward> rewards = new ArrayList<>(partyRewards);
+        List<AbstractReward> rewards = new ArrayList<>(partyRewards.get());
         for (LuckyReward.Entry entry : picks) {
             rewards.add(entry.reward());
             if (entry.id() != null) {
@@ -357,7 +372,7 @@ public class VotePartyService {
      * Empty when no pool is configured.
      */
     private @NotNull List<LuckyReward.Entry> rollPartyEntries() {
-        LuckyReward pool = partyPool;
+        LuckyReward pool = partyPool.get();
         if (pool == null || pool.getEntries().isEmpty()) {
             return List.of();
         }
@@ -464,7 +479,7 @@ public class VotePartyService {
 
     private @NotNull VotePartyEntity getOrCreateActiveParty() {
         return partyRepository.findActive().orElseGet(() -> {
-            VotePartyEntity party = new VotePartyEntity(1, target);
+            VotePartyEntity party = new VotePartyEntity(1, target.get());
             partyRepository.create(party);
             return party;
         });
