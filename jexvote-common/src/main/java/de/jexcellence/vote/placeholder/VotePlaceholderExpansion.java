@@ -1,5 +1,6 @@
 package de.jexcellence.vote.placeholder;
 
+import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.database.entity.VotePlayerEntity;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
 import de.jexcellence.vote.service.RewardStatsService;
@@ -77,13 +78,13 @@ public class VotePlaceholderExpansion extends PlaceholderExpansion {
             // Trigger async refresh; return cached/default value for now
             refreshAsync(uuid);
             if (cached == null) {
-                return defaultValue(params, player.getName());
+                return defaultValue(params, player);
             }
         }
 
         VotePlayerEntity vp = cached.entity;
         if (vp == null) {
-            return defaultValue(params, player.getName());
+            return defaultValue(params, player);
         }
 
         return switch (params.toLowerCase()) {
@@ -93,7 +94,7 @@ public class VotePlaceholderExpansion extends PlaceholderExpansion {
             case "highest_streak" -> String.valueOf(vp.getHighestStreak());
             case "points" -> String.valueOf(vp.getVotePoints());
             case "last_vote" -> vp.getLastVoteAt() != null
-                    ? DATE_FORMAT.format(vp.getLastVoteAt()) : "Never";
+                    ? DATE_FORMAT.format(vp.getLastVoteAt()) : never(player);
             case "player_name" -> vp.getPlayerName() != null ? vp.getPlayerName() : player.getName();
             default -> null;
         };
@@ -124,10 +125,16 @@ public class VotePlaceholderExpansion extends PlaceholderExpansion {
                 cache.put(uuid, new CachedPlayer(opt.orElse(null))));
     }
 
-    private static @Nullable String defaultValue(@NotNull String params, @Nullable String name) {
+    /** The translated "never voted" text in the player's language, or the server default for offline players. */
+    private static @NotNull String never(@NotNull OfflinePlayer player) {
+        return R18nManager.getInstance().msg("vote.placeholder.never").text(player.getPlayer());
+    }
+
+    private static @Nullable String defaultValue(@NotNull String params, @NotNull OfflinePlayer player) {
+        String name = player.getName();
         return switch (params.toLowerCase()) {
             case "total", "monthly", "streak", "highest_streak", "points" -> "0";
-            case "last_vote" -> "Never";
+            case "last_vote" -> never(player);
             case "player_name" -> name;
             default -> null;
         };

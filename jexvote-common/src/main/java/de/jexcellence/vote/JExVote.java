@@ -1,5 +1,6 @@
 package de.jexcellence.vote;
 
+import de.jexcellence.vote.command.CommandTreeMerger;
 import com.raindropcentral.commands.CommandFactory;
 import com.raindropcentral.commands.v2.argument.ArgumentType;
 import com.raindropcentral.commands.v2.argument.ArgumentTypeRegistry;
@@ -131,6 +132,8 @@ public abstract class JExVote {
     private VoteLeaderboardView leaderboardView;
     private VoteRewardsView rewardsView;
     private VoteShopView shopView;
+    private VoteStreakView streakView;
+    private VotePartyView partyView;
     private VoteShopService shopService;
     private VoteFeatures features;
     private boolean bedrockFormsHooked;
@@ -561,10 +564,13 @@ public abstract class JExVote {
         // names, aliases, permissions, and descriptions.
         saveDefaultResource("commands/vote.yml");
         saveDefaultResource("commands/jexvote.yml");
+        CommandTreeMerger.addMissingSubcommands(plugin, "commands/vote.yml");
+        CommandTreeMerger.addMissingSubcommands(plugin, "commands/jexvote.yml");
 
         var voteCommandHandler = new VoteCommandHandler(voteService, leaderboardService, features, overviewView,
                 rewardsView, leaderboardView, streakFreezeService, voteGiftService);
         voteCommandHandler.setShopView(shopView);
+        voteCommandHandler.setStreakAndPartyViews(streakView, partyView);
 
         var bedrockBridge = new BedrockFormBridge();
         if (bedrockBridge.isAvailable()) {
@@ -608,10 +614,10 @@ public abstract class JExVote {
         shopService = new VoteShopService(plugin, playerRepository, rewardService, rewardConfig);
         overviewView = new VoteOverviewView(plugin, voteService, features, rewardConfig, streakFreezeService);
         leaderboardView = new VoteLeaderboardView(plugin, leaderboardService);
-        var streakView = new VoteStreakView(plugin, voteService, rewardService, streakClaimService);
+        streakView = new VoteStreakView(plugin, voteService, rewardService, streakClaimService);
         rewardsView = new VoteRewardsView(plugin, features, rewardConfig, multiplierService,
                 rewardStatsService, streakFreezeService, voteGiftService);
-        var partyView = new VotePartyView(rewardConfig, votePartyService, rewardStatsService);
+        partyView = new VotePartyView(rewardConfig, votePartyService, rewardStatsService);
         shopView = new VoteShopView(plugin, shopService);
         var luckyView = new VoteLuckyView(rewardConfig, rewardStatsService);
 

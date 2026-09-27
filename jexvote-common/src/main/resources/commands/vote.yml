@@ -39,6 +39,16 @@ subcommands:
       - eco
     senders: [player, console]
 
+  - name: streak
+    description: "Open your streak rewards"
+    aliases:
+      - streaks
+    senders: [player]
+
+  - name: party
+    description: "Show the vote party progress and prize pool"
+    senders: [player, console]
+
   - name: shop
     description: "Spend vote points in the vote-token shop"
     aliases:

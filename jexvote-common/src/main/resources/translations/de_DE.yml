@@ -59,6 +59,7 @@ vote:
   party:
     progress: '<#94A3B8>Vote-Party</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{current} / {target}</#F1F5F9>'
     reached: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Vote-Party #{party} ist geschafft. Alle, die gevotet haben, bekommen Party-Belohnungen.</#F1F5F9>'
+    unavailable: "<#F87171>[X]</#F87171> <#F1F5F9>Die Vote-Party ist auf diesem Server ausgeschaltet.</#F1F5F9>"
   no_permission: '<#F87171>[X]</#F87171> <#F1F5F9>Dafür hast du keine Berechtigung.</#F1F5F9>'
   player_not_found: '<#F87171>[X]</#F87171> <#F1F5F9>Kein Spieler namens</#F1F5F9> <#A78BFA>{player}</#A78BFA><#F1F5F9>.</#F1F5F9>'
   stats:
@@ -93,6 +94,10 @@ vote:
     entry_plain: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>{service}</#94A3B8>'
     no_sites: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>Es sind noch keine Vote-Seiten eingerichtet.</#F1F5F9>'
 
+  placeholder:
+    never: "Nie"
+  streak:
+    unavailable: "<#F87171>[X]</#F87171> <#F1F5F9>Serien-Belohnungen sind auf diesem Server ausgeschaltet.</#F1F5F9>"
 # ── Geteilte GUI-Bausteine ───────────────────────────────────────────────────
 gui:
   common:
@@ -504,6 +509,8 @@ vote_help:
     freeze: 'Einen Streak-Freeze mit Vote-Punkten kaufen'
     gift: 'Einem Freund einen Serientag schenken'
     help: 'Zeigt diese Liste'
+    streak: "Öffnet deine Serien-Belohnungen"
+    party: "Zeigt den Fortschritt und die Preise der Vote-Party"
 
 # ── /jexvote help und Admin-Ausgaben ─────────────────────────────────────────
 vote_admin:

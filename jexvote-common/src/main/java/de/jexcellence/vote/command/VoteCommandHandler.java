@@ -1,5 +1,7 @@
 package de.jexcellence.vote.command;
 
+import de.jexcellence.vote.view.VoteStreakView;
+import de.jexcellence.vote.view.VotePartyView;
 import com.raindropcentral.commands.v2.CommandContext;
 import com.raindropcentral.commands.v2.CommandHandler;
 import de.jexcellence.jextranslate.R18nManager;
@@ -44,6 +46,8 @@ public final class VoteCommandHandler {
     private final StreakFreezeService streakFreezeService;
     private final VoteGiftService voteGiftService;
     private VoteShopView shopView;
+    private @Nullable VoteStreakView streakView;
+    private @Nullable VotePartyView partyView;
     private @Nullable VoteBedrockForms bedrockForms;
 
     @SuppressWarnings("java:S107")
@@ -75,12 +79,20 @@ public final class VoteCommandHandler {
                 Map.entry("vote.rewards", this::onRewards),
                 Map.entry("vote.freeze", this::onFreeze),
                 Map.entry("vote.gift", this::onGift),
-                Map.entry("vote.shop", this::onShop)
+                Map.entry("vote.shop", this::onShop),
+                Map.entry("vote.streak", this::onStreak),
+                Map.entry("vote.party", this::onParty)
         );
     }
 
     /** Sets the vote-token shop view (wired post-construction in JExVote). */
     public void setShopView(@NotNull VoteShopView view) { this.shopView = view; }
+
+    /** Views behind {@code /vote streak} and {@code /vote party}. */
+    public void setStreakAndPartyViews(@NotNull VoteStreakView streak, @NotNull VotePartyView party) {
+        this.streakView = streak;
+        this.partyView = party;
+    }
 
     /** Sets the Bedrock forms handler (wired post-construction when Floodgate is present). */
     public void setBedrockForms(@Nullable VoteBedrockForms forms) { this.bedrockForms = forms; }
@@ -104,6 +116,40 @@ public final class VoteCommandHandler {
             return;
         }
         shopView.open(player);
+    }
+
+    private void onStreak(@NotNull CommandContext ctx) {
+        Player player = ctx.asPlayer().orElse(null);
+        if (player == null) {
+            r18n().msg("vote.shop.players_only").prefix().send(ctx.sender());
+            return;
+        }
+        if (!features.streaks() || streakView == null) {
+            r18n().msg("vote.streak.unavailable").prefix().send(player);
+            return;
+        }
+        if (isBedrock(player)) {
+            bedrockForms.openStreaks(player);
+            return;
+        }
+        streakView.open(player);
+    }
+
+    private void onParty(@NotNull CommandContext ctx) {
+        Player player = ctx.asPlayer().orElse(null);
+        if (!features.party() || partyView == null) {
+            r18n().msg("vote.party.unavailable").prefix().send(ctx.sender());
+            return;
+        }
+        if (player == null) {
+            rewardsView.sendTextSummary(ctx.sender());
+            return;
+        }
+        if (isBedrock(player)) {
+            bedrockForms.openParty(player);
+            return;
+        }
+        partyView.open(player);
     }
 
     private void onRewards(@NotNull CommandContext ctx) {
@@ -213,6 +259,13 @@ public final class VoteCommandHandler {
                 List.of("leaderboard", "lb"), HelpRenderer.Action.SUGGEST));
         entries.add(HelpRenderer.Entry.of("/vote rewards", "", "vote_help.desc.rewards-menu",
                 List.of("economy", "eco"), HelpRenderer.Action.RUN));
+        if (features.streaks()) {
+            entries.add(HelpRenderer.Entry.of("/vote streak", "", "vote_help.desc.streak",
+                    List.of("streaks"), HelpRenderer.Action.RUN));
+        }
+        if (features.party()) {
+            entries.add(HelpRenderer.Entry.of("/vote party", "", "vote_help.desc.party", HelpRenderer.Action.RUN));
+        }
         if (features.shop()) {
             entries.add(HelpRenderer.Entry.of("/vote shop", "", "vote_help.desc.shop",
                     List.of("store", "tokens"), HelpRenderer.Action.RUN));

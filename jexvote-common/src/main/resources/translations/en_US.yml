@@ -59,6 +59,7 @@ vote:
   party:
     progress: '<#94A3B8>Vote party</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{current} / {target}</#F1F5F9>'
     reached: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Vote party #{party} is complete. Everyone who voted gets party rewards.</#F1F5F9>'
+    unavailable: "<#F87171>[X]</#F87171> <#F1F5F9>The vote party is turned off on this server.</#F1F5F9>"
   no_permission: '<#F87171>[X]</#F87171> <#F1F5F9>You don''t have permission to do that.</#F1F5F9>'
   player_not_found: '<#F87171>[X]</#F87171> <#F1F5F9>No player named</#F1F5F9> <#A78BFA>{player}</#A78BFA><#F1F5F9>.</#F1F5F9>'
   stats:
@@ -93,6 +94,10 @@ vote:
     entry_plain: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>{service}</#94A3B8>'
     no_sites: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>No vote sites are set up yet.</#F1F5F9>'
 
+  placeholder:
+    never: "Never"
+  streak:
+    unavailable: "<#F87171>[X]</#F87171> <#F1F5F9>Streak rewards are turned off on this server.</#F1F5F9>"
 # ── Shared GUI vocabulary ────────────────────────────────────────────────────
 gui:
   common:
@@ -504,6 +509,8 @@ vote_help:
     freeze: 'Buy a Streak Freeze with vote points'
     gift: 'Give a friend a streak day'
     help: 'Show this list'
+    streak: "Open your streak rewards"
+    party: "Show the vote party progress and prizes"
 
 # ── /jexvote help and admin output ───────────────────────────────────────────
 vote_admin:

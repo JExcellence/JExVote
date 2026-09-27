@@ -42,7 +42,7 @@ subcommands:
     permission: "jexvote.command.admin.setstreak"
     argumentSchema:
       - { name: player, type: offline_player, required: true, description: "Player to modify" }
-      - { name: value, type: positive_long, required: true, description: "New streak value" }
+      - { name: value, type: long, required: true, description: "New streak value (0 or higher)" }
 
   - name: debug-services
     description: "Diagnose vote-site service-names vs. what's actually been received"
