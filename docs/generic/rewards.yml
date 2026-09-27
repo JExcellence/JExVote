@@ -1,0 +1,228 @@
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║                  JExVote - Rewards                            ║
+# ╚═══════════════════════════════════════════════════════════════╝
+#
+# Everything a vote pays. The defaults below only use vanilla items and XP,
+# so they work on any server. Change them freely: JExVote never adds entries
+# back into this file, so a reward you delete stays deleted.
+# Apply changes with /jexvote reload.
+#
+# Each reward has an id (any unique name) and a 'type'. The types are listed
+# at the end of this file. The menus describe every reward on their own:
+# items show the item name in the player's language, xp shows "50 XP",
+# currency shows "500 Coins". For a 'command' reward add a 'describe' text,
+# otherwise the menus call it "Special reward".
+
+# ── Every vote ──────────────────────────────────────────────────
+# Paid on every vote on any site.
+default-rewards:
+  vote-xp: { type: xp, amount: 50 }
+  vote-iron: { type: item, material: IRON_INGOT, amount: 4 }
+  # Lucky vote: every vote also draws exactly ONE prize from this pool.
+  # The chance of an entry is its weight divided by the sum of all weights
+  # (here they add up to 100, so each weight is its chance in percent).
+  # The 'id' counts how often a prize was won (shown in /vote rewards and
+  # as %jexvote_reward_count_<id>%).
+  lucky-vote:
+    type: lucky
+    entries:
+      - { weight: 40, id: 'lucky-bread',      reward: { type: item, material: BREAD, amount: 8 } }
+      - { weight: 25, id: 'lucky-xp',         reward: { type: xp, amount: 100 } }
+      - { weight: 15, id: 'lucky-gold',       reward: { type: item, material: GOLD_INGOT, amount: 4 } }
+      - { weight: 10, id: 'lucky-emeralds',   reward: { type: item, material: EMERALD, amount: 3 } }
+      - { weight: 7,  id: 'lucky-diamond',    announce: 'vote.lucky.jackpot', reward: { type: item, material: DIAMOND, amount: 1 } }
+      - { weight: 3,  id: 'lucky-golden-apple', announce: 'vote.lucky.jackpot', reward: { type: item, material: GOLDEN_APPLE, amount: 1 } }
+
+# ── Guaranteed extras ───────────────────────────────────────────
+# Paid on every vote on top of default-rewards, and named in the
+# "Every vote also pays" chat line. A list, not a map. Example:
+#   guaranteed-rewards:
+#     - { type: command, command: 'crate give key {player} Vote 1', asConsole: true }
+guaranteed-rewards: []
+
+# ── Streak milestones ───────────────────────────────────────────
+# Paid once when a player's best streak reaches the day number.
+# With streak.claim-mode: manual (config.yml) players claim them in
+# /vote > Streak rewards; with auto they are paid on the day.
+streak-rewards:
+  3:
+    streak-3-xp: { type: xp, amount: 100 }
+    streak-3-iron: { type: item, material: IRON_INGOT, amount: 16 }
+  7:
+    streak-7-xp: { type: xp, amount: 250 }
+    streak-7-diamonds: { type: item, material: DIAMOND, amount: 2 }
+  14:
+    streak-14-xp: { type: xp, amount: 500 }
+    streak-14-golden-apples: { type: item, material: GOLDEN_APPLE, amount: 3 }
+  30:
+    streak-30-xp: { type: xp, amount: 1000 }
+    streak-30-diamonds: { type: item, material: DIAMOND, amount: 8 }
+    streak-30-pickaxe:
+      type: item
+      material: DIAMOND_PICKAXE
+      amount: 1
+      name: "<#F1F5F9>Voter's Pickaxe</#F1F5F9>"
+      lore:
+        - "<#94A3B8>For a 30-day vote streak.</#94A3B8>"
+      enchantments:
+        efficiency: 3
+        unbreaking: 3
+
+# ── Extra rewards per site ──────────────────────────────────────
+# Paid on top of default-rewards for a vote on one site. Use the site id
+# from sites.yml as the key. Example:
+#   site-rewards:
+#     example-list:
+#       example-bonus: { type: xp, amount: 25 }
+site-rewards: {}
+
+# ── Vote party (Premium) ────────────────────────────────────────
+# vote-party-rewards: what every player who voted for the party gets.
+vote-party-rewards:
+  party-xp: { type: xp, amount: 200 }
+  party-cake: { type: item, material: CAKE, amount: 1 }
+# vote-party-pool: extra prize draws per player (a 'lucky' pool).
+# Leave it out for baseline rewards only.
+vote-party-pool:
+  type: lucky
+  entries:
+    - { weight: 50, id: 'party-gold',     reward: { type: item, material: GOLD_INGOT, amount: 8 } }
+    - { weight: 30, id: 'party-emeralds', reward: { type: item, material: EMERALD, amount: 6 } }
+    - { weight: 15, id: 'party-diamonds', reward: { type: item, material: DIAMOND, amount: 2 } }
+    - { weight: 5,  id: 'party-totem',    announce: 'vote.lucky.jackpot', reward: { type: item, material: TOTEM_OF_UNDYING, amount: 1 } }
+
+# How the party is paid out.
+vote-party:
+  animation:
+    # Frames of the prize spin before the reveal.
+    spin-frames: 14
+    # Ticks between two frames (20 ticks = 1 second).
+    frame-ticks: 3
+    # Prize draws every player gets.
+    guaranteed-picks: 3
+    # Most draws in total (guaranteed + extra).
+    max-total-picks: 10
+    # Chance of the first extra draw; each further one is extra-step lower.
+    extra-start-chance: 0.75
+    extra-step: 0.08
+  sounds:
+    spin: BLOCK_NOTE_BLOCK_HAT
+    spin-volume: 0.7
+    spin-pitch-base: 1.0
+    spin-pitch-step: 0.1
+    reveal: UI_TOAST_CHALLENGE_COMPLETE
+    reveal-volume: 1.0
+    reveal-pitch: 1.0
+  # The spin / reveal texts come from the translation files
+  # (vote_party.titles.*). To use the same text for everyone, set
+  # spin, reveal and reveal-subtitle here as MiniMessage.
+  titles:
+    # Title timing in milliseconds.
+    fade-in: 0
+    stay: 200
+    fade-out: 0
+
+# ── Vote shop (Premium) ─────────────────────────────────────────
+# /vote shop: players spend vote points here. Fields per item:
+#   name         name in the menu and in chat
+#   icon         item shown in the menu
+#   cost         price in vote points
+#   description  lore lines under the name (MiniMessage)
+#   reward       what the player gets (any reward type)
+#   purchase-sound / purchase-volume / purchase-pitch / purchase-messages  (optional)
+# The shop filter sorts items into crate keys, items and everything else
+# on its own.
+vote-shop:
+  iron-bundle:
+    name: "Iron Bundle"
+    icon: IRON_INGOT
+    cost: 5
+    description:
+      - "<#94A3B8>32 iron ingots for tools and builds.</#94A3B8>"
+    reward: { type: item, material: IRON_INGOT, amount: 32 }
+  xp-bottles:
+    name: "Experience Bottles"
+    icon: EXPERIENCE_BOTTLE
+    cost: 8
+    description:
+      - "<#94A3B8>32 bottles o' enchanting.</#94A3B8>"
+    reward: { type: item, material: EXPERIENCE_BOTTLE, amount: 32 }
+  diamond-bundle:
+    name: "Diamond Bundle"
+    icon: DIAMOND
+    cost: 15
+    description:
+      - "<#94A3B8>Four diamonds.</#94A3B8>"
+    reward: { type: item, material: DIAMOND, amount: 4 }
+  golden-apples:
+    name: "Golden Apples"
+    icon: GOLDEN_APPLE
+    cost: 12
+    description:
+      - "<#94A3B8>Four golden apples.</#94A3B8>"
+    reward: { type: item, material: GOLDEN_APPLE, amount: 4 }
+  name-tag:
+    name: "Name Tag"
+    icon: NAME_TAG
+    cost: 6
+    description:
+      - "<#94A3B8>Name a pet or a mob.</#94A3B8>"
+    reward: { type: item, material: NAME_TAG, amount: 1 }
+
+# ═════════════════════════════════════════════════════════════════
+# REWARD TYPES
+# ═════════════════════════════════════════════════════════════════
+#
+# item - gives an item stack.
+#   my-item:
+#     type: item
+#     material: DIAMOND_SWORD
+#     amount: 1
+#     name: '<#F1F5F9>Vote Sword</#F1F5F9>'   # optional
+#     lore: ['<#94A3B8>A reward for voting</#94A3B8>']   # optional
+#     enchantments: { sharpness: 3 }           # optional
+#     glow: true                               # optional
+#     unbreakable: true                        # optional
+#
+# xp - vanilla experience points.
+#   my-xp: { type: xp, amount: 100 }
+#
+# currency - money through JExEconomy, or through Vault when JExEconomy is not
+# installed (EssentialsX, CMI and other Vault economies). /jexvote info shows
+# which economy is used. 'currency' is the JExEconomy currency id; Vault has
+# one currency and ignores it.
+#   my-money: { type: currency, currency: 'money', amount: 500.0 }
+#
+# command - runs a command; {player} is the player's name. 'describe' is the
+# text the menus show for it (plain text, MiniMessage or a translation key).
+#   my-command:
+#     type: command
+#     command: 'give {player} emerald 5'
+#     asConsole: true
+#     describe: '5 Emeralds'
+#   Crate key commands of common crate plugins are recognised and shown as
+#   "1x Vote Crate key" without a describe, for example
+#   'crate give key {player} Vote 1' or 'ac virtualkey give {player} Vote 1'.
+#
+# permission - a permission node (needs a permission plugin such as LuckPerms).
+#   my-permission: { type: permission, permission: 'vote.vip', duration: '7d' }
+#
+# sound / particle / title / teleport - effects for the player.
+#   my-title: { type: title, title: '<#A78BFA>Thanks!</#A78BFA>', subtitle: '', fade-in: 10, stay: 60, fade-out: 10 }
+#
+# composite - several rewards granted together.
+#   my-bundle:
+#     type: composite
+#     rewards:
+#       - { type: xp, amount: 100 }
+#       - { type: item, material: DIAMOND, amount: 1 }
+#
+# chance - one reward with a probability from 0.0 to 1.0.
+#   my-chance:
+#     type: chance
+#     id: 'my-chance'            # optional, counts wins
+#     chance: 0.10               # 10 %
+#     announce: 'vote.lucky.hit' # optional chat message on a win
+#     reward: { type: item, material: DIAMOND, amount: 5 }
+#
+# lucky - exactly one reward from a weighted pool (see lucky-vote above).

@@ -32,21 +32,81 @@
 # The Free edition loads the first 5 sites; Premium has no limit.
 # Apply changes with /jexvote reload.
 #
-# Example (remove the # in front of the lines to use it):
-#
-# sites:
-#   example-list:
-#     display-name: 'Example Server List'
-#     service-name: 'ExampleList'
-#     vote-url: 'https://example.com/server/12345/vote'
-#     cooldown-minutes: 1440
-#     points-per-vote: 1
-#   second-list:
-#     display-name: 'Second List'
-#     service-name: 'SecondList.net'
-#     vote-url: 'https://second-list.example/vote/678'
-#     daily-reset: '00:00'
-#     timezone: 'UTC'
-#     points-per-vote: 1
 
-sites: {}
+# These are the Mythblock sites; replace them with your own.
+sites:
+  minecraft-server:
+    display-name: 'Minecraft-Serverliste'
+    service-name: 'Minecraft-Serverliste.eu'
+    vote-url: 'https://minecraft-server.eu/vote/index/239F1'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  minecraft-servers:
+    display-name: 'Minecraft-Servers'
+    service-name: 'Minecraft-Servers.de'
+    vote-url: 'https://minecraft-servers.de/server/mythblock/vote'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  minecraft-server-list:
+    display-name: 'Minecraft Server List'
+    service-name: 'MCSL'
+    vote-url: 'https://minecraft-server-list.com/server/520312/vote/'
+    daily-reset: '00:00'
+    timezone: 'UTC'
+    points-per-vote: 1
+    # Offline-vote reconciliation (optional), values from the site's API docs:
+    # api-url: 'https://minecraft-server-list.com/server/520312/vote/json/?username={username}&key={key}'
+    # api-key: 'YOUR_SERVER_KEY'
+    # api-voted-contains: '1'
+
+  minecraft-pocket-servers:
+    display-name: 'MinecraftPocket Servers'
+    service-name: 'MinecraftPocket-Servers.com'
+    vote-url: 'https://minecraftpocket-servers.com/server/133747/'
+    daily-reset: '00:00'
+    timezone: 'UTC'
+    points-per-vote: 1
+
+  topg:
+    display-name: 'TopG'
+    service-name: 'TopG.org'
+    vote-url: 'https://topg.org/minecraft-servers/server-684134'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  minecraft-mp:
+    display-name: 'Minecraft-MP'
+    service-name: 'Minecraft-MP.com'
+    vote-url: 'https://minecraft-mp.com/server/360836/vote/'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  minecraft-serverlist:
+    display-name: 'Minecraft Serverlist'
+    service-name: 'Minecraft-Serverlist.com'
+    vote-url: 'https://minecraft-serverlist.com/server/5753/vote'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  serverliste:
+    display-name: 'Serverliste'
+    service-name: 'Serverliste.net'
+    vote-url: 'https://serverliste.net/vote/5621'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  findmcserver:
+    display-name: 'FindMCServer'
+    service-name: 'FindMCServer.com'
+    vote-url: 'https://findmcserver.com/server/ttQ1PVlRNY'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  mcstat:
+    display-name: 'MCStat'
+    service-name: 'MCStat'
+    vote-url: 'https://mcstat.org/de/servers/mythblockme'
+    cooldown-minutes: 1440
+    points-per-vote: 1

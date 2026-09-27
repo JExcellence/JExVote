@@ -19,8 +19,9 @@ Built-in Votifier | Streaks | Streak Freezes | Vote Gifting | Lucky Vote | Vote 
 
 JExVote handles everything around server voting: it receives votes from vote sites with its own built-in
 Votifier server, pays rewards, tracks streaks and shows everything in one `/vote` menu. You do not need
-NuVotifier. The bundled defaults only use vanilla items and XP, so a fresh install works without any other
-plugin.
+NuVotifier. The bundled `rewards.yml` and `sites.yml` are the Mythblock setup (JExEconomy coins and Crystals,
+JExCrates keys, JExOneblock and LuckPerms commands). On a server without those plugins, start from
+`docs/generic/rewards.yml` and `docs/generic/sites.yml` instead, which only use vanilla items and XP.
 
 ---
 
@@ -244,7 +245,7 @@ new in the plugin are added automatically, but texts you already have are not ov
 
 - 2026-09-27: vote menu reorganised into header, stat row, site cards and one navigation row (with the vote
   party); centred layouts in every menu; features that are off or Premium only are hidden everywhere;
-  `/jexvote info` status panel; generic first-run `config.yml`, `sites.yml` and `rewards.yml`; currency icons
+  `/jexvote info` status panel; generic first-run `config.yml` (generic `sites.yml` and `rewards.yml` in `docs/generic/`); currency icons
   only with JExEconomy; `site-rewards` by site id; vote effects and reload of party rewards, target and effects
   now work; Free site limit also applies on reload.
 - 2026-09-26: menus, lore and messages rebuilt on the suite design rules.

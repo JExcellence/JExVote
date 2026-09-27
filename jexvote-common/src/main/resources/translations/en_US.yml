@@ -489,6 +489,18 @@ reward_describe:
   lucky-pool: '<#F1F5F9>1 of {count} lucky prizes</#F1F5F9>'
   lucky-win: '{reward}'
   chance: '{reward} <#94A3B8>({chance}%)</#94A3B8>'
+  custom:
+    sigil-pass: '<#F1F5F9>Sigil pass for 30 days</#F1F5F9>'
+    aether-pass: '<#F1F5F9>Aether pass for 7 days</#F1F5F9>'
+    eclipse-pass: '<#F1F5F9>Eclipse pass for 7 days</#F1F5F9>'
+    mythic-rank: '<#F1F5F9>Mythic rank for 30 days</#F1F5F9>'
+    event-fly: '<#F1F5F9>Event auto-fly perk (permanent)</#F1F5F9>'
+    backpack-upgrader: '<#F1F5F9>1x Backpack Upgrader</#F1F5F9>'
+    cobble-minion: '<#F1F5F9>1x Cobblestone Minion (Tier I)</#F1F5F9>'
+    obsidian-breaker: '<#F1F5F9>1x Obsidian Breaker</#F1F5F9>'
+    ancient-cache: '<#F1F5F9>1x Ancient Cache</#F1F5F9>'
+    excavation-brush: '<#F1F5F9>1x Excavation Brush</#F1F5F9>'
+    particle-trail: '<#F1F5F9>Particle trail (permanent)</#F1F5F9>'
 
 # ── /vote help ───────────────────────────────────────────────────────────────
 vote_help:

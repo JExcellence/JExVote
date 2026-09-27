@@ -1,0 +1,52 @@
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║                    JExVote - Vote Sites                       ║
+# ╚═══════════════════════════════════════════════════════════════╝
+#
+# One entry per vote listing site. Each site shows up as a card in /vote
+# with its vote link and when the player can vote on it again.
+#
+#   <site-id>:                 Any short id, used as the key in site-rewards
+#                              (rewards.yml).
+#     display-name:            Name players see.
+#     service-name:            The name the site sends with each vote. This is
+#                              NOT the web address: many sites send a short
+#                              name (for example "MCSL"). If votes arrive but
+#                              no site matches, /jexvote debug-services lists
+#                              the names that did arrive; copy one here.
+#     vote-url:                Link players get when they click the site card.
+#     points-per-vote:         Vote points per vote on this site (default 1).
+#
+#   When the player can vote again (pick one per site):
+#     cooldown-minutes: 1440   Rolling window after their last vote (1440 = 24 h).
+#     daily-reset: '00:00'     Fixed time of day, with timezone: 'UTC' (or any
+#                              zone id such as 'Europe/Berlin').
+#   Use what the site itself does; the card then shows the right time.
+#
+#   Offline votes (optional, needs reconciliation.enabled: true in config.yml):
+#     api-url:                 The site's "has this player voted?" address with
+#                              {username} and {key} placeholders (see the site's
+#                              API docs).
+#     api-key:                 Your server key for that API (fills {key}).
+#     api-voted-contains:      Text in the answer that means "voted" (default "1").
+#
+# The Free edition loads the first 5 sites; Premium has no limit.
+# Apply changes with /jexvote reload.
+#
+# Example (remove the # in front of the lines to use it):
+#
+# sites:
+#   example-list:
+#     display-name: 'Example Server List'
+#     service-name: 'ExampleList'
+#     vote-url: 'https://example.com/server/12345/vote'
+#     cooldown-minutes: 1440
+#     points-per-vote: 1
+#   second-list:
+#     display-name: 'Second List'
+#     service-name: 'SecondList.net'
+#     vote-url: 'https://second-list.example/vote/678'
+#     daily-reset: '00:00'
+#     timezone: 'UTC'
+#     points-per-vote: 1
+
+sites: {}
