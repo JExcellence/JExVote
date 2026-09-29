@@ -709,6 +709,7 @@ jexcommand:
     player-unknown: '<#F87171>[X]</#F87171> <#F1F5F9>Kein Spieler namens</#F1F5F9> <#A78BFA>{value}</#A78BFA><#F1F5F9>.</#F1F5F9>'
     internal: '<#F87171>[X]</#F87171> <#F1F5F9>Etwas ist schiefgelaufen:</#F1F5F9> <#94A3B8>{message}</#94A3B8>'
     unknown-subcommand: '<#F87171>[X]</#F87171> <#F1F5F9>Unbekannter Befehl</#F1F5F9> <#A78BFA>{name}</#A78BFA><#F1F5F9>. Versuche /vote help.</#F1F5F9>'
+    ambiguous-subcommand: '<#FBBF24>[!]</#FBBF24> <#F1F5F9><#A78BFA>{name}</#A78BFA> passt zu mehreren Unterbefehlen: <#A78BFA>{choices}</#A78BFA>. Klicke einen an oder tippe weiter.</#F1F5F9>'
     unknown-type: '<#F87171>[X]</#F87171> <#F1F5F9>Unbekannter Argumenttyp</#F1F5F9> <#A78BFA>{type}</#A78BFA><#F1F5F9>.</#F1F5F9>'
   usage: '<#A78BFA>▸</#A78BFA> <#F1F5F9>Nutze</#F1F5F9> <#A78BFA>{usage}</#A78BFA>'
 
