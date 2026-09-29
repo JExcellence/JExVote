@@ -71,6 +71,7 @@ public final class VoteBedrockForms {
     private final VoteGiftService giftService;
     private @Nullable VotePartyService partyService;
     private @Nullable VoteShopService shopService;
+    private @Nullable VoteSettingsForm settingsForm;
 
     @SuppressWarnings("java:S107")
     public VoteBedrockForms(@NotNull BedrockFormBridge bridge,
@@ -103,6 +104,25 @@ public final class VoteBedrockForms {
 
     public void setShopService(@Nullable VoteShopService shopService) {
         this.shopService = shopService;
+    }
+
+    public void setSettingsForm(@Nullable VoteSettingsForm settingsForm) {
+        this.settingsForm = settingsForm;
+    }
+
+    /**
+     * Opens the vote settings form.
+     *
+     * @param player the Bedrock player
+     * @return whether the settings form is wired and was sent
+     */
+    public boolean openSettings(@NotNull Player player) {
+        VoteSettingsForm form = settingsForm;
+        if (form == null) {
+            return false;
+        }
+        form.open(player);
+        return true;
     }
 
     /**
@@ -192,6 +212,10 @@ public final class VoteBedrockForms {
         if (features.party() && partyService != null) {
             form.button(text(player, KEY + "nav.party"));
             actions.add(() -> openParty(player));
+        }
+        if (settingsForm != null) {
+            form.button(text(player, KEY + "nav.settings"));
+            actions.add(() -> openSettings(player));
         }
         return actions;
     }

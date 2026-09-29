@@ -26,6 +26,7 @@ import de.jexcellence.vote.rest.VoteRestApiServer;
 import de.jexcellence.vote.reward.ChanceReward;
 import de.jexcellence.vote.bedrock.BedrockFormBridge;
 import de.jexcellence.vote.bedrock.VoteBedrockForms;
+import de.jexcellence.vote.bedrock.VoteSettingsForm;
 import de.jexcellence.vote.reward.LuckyReward;
 import de.jexcellence.jexplatform.reward.impl.CurrencyReward;
 import de.jexcellence.vote.reward.RewardStats;
@@ -36,6 +37,7 @@ import de.jexcellence.vote.database.repository.RewardGrantStatRepository;
 import de.jexcellence.vote.database.repository.VotePartyContributorRepository;
 import de.jexcellence.vote.database.repository.VotePartyRepository;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
+import de.jexcellence.vote.database.repository.VotePlayerSettingsRepository;
 import de.jexcellence.vote.database.repository.VoteRecordRepository;
 import de.jexcellence.vote.database.repository.VoteSyncEventRepository;
 import de.jexcellence.vote.listener.PlayerJoinListener;
@@ -58,6 +60,9 @@ import de.jexcellence.vote.service.ProxyVoteSyncService;
 import de.jexcellence.vote.service.OutboxProxyEventBus;
 import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.model.VoteSite;
+import de.jexcellence.vote.settings.DiscordReminderBridge;
+import de.jexcellence.vote.settings.VoteReminderService;
+import de.jexcellence.vote.settings.VoteSettingsService;
 import de.jexcellence.vote.view.VoteBaseView;
 import de.jexcellence.vote.view.VoteLeaderboardView;
 import de.jexcellence.vote.view.VoteRewardDescriber;
@@ -66,6 +71,7 @@ import de.jexcellence.vote.view.VoteOverviewView;
 import de.jexcellence.vote.view.VoteLuckyView;
 import de.jexcellence.vote.view.VotePartyView;
 import de.jexcellence.vote.view.VoteRewardsView;
+import de.jexcellence.vote.view.VoteSettingsView;
 import de.jexcellence.vote.view.VoteShopView;
 import de.jexcellence.vote.view.VoteStreakView;
 import org.bukkit.Bukkit;
@@ -115,6 +121,7 @@ public abstract class JExVote {
     private VotePartyContributorRepository partyContributorRepository;
     private RewardGrantStatRepository rewardStatRepository;
     private VoteSyncEventRepository syncEventRepository;
+    private VotePlayerSettingsRepository settingsRepository;
 
     private VoteService voteService;
     private VoteRewardService rewardService;
@@ -127,6 +134,9 @@ public abstract class JExVote {
     private RewardStatsService rewardStatsService;
     private MultiplierService multiplierService;
     private VoteRewardProviderRegistry rewardSpiRegistry;
+    private VoteSettingsService settingsService;
+    private VoteReminderService reminderService;
+    private VoteSettingsView settingsView;
 
     private VotifierServer votifierServer;
     private VoteRestApiServer restApiServer;
@@ -214,6 +224,9 @@ public abstract class JExVote {
     public void onDisable() {
         RewardStats.reset();
         CurrencyReward.clearDepositor();
+        if (reminderService != null) {
+            reminderService.stop();
+        }
         if (restApiServer != null) {
             restApiServer.stop();
         }
@@ -294,6 +307,7 @@ public abstract class JExVote {
         partyContributorRepository = repos.get(VotePartyContributorRepository.class);
         rewardStatRepository = repos.get(RewardGrantStatRepository.class);
         syncEventRepository = repos.get(VoteSyncEventRepository.class);
+        settingsRepository = repos.get(VotePlayerSettingsRepository.class);
     }
 
     private void initializeServices() {
@@ -356,6 +370,9 @@ public abstract class JExVote {
         effectsConfig = new VoteEffectsConfig(plugin);
         effectsConfig.load();
         broadcastService.setEffects(effectsConfig);
+        settingsService = new VoteSettingsService(settingsRepository, voteConfig, features,
+                new DiscordReminderBridge(logger), logger);
+        broadcastService.setPreferences(settingsService);
         leaderboardService = new VoteLeaderboardService(playerRepository);
 
         Map<String, VoteSite> sites = loadedSites();
@@ -403,6 +420,9 @@ public abstract class JExVote {
                     voteConfig.getProxyReconcileSeconds()).start();
         }
 
+        reminderService = new VoteReminderService(plugin, voteService, voteConfig, settingsService,
+                settingsRepository);
+
         streakFreezeService = new StreakFreezeService(playerRepository, voteConfig);
         voteGiftService = new VoteGiftService(playerRepository, voteConfig);
         voteReconciliationService = new VoteReconciliationService(
@@ -449,6 +469,7 @@ public abstract class JExVote {
         partyConfig.load();
         effectsConfig.load();
         applyCurrencyDisplay();
+        reminderService.start();
         rewardService.setStreaksEnabled(voteConfig.isFeatureStreaks());
         voteService.reload(
                 loadedSites(),
@@ -533,6 +554,9 @@ public abstract class JExVote {
     private void registerListeners() {
         var pm = Bukkit.getPluginManager();
         pm.registerEvents(new PlayerJoinListener(voteService), plugin);
+        pm.registerEvents(settingsService, plugin);
+        settingsService.loadOnlinePlayers();
+        reminderService.start();
         if (voteReconciliationService != null) {
             pm.registerEvents(voteReconciliationService, plugin);
         }
@@ -582,6 +606,7 @@ public abstract class JExVote {
                 rewardsView, leaderboardView, streakFreezeService, voteGiftService);
         voteCommandHandler.setShopView(shopView);
         voteCommandHandler.setStreakAndPartyViews(streakView, partyView);
+        voteCommandHandler.setSettingsView(settingsView);
 
         var bedrockBridge = new BedrockFormBridge();
         if (bedrockBridge.isAvailable()) {
@@ -591,6 +616,7 @@ public abstract class JExVote {
                     streakFreezeService, voteGiftService);
             bedrockForms.setPartyService(votePartyService);
             bedrockForms.setShopService(shopService);
+            bedrockForms.setSettingsForm(new VoteSettingsForm(bedrockBridge, settingsService));
             voteCommandHandler.setBedrockForms(bedrockForms);
             bedrockFormsHooked = true;
         }
@@ -631,6 +657,7 @@ public abstract class JExVote {
         partyView = new VotePartyView(rewardConfig, votePartyService, rewardStatsService);
         shopView = new VoteShopView(plugin, shopService);
         var luckyView = new VoteLuckyView(rewardConfig, rewardStatsService);
+        settingsView = new VoteSettingsView(plugin, settingsService, voteConfig);
 
         overviewView.setMultipliers(multiplierService);
         overviewView.setParty(votePartyService);
@@ -639,6 +666,8 @@ public abstract class JExVote {
         overviewView.setRewardsView(rewardsView);
         overviewView.setShopView(shopView);
         overviewView.setPartyView(partyView);
+        overviewView.setSettingsView(settingsView);
+        settingsView.setOverviewView(overviewView);
         leaderboardView.setOverviewView(overviewView);
         streakView.setOverviewView(overviewView);
         rewardsView.setParty(votePartyService);
@@ -649,7 +678,7 @@ public abstract class JExVote {
         luckyView.setRewardsView(rewardsView);
 
         for (VoteBaseView view : List.of(overviewView, leaderboardView, streakView, rewardsView, partyView,
-                shopView, luckyView)) {
+                shopView, luckyView, settingsView)) {
             pm.registerEvents(view, plugin);
         }
     }

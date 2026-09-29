@@ -94,6 +94,18 @@ vote:
     entry_plain: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>{service}</#94A3B8>'
     no_sites: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>No vote sites are set up yet.</#F1F5F9>'
 
+  reminder:
+    chat: "<#A78BFA>▸</#A78BFA> <#F1F5F9>A vote site is ready again:</#F1F5F9> <#A78BFA>{ready} / {total}</#A78BFA><#F1F5F9>.</#F1F5F9> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Opens the vote menu</#94A3B8>'><#A78BFA><u>Vote now</u></#A78BFA></hover></click> <#94A3B8>Turn this off in /vote settings</#94A3B8>"
+    title: '<gradient:#5EEAD4:#A78BFA>You can vote again</gradient>'
+    subtitle: '<#F1F5F9>{ready} of {total} sites are ready</#F1F5F9> <dark_gray>|</dark_gray> <#A78BFA>/vote</#A78BFA>'
+    streak-warning: "<#FBBF24>[!]</#FBBF24> <#F1F5F9>Your vote streak of</#F1F5F9> <#A78BFA>{streak}</#A78BFA> <#F1F5F9>ends in</#F1F5F9> <#FBBF24>{time}</#FBBF24><#F1F5F9>.</#F1F5F9> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Opens the vote menu</#94A3B8>'><#A78BFA><u>Vote now</u></#A78BFA></hover></click>"
+    discord:
+      title: 'You can vote again'
+      description: "{ready} of {total} vote sites are ready for you again:\n{sites}\n\nYou can turn these messages off in /vote settings."
+      site: '- {site}'
+      site-link: '- {site}: {url}'
+  settings:
+    players_only: '<#F87171>[X]</#F87171> <#F1F5F9>Only players have vote settings.</#F1F5F9>'
   placeholder:
     never: "Never"
   streak:
@@ -272,6 +284,57 @@ vote_overview:
     party:
       name: '<#F1F5F9>Vote party</#F1F5F9>'
       description: 'The shared server goal. When it is reached, everyone who voted gets party rewards.'
+    settings:
+      name: '<#F1F5F9>Vote settings</#F1F5F9>'
+      description: 'Reminders, broadcasts, vote party messages and effects, set the way you like them.'
+
+# ── Vote settings ────────────────────────────────────────────────────────────
+vote_settings:
+  title: '<gradient:#5EEAD4:#A78BFA>Vote settings</gradient>'
+  back-to-menu: 'Back to the vote menu.'
+  header:
+    name: '<gradient:#5EEAD4:#A78BFA>Vote settings</gradient>'
+    description: 'Choose what JExVote sends you. Your choice is saved and stays after a restart.'
+    section: '<#C4B5FD>Your settings</#C4B5FD>'
+  card:
+    section: '<#C4B5FD>Choose</#C4B5FD>'
+    details: '<#C4B5FD>Timing</#C4B5FD>'
+  unavailable:
+    value: 'Not available'
+    description: 'The server has turned this feature off.'
+  label:
+    at-most-every: 'At most every'
+    warns-before: 'Warns before'
+  value:
+    enabled: 'Enabled'
+    disabled: 'Disabled'
+    chat: 'Chat'
+    title: 'Title'
+  option:
+    reminder:
+      name: '<#F1F5F9>Vote reminder</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+      label: 'Vote reminder'
+      description: 'Tells you when a vote site is ready again. Only sent when at least one site can be voted on.'
+    streak-warning:
+      name: '<#F1F5F9>Streak warning</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+      label: 'Streak warning'
+      description: 'Warns you in chat shortly before your vote streak would break.'
+    broadcasts:
+      name: '<#F1F5F9>Vote broadcasts</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+      label: 'Vote broadcasts'
+      description: 'Shows the chat line when another player votes.'
+    party:
+      name: '<#F1F5F9>Vote party messages</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+      label: 'Vote party messages'
+      description: 'Shows the announcement when a vote party is complete. Your party rewards arrive either way.'
+    effects:
+      name: '<#F1F5F9>Sounds and effects</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+      label: 'Sounds and effects'
+      description: 'Plays the sounds and titles when your own vote arrives.'
+    discord:
+      name: '<#F1F5F9>Discord reminder</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+      label: 'Discord reminder'
+      description: 'Sends a direct message to your linked Discord account when a vote site is ready again and you are not online.'
 
 # ── Top voters ───────────────────────────────────────────────────────────────
 vote_leaderboard:
@@ -523,6 +586,7 @@ vote_help:
     help: 'Show this list'
     streak: "Open your streak rewards"
     party: "Show the vote party progress and prizes"
+    settings: "Choose your reminders, broadcasts and effects"
 
 # ── /jexvote help and admin output ───────────────────────────────────────────
 vote_admin:
@@ -678,6 +742,7 @@ bedrock:
     rewards: 'Vote rewards'
     shop: 'Vote shop'
     party: 'Vote party'
+    settings: 'Vote settings'
     back: 'Back'
   leaderboard:
     title: 'Top voters'
@@ -728,3 +793,8 @@ bedrock:
     not-enough: '<#F87171>[X]</#F87171> <#F1F5F9>You need more vote points for {item}.</#F1F5F9>'
     error: '<#F87171>[X]</#F87171> <#F1F5F9>The purchase did not go through. Try again.</#F1F5F9>'
     grant-failed: '<#F87171>[X]</#F87171> <#F1F5F9>The reward could not be delivered. Your points were refunded.</#F1F5F9>'
+  settings:
+    title: 'Vote settings'
+    intro: 'Choose what JExVote sends you. Your choice is saved when you press Submit.'
+    unavailable: '{option}: not available on this server'
+    saved: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Your vote settings are saved.</#F1F5F9>'

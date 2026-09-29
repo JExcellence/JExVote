@@ -101,6 +101,18 @@ public final class VoteConfig {
      */
     public record DailyFlySettings(boolean enabled, int minutes) {}
 
+    /**
+     * Timing of the per-player reminders a player turns on in {@code /vote settings}.
+     *
+     * @param enabled                whether reminders run at all; when off the reminder options are unavailable
+     * @param checkSeconds           seconds between two checks of the online players
+     * @param intervalMinutes        minimum minutes between two in-game reminders for one player
+     * @param streakWarningHours     hours before the streak breaks at which the streak warning is sent
+     * @param discordIntervalMinutes minimum minutes between two Discord reminders for one player
+     */
+    public record ReminderSettings(boolean enabled, int checkSeconds, int intervalMinutes,
+                                   int streakWarningHours, int discordIntervalMinutes) {}
+
     private final JavaPlugin plugin;
     private final Logger logger;
 
@@ -144,6 +156,7 @@ public final class VoteConfig {
     private BedrockSettings bedrockSettings = new BedrockSettings("!", true);
     private DailyFlySettings dailyFlySettings = new DailyFlySettings(false, 15);
     private List<String> dailyRewardCommands = List.of();
+    private ReminderSettings reminderSettings = new ReminderSettings(true, 60, 60, 3, 720);
 
     private VoteRestApiConfig restApiConfig = VoteRestApiConfig.DISABLED;
 
@@ -209,6 +222,7 @@ public final class VoteConfig {
         loadStreakFreeze(config);
         loadReconciliation(config);
         loadVoteGift(config);
+        loadReminders(config);
         loadBedrock(config);
         loadRestApi(config);
         loadFeatureToggles(config);
@@ -289,6 +303,15 @@ public final class VoteConfig {
         int playerCooldownMinutes = Math.max(1, config.getInt("reconciliation.player-cooldown-minutes", 30));
         int timeoutSeconds = Math.max(2, config.getInt("reconciliation.timeout-seconds", 8));
         reconciliationSettings = new ReconciliationSettings(enabled, playerCooldownMinutes, timeoutSeconds);
+    }
+
+    private void loadReminders(@NotNull YamlConfiguration config) {
+        reminderSettings = new ReminderSettings(
+                config.getBoolean("reminders.enabled", true),
+                Math.max(15, config.getInt("reminders.check-seconds", 60)),
+                Math.max(5, config.getInt("reminders.interval-minutes", 60)),
+                Math.max(1, config.getInt("reminders.streak-warning-hours", 3)),
+                Math.max(60, config.getInt("reminders.discord-interval-minutes", 720)));
     }
 
     private void loadBedrock(@NotNull YamlConfiguration config) {
@@ -496,6 +519,7 @@ public final class VoteConfig {
     public @NotNull FreezeSettings getFreezeSettings() { return freezeSettings; }
     public @NotNull ReconciliationSettings getReconciliationSettings() { return reconciliationSettings; }
     public @NotNull GiftSettings getGiftSettings() { return giftSettings; }
+    public @NotNull ReminderSettings getReminderSettings() { return reminderSettings; }
     public boolean isFeatureStreaks() { return featureStreaks; }
     public boolean isFeatureShop() { return featureShop; }
     public boolean isFeatureLeaderboard() { return featureLeaderboard; }

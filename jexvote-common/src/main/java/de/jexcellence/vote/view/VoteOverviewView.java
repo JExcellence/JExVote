@@ -40,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *  row 0  header (how voting works, sites ready, bonus / party right now)
  *  row 1  your votes | vote points | streak
  *  row 2-3  one card per vote site with its live status (centred, paged at 48 / 50)
- *  row 4  navigation: streaks, rewards, top voters, shop, vote party
+ *  row 4  navigation: streaks, rewards, top voters, shop, vote party, settings
  *  row 5  close
  * </pre>
  * Cards for features that are off or not in the edition are left out and the rest re-centre. Stats and
@@ -58,6 +58,7 @@ public class VoteOverviewView extends VoteBaseView {
     private static final String TAG_LEADERBOARD = "leaderboard";
     private static final String TAG_SHOP = "shop";
     private static final String TAG_PARTY = "party";
+    private static final String TAG_SETTINGS = "settings";
     private static final String PARAM_VALUE = "value";
     private static final String PARAM_SITE = "site";
     private static final String TONE_ACCENT = "accent";
@@ -84,6 +85,7 @@ public class VoteOverviewView extends VoteBaseView {
     private @Nullable VoteRewardsView rewardsView;
     private @Nullable VoteShopView shopView;
     private @Nullable VotePartyView partyView;
+    private @Nullable VoteSettingsView settingsView;
 
     /**
      * Async data the menu shows once loaded.
@@ -126,6 +128,8 @@ public class VoteOverviewView extends VoteBaseView {
     public void setShopView(@NotNull VoteShopView view) { this.shopView = view; }
 
     public void setPartyView(@NotNull VotePartyView view) { this.partyView = view; }
+
+    public void setSettingsView(@NotNull VoteSettingsView view) { this.settingsView = view; }
 
     @Override protected @NotNull String title() { return KEY + "title"; }
     @Override protected int rows() { return 6; }
@@ -417,6 +421,9 @@ public class VoteOverviewView extends VoteBaseView {
         if (features.party() && party != null && partyView != null) {
             cards.add(new NavCard(Material.CAKE, KEY + "nav.party", TAG_PARTY));
         }
+        if (settingsView != null) {
+            cards.add(new NavCard(Material.COMPARATOR, KEY + "nav.settings", TAG_SETTINGS));
+        }
         int[] slots = VoteLayout.spacedRow(cards.size(), NAV_ROW);
         for (int i = 0; i < slots.length; i++) {
             NavCard nav = cards.get(i);
@@ -455,6 +462,7 @@ public class VoteOverviewView extends VoteBaseView {
             case TAG_REWARDS -> rewardsView;
             case TAG_SHOP -> shopView;
             case TAG_PARTY -> partyView;
+            case TAG_SETTINGS -> settingsView;
             default -> null;
         };
         if (target != null) {

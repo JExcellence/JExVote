@@ -29,3 +29,7 @@ dependencies:
       load: BEFORE
       required: false
       join-classpath: true
+    JExDiscord:
+      load: AFTER
+      required: false
+      join-classpath: true

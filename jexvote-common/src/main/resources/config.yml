@@ -62,6 +62,23 @@ broadcast:
 private-message:
   enabled: true
 
+# ── Player reminders ────────────────────────────────────────────
+# Each player picks in /vote settings whether they want a reminder when
+# a vote site is ready again (chat or title), a warning before their
+# streak breaks and, with JExDiscord and a linked account, a Discord
+# message. These values only set the timing.
+reminders:
+  # When false, the reminder options show as unavailable in /vote settings.
+  enabled: true
+  # Seconds between two checks of the online players.
+  check-seconds: 60
+  # Minimum minutes between two in-game reminders for the same player.
+  interval-minutes: 60
+  # Warn this many hours before a streak would break.
+  streak-warning-hours: 3
+  # Minimum minutes between two Discord reminders for the same player.
+  discord-interval-minutes: 720
+
 # ── Offline Vote Queue ──────────────────────────────────────────
 # A vote from a player who is offline is stored and paid out the next
 # time they join, with one summary of everything they got.

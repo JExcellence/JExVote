@@ -68,5 +68,11 @@ subcommands:
     argumentSchema:
       - { name: target, type: vote_gift_target, required: true, description: "Player name or 'random'" }
 
+  - name: settings
+    description: "Choose your vote reminders, broadcasts and effects"
+    aliases:
+      - options
+    senders: [player]
+
 # Player-safe: every player holds this by default (op-only otherwise).
 default: true

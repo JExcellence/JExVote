@@ -66,7 +66,17 @@ class TranslationFilesTest {
             "bedrock.leaderboard.show-all-time",
             "bedrock.streaks.status-claimable",
             "bedrock.shop.line-short",
-            "bedrock.rewards.every-vote");
+            "bedrock.rewards.every-vote",
+            "bedrock.nav.settings",
+            "bedrock.settings.unavailable",
+            "vote_overview.nav.settings.name",
+            "vote_settings.option.reminder.name",
+            "vote_settings.option.discord.description",
+            "vote_settings.value.enabled",
+            "vote_settings.value.disabled",
+            "vote.reminder.chat",
+            "vote.reminder.streak-warning",
+            "vote.reminder.discord.site-link");
 
     @Test
     void englishAndGermanHaveTheSameKeys() throws IOException {

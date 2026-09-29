@@ -94,6 +94,18 @@ vote:
     entry_plain: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>{service}</#94A3B8>'
     no_sites: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>Es sind noch keine Vote-Seiten eingerichtet.</#F1F5F9>'
 
+  reminder:
+    chat: "<#A78BFA>▸</#A78BFA> <#F1F5F9>Eine Vote-Seite ist wieder bereit:</#F1F5F9> <#A78BFA>{ready} / {total}</#A78BFA><#F1F5F9>.</#F1F5F9> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Öffnet das Vote-Menü</#94A3B8>'><#A78BFA><u>Jetzt voten</u></#A78BFA></hover></click> <#94A3B8>Abschalten unter /vote settings</#94A3B8>"
+    title: '<gradient:#5EEAD4:#A78BFA>Du kannst wieder voten</gradient>'
+    subtitle: '<#F1F5F9>{ready} von {total} Seiten sind bereit</#F1F5F9> <dark_gray>|</dark_gray> <#A78BFA>/vote</#A78BFA>'
+    streak-warning: "<#FBBF24>[!]</#FBBF24> <#F1F5F9>Deine Vote-Serie von</#F1F5F9> <#A78BFA>{streak}</#A78BFA> <#F1F5F9>endet in</#F1F5F9> <#FBBF24>{time}</#FBBF24><#F1F5F9>.</#F1F5F9> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Öffnet das Vote-Menü</#94A3B8>'><#A78BFA><u>Jetzt voten</u></#A78BFA></hover></click>"
+    discord:
+      title: 'Du kannst wieder voten'
+      description: "{ready} von {total} Vote-Seiten sind für dich wieder bereit:\n{sites}\n\nDiese Nachrichten schaltest du unter /vote settings ab."
+      site: '- {site}'
+      site-link: '- {site}: {url}'
+  settings:
+    players_only: '<#F87171>[X]</#F87171> <#F1F5F9>Nur Spieler haben Vote-Einstellungen.</#F1F5F9>'
   placeholder:
     never: "Nie"
   streak:
@@ -272,6 +284,57 @@ vote_overview:
     party:
       name: '<#F1F5F9>Vote-Party</#F1F5F9>'
       description: 'Das gemeinsame Server-Ziel. Ist es erreicht, bekommen alle, die gevotet haben, Party-Belohnungen.'
+    settings:
+      name: '<#F1F5F9>Vote-Einstellungen</#F1F5F9>'
+      description: 'Erinnerungen, Broadcasts, Vote-Party-Meldungen und Effekte so, wie du sie haben willst.'
+
+# ── Vote-Einstellungen ───────────────────────────────────────────────────────
+vote_settings:
+  title: '<gradient:#5EEAD4:#A78BFA>Vote-Einstellungen</gradient>'
+  back-to-menu: 'Zurück zum Vote-Menü.'
+  header:
+    name: '<gradient:#5EEAD4:#A78BFA>Vote-Einstellungen</gradient>'
+    description: 'Wähle, was JExVote dir schickt. Deine Auswahl wird gespeichert und bleibt nach einem Neustart erhalten.'
+    section: '<#C4B5FD>Deine Einstellungen</#C4B5FD>'
+  card:
+    section: '<#C4B5FD>Auswahl</#C4B5FD>'
+    details: '<#C4B5FD>Zeitpunkt</#C4B5FD>'
+  unavailable:
+    value: 'Nicht verfügbar'
+    description: 'Der Server hat diese Funktion ausgeschaltet.'
+  label:
+    at-most-every: 'Höchstens alle'
+    warns-before: 'Warnt vorher'
+  value:
+    enabled: 'An'
+    disabled: 'Aus'
+    chat: 'Chat'
+    title: 'Titel'
+  option:
+    reminder:
+      name: '<#F1F5F9>Vote-Erinnerung</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+      label: 'Vote-Erinnerung'
+      description: 'Sagt dir, wenn eine Vote-Seite wieder bereit ist. Kommt nur, wenn mindestens eine Seite votebar ist.'
+    streak-warning:
+      name: '<#F1F5F9>Serien-Warnung</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+      label: 'Serien-Warnung'
+      description: 'Warnt dich im Chat kurz bevor deine Vote-Serie reißen würde.'
+    broadcasts:
+      name: '<#F1F5F9>Vote-Broadcasts</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+      label: 'Vote-Broadcasts'
+      description: 'Zeigt die Chat-Zeile, wenn ein anderer Spieler votet.'
+    party:
+      name: '<#F1F5F9>Vote-Party-Meldungen</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+      label: 'Vote-Party-Meldungen'
+      description: 'Zeigt die Meldung, wenn eine Vote-Party erreicht ist. Deine Party-Belohnungen bekommst du so oder so.'
+    effects:
+      name: '<#F1F5F9>Sounds und Effekte</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+      label: 'Sounds und Effekte'
+      description: 'Spielt die Sounds und Titel, wenn dein eigener Vote ankommt.'
+    discord:
+      name: '<#F1F5F9>Discord-Erinnerung</#F1F5F9> <dark_gray>|</dark_gray> {value}'
+      label: 'Discord-Erinnerung'
+      description: 'Schickt deinem verknüpften Discord-Konto eine Direktnachricht, wenn eine Vote-Seite wieder bereit ist und du nicht online bist.'
 
 # ── Top-Voter ────────────────────────────────────────────────────────────────
 vote_leaderboard:
@@ -523,6 +586,7 @@ vote_help:
     help: 'Zeigt diese Liste'
     streak: "Öffnet deine Serien-Belohnungen"
     party: "Zeigt den Fortschritt und die Preise der Vote-Party"
+    settings: "Erinnerungen, Broadcasts und Effekte einstellen"
 
 # ── /jexvote help und Admin-Ausgaben ─────────────────────────────────────────
 vote_admin:
@@ -678,6 +742,7 @@ bedrock:
     rewards: 'Vote-Belohnungen'
     shop: 'Vote-Shop'
     party: 'Vote-Party'
+    settings: 'Vote-Einstellungen'
     back: 'Zurück'
   leaderboard:
     title: 'Top-Voter'
@@ -728,3 +793,8 @@ bedrock:
     not-enough: '<#F87171>[X]</#F87171> <#F1F5F9>Dir fehlen Vote-Punkte für {item}.</#F1F5F9>'
     error: '<#F87171>[X]</#F87171> <#F1F5F9>Der Kauf hat nicht geklappt. Versuche es erneut.</#F1F5F9>'
     grant-failed: '<#F87171>[X]</#F87171> <#F1F5F9>Die Belohnung konnte nicht zugestellt werden. Deine Punkte wurden erstattet.</#F1F5F9>'
+  settings:
+    title: 'Vote-Einstellungen'
+    intro: 'Wähle, was JExVote dir schickt. Mit Absenden wird deine Auswahl gespeichert.'
+    unavailable: '{option}: auf diesem Server nicht verfügbar'
+    saved: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Deine Vote-Einstellungen sind gespeichert.</#F1F5F9>'

@@ -18,6 +18,7 @@ import de.jexcellence.vote.service.VoteService;
 import de.jexcellence.vote.view.VoteLeaderboardView;
 import de.jexcellence.vote.view.VoteOverviewView;
 import de.jexcellence.vote.view.VoteRewardsView;
+import de.jexcellence.vote.view.VoteSettingsView;
 import de.jexcellence.vote.view.VoteShopView;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -49,6 +50,7 @@ public final class VoteCommandHandler {
     private @Nullable VoteStreakView streakView;
     private @Nullable VotePartyView partyView;
     private @Nullable VoteBedrockForms bedrockForms;
+    private @Nullable VoteSettingsView settingsView;
 
     @SuppressWarnings("java:S107")
     public VoteCommandHandler(@NotNull VoteService voteService,
@@ -81,7 +83,8 @@ public final class VoteCommandHandler {
                 Map.entry("vote.gift", this::onGift),
                 Map.entry("vote.shop", this::onShop),
                 Map.entry("vote.streak", this::onStreak),
-                Map.entry("vote.party", this::onParty)
+                Map.entry("vote.party", this::onParty),
+                Map.entry("vote.settings", this::onSettings)
         );
     }
 
@@ -93,6 +96,9 @@ public final class VoteCommandHandler {
         this.streakView = streak;
         this.partyView = party;
     }
+
+    /** Sets the view behind {@code /vote settings}. */
+    public void setSettingsView(@NotNull VoteSettingsView view) { this.settingsView = view; }
 
     /** Sets the Bedrock forms handler (wired post-construction when Floodgate is present). */
     public void setBedrockForms(@Nullable VoteBedrockForms forms) { this.bedrockForms = forms; }
@@ -133,6 +139,20 @@ public final class VoteCommandHandler {
             return;
         }
         streakView.open(player);
+    }
+
+    private void onSettings(@NotNull CommandContext ctx) {
+        Player player = ctx.asPlayer().orElse(null);
+        if (player == null) {
+            r18n().msg("vote.settings.players_only").prefix().send(ctx.sender());
+            return;
+        }
+        if (isBedrock(player) && bedrockForms.openSettings(player)) {
+            return;
+        }
+        if (settingsView != null) {
+            settingsView.open(player);
+        }
     }
 
     private void onParty(@NotNull CommandContext ctx) {
@@ -278,6 +298,8 @@ public final class VoteCommandHandler {
             entries.add(HelpRenderer.Entry.of("/vote gift", "<player|random>", "vote_help.desc.gift",
                     HelpRenderer.Action.SUGGEST));
         }
+        entries.add(HelpRenderer.Entry.of("/vote settings", "", "vote_help.desc.settings",
+                List.of("options"), HelpRenderer.Action.RUN));
         entries.add(HelpRenderer.Entry.of("/vote help", "", "vote_help.desc.help", HelpRenderer.Action.RUN));
         new HelpRenderer("vote_help").render(ctx.sender(), entries);
     }

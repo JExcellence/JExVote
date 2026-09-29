@@ -39,6 +39,7 @@ public class VoteBroadcastService {
     private final VoteConfig config;
     private final AtomicLong lastBroadcastTime = new AtomicLong(0);
     private final AtomicReference<VoteEffectsConfig> effects = new AtomicReference<>();
+    private final AtomicReference<VotePreferences> preferences = new AtomicReference<>(VotePreferences.EVERYTHING);
 
     public VoteBroadcastService(@NotNull VoteConfig config) {
         this.config = config;
@@ -54,9 +55,19 @@ public class VoteBroadcastService {
     }
 
     /**
+     * Sets the per-player preferences that filter broadcasts, party announcements and effects.
+     *
+     * @param playerPreferences the preferences source
+     */
+    public void setPreferences(@NotNull VotePreferences playerPreferences) {
+        preferences.set(playerPreferences);
+    }
+
+    /**
      * Plays the configured vote sound for the voter: the milestone sound and title when the vote landed on a
      * streak milestone, the streak sound when the streak grew past day one, the vote sound otherwise. Silent when
-     * {@code features.effects} is off. Runs on the voter's thread.
+     * {@code features.effects} is off or the voter turned effects off in their settings. Runs on the voter's
+     * thread.
      *
      * @param player    the voter
      * @param streak    the streak after this vote
@@ -64,7 +75,7 @@ public class VoteBroadcastService {
      */
     public void playVoteEffects(@NotNull Player player, int streak, boolean milestone) {
         VoteEffectsConfig loaded = effects.get();
-        if (loaded == null || !config.isFeatureEffects()) {
+        if (loaded == null || !config.isFeatureEffects() || !preferences.get().playsEffects(player.getUniqueId())) {
             return;
         }
         VoteEffectsConfig.VoteEffects settings = loaded.getEffects();
@@ -91,7 +102,8 @@ public class VoteBroadcastService {
     }
 
     /**
-     * Sends the public broadcast to eligible players, respecting mode and cooldown.
+     * Sends the public broadcast to eligible players, respecting mode, cooldown and each viewer's settings. The
+     * voter's own copy follows the server mode only.
      *
      * @param playerName  the voter's name
      * @param serviceName the vote service name
@@ -104,9 +116,12 @@ public class VoteBroadcastService {
             return;
         }
         String site = siteName(serviceName);
+        VotePreferences viewers = preferences.get();
         for (Player online : Bukkit.getOnlinePlayers()) {
             boolean isVoter = voterUuid != null && online.getUniqueId().equals(voterUuid);
-            if (mode != VoteConfig.BroadcastMode.OTHERS || !isVoter) {
+            boolean wanted = isVoter ? mode != VoteConfig.BroadcastMode.OTHERS
+                    : viewers.showsBroadcasts(online.getUniqueId());
+            if (wanted) {
                 r18n().msg("vote.broadcast").prefix()
                         .with(PARAM_PLAYER, playerName)
                         .with(PARAM_SERVICE, site)
@@ -166,12 +181,16 @@ public class VoteBroadcastService {
     }
 
     /**
-     * Announces a completed vote party to everyone online.
+     * Announces a completed vote party to everyone online who did not turn party announcements off.
      *
      * @param partyNumber the number of the party that just completed
      */
     public void broadcastPartyReached(int partyNumber) {
+        VotePreferences viewers = preferences.get();
         for (Player online : Bukkit.getOnlinePlayers()) {
+            if (!viewers.showsPartyAnnouncements(online.getUniqueId())) {
+                continue;
+            }
             r18n().msg("vote.party.reached").prefix()
                     .with("party", String.valueOf(partyNumber))
                     .send(online);
