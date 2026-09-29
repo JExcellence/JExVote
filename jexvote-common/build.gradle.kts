@@ -23,6 +23,7 @@ dependencies {
 
     // ── External Libraries ──
     compileOnly(project(":JExEconomy:jexeconomy-api"))
+    compileOnly(project(":JExOneblock:jexoneblock-api"))
     compileOnly(project(":JExEssentials:jexessentials-api"))
     compileOnly(libs.paper.api)
     compileOnly(libs.bundles.adventure)

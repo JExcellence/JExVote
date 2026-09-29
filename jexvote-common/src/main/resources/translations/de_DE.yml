@@ -55,6 +55,7 @@ vote:
     target_not_found: '<#F87171>[X]</#F87171> <#A78BFA>{target}</#A78BFA> <#F1F5F9>hat noch nie gevotet, es gibt keine Serie zu retten.</#F1F5F9>'
     already_advanced: '<#FBBF24>[!]</#FBBF24> <#A78BFA>{target}</#A78BFA> <#F1F5F9>hat die Serie heute schon weitergebracht.</#F1F5F9>'
     no_random: '<#F87171>[X]</#F87171> <#F1F5F9>Kein anderer Spieler ist online, der ein Geschenk bekommen kann.</#F1F5F9>'
+    ironman_blocked: '<#F87171>[X]</#F87171> <#F1F5F9>Ironman: Keine Vote-Geschenke zwischen Ironman und anderen Spielern.</#F1F5F9>'
     error: '<#F87171>[X]</#F87171> <#F1F5F9>Das Geschenk hat nicht geklappt. Versuche es erneut.</#F1F5F9>'
   party:
     progress: '<#94A3B8>Vote-Party</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{current} / {target}</#F1F5F9>'

@@ -3,6 +3,7 @@ package de.jexcellence.vote.service;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.database.entity.VotePlayerEntity;
 import de.jexcellence.vote.database.repository.VotePlayerRepository;
+import de.jexcellence.vote.integration.IronmanGate;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -46,7 +47,8 @@ public class VoteGiftService {
         SELF_GIFT,
         TARGET_NOT_FOUND,
         ALREADY_ADVANCED,
-        NO_RANDOM_TARGET
+        NO_RANDOM_TARGET,
+        IRONMAN_BLOCKED
     }
 
     /**
@@ -145,6 +147,7 @@ public class VoteGiftService {
     public @NotNull CompletableFuture<GiftOutcome> giftRandom(@NotNull Player gifter) {
         List<Player> candidates = Bukkit.getOnlinePlayers().stream()
                 .filter(online -> !online.getUniqueId().equals(gifter.getUniqueId()))
+                .filter(online -> !IronmanGate.shared().isTradeBlocked(gifter.getUniqueId(), online.getUniqueId()))
                 .map(online -> (Player) online)
                 .toList();
         if (candidates.isEmpty()) {
@@ -167,6 +170,9 @@ public class VoteGiftService {
         int dailyLimit = resolveDailyLimit(gifter);
 
         return playerRepository.findByUuidAsync(gifter.getUniqueId()).thenCompose(gifterOpt -> {
+            if (IronmanGate.shared().isTradeBlocked(gifter.getUniqueId(), targetUuid)) {
+                return CompletableFuture.completedFuture(GiftOutcome.of(GiftResult.IRONMAN_BLOCKED, targetName));
+            }
             if (gifterOpt.isEmpty()) {
                 return CompletableFuture.completedFuture(GiftOutcome.of(GiftResult.GIFTER_NO_PROFILE));
             }

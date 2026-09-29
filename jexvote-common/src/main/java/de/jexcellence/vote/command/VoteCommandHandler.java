@@ -247,6 +247,7 @@ public final class VoteCommandHandler {
             case ALREADY_ADVANCED -> r18n().msg("vote.gift.already_advanced").prefix()
                     .with(PARAM_TARGET, targetName).send(gifter);
             case NO_RANDOM_TARGET -> r18n().msg("vote.gift.no_random").prefix().send(gifter);
+            case IRONMAN_BLOCKED -> r18n().msg("vote.gift.ironman_blocked").prefix().send(gifter);
             default -> r18n().msg("vote.gift.error").prefix().send(gifter);
         }
     }

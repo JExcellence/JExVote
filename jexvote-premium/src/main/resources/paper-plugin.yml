@@ -9,6 +9,11 @@ loader: de.jexcellence.dependency.loader.PaperPluginLoader
 folia-supported: true
 dependencies:
   server:
+    # Soft: Ironman isolation checks through the JExOneblock API (loads after this plugin).
+    JExOneblock:
+      load: AFTER
+      required: false
+      join-classpath: true
     JExEconomy:
       load: BEFORE
       required: false

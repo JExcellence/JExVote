@@ -55,6 +55,7 @@ vote:
     target_not_found: '<#F87171>[X]</#F87171> <#A78BFA>{target}</#A78BFA> <#F1F5F9>has never voted, so there is no streak to keep alive.</#F1F5F9>'
     already_advanced: '<#FBBF24>[!]</#FBBF24> <#A78BFA>{target}</#A78BFA> <#F1F5F9>already moved their streak forward today.</#F1F5F9>'
     no_random: '<#F87171>[X]</#F87171> <#F1F5F9>No other player is online to get a gift.</#F1F5F9>'
+    ironman_blocked: '<#F87171>[X]</#F87171> <#F1F5F9>Ironman: no vote gifts between Ironman and other players.</#F1F5F9>'
     error: '<#F87171>[X]</#F87171> <#F1F5F9>The gift did not go through. Try again.</#F1F5F9>'
   party:
     progress: '<#94A3B8>Vote party</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{current} / {target}</#F1F5F9>'
