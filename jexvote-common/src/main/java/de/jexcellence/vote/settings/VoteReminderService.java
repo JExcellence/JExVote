@@ -123,6 +123,16 @@ public final class VoteReminderService {
         }
     }
 
+    /**
+     * Drops what the reminder check remembers about a player (reminder and warning timestamps).
+     *
+     * @param player the player's UUID
+     */
+    public void forget(@NotNull UUID player) {
+        states.remove(player);
+        lastDiscordAt.remove(player);
+    }
+
     private void tick() {
         VoteConfig.ReminderSettings timing = config.getReminderSettings();
         if (!timing.enabled()) {

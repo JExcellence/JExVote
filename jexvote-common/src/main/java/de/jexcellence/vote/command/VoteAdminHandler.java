@@ -29,6 +29,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 /**
  * {@code /jexvote}: the server-owner surface. {@code info} prints one status panel (edition, Votifier, sites,
@@ -62,6 +65,8 @@ public final class VoteAdminHandler {
     private final VoteConfig voteConfig;
     private final VoteFeatures features;
     private final AdminStatus status;
+    private Function<UUID, CompletableFuture<Boolean>> settingsEraser =
+            uuid -> CompletableFuture.completedFuture(false);
 
     public VoteAdminHandler(@NotNull JavaPlugin plugin,
                             @NotNull VoteService voteService,
@@ -73,6 +78,15 @@ public final class VoteAdminHandler {
         this.voteConfig = voteConfig;
         this.features = features;
         this.status = status;
+    }
+
+    /**
+     * Sets what {@code /jexvote reset <player>} runs to delete the player's vote settings.
+     *
+     * @param eraser deletes the settings of a player; completes with whether anything was deleted
+     */
+    public void setSettingsEraser(@NotNull Function<UUID, CompletableFuture<Boolean>> eraser) {
+        this.settingsEraser = eraser;
     }
 
     public @NotNull Map<String, CommandHandler> handlerMap() {
@@ -377,7 +391,9 @@ public final class VoteAdminHandler {
     private void onReset(@NotNull CommandContext ctx) {
         OfflinePlayer target = ctx.require(PARAM_PLAYER, OfflinePlayer.class);
         String name = target.getName() != null ? target.getName() : target.getUniqueId().toString();
-        voteService.resetPlayer(target.getUniqueId()).thenAccept(success -> {
+        UUID uuid = target.getUniqueId();
+        voteService.resetPlayer(uuid).thenCombine(settingsEraser.apply(uuid),
+                (stats, settings) -> Boolean.TRUE.equals(stats) || Boolean.TRUE.equals(settings)).thenAccept(success -> {
             if (Boolean.TRUE.equals(success)) {
                 r18n().msg("vote.reset.success").prefix().with(PARAM_PLAYER, name).send(ctx.sender());
             } else {

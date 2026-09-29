@@ -623,9 +623,13 @@ public abstract class JExVote {
         factory.registerTree(new File(plugin.getDataFolder(), "commands/vote.yml"),
                 voteCommandHandler.handlerMap(),
                 messages, registry);
+        var adminHandler = new VoteAdminHandler(plugin, voteService, voteConfig, features, adminStatus());
+        adminHandler.setSettingsEraser(uuid -> {
+            reminderService.forget(uuid);
+            return settingsService.delete(uuid);
+        });
         factory.registerTree(new File(plugin.getDataFolder(), "commands/jexvote.yml"),
-                new VoteAdminHandler(plugin, voteService, voteConfig, features, adminStatus()).handlerMap(),
-                messages, registry);
+                adminHandler.handlerMap(), messages, registry);
 
         factory.registerAllCommandsAndListeners();
         logger.info("Registered 2 command trees: /vote, /jexvote");

@@ -78,7 +78,7 @@ vote:
     empty: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>No votes yet.</#F1F5F9>'
   reload: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>config.yml, rewards.yml and sites.yml reloaded.</#F1F5F9>'
   reset:
-    success: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Vote stats of</#F1F5F9> <#A78BFA>{player}</#A78BFA> <#F1F5F9>were reset.</#F1F5F9>'
+    success: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Vote stats and settings of</#F1F5F9> <#A78BFA>{player}</#A78BFA> <#F1F5F9>were reset.</#F1F5F9>'
     all_success: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Monthly votes were reset for every player.</#F1F5F9>'
     not_found: '<#F87171>[X]</#F87171> <#F1F5F9>No vote data found for</#F1F5F9> <#A78BFA>{player}</#A78BFA><#F1F5F9>.</#F1F5F9>'
   setstreak:

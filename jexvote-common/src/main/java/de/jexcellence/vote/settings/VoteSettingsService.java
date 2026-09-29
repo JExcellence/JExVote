@@ -144,6 +144,28 @@ public final class VoteSettingsService implements VotePreferences, Listener {
     }
 
     /**
+     * Deletes the player's settings row and drops the cached settings, after any pending write has finished.
+     *
+     * @param player the player's UUID
+     * @return completes with {@code true} when a row was deleted
+     */
+    public @NotNull CompletableFuture<Boolean> delete(@NotNull UUID player) {
+        loaded.remove(player);
+        CompletableFuture<Void> pending = writes.getOrDefault(player, CompletableFuture.completedFuture(null));
+        CompletableFuture<Boolean> deleted = pending
+                .thenCompose(ignored -> repository.findByUuidAsync(player))
+                .thenApply(row -> {
+                    row.ifPresent(repository::deleteEntity);
+                    return row.isPresent();
+                });
+        writes.remove(player);
+        return deleted.exceptionally(ex -> {
+            logger.log(Level.WARNING, ex, () -> "Could not delete vote settings of " + player);
+            return false;
+        });
+    }
+
+    /**
      * Whether {@code player} can use {@code option} right now.
      *
      * @param player the player's UUID
