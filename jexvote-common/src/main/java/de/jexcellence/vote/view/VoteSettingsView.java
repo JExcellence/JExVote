@@ -1,6 +1,7 @@
 package de.jexcellence.vote.view;
 
 import de.jexcellence.jexplatform.gui.component.CardLore;
+import de.jexcellence.jexplatform.gui.style.LockedIcon;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.gui.style.VoteFormat;
@@ -124,7 +125,7 @@ public final class VoteSettingsView extends VoteBaseView {
                                     @NotNull VoteSettings current) {
         String base = OPTION + option.id();
         if (settings.availability(viewer.getUniqueId(), option) == Availability.UNAVAILABLE) {
-            return VoteCards.card(Material.RED_DYE,
+            return VoteCards.card(LockedIcon.item(viewer),
                     VoteCards.ic(VoteCards.msg(base + NAME).with(PARAM_VALUE,
                             VoteCards.tone(viewer, "bad", VoteCards.text(viewer, KEY + "unavailable.value"))), viewer),
                     CardLore.create()

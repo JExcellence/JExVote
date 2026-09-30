@@ -2,6 +2,7 @@ package de.jexcellence.vote.view;
 
 import de.jexcellence.jexplatform.gui.component.CardLore;
 import de.jexcellence.jexplatform.gui.component.FilterHopperButton;
+import de.jexcellence.jexplatform.gui.style.LockedIcon;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jexplatform.view.RewardViewHelper;
@@ -154,7 +155,7 @@ public class VoteStreakView extends VoteBaseView {
             return;
         }
         if (milestones.isEmpty()) {
-            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.RED_DYE, KEY + "empty"));
+            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, LockedIcon.item(viewer), KEY + "empty"));
             return;
         }
         String[] filters = filters();
@@ -275,7 +276,7 @@ public class VoteStreakView extends VoteBaseView {
         lore.block(stateLines(viewer, day, milestone, state, onTrack));
         Component name = VoteCards.ic(VoteCards.msg(KEY + "milestone.name-" + stateKey(milestone))
                 .with(PARAM_DAY, day), viewer);
-        Material icon = milestone == MilestoneState.LOCKED ? Material.RED_DYE : primaryIcon(rewards);
+        ItemStack icon = milestone == MilestoneState.LOCKED ? LockedIcon.item(viewer) : new ItemStack(primaryIcon(rewards));
         ItemStack card = VoteCards.card(icon, name, lore.build());
         card.setAmount(Math.clamp(day, 1, MAX_STACK));
         if (milestone == MilestoneState.CLAIMABLE) {
@@ -348,15 +349,15 @@ public class VoteStreakView extends VoteBaseView {
         String base = KEY + "detail.claim-" + stateKey(milestone);
         CardLore lore = CardLore.create().block(VoteCards.paragraph(viewer, VoteCards.msg(base + ".description")
                 .with(PARAM_DAY, day).text(viewer)));
-        Material icon;
+        ItemStack icon;
         switch (milestone) {
             case CLAIMABLE -> {
-                icon = Material.LIME_DYE;
+                icon = new ItemStack(Material.LIME_DYE);
                 lore.block(List.of(VoteCards.ic(viewer, KEY + "detail.claim-action")));
             }
-            case CLAIMED, REACHED -> icon = Material.PAPER;
+            case CLAIMED, REACHED -> icon = new ItemStack(Material.PAPER);
             default -> {
-                icon = Material.RED_DYE;
+                icon = LockedIcon.item(viewer);
                 lore.section(VoteCards.section(viewer, "progress"), List.of(
                         VoteCards.rowOf(viewer, LABEL + "streak", VoteCards.ofTotal(viewer, state.current, day))));
             }

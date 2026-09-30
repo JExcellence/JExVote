@@ -1,6 +1,7 @@
 package de.jexcellence.vote.view;
 
 import de.jexcellence.jexplatform.gui.component.CardLore;
+import de.jexcellence.jexplatform.gui.style.LockedIcon;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.jexplatform.view.RewardViewHelper;
@@ -331,7 +332,7 @@ public class VoteOverviewView extends VoteBaseView {
     private void renderSites(@NotNull Inventory inv, @NotNull Player viewer, @Nullable ViewerData data) {
         List<VoteSite> sites = new ArrayList<>(voteService.getVoteSites().values());
         if (sites.isEmpty()) {
-            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.RED_DYE, KEY + "no-sites"));
+            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, LockedIcon.item(viewer), KEY + "no-sites"));
             return;
         }
         int pages = Math.max(1, (sites.size() + SITES_PER_PAGE - 1) / SITES_PER_PAGE);

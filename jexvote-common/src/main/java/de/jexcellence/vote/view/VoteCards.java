@@ -177,7 +177,12 @@ public final class VoteCards {
 
     /** A card with a wrapped description and nothing else, for empty or error states. */
     public static @NotNull ItemStack notice(@Nullable Player viewer, @NotNull Material icon, @NotNull String keyBase) {
-        return card(icon, ic(viewer, keyBase + ".name"),
+        return notice(viewer, new ItemStack(icon), keyBase);
+    }
+
+    /** A notice card on a prepared base item, e.g. the shared locked icon. */
+    public static @NotNull ItemStack notice(@Nullable Player viewer, @NotNull ItemStack base, @NotNull String keyBase) {
+        return card(base, ic(viewer, keyBase + ".name"),
                 CardLore.create().block(paragraphOf(viewer, keyBase + ".description")).build());
     }
 

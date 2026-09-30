@@ -2,6 +2,7 @@ package de.jexcellence.vote.view;
 
 import de.jexcellence.jexplatform.gui.component.CardLore;
 import de.jexcellence.jexplatform.gui.component.FilterHopperButton;
+import de.jexcellence.jexplatform.gui.style.LockedIcon;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.vote.gui.style.VoteFormat;
 import de.jexcellence.vote.gui.style.VoteRarityStyle;
@@ -94,7 +95,7 @@ public abstract class VotePrizeCatalogView extends VoteBaseView {
         navBar(inv, viewer, backDescriptionKey());
         inv.setItem(SLOT_HEADER, header(viewer, all));
         if (all.isEmpty()) {
-            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.RED_DYE, emptyKey()));
+            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, LockedIcon.item(viewer), emptyKey()));
             return;
         }
         int filter = rarityFilter.index(viewer.getUniqueId());

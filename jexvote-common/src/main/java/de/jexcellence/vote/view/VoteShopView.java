@@ -2,6 +2,7 @@ package de.jexcellence.vote.view;
 
 import de.jexcellence.jexplatform.gui.component.CardLore;
 import de.jexcellence.jexplatform.gui.component.FilterHopperButton;
+import de.jexcellence.jexplatform.gui.style.LockedIcon;
 import de.jexcellence.jexplatform.reward.impl.ItemReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
 import de.jexcellence.vote.config.VoteShopItem;
@@ -89,7 +90,7 @@ public final class VoteShopView extends VoteBaseView {
         List<VoteShopItem> items = shopService.items();
         inv.setItem(SLOT_HEADER, header(viewer, balance, items));
         if (items.isEmpty()) {
-            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, Material.RED_DYE, KEY + "empty"));
+            inv.setItem(SLOT_CENTER, VoteCards.notice(viewer, LockedIcon.item(viewer), KEY + "empty"));
             return;
         }
         int filter = categoryFilter.index(viewer.getUniqueId());
