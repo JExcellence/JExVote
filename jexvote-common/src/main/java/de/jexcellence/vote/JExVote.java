@@ -7,6 +7,7 @@ import com.raindropcentral.commands.v2.argument.ArgumentType;
 import com.raindropcentral.commands.v2.argument.ArgumentTypeRegistry;
 import de.jexcellence.jehibernate.core.JEHibernate;
 import de.jexcellence.jexplatform.JExPlatform;
+import de.jexcellence.jexplatform.command.migration.CommandFileMigration;
 import de.jexcellence.jexplatform.logging.LogLevel;
 import de.jexcellence.jexplatform.reward.RewardRegistry;
 import de.jexcellence.jexplatform.reward.RewardType;
@@ -192,6 +193,7 @@ public abstract class JExVote {
     }
 
     public void onEnable() {
+        CommandFileMigration.oneblockAdminPaths(plugin.getLogger()).runOnce(plugin.getDataFolder().toPath());
         try {
             TranslationFileMerger.addMissingKeys(plugin, allLocales());
             platform = JExPlatform.builder(plugin)

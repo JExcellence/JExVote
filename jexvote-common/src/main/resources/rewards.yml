@@ -73,7 +73,7 @@ default-rewards:
       announce: vote.lucky.jackpot
       reward:
         type: command
-        command: jexoneblock grant-radius {player} 2
+        command: jexoneblock player grant-radius {player} 2
         asConsole: true
     - weight: 2
       id: jackpot-coins-huge
@@ -191,7 +191,7 @@ streak-rewards:
     # time cap. The player must be online when the streak fires.
     streak-3-flytime:
       type: command
-      command: jexoneblock flycoupon {player} 15 3
+      command: jexoneblock economy flycoupon {player} 15 3
       asConsole: true
     streak-3-iron:
       type: item
@@ -245,7 +245,7 @@ streak-rewards:
       asConsole: true
     streak-14-radius:
       type: command
-      command: jexoneblock grant-radius {player} 10
+      command: jexoneblock player grant-radius {player} 10
       asConsole: true
   '21':
     streak-21-xp:
@@ -265,7 +265,7 @@ streak-rewards:
       asConsole: true
     streak-21-fly:
       type: command
-      command: jexoneblock flycoupon {player} 15 2
+      command: jexoneblock economy flycoupon {player} 15 2
       asConsole: true
     streak-21-diamonds:
       type: item
@@ -286,7 +286,7 @@ streak-rewards:
       asConsole: true
     streak-30-radius:
       type: command
-      command: jexoneblock grant-radius {player} 15
+      command: jexoneblock player grant-radius {player} 15
       asConsole: true
     streak-30-crown:
       type: item
@@ -316,7 +316,7 @@ streak-rewards:
       amount: 25000.0
     streak-60-radius:
       type: command
-      command: jexoneblock grant-radius {player} 10
+      command: jexoneblock player grant-radius {player} 10
       asConsole: true
     streak-60-vote-keys:
       type: command
@@ -337,7 +337,7 @@ streak-rewards:
       amount: 25000.0
     streak-90-radius:
       type: command
-      command: jexoneblock grant-radius {player} 10
+      command: jexoneblock player grant-radius {player} 10
       asConsole: true
     streak-90-void-keys:
       type: command
@@ -361,7 +361,7 @@ streak-rewards:
       amount: 25000.0
     streak-120-radius:
       type: command
-      command: jexoneblock grant-radius {player} 10
+      command: jexoneblock player grant-radius {player} 10
       asConsole: true
     streak-120-void-keys:
       type: command
@@ -382,7 +382,7 @@ streak-rewards:
       amount: 25000.0
     streak-180-radius:
       type: command
-      command: jexoneblock grant-radius {player} 10
+      command: jexoneblock player grant-radius {player} 10
       asConsole: true
     streak-180-shadow-keys:
       type: command
@@ -408,7 +408,7 @@ streak-rewards:
       amount: 25000.0
     streak-365-radius:
       type: command
-      command: jexoneblock grant-radius {player} 50
+      command: jexoneblock player grant-radius {player} 50
       asConsole: true
     streak-365-dragon-keys:
       type: command
@@ -702,7 +702,7 @@ vote-party-pool:
     announce: vote.lucky.jackpot
     reward:
       type: command
-      command: jexoneblock grant-radius {player} 2
+      command: jexoneblock player grant-radius {player} 2
       asConsole: true
   - weight: 1
     id: party-netherite-ingot
@@ -722,7 +722,7 @@ vote-party-pool:
     announce: vote.lucky.jackpot
     reward:
       type: command
-      command: jexoneblock grant-radius {player} 5
+      command: jexoneblock player grant-radius {player} 5
       asConsole: true
   - weight: 0.8
     id: party-void-key
@@ -865,7 +865,7 @@ vote-shop:
     - <gray>coupons; redeem when you have room.
     reward:
       type: command
-      command: jexoneblock flycoupon {player} 15 2
+      command: jexoneblock economy flycoupon {player} 15 2
       asConsole: true
     purchase-sound: ITEM_ELYTRA_FLYING
   island-radius-small:
@@ -877,7 +877,7 @@ vote-shop:
     - <gray>5 blocks on every side.
     reward:
       type: command
-      command: jexoneblock grant-radius {player} 5
+      command: jexoneblock player grant-radius {player} 5
       asConsole: true
   island-radius-large:
     name: Island Expansion +25
@@ -888,7 +888,7 @@ vote-shop:
     - <gray>on every side.
     reward:
       type: command
-      command: jexoneblock grant-radius {player} 25
+      command: jexoneblock player grant-radius {player} 25
       asConsole: true
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
   event-fly:
@@ -982,7 +982,7 @@ vote-shop:
     - <gray>cobblestone while you are away.
     reward:
       type: command
-      command: jexoneblock minion give {player} cobble_generator 1
+      command: jexoneblock content minion {player} cobble_generator 1
       asConsole: true
       describe: reward_describe.custom.cobble-minion
   obsidian-breaker:
@@ -994,7 +994,7 @@ vote-shop:
     - <gray>for obsidian.
     reward:
       type: command
-      command: jexoneblock breaker-give {player} obsidian 1
+      command: jexoneblock content breaker {player} obsidian 1
       asConsole: true
       describe: reward_describe.custom.obsidian-breaker
   ancient-cache:
@@ -1006,7 +1006,7 @@ vote-shop:
     - <gray>and archaeology loot.
     reward:
       type: command
-      command: jexoneblock excavate-give {player} cache 1
+      command: jexoneblock content excavate {player} cache 1
       asConsole: true
       describe: reward_describe.custom.ancient-cache
   excavation-brush:
@@ -1018,7 +1018,7 @@ vote-shop:
     - <gray>suspicious sand.
     reward:
       type: command
-      command: jexoneblock excavate-give {player} brush 1
+      command: jexoneblock content excavate {player} brush 1
       asConsole: true
       describe: reward_describe.custom.excavation-brush
   crystal-cache:

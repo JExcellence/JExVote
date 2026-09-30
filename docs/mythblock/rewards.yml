@@ -60,7 +60,7 @@ default-rewards:
       - weight: 4           # 4% - a small island expansion (+2 radius, server-capped)
         id: 'jackpot-region'
         announce: 'vote.lucky.jackpot'
-        reward: { type: command, command: 'jexoneblock grant-radius {player} 2', asConsole: true }
+        reward: { type: command, command: 'jexoneblock player grant-radius {player} 2', asConsole: true }
       # -- Rare (~4%) - genuine value --
       - weight: 2           # 2% - the coin jackpot
         id: 'jackpot-coins-huge'
@@ -137,7 +137,7 @@ guaranteed-rewards:
 #  365   ★ Dragon key ×10 + Mythic rank 30 days + 50 radius
 #
 # Crate keys: 'crate give key <player> <Crate> <n>' (JExCrates virtual keys).
-# Region: 'jexoneblock grant-radius <player> <n>'. Flight: 'jexoneblock flytime'.
+# Region: 'jexoneblock player grant-radius <player> <n>'. Flight: 'jexoneblock economy flytime'.
 # Passes: LP group 'jexoneblock.pass.<id>' (sigil<aether<eclipse) via addtemp.
 # Rank: LP group 'mythic' (top rank) via addtemp. addtemp uses 'accumulate' so a
 # reward stacks onto an already-active pass/rank instead of failing.
@@ -166,7 +166,7 @@ streak-rewards:
     # items (here 3× 15m = 45m) rather than a direct bank grant, so nothing is
     # silently lost to the flytime cap: the player redeems each coupon when they
     # have room. Recipient must be online when the streak fires.
-    streak-3-flytime:   { type: command,  command: 'jexoneblock flycoupon {player} 15 3', asConsole: true }
+    streak-3-flytime:   { type: command,  command: 'jexoneblock economy flycoupon {player} 15 3', asConsole: true }
     streak-3-iron:
       type: item
       material: IRON_INGOT
@@ -200,7 +200,7 @@ streak-rewards:
     streak-14-coins:    { type: currency, currency: coins, amount: 8000.0 }
     streak-14-void-key: { type: command,  command: 'crate give key {player} VoidCrate 1', asConsole: true }
     streak-14-vote-key: { type: command,  command: 'crate give key {player} VoteCrate 2', asConsole: true }
-    streak-14-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
+    streak-14-radius:   { type: command,  command: 'jexoneblock player grant-radius {player} 10', asConsole: true }
 
   # ── Day 21 · Champion ───────────────────────────────────────────
   21:
@@ -208,7 +208,7 @@ streak-rewards:
     streak-21-coins:    { type: currency, currency: coins, amount: 12000.0 }
     streak-21-void-key: { type: command,  command: 'crate give key {player} VoidCrate 1', asConsole: true }
     streak-21-vote-key: { type: command,  command: 'crate give key {player} VoteCrate 5', asConsole: true }
-    streak-21-fly:      { type: command,  command: 'jexoneblock flycoupon {player} 15 2', asConsole: true }
+    streak-21-fly:      { type: command,  command: 'jexoneblock economy flycoupon {player} 15 2', asConsole: true }
     streak-21-diamonds: { type: item, material: DIAMOND, amount: 8 }
 
   # ── Day 30 · Legend ★ UNIQUE ────────────────────────────────────
@@ -219,7 +219,7 @@ streak-rewards:
     streak-30-xp:       { type: xp,       amount: 800 }
     streak-30-coins:    { type: currency, currency: coins, amount: 25000.0 }
     streak-30-season-key: { type: command, command: 'crate give key {player} SeasonCrate 1', asConsole: true }
-    streak-30-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 15', asConsole: true }
+    streak-30-radius:   { type: command,  command: 'jexoneblock player grant-radius {player} 15', asConsole: true }
     streak-30-crown:
       type: item
       material: GOLDEN_HELMET
@@ -241,7 +241,7 @@ streak-rewards:
   60:
     streak-60-xp:       { type: xp,       amount: 1200 }
     streak-60-coins:    { type: currency, currency: coins, amount: 25000.0 }
-    streak-60-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
+    streak-60-radius:   { type: command,  command: 'jexoneblock player grant-radius {player} 10', asConsole: true }
     streak-60-vote-keys: { type: command, command: 'crate give key {player} VoteCrate 10', asConsole: true }
     # Sigil = cheapest pass. addtemp/accumulate so it stacks if already active.
     streak-60-pass:     { type: command,  command: 'lp user {player} parent addtemp jexoneblock.pass.sigil 30d accumulate', asConsole: true }
@@ -252,7 +252,7 @@ streak-rewards:
   90:
     streak-90-xp:       { type: xp,       amount: 1500 }
     streak-90-coins:    { type: currency, currency: coins, amount: 25000.0 }
-    streak-90-radius:   { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
+    streak-90-radius:   { type: command,  command: 'jexoneblock player grant-radius {player} 10', asConsole: true }
     streak-90-void-keys: { type: command, command: 'crate give key {player} VoidCrate 3', asConsole: true }
     streak-90-vote-keys: { type: command, command: 'crate give key {player} VoteCrate 5', asConsole: true }
     streak-90-diamonds: { type: item, material: DIAMOND, amount: 16 }
@@ -261,7 +261,7 @@ streak-rewards:
   120:
     streak-120-xp:      { type: xp,       amount: 2000 }
     streak-120-coins:   { type: currency, currency: coins, amount: 25000.0 }
-    streak-120-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
+    streak-120-radius:  { type: command,  command: 'jexoneblock player grant-radius {player} 10', asConsole: true }
     streak-120-void-keys: { type: command, command: 'crate give key {player} VoidCrate 5', asConsole: true }
     # Aether = mid pass tier, 7 days.
     streak-120-pass:    { type: command,  command: 'lp user {player} parent addtemp jexoneblock.pass.aether 7d accumulate', asConsole: true }
@@ -270,7 +270,7 @@ streak-rewards:
   180:
     streak-180-xp:      { type: xp,       amount: 3000 }
     streak-180-coins:   { type: currency, currency: coins, amount: 25000.0 }
-    streak-180-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 10', asConsole: true }
+    streak-180-radius:  { type: command,  command: 'jexoneblock player grant-radius {player} 10', asConsole: true }
     streak-180-shadow-keys: { type: command, command: 'crate give key {player} ShadowCrate 2', asConsole: true }
     streak-180-void-keys:   { type: command, command: 'crate give key {player} VoidCrate 2', asConsole: true }
     # Eclipse = top pass tier, 7 days.
@@ -282,7 +282,7 @@ streak-rewards:
   365:
     streak-365-xp:      { type: xp,       amount: 5000 }
     streak-365-coins:   { type: currency, currency: coins, amount: 25000.0 }
-    streak-365-radius:  { type: command,  command: 'jexoneblock grant-radius {player} 50', asConsole: true }
+    streak-365-radius:  { type: command,  command: 'jexoneblock player grant-radius {player} 50', asConsole: true }
     streak-365-dragon-keys: { type: command, command: 'crate give key {player} DragonCrate 10', asConsole: true }
     # Mythic = top rank group (bare id), 30 days.
     streak-365-rank:    { type: command,  command: 'lp user {player} parent addtemp mythic 30d accumulate', asConsole: true }
@@ -371,11 +371,11 @@ vote-party-pool:
     # -- Rare - netherite mats, larger coin, border extension --
     - { weight: 2,   id: 'party-netherite-scrap', reward: { type: item, material: NETHERITE_SCRAP, amount: 3 } }
     - { weight: 1.5, id: 'party-coins-large',  reward: { type: currency, currency: coins, amount: 12000.0 } }
-    - { weight: 1.5, id: 'party-border-small', announce: 'vote.lucky.jackpot', reward: { type: command, command: 'jexoneblock grant-radius {player} 2', asConsole: true } }
+    - { weight: 1.5, id: 'party-border-small', announce: 'vote.lucky.jackpot', reward: { type: command, command: 'jexoneblock player grant-radius {player} 2', asConsole: true } }
     - { weight: 1,   id: 'party-netherite-ingot', reward: { type: item, material: NETHERITE_INGOT, amount: 1 } }
     # -- Epic - shadow key, bigger border win --
     - { weight: 1.2, id: 'party-shadow-key',   announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} ShadowCrate 1', asConsole: true } }
-    - { weight: 0.6, id: 'party-border-large', announce: 'vote.lucky.jackpot', reward: { type: command, command: 'jexoneblock grant-radius {player} 5', asConsole: true } }
+    - { weight: 0.6, id: 'party-border-large', announce: 'vote.lucky.jackpot', reward: { type: command, command: 'jexoneblock player grant-radius {player} 5', asConsole: true } }
     # -- Legendary - void & dragon keys (the grand prizes) --
     - { weight: 0.8, id: 'party-void-key',     announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} VoidCrate 1', asConsole: true } }
     - { weight: 0.25, id: 'party-dragon-key',  announce: 'vote.lucky.jackpot', reward: { type: command, command: 'crate give key {player} DragonCrate 1', asConsole: true } }
@@ -441,7 +441,7 @@ vote-party:
 # crate keys, and a little cosmetic flavour. The $20-tier Season/Dragon keys
 # are here as LONG-TERM goals (priced high). Removed the odd Shulker/NameTag
 # fillers. Crate keys use 'crate give key'; region uses grant-radius;
-# flight uses the island fly-time bank (jexoneblock flytime) so it matches the
+# flight uses the island fly-time bank (jexoneblock economy flytime) so it matches the
 # in-game "Out of fly time?" hint that points here.
 vote-shop:
 
@@ -513,7 +513,7 @@ vote-shop:
     description:
       - "<#94A3B8>Tradeable island flight coupons."
       - "<#94A3B8>Redeem each when you have room to spare."
-    reward: { type: command, command: 'jexoneblock flycoupon {player} 15 2', asConsole: true }
+    reward: { type: command, command: 'jexoneblock economy flycoupon {player} 15 2', asConsole: true }
     purchase-sound: ITEM_ELYTRA_FLYING
   island-radius-small:
     name: "Island Expansion +5"
@@ -522,7 +522,7 @@ vote-shop:
     description:
       - "<#94A3B8>Push your island border out by 5 blocks"
       - "<#94A3B8>on every side. Room to grow."
-    reward: { type: command, command: 'jexoneblock grant-radius {player} 5', asConsole: true }
+    reward: { type: command, command: 'jexoneblock player grant-radius {player} 5', asConsole: true }
   island-radius-large:
     name: "Island Expansion +25"
     icon: GRASS_BLOCK
@@ -530,7 +530,7 @@ vote-shop:
     description:
       - "<#94A3B8>A big leap - +25 blocks on every side."
       - "<#94A3B8>For the ambitious builder."
-    reward: { type: command, command: 'jexoneblock grant-radius {player} 25', asConsole: true }
+    reward: { type: command, command: 'jexoneblock player grant-radius {player} 25', asConsole: true }
     purchase-sound: UI_TOAST_CHALLENGE_COMPLETE
   event-fly:
     name: "Event Auto-Fly Perk"
@@ -604,7 +604,7 @@ vote-shop:
     description:
       - "<#94A3B8>A tireless tier-1 worker that mines"
       - "<#94A3B8>cobblestone while you are away."
-    reward: { type: command, command: 'jexoneblock minion give {player} cobble_generator 1', asConsole: true }
+    reward: { type: command, command: 'jexoneblock content minion {player} cobble_generator 1', asConsole: true }
   obsidian-breaker:
     name: "Obsidian Breaker"
     icon: NETHERITE_PICKAXE
@@ -612,7 +612,7 @@ vote-shop:
     description:
       - "<#94A3B8>An instant-mine pickaxe with charges -"
       - "<#94A3B8>tear through the central block."
-    reward: { type: command, command: 'jexoneblock breaker-give {player} obsidian 1', asConsole: true }
+    reward: { type: command, command: 'jexoneblock content breaker {player} obsidian 1', asConsole: true }
   ancient-cache:
     name: "Ancient Cache"
     icon: BRUSH
@@ -620,7 +620,7 @@ vote-shop:
     description:
       - "<#94A3B8>Brush it open for relics, coins and"
       - "<#94A3B8>archaeology loot."
-    reward: { type: command, command: 'jexoneblock excavate-give {player} cache 1', asConsole: true }
+    reward: { type: command, command: 'jexoneblock content excavate {player} cache 1', asConsole: true }
   excavation-brush:
     name: "Excavation Brush"
     icon: BRUSH
@@ -628,7 +628,7 @@ vote-shop:
     description:
       - "<#94A3B8>The tool for digging caches and"
       - "<#94A3B8>suspicious sand."
-    reward: { type: command, command: 'jexoneblock excavate-give {player} brush 1', asConsole: true }
+    reward: { type: command, command: 'jexoneblock content excavate {player} brush 1', asConsole: true }
   crystal-cache:
     name: "Crystal Cache"
     icon: AMETHYST_CLUSTER
