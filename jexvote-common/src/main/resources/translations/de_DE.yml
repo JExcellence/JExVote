@@ -97,6 +97,8 @@ vote:
 
   reminder:
     chat: "<#A78BFA>▸</#A78BFA> <#F1F5F9>Eine Vote-Seite ist wieder bereit:</#F1F5F9> <#A78BFA>{ready} / {total}</#A78BFA><#F1F5F9>.</#F1F5F9> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Öffnet das Vote-Menü</#94A3B8>'><#A78BFA><u>Jetzt voten</u></#A78BFA></hover></click> <#94A3B8>Abschalten unter /vote settings</#94A3B8>"
+    chat-v2: "<#F1F5F9>{ready} von {total} Vote-Seiten sind bereit.</#F1F5F9> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Öffnet das Vote-Menü</#94A3B8><newline><#94A3B8>Vote auf jeder bereiten Seite für deine Belohnungen</#94A3B8>'><#A78BFA>></#A78BFA> <#A78BFA><u>Jetzt voten</u></#A78BFA></hover></click>"
+    chat-hint-v2: "<#94A3B8>Diese Erinnerung schaltest du ab unter</#94A3B8> <click:run_command:'/vote settings'><hover:show_text:'<#94A3B8>Öffnet deine Vote-Einstellungen</#94A3B8>'><#A78BFA>/vote settings</#A78BFA></hover></click><#94A3B8>.</#94A3B8>"
     title: '<gradient:#5EEAD4:#A78BFA>Du kannst wieder voten</gradient>'
     subtitle: '<#F1F5F9>{ready} von {total} Seiten sind bereit</#F1F5F9> <dark_gray>|</dark_gray> <#A78BFA>/vote</#A78BFA>'
     streak-warning: "<#FBBF24>[!]</#FBBF24> <#F1F5F9>Deine Vote-Serie von</#F1F5F9> <#A78BFA>{streak}</#A78BFA> <#F1F5F9>endet in</#F1F5F9> <#FBBF24>{time}</#FBBF24><#F1F5F9>.</#F1F5F9> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Öffnet das Vote-Menü</#94A3B8>'><#A78BFA><u>Jetzt voten</u></#A78BFA></hover></click>"

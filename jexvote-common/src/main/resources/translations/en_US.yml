@@ -97,6 +97,8 @@ vote:
 
   reminder:
     chat: "<#A78BFA>▸</#A78BFA> <#F1F5F9>A vote site is ready again:</#F1F5F9> <#A78BFA>{ready} / {total}</#A78BFA><#F1F5F9>.</#F1F5F9> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Opens the vote menu</#94A3B8>'><#A78BFA><u>Vote now</u></#A78BFA></hover></click> <#94A3B8>Turn this off in /vote settings</#94A3B8>"
+    chat-v2: "<#F1F5F9>{ready} of {total} vote sites are ready.</#F1F5F9> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Opens the vote menu</#94A3B8><newline><#94A3B8>Vote on each ready site for your rewards</#94A3B8>'><#A78BFA>></#A78BFA> <#A78BFA><u>Vote now</u></#A78BFA></hover></click>"
+    chat-hint-v2: "<#94A3B8>Turn this reminder off in</#94A3B8> <click:run_command:'/vote settings'><hover:show_text:'<#94A3B8>Opens your vote settings</#94A3B8>'><#A78BFA>/vote settings</#A78BFA></hover></click><#94A3B8>.</#94A3B8>"
     title: '<gradient:#5EEAD4:#A78BFA>You can vote again</gradient>'
     subtitle: '<#F1F5F9>{ready} of {total} sites are ready</#F1F5F9> <dark_gray>|</dark_gray> <#A78BFA>/vote</#A78BFA>'
     streak-warning: "<#FBBF24>[!]</#FBBF24> <#F1F5F9>Your vote streak of</#F1F5F9> <#A78BFA>{streak}</#A78BFA> <#F1F5F9>ends in</#F1F5F9> <#FBBF24>{time}</#FBBF24><#F1F5F9>.</#F1F5F9> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Opens the vote menu</#94A3B8>'><#A78BFA><u>Vote now</u></#A78BFA></hover></click>"

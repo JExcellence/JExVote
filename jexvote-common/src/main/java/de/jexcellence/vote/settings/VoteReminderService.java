@@ -57,6 +57,8 @@ public final class VoteReminderService {
     private static final long DISCORD_SWEEP_MS = 10L * MINUTE_MS;
     private static final int DISCORD_COLOR = 0xA78BFA;
     private static final String KEY = "vote.reminder.";
+    private static final String KEY_CHAT = KEY + "chat-v2";
+    private static final String KEY_CHAT_HINT = KEY + "chat-hint-v2";
     private static final String PARAM_READY = "ready";
     private static final String PARAM_TOTAL = "total";
 
@@ -208,13 +210,14 @@ public final class VoteReminderService {
         if (!player.isOnline()) {
             return;
         }
-        MessageBuilder message = msg(mode == ReminderMode.TITLE ? KEY + "title" : KEY + "chat")
+        MessageBuilder message = msg(mode == ReminderMode.TITLE ? KEY + "title" : KEY_CHAT)
                 .with(PARAM_READY, VoteFormat.number(player, ready))
                 .with(PARAM_TOTAL, VoteFormat.number(player, total));
         if (mode == ReminderMode.TITLE) {
             message.showTitle(player, KEY + "subtitle");
         } else {
             message.prefix().send(player);
+            msg(KEY_CHAT_HINT).send(player);
         }
     }
 
