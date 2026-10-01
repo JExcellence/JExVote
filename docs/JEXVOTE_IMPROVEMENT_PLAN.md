@@ -1,8 +1,11 @@
 # JExVote - Public-Plugin Improvement & API Evolution Plan
 
-> **Status:** in-progress (design locked; first implementation slice landed and code-verified). **Last verified:** 2026-09-17. **Related:** [DISCORD_SHORT](DISCORD_SHORT.md), [UPDATE_2026-08](UPDATE_2026-08.md).
+> **Status:** built, in-game test pending (2026-10-01). **Last verified:** 2026-10-01.
+> **Related:** [DISCORD_SHORT](DISCORD_SHORT.md), [UPDATE_2026-08](UPDATE_2026-08.md).
 >
-> **Built (verified 2026-09-17):** the ✅ items below exist in `JExVote/src`: `jexvote-common/.../service/OutboxProxyEventBus.java`, `ProxyVoteSyncService.java`, `VoteRewardProviderRegistry.java`, `VoteStatsService.java`, and `jexvote-api/.../event/VotePreRewardEvent.java`. Remaining work is the "Open backlog" list, gated on a two-backend live test.
+> **Built (verified 2026-10-01):** API contract, `VoteService` decompose, event-fire/`Thread.sleep(100)` fixes,
+> i18n sweep, reward-SPI, proxy sync, REST generalization, `jexvote-api` publish, S4 hooks all complete.
+> Bedrock forms committed. Pending: two-backend production live test.
 
 ## Contents
 
@@ -280,4 +283,5 @@ The embedded HMAC REST server (`rest/`) currently defaults CORS to `https://myth
 
 ## Changelog
 
-- 2026-09-17: doc-quality pass (mandate status banner + TOC added; ✅ items spot-checked against `JExVote/src` - the five named service/event classes exist).
+- 2026-10-01: launch snapshot. All implementation slices complete. Bedrock forms, vote settings, reminders shipped. Two-backend live test pending.
+- 2026-09-17: doc-quality pass (mandate status banner + TOC added; ✅ items spot-checked against `JExVote/src`).
