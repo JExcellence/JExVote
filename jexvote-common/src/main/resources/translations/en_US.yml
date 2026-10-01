@@ -28,6 +28,12 @@ vote:
   offline-summary-entry-stacked: '<#A78BFA>+</#A78BFA> {reward} <#94A3B8>x{count}</#94A3B8>'
   site-link: "<#A78BFA>▸</#A78BFA> <#F1F5F9>Vote on {site}:</#F1F5F9> <click:open_url:'{url}'><hover:show_text:'<#94A3B8>Opens the vote page in your browser</#94A3B8>'><#A78BFA><u>{url}</u></#A78BFA></hover></click>"
   unknown-player: 'Unknown'
+  normal-profile:
+    sent: "<#FBBF24>[!]</#FBBF24> <#F1F5F9>Your Season profile cannot use vote rewards, so they went to your Normal profile (slot {slot}). Switch with</#F1F5F9> <click:run_command:'/island profiles'><hover:show_text:'<#94A3B8>Open your profiles</#94A3B8>'><#A78BFA>/island profiles</#A78BFA></hover></click> <#F1F5F9>to receive them.</#F1F5F9>"
+    held: "<#FBBF24>[!]</#FBBF24> <#F1F5F9>Your vote rewards wait for your Normal profile (slot {slot}). Switch with</#F1F5F9> <click:run_command:'/island profiles'><hover:show_text:'<#94A3B8>Open your profiles</#94A3B8>'><#A78BFA>/island profiles</#A78BFA></hover></click> <#F1F5F9>to receive them.</#F1F5F9>"
+    waiting: "<#FBBF24>[!]</#FBBF24> <#F1F5F9>Your vote rewards wait for a Normal profile. Create one with</#F1F5F9> <click:run_command:'/island profiles'><hover:show_text:'<#94A3B8>Open your profiles</#94A3B8>'><#A78BFA>/island profiles</#A78BFA></hover></click> <#F1F5F9>to receive them.</#F1F5F9>"
+    delivered: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Your</#F1F5F9> <#A78BFA>{count}</#A78BFA> <#F1F5F9>votes from the Season profile paid out on this profile:</#F1F5F9><newline>{rewards}'
+    delivered-empty: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Your</#F1F5F9> <#A78BFA>{count}</#A78BFA> <#F1F5F9>votes from the Season profile were counted on this profile.</#F1F5F9>'
   shop:
     players_only: '<#F87171>[X]</#F87171> <#F1F5F9>Only players can open the vote shop.</#F1F5F9>'
     unavailable: '<#F87171>[X]</#F87171> <#F1F5F9>The vote shop is not available on this server.</#F1F5F9>'

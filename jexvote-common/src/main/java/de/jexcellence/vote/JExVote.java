@@ -46,6 +46,7 @@ import de.jexcellence.vote.placeholder.VotePlaceholderExpansion;
 import de.jexcellence.vote.server.VotifierKeyManager;
 import de.jexcellence.vote.server.VotifierServer;
 import de.jexcellence.vote.service.MultiplierService;
+import de.jexcellence.vote.service.NormalProfileRewards;
 import de.jexcellence.vote.service.RewardStatsService;
 import de.jexcellence.vote.service.VotePartyService;
 import de.jexcellence.vote.service.StreakClaimService;
@@ -556,6 +557,7 @@ public abstract class JExVote {
     private void registerListeners() {
         var pm = Bukkit.getPluginManager();
         pm.registerEvents(new PlayerJoinListener(voteService), plugin);
+        NormalProfileRewards.install(plugin, pendingRewardRepository, voteService::deliverPendingRewards);
         pm.registerEvents(settingsService, plugin);
         settingsService.loadOnlinePlayers();
         reminderService.start();

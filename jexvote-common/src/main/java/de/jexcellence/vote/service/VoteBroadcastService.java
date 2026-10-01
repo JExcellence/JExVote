@@ -198,25 +198,29 @@ public class VoteBroadcastService {
     }
 
     /**
-     * Tells a returning player, in one message, what their offline votes delivered. Sent after the grants
-     * completed; identical rewards are folded into one line with a count.
+     * Tells a player, in one message, what their pending votes delivered: the votes cast while offline, or the
+     * rewards kept from the JExOneblock Season profile for this Normal profile. Sent after the grants completed;
+     * identical rewards are folded into one line with a count.
      *
-     * @param player   the returning player
-     * @param votes    how many stored votes were queued while offline (>= 1)
-     * @param received one description per reward actually granted; empty when every grant failed or produced
-     *                 no describable reward
+     * @param player            the recipient
+     * @param votes             how many stored entries were delivered (>= 1)
+     * @param received          one description per reward actually granted; empty when every grant failed or
+     *                          produced no describable reward
+     * @param fromSeasonProfile whether the entries were kept from the Season profile
      */
-    public void notifyRewardsDelivered(@NotNull Player player, int votes, @NotNull List<String> received) {
+    public void notifyRewardsDelivered(@NotNull Player player, int votes, @NotNull List<String> received,
+                                       boolean fromSeasonProfile) {
         if (votes <= 0) {
             return;
         }
+        String key = fromSeasonProfile ? "vote.normal-profile.delivered" : "vote.offline-summary";
         if (received.isEmpty()) {
-            r18n().msg("vote.offline-summary-empty").prefix()
+            r18n().msg(key + "-empty").prefix()
                     .with(PARAM_COUNT, String.valueOf(votes))
                     .send(player);
             return;
         }
-        r18n().msg("vote.offline-summary").prefix()
+        r18n().msg(key).prefix()
                 .with(PARAM_COUNT, String.valueOf(votes))
                 .with("rewards", buildRewardList(player, received))
                 .send(player);

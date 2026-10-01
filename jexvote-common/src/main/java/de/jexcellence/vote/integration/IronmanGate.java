@@ -5,7 +5,9 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -59,6 +61,33 @@ public final class IronmanGate {
     public @Nullable String itemRefusal(@NotNull ItemStack item, @NotNull UUID user) {
         IronmanChecks current = resolve();
         return current == null ? null : current.itemRefusal(item, user);
+    }
+
+    /**
+     * Whether the player's active JExOneblock profile is the Season profile, which cannot use vote crate keys,
+     * coupons or items; its vote rewards go to the {@link #rewardProfile reward profile}. Works for offline players.
+     */
+    public boolean isSeasonProfile(@NotNull UUID player) {
+        IronmanChecks current = resolve();
+        return current != null && current.isSeasonProfile(player);
+    }
+
+    /** The id of the player's active JExOneblock profile, or {@code null} when profiles are off or unknown. */
+    public @Nullable Long activeProfileId(@NotNull UUID player) {
+        IronmanChecks current = resolve();
+        return current == null ? null : current.activeProfileId(player);
+    }
+
+    /** The player's lowest-slot Normal profile, which receives the vote rewards of the Season profile. */
+    public @NotNull CompletableFuture<Optional<RewardProfile>> rewardProfile(@NotNull UUID player) {
+        IronmanChecks current = resolve();
+        return current == null ? CompletableFuture.completedFuture(Optional.empty()) : current.rewardProfile(player);
+    }
+
+    /** Deposits into a JExOneblock island bank; {@code false} when JExOneblock is missing or the island unknown. */
+    public boolean depositToIslandBank(long islandId, @NotNull String currency, long amount) {
+        IronmanChecks current = resolve();
+        return current != null && current.depositToIslandBank(islandId, currency, amount);
     }
 
     private @Nullable IronmanChecks resolve() {

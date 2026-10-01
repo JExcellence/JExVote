@@ -416,7 +416,8 @@ public class VoteService {
      * executor when the player next joins.
      */
     private void queueBonusOffline(@NotNull UUID uuid, @NotNull String service,
-                                   @NotNull List<VoteRewardDescriptor> bonus) {
+                                   @NotNull List<VoteRewardDescriptor> bonus,
+                                   @Nullable NormalProfileRewards normalProfile) {
         VoteDescriptorExecutor executor = this.descriptorExecutor;
         if (bonus.isEmpty() || executor == null) {
             return;
@@ -433,7 +434,12 @@ public class VoteService {
             return;
         }
         String blob = executor.serialize(queueable);
-        if (blob != null) {
+        if (blob == null) {
+            return;
+        }
+        if (normalProfile != null) {
+            normalProfile.hold(uuid, SPI_PENDING_MARKER + service, blob);
+        } else {
             pendingRewardRepository.create(new PendingVoteRewardEntity(uuid, SPI_PENDING_MARKER + service, blob));
         }
     }
@@ -484,7 +490,12 @@ public class VoteService {
         // the main/region thread that deliverOnlineRewards runs on.
         List<VoteRewardDescriptor> bonus = collectBonusRewards(vote, uuid, snapshot, online);
 
-        if (online) {
+        NormalProfileRewards normalProfile = NormalProfileRewards.current();
+        if (normalProfile != null && normalProfile.routes(uuid)) {
+            holdForNormalProfile(normalProfile, vote, uuid, streak, firstDailyBonus, bonus);
+            logger.log(Level.INFO, () -> String.format("Vote processed for %s (Season profile) - rewards kept for "
+                    + "the Normal profile, streak: %d, total: %d", vote.username(), streak, player.getTotalVotes()));
+        } else if (online) {
             scheduler.runAtEntity(onlinePlayer, () ->
                     deliverOnlineRewards(onlinePlayer, vote, uuid, snapshot, streak,
                             firstDailyBonus, consumedFreezes, remainingFreezes, freshFreezeGrant, bonus));
@@ -500,10 +511,35 @@ public class VoteService {
                 pendingRewardRepository.create(
                         new PendingVoteRewardEntity(uuid, vote.serviceName(), rewardData));
             }
-            queueBonusOffline(uuid, vote.serviceName(), bonus);
+            queueBonusOffline(uuid, vote.serviceName(), bonus, null);
             logger.log(Level.INFO, () -> String.format("Vote processed for %s (offline) - rewards queued, streak: %d, total: %d",
                     vote.username(), streak, player.getTotalVotes()));
         }
+    }
+
+    /**
+     * A vote cast while the JExOneblock Season profile is active: the rewards, the daily bonus and the streak
+     * commands wait in the pending queue for the Normal profile. An online voter still gets the thank-you message,
+     * the effects and a note where the rewards went.
+     */
+    private void holdForNormalProfile(@NotNull NormalProfileRewards normalProfile, @NotNull Vote vote,
+                                      @NotNull UUID uuid, int streak, boolean firstDailyBonus,
+                                      @NotNull List<VoteRewardDescriptor> bonus) {
+        String service = vote.serviceName();
+        List<String> commands = new ArrayList<>(firstDailyBonus ? dailyRewardCommands : List.of());
+        commands.addAll(resolveStreakCommands(service, streak));
+        normalProfile.hold(uuid, service, rewardService.serializeRewards(service, streak, commands));
+        queueBonusOffline(uuid, service, bonus, normalProfile);
+        Player onlinePlayer = Bukkit.getPlayer(uuid);
+        if (onlinePlayer == null || !onlinePlayer.isOnline()) {
+            return;
+        }
+        boolean milestone = rewardService.getStreakRewards().containsKey(streak);
+        scheduler.runAtEntity(onlinePlayer, () -> {
+            broadcastService.notifyPlayer(onlinePlayer, service, streak);
+            broadcastService.playVoteEffects(onlinePlayer, streak, milestone);
+            normalProfile.tellWhere(onlinePlayer);
+        });
     }
 
     @SuppressWarnings("java:S107") // cohesive per-vote delivery context; grouping would obscure it
@@ -586,69 +622,105 @@ public class VoteService {
         return null;
     }
 
+    /**
+     * Delivers the pending rewards the active profile may receive. Without JExOneblock profiles that is every
+     * pending row; otherwise {@link NormalProfileRewards} keeps Season-profile rewards for the Normal profile.
+     * Called on join and after every JExOneblock profile switch.
+     *
+     * @param player the online player
+     */
     public void deliverPendingRewards(@NotNull Player player) {
         replayUnresolvedVotes(player);
         pendingRewardRepository.findByPlayer(player.getUniqueId()).thenAccept(pending -> {
-            if (pending.isEmpty()) return;
-
-            scheduler.runAtEntity(player, () -> {
-                List<CompletableFuture<List<String>>> grants = new ArrayList<>(pending.size());
-                VoteDescriptorExecutor executor = this.descriptorExecutor;
-                for (PendingVoteRewardEntity reward : pending) {
-                    try {
-                        // SPI/pre-reward descriptor blobs are marked in the service name and replayed
-                        // through the descriptor executor; everything else is a config-reward blob.
-                        boolean isBonusBlob = executor != null && reward.getServiceName() != null
-                                && reward.getServiceName().startsWith(SPI_PENDING_MARKER);
-                        CompletableFuture<List<String>> grant = isBonusBlob
-                                ? executor.grantSerialized(player, reward.getRewardData())
-                                : rewardService.grantSerializedRewards(player, reward.getRewardData());
-                        grants.add(grant.exceptionally(ex -> {
-                            final String playerName = player.getName();
-                            logger.log(Level.WARNING, ex,
-                                    () -> "Async reward grant failed for " + playerName);
-                            return List.of();
-                        }));
-                    } catch (Exception e) {
-                        final String playerName = player.getName();
-                        logger.log(Level.WARNING, e,
-                                () -> "Failed to deliver pending reward to " + playerName);
-                    }
-                }
-
-                CompletableFuture
-                        .allOf(grants.toArray(CompletableFuture[]::new))
-                        .whenComplete((ignored, err) -> {
-                            if (err != null) {
-                                final String pName = player.getName();
-                                logger.log(Level.WARNING, err,
-                                        () -> "Unexpected error in pending reward delivery for " + pName);
-                            }
-
-                            pendingRewardRepository.deleteByPlayer(player.getUniqueId())
-                                    .exceptionally(ex -> {
-                                        final String pName = player.getName();
-                                        logger.log(Level.SEVERE, ex,
-                                                () -> "Failed to delete pending rewards for " + pName);
-                                        return 0;
-                                    });
-
-                            List<String> received = grants.stream()
-                                    .map(f -> f.getNow(List.of()))
-                                    .flatMap(List::stream)
-                                    .toList();
-
-                            scheduler.runAtEntity(player, () ->
-                                    broadcastService.notifyRewardsDelivered(
-                                            player, pending.size(), received));
-
-                            final int deliveredCount = pending.size();
-                            final String deliveredTo = player.getName();
-                            logger.log(Level.INFO, () -> "Delivered " + deliveredCount
-                                    + " pending vote reward(s) to " + deliveredTo);
-                        });
-            });
+            if (pending.isEmpty()) {
+                return;
+            }
+            NormalProfileRewards normalProfile = NormalProfileRewards.current();
+            if (normalProfile == null) {
+                deliverBatch(player, pending, false);
+            } else {
+                normalProfile.handOver(player, pending, (rows, held) -> deliverBatch(player, rows, held));
+            }
         });
+    }
+
+    /**
+     * Grants one batch of pending rows on the player's thread, removes exactly those rows and reports what arrived.
+     *
+     * @param held whether the rows were kept from the Season profile for this Normal profile
+     * @return completes once every grant of the batch finished
+     */
+    private @NotNull CompletableFuture<Void> deliverBatch(@NotNull Player player,
+                                                          @NotNull List<PendingVoteRewardEntity> pending,
+                                                          boolean held) {
+        CompletableFuture<Void> done = new CompletableFuture<>();
+        if (pending.isEmpty()) {
+            done.complete(null);
+            return done;
+        }
+        scheduler.runAtEntity(player, () -> {
+            List<CompletableFuture<List<String>>> grants = new ArrayList<>(pending.size());
+            for (PendingVoteRewardEntity reward : pending) {
+                grantPending(player, reward, grants);
+            }
+            CompletableFuture
+                    .allOf(grants.toArray(CompletableFuture[]::new))
+                    .whenComplete((ignored, err) -> {
+                        if (err != null) {
+                            final String pName = player.getName();
+                            logger.log(Level.WARNING, err,
+                                    () -> "Unexpected error in pending reward delivery for " + pName);
+                        }
+                        deletePending(player, pending);
+                        List<String> received = grants.stream()
+                                .map(f -> f.getNow(List.of()))
+                                .flatMap(List::stream)
+                                .toList();
+                        scheduler.runAtEntity(player, () ->
+                                broadcastService.notifyRewardsDelivered(player, pending.size(), received, held));
+                        final int deliveredCount = pending.size();
+                        final String deliveredTo = player.getName();
+                        logger.log(Level.INFO, () -> "Delivered " + deliveredCount
+                                + " pending vote reward(s) to " + deliveredTo);
+                        done.complete(null);
+                    });
+        });
+        return done;
+    }
+
+    /**
+     * Grants one pending row. SPI/pre-reward descriptor blobs are marked in the service name and replayed through
+     * the descriptor executor; everything else is a config-reward blob.
+     */
+    private void grantPending(@NotNull Player player, @NotNull PendingVoteRewardEntity reward,
+                              @NotNull List<CompletableFuture<List<String>>> grants) {
+        VoteDescriptorExecutor executor = this.descriptorExecutor;
+        try {
+            boolean isBonusBlob = executor != null
+                    && NormalProfileRewards.sourceOf(reward.getServiceName()).startsWith(SPI_PENDING_MARKER);
+            CompletableFuture<List<String>> grant = isBonusBlob
+                    ? executor.grantSerialized(player, reward.getRewardData())
+                    : rewardService.grantSerializedRewards(player, reward.getRewardData());
+            grants.add(grant.exceptionally(ex -> {
+                final String playerName = player.getName();
+                logger.log(Level.WARNING, ex, () -> "Async reward grant failed for " + playerName);
+                return List.of();
+            }));
+        } catch (Exception e) {
+            final String playerName = player.getName();
+            logger.log(Level.WARNING, e, () -> "Failed to deliver pending reward to " + playerName);
+        }
+    }
+
+    /** Removes the delivered rows, so rows queued meanwhile or held for another profile stay. */
+    private void deletePending(@NotNull Player player, @NotNull List<PendingVoteRewardEntity> delivered) {
+        for (PendingVoteRewardEntity row : delivered) {
+            pendingRewardRepository.deleteAsync(row.getId()).exceptionally(ex -> {
+                final String pName = player.getName();
+                logger.log(Level.SEVERE, ex, () -> "Failed to delete a pending reward of " + pName);
+                return null;
+            });
+        }
     }
 
     // ── Read surface - delegated to VoteStatsService (see that class) ────────────────
@@ -901,16 +973,24 @@ public class VoteService {
      */
 
     private void executeStreakCommands(@NotNull Player player, @NotNull String serviceName, int streak) {
-        List<String> commands = streakCommands.get().get(streak);
-        if (commands == null || commands.isEmpty()) return;
-
-        for (String command : commands) {
-            String resolved = command
-                    .replace("{player}", player.getName())
-                    .replace("{service}", serviceName)
-                    .replace("{streak}", String.valueOf(streak));
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), resolved);
+        for (String command : resolveStreakCommands(serviceName, streak)) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("{player}", player.getName()));
         }
+    }
+
+    /** The streak commands of {@code streak} with service and streak filled in; {@code {player}} stays. */
+    private @NotNull List<String> resolveStreakCommands(@NotNull String serviceName, int streak) {
+        List<String> commands = streakCommands.get().get(streak);
+        if (commands == null || commands.isEmpty()) {
+            return List.of();
+        }
+        List<String> resolved = new ArrayList<>(commands.size());
+        for (String command : commands) {
+            resolved.add(command
+                    .replace("{service}", serviceName)
+                    .replace("{streak}", String.valueOf(streak)));
+        }
+        return resolved;
     }
 
     private void resetMonthlyIfNeeded(@NotNull VotePlayerEntity player) {

@@ -28,6 +28,9 @@ public class VoteRewardService {
 
     private static final String REWARDS_KEY = "rewards";
     private static final String COMMANDS_KEY = "commands";
+    private static final String SOURCE_PARTY = "party";
+    private static final String SOURCE_SHOP = "shop";
+    private static final String SOURCE_STREAK_CLAIM = "streak-claim";
 
     private final Logger logger;
     private final ObjectMapper objectMapper;
@@ -208,7 +211,30 @@ public class VoteRewardService {
      * No vote multiplier is applied - party rewards are granted as configured.
      */
     public void grantRewardList(@NotNull Player player, @NotNull List<AbstractReward> rewards) {
-        grantAll(rewards, player, 1.0);
+        if (!heldForNormalProfile(player, rewards, SOURCE_PARTY)) {
+            grantAll(rewards, player, 1.0);
+        }
+    }
+
+    /**
+     * Keeps rewards for the player's JExOneblock Normal profile while the Season profile is active (it cannot use
+     * vote keys, coupons or items) and tells the player where they went.
+     *
+     * @return {@code true} when the rewards were kept instead of granted
+     */
+    private boolean heldForNormalProfile(@NotNull Player player, @NotNull List<AbstractReward> rewards,
+                                         @NotNull String source) {
+        NormalProfileRewards normalProfile = NormalProfileRewards.current();
+        if (rewards.isEmpty() || normalProfile == null || !normalProfile.routes(player.getUniqueId())) {
+            return false;
+        }
+        String data = serializeRewardList(rewards);
+        if (data == null) {
+            return false;
+        }
+        normalProfile.hold(player.getUniqueId(), source, data);
+        normalProfile.tellWhere(player);
+        return true;
     }
 
     /**
@@ -218,6 +244,9 @@ public class VoteRewardService {
      */
     public @NotNull CompletableFuture<Boolean> grantChecked(@NotNull Player player,
                                                             @NotNull AbstractReward reward) {
+        if (heldForNormalProfile(player, List.of(reward), SOURCE_SHOP)) {
+            return CompletableFuture.completedFuture(true);
+        }
         return reward.grant(player).exceptionally(ex -> {
             logger.log(Level.WARNING, "Failed to grant shop reward to " + player.getName(), ex);
             return false;
@@ -395,6 +424,9 @@ public class VoteRewardService {
         List<AbstractReward> rewards = streakRewards.get().get(milestoneDay);
         if (rewards == null || rewards.isEmpty()) {
             return CompletableFuture.completedFuture(false);
+        }
+        if (heldForNormalProfile(player, rewards, SOURCE_STREAK_CLAIM)) {
+            return CompletableFuture.completedFuture(true);
         }
 
         // Serialise the grants (see grantSerializedRewards): concurrent coin deposits

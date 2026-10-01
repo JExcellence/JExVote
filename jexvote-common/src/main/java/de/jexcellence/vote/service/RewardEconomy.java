@@ -70,6 +70,10 @@ public final class RewardEconomy {
         if (amount <= 0.0) {
             return CompletableFuture.completedFuture(true);
         }
+        NormalProfileRewards normalProfile = NormalProfileRewards.current();
+        if (normalProfile != null && normalProfile.depositToBank(player.getUniqueId(), currency, amount)) {
+            return CompletableFuture.completedFuture(true);
+        }
         CompletableFuture<Boolean> viaJexEconomy = tryJexEconomy(player, currency, amount);
         if (viaJexEconomy != null) {
             return viaJexEconomy;
