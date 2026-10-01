@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Manages the server-wide Vote Party: a shared counter that, once it reaches the
@@ -334,14 +335,12 @@ public class VotePartyService {
      */
     private void sendRewardSummary(@NotNull Player player, @NotNull List<AbstractReward> rewards) {
         R18nManager r18n = R18nManager.getInstance();
-        r18n.msg("vote_party.rewarded.header").prefix().send(player);
-        for (AbstractReward reward : rewards) {
-            for (AbstractReward atomic : RewardViewHelper.flatten(reward)) {
-                r18n.msg("vote_party.rewarded.entry")
-                        .with("reward", VoteRewardDescriber.describe(atomic, player))
-                        .send(player);
-            }
-        }
+        String separator = r18n.msg("vote.list-separator").miniMessage(player);
+        String names = rewards.stream()
+                .flatMap(reward -> RewardViewHelper.flatten(reward).stream())
+                .map(atomic -> VoteRewardDescriber.describe(atomic, player))
+                .collect(Collectors.joining(separator));
+        r18n.msg("vote_party.rewarded-v2").with("rewards", names).send(player);
     }
 
     /** Plays the configured reveal sound as generic reward feedback. */
@@ -441,7 +440,7 @@ public class VotePartyService {
         String name = VoteRewardDescriber.describe(spin.reward(), player);
 
         player.showTitle(Title.title(
-                titleText(player, titleSettings.spinTitle(), "vote_party.titles.spin", 0),
+                titleText(player, titleSettings.spinTitle(), "vote_party.titles.spin-v2", 0),
                 MiniMessage.miniMessage().deserialize(name),
                 Title.Times.times(titleSettings.fadeIn(), titleSettings.stay(), titleSettings.fadeOut())));
 
@@ -456,8 +455,8 @@ public class VotePartyService {
 
         int count = picks.size();
         player.showTitle(Title.title(
-                titleText(player, titleSettings.revealTitle(), "vote_party.titles.reveal", count),
-                titleText(player, titleSettings.revealSubtitle(), "vote_party.titles.reveal-subtitle", count),
+                titleText(player, titleSettings.revealTitle(), "vote_party.titles.reveal-v2", count),
+                titleText(player, titleSettings.revealSubtitle(), "vote_party.titles.reveal-subtitle-v2", count),
                 Title.Times.times(Duration.ofMillis(100), titleSettings.stay(), Duration.ofMillis(400))));
 
         Sound revealSound = Sound.valueOf(soundSettings.revealSound());

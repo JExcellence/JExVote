@@ -226,7 +226,7 @@ public class VoteBroadcastService {
             if (!viewers.showsPartyAnnouncements(online.getUniqueId())) {
                 continue;
             }
-            r18n().msg("vote.party.reached").prefix()
+            r18n().msg("vote.party.reached-v2")
                     .with("party", String.valueOf(partyNumber))
                     .send(online);
         }

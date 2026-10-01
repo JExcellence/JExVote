@@ -77,6 +77,9 @@ vote:
   party:
     progress: '<#94A3B8>Vote party</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{current} / {target}</#F1F5F9>'
     reached: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Vote party #{party} is complete. Everyone who voted gets party rewards.</#F1F5F9>'
+    reached-v2:
+      - "<#A78BFA>▸</#A78BFA> <#F1F5F9>Vote party #{party}</#F1F5F9> <#94A3B8>is complete</#94A3B8>"
+      - "<#A78BFA>|</#A78BFA> <#94A3B8>Everyone who voted gets rewards</#94A3B8> <dark_gray>|</dark_gray> <click:run_command:'/vote party'><hover:show_text:'<#94A3B8>Shows the party prizes</#94A3B8>'><#A78BFA>» /vote party</#A78BFA></hover></click>"
     unavailable: "<#F87171>[X]</#F87171> <#F1F5F9>The vote party is turned off on this server.</#F1F5F9>"
   no_permission: '<#F87171>[X]</#F87171> <#F1F5F9>You don''t have permission to do that.</#F1F5F9>'
   player_not_found: '<#F87171>[X]</#F87171> <#F1F5F9>No player named</#F1F5F9> <#A78BFA>{player}</#A78BFA><#F1F5F9>.</#F1F5F9>'
@@ -511,9 +514,15 @@ vote_party:
     spin: '<gradient:#5EEAD4:#A78BFA>Vote party</gradient>'
     reveal: '<gradient:#5EEAD4:#A78BFA>Party rewards</gradient>'
     reveal-subtitle: '<#F1F5F9>You won {count} prizes</#F1F5F9>'
+    spin-v2: '<#A78BFA>Vote party</#A78BFA>'
+    reveal-v2: '<#F1F5F9>Party rewards</#F1F5F9>'
+    reveal-subtitle-v2: '<#94A3B8>Prizes won</#94A3B8> <dark_gray>|</dark_gray> <#A78BFA>{count}</#A78BFA>'
   rewarded:
     header: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Vote party rewards:</#F1F5F9>'
     entry: '<#A78BFA>+</#A78BFA> {reward}'
+  rewarded-v2:
+    - "<#A78BFA>▸</#A78BFA> <#F1F5F9>Vote party rewards</#F1F5F9>"
+    - "<#A78BFA>|</#A78BFA> {rewards}"
 
 # ── Vote shop ────────────────────────────────────────────────────────────────
 vote_shop:

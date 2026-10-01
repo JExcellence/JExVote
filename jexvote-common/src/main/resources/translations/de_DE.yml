@@ -77,6 +77,9 @@ vote:
   party:
     progress: '<#94A3B8>Vote-Party</#94A3B8> <dark_gray>|</dark_gray> <#F1F5F9>{current} / {target}</#F1F5F9>'
     reached: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Vote-Party #{party} ist geschafft. Alle, die gevotet haben, bekommen Party-Belohnungen.</#F1F5F9>'
+    reached-v2:
+      - "<#A78BFA>▸</#A78BFA> <#F1F5F9>Vote-Party #{party}</#F1F5F9> <#94A3B8>ist geschafft</#94A3B8>"
+      - "<#A78BFA>|</#A78BFA> <#94A3B8>Alle, die gevotet haben, bekommen Belohnungen</#94A3B8> <dark_gray>|</dark_gray> <click:run_command:'/vote party'><hover:show_text:'<#94A3B8>Zeigt die Party-Preise</#94A3B8>'><#A78BFA>» /vote party</#A78BFA></hover></click>"
     unavailable: "<#F87171>[X]</#F87171> <#F1F5F9>Die Vote-Party ist auf diesem Server ausgeschaltet.</#F1F5F9>"
   no_permission: '<#F87171>[X]</#F87171> <#F1F5F9>Dafür hast du keine Berechtigung.</#F1F5F9>'
   player_not_found: '<#F87171>[X]</#F87171> <#F1F5F9>Kein Spieler namens</#F1F5F9> <#A78BFA>{player}</#A78BFA><#F1F5F9>.</#F1F5F9>'
@@ -511,9 +514,15 @@ vote_party:
     spin: '<gradient:#5EEAD4:#A78BFA>Vote-Party</gradient>'
     reveal: '<gradient:#5EEAD4:#A78BFA>Party-Belohnungen</gradient>'
     reveal-subtitle: '<#F1F5F9>Du hast {count} Preise gewonnen</#F1F5F9>'
+    spin-v2: '<#A78BFA>Vote-Party</#A78BFA>'
+    reveal-v2: '<#F1F5F9>Party-Belohnungen</#F1F5F9>'
+    reveal-subtitle-v2: '<#94A3B8>Gewonnene Preise</#94A3B8> <dark_gray>|</dark_gray> <#A78BFA>{count}</#A78BFA>'
   rewarded:
     header: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Vote-Party-Belohnungen:</#F1F5F9>'
     entry: '<#A78BFA>+</#A78BFA> {reward}'
+  rewarded-v2:
+    - "<#A78BFA>▸</#A78BFA> <#F1F5F9>Vote-Party-Belohnungen</#F1F5F9>"
+    - "<#A78BFA>|</#A78BFA> {rewards}"
 
 # ── Vote-Shop ────────────────────────────────────────────────────────────────
 vote_shop:
