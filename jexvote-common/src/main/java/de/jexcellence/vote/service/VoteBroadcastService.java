@@ -5,6 +5,7 @@ import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.config.VoteConfig;
 import de.jexcellence.vote.config.VoteEffectsConfig;
 import de.jexcellence.vote.gui.style.VoteFormat;
+import de.jexcellence.vote.gui.style.VoteRarityStyle;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.view.VoteRewardDescriber;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
@@ -24,8 +26,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
- * Vote chat messages: the public "X voted" broadcast (mode + anti-spam cooldown), the private thank-you, the
- * guaranteed-reward note, the vote party announcement and the one-message summary of offline votes. Site
+ * Vote chat messages: the public "X voted" broadcast (mode + anti-spam cooldown), the public lucky win card, the
+ * private thank-you, the guaranteed-reward note, the vote party announcement and the one-message summary of
+ * offline votes. Site
  * placeholders show the site's display name instead of its technical service name.
  *
  * @author JExcellence
@@ -103,14 +106,15 @@ public class VoteBroadcastService {
 
     /**
      * Sends the public broadcast to eligible players, respecting mode, cooldown and each viewer's settings. The
-     * voter's own copy follows the server mode only.
+     * voter's own copy follows the server mode only; nobody else sees it when the voter turned reward sharing off.
      *
      * @param playerName  the voter's name
      * @param serviceName the vote service name
      * @param voterUuid   the voter's UUID, used for "others" mode filtering (nullable for offline voters)
+     * @param voterShares whether the voter shares rewards publicly
      */
     public void broadcastVote(@NotNull String playerName, @NotNull String serviceName,
-                              @Nullable UUID voterUuid) {
+                              @Nullable UUID voterUuid, boolean voterShares) {
         VoteConfig.BroadcastMode mode = config.getBroadcastMode();
         if (mode == VoteConfig.BroadcastMode.NONE || !claimBroadcastSlot()) {
             return;
@@ -120,11 +124,42 @@ public class VoteBroadcastService {
         for (Player online : Bukkit.getOnlinePlayers()) {
             boolean isVoter = voterUuid != null && online.getUniqueId().equals(voterUuid);
             boolean wanted = isVoter ? mode != VoteConfig.BroadcastMode.OTHERS
-                    : viewers.showsBroadcasts(online.getUniqueId());
+                    : voterShares && viewers.showsBroadcasts(online.getUniqueId());
             if (wanted) {
-                r18n().msg("vote.broadcast").prefix()
+                r18n().msg("vote.broadcast-v2")
                         .with(PARAM_PLAYER, playerName)
                         .with(PARAM_SERVICE, site)
+                        .send(online);
+            }
+        }
+    }
+
+    /**
+     * Posts the public two-line card of an announced lucky or chance prize to every other player who did not turn
+     * vote broadcasts off. Silent when broadcasts are off on the server or the winner does not share rewards; the
+     * winner's private message is sent by the reward itself.
+     *
+     * @param winner  the player who won
+     * @param reward  the prize
+     * @param percent the drop chance, scaled to 0-100
+     * @param shared  whether the winner shares rewards publicly
+     */
+    public void broadcastLuckyWin(@NotNull Player winner, @NotNull AbstractReward reward, double percent,
+                                  boolean shared) {
+        if (!shared || config.getBroadcastMode() == VoteConfig.BroadcastMode.NONE) {
+            return;
+        }
+        VoteRarityStyle rarity = VoteRarityStyle.byPercent(percent);
+        String accentKey = "vote.reward-card.accent." + rarity.name().toLowerCase(Locale.ROOT);
+        VotePreferences viewers = preferences.get();
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (!online.getUniqueId().equals(winner.getUniqueId()) && viewers.showsBroadcasts(online.getUniqueId())) {
+                r18n().msg("vote.reward-card.lucky")
+                        .with("accent", r18n().msg(accentKey).miniMessage(online))
+                        .with(PARAM_PLAYER, winner.getName())
+                        .with("reward", VoteRewardDescriber.describe(reward, online))
+                        .with("rarity", r18n().msg(rarity.key()).miniMessage(online))
+                        .with("chance", VoteFormat.percent(online, percent))
                         .send(online);
             }
         }

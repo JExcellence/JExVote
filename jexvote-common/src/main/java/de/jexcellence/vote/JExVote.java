@@ -29,6 +29,7 @@ import de.jexcellence.vote.bedrock.BedrockFormBridge;
 import de.jexcellence.vote.bedrock.VoteBedrockForms;
 import de.jexcellence.vote.bedrock.VoteSettingsForm;
 import de.jexcellence.vote.reward.LuckyReward;
+import de.jexcellence.vote.reward.RewardAnnouncer;
 import de.jexcellence.jexplatform.reward.impl.CurrencyReward;
 import de.jexcellence.vote.reward.RewardStats;
 import de.jexcellence.vote.service.RewardEconomy;
@@ -226,6 +227,7 @@ public abstract class JExVote {
 
     public void onDisable() {
         RewardStats.reset();
+        RewardAnnouncer.reset();
         CurrencyReward.clearDepositor();
         if (reminderService != null) {
             reminderService.stop();
@@ -376,6 +378,7 @@ public abstract class JExVote {
         settingsService = new VoteSettingsService(settingsRepository, voteConfig, features,
                 new DiscordReminderBridge(logger), logger);
         broadcastService.setPreferences(settingsService);
+        RewardAnnouncer.install(broadcastService::broadcastLuckyWin);
         leaderboardService = new VoteLeaderboardService(playerRepository);
 
         Map<String, VoteSite> sites = loadedSites();

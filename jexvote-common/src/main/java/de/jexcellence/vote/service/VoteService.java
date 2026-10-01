@@ -263,8 +263,9 @@ public class VoteService {
      * the provider granted rewards (the crate) but nobody saw who voted.
      */
     private void announceVote(@NotNull Vote vote, @NotNull UUID uuid) {
+        boolean voterShares = RewardSharePreference.isShared(uuid);
         scheduler.runSync(() -> broadcastService.broadcastVote(
-                vote.username(), vote.serviceName(), uuid));
+                vote.username(), vote.serviceName(), uuid, voterShares));
     }
 
     /**

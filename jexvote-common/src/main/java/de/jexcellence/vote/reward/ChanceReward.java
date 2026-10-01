@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jextranslate.R18nManager;
+import de.jexcellence.vote.service.RewardSharePreference;
 import de.jexcellence.vote.view.VoteRewardDescriber;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -61,11 +62,13 @@ public class ChanceReward extends AbstractReward {
         if (ThreadLocalRandom.current().nextDouble() >= chance) {
             return CompletableFuture.completedFuture(false);
         }
+        boolean shared = RewardSharePreference.isShared(player);
         return reward.grant(player).thenApply(success -> {
             if (Boolean.TRUE.equals(success)) {
                 RewardStats.logGrant(id);
                 if (announceKey != null && !announceKey.isBlank()) {
                     announce(player);
+                    RewardAnnouncer.announce(player, reward, chance * 100.0, shared);
                 }
             }
             return success;

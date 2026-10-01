@@ -19,6 +19,17 @@ _defaults:
 # ── Chat messages ────────────────────────────────────────────────────────────
 vote:
   broadcast: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{player} voted on {service}.</#F1F5F9> <#94A3B8>Vote too with /vote</#94A3B8>'
+  broadcast-v2: "<#A78BFA>▸</#A78BFA> <#F1F5F9>{player}</#F1F5F9> <#94A3B8>voted on</#94A3B8> <#F1F5F9>{service}</#F1F5F9> <dark_gray>|</dark_gray> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Open the vote menu</#94A3B8>'><#A78BFA>» /vote</#A78BFA></hover></click>"
+  reward-card:
+    lucky:
+      - "<{accent}>▸</{accent}> <#F1F5F9>{player}</#F1F5F9> <#94A3B8>won</#94A3B8> {reward}"
+      - "<{accent}>|</{accent}> {rarity} <dark_gray>|</dark_gray> <#F1F5F9>Lucky vote</#F1F5F9> <#94A3B8>{chance}%</#94A3B8> <dark_gray>|</dark_gray> <click:run_command:'/vote rewards'><hover:show_text:'<#94A3B8>Click to see every vote prize and its chance</#94A3B8>'><#A78BFA>» /vote rewards</#A78BFA></hover></click>"
+    accent:
+      common: "#94A3B8"
+      uncommon: "#4ADE80"
+      rare: "#A78BFA"
+      epic: "#5EEAD4"
+      legendary: "#FBBF24"
   received: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Thanks for voting on {service}. Your streak is now</#F1F5F9> <#A78BFA>{streak}</#A78BFA><#F1F5F9>.</#F1F5F9>'
   guaranteed-rewards: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Every vote also pays:</#F1F5F9> {rewards}'
   list-separator: '<#94A3B8>, </#94A3B8>'

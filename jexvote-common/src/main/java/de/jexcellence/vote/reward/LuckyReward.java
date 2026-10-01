@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jextranslate.R18nManager;
+import de.jexcellence.vote.service.RewardSharePreference;
 import de.jexcellence.vote.view.VoteRewardDescriber;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,8 @@ import java.util.concurrent.ThreadLocalRandom;
  *
  * <p>Each {@link Entry} has a relative {@code weight}; the higher the weight, the
  * more likely it is selected. Exactly one entry is granted per invocation. An
- * optional per-entry {@code announce} i18n key is sent on a successful grant.
+ * optional per-entry {@code announce} i18n key is sent on a successful grant, and the
+ * public win card goes out through {@link RewardAnnouncer}.
  *
  * @author JExcellence
  */
@@ -93,6 +95,7 @@ public class LuckyReward extends AbstractReward {
         }
 
         Entry chosen = pickWeighted();
+        boolean shared = RewardSharePreference.isShared(player);
         return chosen.reward().grant(player).thenApply(success -> {
             if (!Boolean.TRUE.equals(success)) {
                 return null;
@@ -104,9 +107,15 @@ public class LuckyReward extends AbstractReward {
                         .with("reward", VoteRewardDescriber.describeLuckyWin(chosen, player))
                         .prefix()
                         .send(player);
+                RewardAnnouncer.announce(player, chosen.reward(), percentOf(chosen), shared);
             }
             return chosen;
         });
+    }
+
+    private double percentOf(@NotNull Entry entry) {
+        double total = entries.stream().mapToDouble(Entry::weight).sum();
+        return total <= 0.0 ? 0.0 : entry.weight() / total * 100.0;
     }
 
     /**
