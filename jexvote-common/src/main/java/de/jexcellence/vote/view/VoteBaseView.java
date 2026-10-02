@@ -113,7 +113,7 @@ public abstract class VoteBaseView implements Listener {
     private void fillGaps(@NotNull Inventory inv) {
         for (int i = 0; i < inv.getSize(); i++) {
             if (inv.getItem(i) == null) {
-                inv.setItem(i, filler());
+                inv.setItem(i, decoration(i, inv.getSize()));
             }
         }
     }
@@ -147,7 +147,7 @@ public abstract class VoteBaseView implements Listener {
 
     private static boolean isContentItem(@Nullable ItemStack clicked) {
         return clicked != null && clicked.getType() != Material.AIR
-                && clicked.getType() != Material.BLACK_STAINED_GLASS_PANE;
+                && !isDecoration(clicked.getType());
     }
 
     /**
@@ -208,8 +208,20 @@ public abstract class VoteBaseView implements Listener {
         }
     }
 
-    protected @NotNull ItemStack filler() {
-        return ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE)
+    private static boolean isDecoration(@NotNull Material material) {
+        return material == Material.BLACK_STAINED_GLASS_PANE
+                || material == Material.PURPLE_STAINED_GLASS_PANE
+                || material == Material.CYAN_STAINED_GLASS_PANE;
+    }
+
+    private static @NotNull ItemStack decoration(int slot, int size) {
+        int row = slot / 9;
+        int column = slot % 9;
+        int lastRow = size / 9 - 1;
+        Material material = row == 0 || row == lastRow
+                ? Material.PURPLE_STAINED_GLASS_PANE
+                : column == 0 || column == 8 ? Material.CYAN_STAINED_GLASS_PANE : Material.BLACK_STAINED_GLASS_PANE;
+        return ItemBuilder.of(material)
                 .name(Component.empty())
                 .build();
     }

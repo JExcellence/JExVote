@@ -67,15 +67,29 @@ public final class VoteStatsService {
         return voteSites.get().values().stream().map(VoteSite::serviceName).toList();
     }
 
+    /**
+     * Finds the site a vote belongs to. Exact case-insensitive matches win; otherwise names are compared by their
+     * letters and digits only, because sites send the same name with different punctuation
+     * ({@code minecraft-serverlist-com} for {@code Minecraft-Serverlist.com}).
+     */
     public @Nullable VoteSite findSiteByServiceName(@NotNull String serviceName) {
-        // Locale.ROOT avoids the Turkish-locale "i" bug: on a tr/az server "I".toLowerCase()
-        // yields 'ı' (dotless i), so a service-name match without ROOT can silently fail.
         String lower = serviceName.toLowerCase(Locale.ROOT);
-        return voteSites.get().values().stream()
-                .filter(site -> site.serviceName().toLowerCase(Locale.ROOT).equals(lower)
-                        || site.id().toLowerCase(Locale.ROOT).equals(lower))
-                .findFirst()
-                .orElse(null);
+        String compact = compact(serviceName);
+        VoteSite loose = null;
+        for (VoteSite site : voteSites.get().values()) {
+            if (site.serviceName().toLowerCase(Locale.ROOT).equals(lower) || site.id().toLowerCase(Locale.ROOT).equals(lower)) {
+                return site;
+            }
+            if (loose == null && !compact.isEmpty()
+                    && (compact(site.serviceName()).equals(compact) || compact(site.id()).equals(compact))) {
+                loose = site;
+            }
+        }
+        return loose;
+    }
+
+    private static @NotNull String compact(@NotNull String name) {
+        return name.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
     }
 
     /**
