@@ -1,5 +1,6 @@
 package de.jexcellence.vote.service;
 
+import de.jexcellence.jexplatform.gui.chat.ChatPanel;
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.config.VoteConfig;
@@ -8,6 +9,7 @@ import de.jexcellence.vote.gui.style.VoteFormat;
 import de.jexcellence.vote.gui.style.VoteRarityStyle;
 import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.view.VoteRewardDescriber;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -16,6 +18,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -38,6 +41,7 @@ public class VoteBroadcastService {
     private static final String PARAM_PLAYER = "player";
     private static final String PARAM_SERVICE = "service";
     private static final String PARAM_COUNT = "count";
+    private static final String PANEL_KEY = "vote.chat-panel-v1.delivered.";
 
     private final VoteConfig config;
     private final AtomicLong lastBroadcastTime = new AtomicLong(0);
@@ -233,7 +237,7 @@ public class VoteBroadcastService {
     }
 
     /**
-     * Tells a player, in one message, what their pending votes delivered: the votes cast while offline, or the
+     * Tells a player, as one chat panel, what their pending votes delivered: the votes cast while offline, or the
      * rewards kept from the JExOneblock Season profile for this Normal profile. Sent after the grants completed;
      * identical rewards are folded into one line with a count.
      *
@@ -248,17 +252,21 @@ public class VoteBroadcastService {
         if (votes <= 0) {
             return;
         }
-        String key = fromSeasonProfile ? "vote.normal-profile.delivered" : "vote.offline-summary";
         if (received.isEmpty()) {
-            r18n().msg(key + "-empty").prefix()
+            String emptyKey = fromSeasonProfile ? "vote.normal-profile.delivered-empty" : "vote.offline-summary-empty";
+            r18n().msg(emptyKey).prefix()
                     .with(PARAM_COUNT, String.valueOf(votes))
                     .send(player);
             return;
         }
-        r18n().msg(key).prefix()
-                .with(PARAM_COUNT, String.valueOf(votes))
-                .with("rewards", buildRewardList(player, received))
-                .send(player);
+        String source = fromSeasonProfile ? "season-" : "offline-";
+        ChatPanel panel = ChatPanel.create()
+                .header(r18n().msg(PANEL_KEY + source + "header").toComponent(player))
+                .context(r18n().msg(PANEL_KEY + source + "context")
+                        .with(PARAM_COUNT, String.valueOf(votes)).toComponent(player))
+                .gap();
+        rewardLines(player, received).forEach(panel::line);
+        panel.footer(r18n().msg(PANEL_KEY + "footer").toComponent(player)).send(player);
     }
 
     private @NotNull String siteName(@NotNull String serviceName) {
@@ -270,23 +278,20 @@ public class VoteBroadcastService {
         return serviceName;
     }
 
-    private static @NotNull String buildRewardList(@NotNull Player player, @NotNull List<String> received) {
+    private static @NotNull List<Component> rewardLines(@NotNull Player player, @NotNull List<String> received) {
         Map<String, Integer> folded = new LinkedHashMap<>();
         for (String entry : received) {
             folded.merge(entry, 1, Integer::sum);
         }
-        StringBuilder lines = new StringBuilder(folded.size() * 48);
+        List<Component> lines = new ArrayList<>(folded.size());
         for (Map.Entry<String, Integer> line : folded.entrySet()) {
-            if (!lines.isEmpty()) {
-                lines.append("<newline>");
-            }
-            String key = line.getValue() > 1 ? "vote.offline-summary-entry-stacked" : "vote.offline-summary-entry";
-            lines.append(r18n().msg(key)
+            String key = line.getValue() > 1 ? "entry-stacked" : "entry";
+            lines.add(r18n().msg(PANEL_KEY + key)
                     .with("reward", line.getKey())
                     .with(PARAM_COUNT, String.valueOf(line.getValue()))
-                    .miniMessage(player));
+                    .toComponent(player));
         }
-        return lines.toString();
+        return lines;
     }
 
     private static @NotNull R18nManager r18n() {

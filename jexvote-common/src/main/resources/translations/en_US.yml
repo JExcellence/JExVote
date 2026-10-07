@@ -33,17 +33,22 @@ vote:
   received: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Thanks for voting on {service}. Your streak is now</#F1F5F9> <#A78BFA>{streak}</#A78BFA><#F1F5F9>.</#F1F5F9>'
   guaranteed-rewards: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Every vote also pays:</#F1F5F9> {rewards}'
   list-separator: '<#94A3B8>, </#94A3B8>'
-  offline-summary: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Your</#F1F5F9> <#A78BFA>{count}</#A78BFA> <#F1F5F9>votes while you were offline paid out:</#F1F5F9><newline>{rewards}'
   offline-summary-empty: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Welcome back. Your</#F1F5F9> <#A78BFA>{count}</#A78BFA> <#F1F5F9>offline votes were counted.</#F1F5F9>'
-  offline-summary-entry: '<#A78BFA>+</#A78BFA> {reward}'
-  offline-summary-entry-stacked: '<#A78BFA>+</#A78BFA> {reward} <#94A3B8>x{count}</#94A3B8>'
+  chat-panel-v1:
+    delivered:
+      offline-header: "<gradient:#5EEAD4:#A78BFA><bold>Offline Votes</bold></gradient>"
+      offline-context: "<#4ADE80>[OK]</#4ADE80> <#94A3B8>Your</#94A3B8> <#A78BFA>{count}</#A78BFA> <#94A3B8>votes while you were away paid out</#94A3B8>"
+      season-header: "<gradient:#5EEAD4:#A78BFA><bold>Season Profile Votes</bold></gradient>"
+      season-context: "<#4ADE80>[OK]</#4ADE80> <#94A3B8>Your</#94A3B8> <#A78BFA>{count}</#A78BFA> <#94A3B8>votes from the Season profile paid out here</#94A3B8>"
+      entry: "<#A78BFA>▸</#A78BFA> {reward}"
+      entry-stacked: "<#A78BFA>▸</#A78BFA> {reward} <#94A3B8>x{count}</#94A3B8>"
+      footer: "<click:run_command:'/vote'><hover:show_text:'<#94A3B8>Open the vote menu</#94A3B8>'><#A78BFA>></#A78BFA> <#94A3B8>Vote again:</#94A3B8> <#A78BFA><underlined>/vote</underlined></#A78BFA></hover></click>"
   site-link: "<#A78BFA>▸</#A78BFA> <#F1F5F9>Vote on {site}:</#F1F5F9> <click:open_url:'{url}'><hover:show_text:'<#94A3B8>Opens the vote page in your browser</#94A3B8>'><#A78BFA><u>{url}</u></#A78BFA></hover></click>"
   unknown-player: 'Unknown'
   normal-profile:
     sent: "<#FBBF24>[!]</#FBBF24> <#F1F5F9>Your Season profile cannot use vote rewards, so they went to your Normal profile (slot {slot}). Switch with</#F1F5F9> <click:run_command:'/island profiles'><hover:show_text:'<#94A3B8>Open your profiles</#94A3B8>'><#A78BFA>/island profiles</#A78BFA></hover></click> <#F1F5F9>to receive them.</#F1F5F9>"
     held: "<#FBBF24>[!]</#FBBF24> <#F1F5F9>Your vote rewards wait for your Normal profile (slot {slot}). Switch with</#F1F5F9> <click:run_command:'/island profiles'><hover:show_text:'<#94A3B8>Open your profiles</#94A3B8>'><#A78BFA>/island profiles</#A78BFA></hover></click> <#F1F5F9>to receive them.</#F1F5F9>"
     waiting: "<#FBBF24>[!]</#FBBF24> <#F1F5F9>Your vote rewards wait for a Normal profile. Create one with</#F1F5F9> <click:run_command:'/island profiles'><hover:show_text:'<#94A3B8>Open your profiles</#94A3B8>'><#A78BFA>/island profiles</#A78BFA></hover></click> <#F1F5F9>to receive them.</#F1F5F9>"
-    delivered: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Your</#F1F5F9> <#A78BFA>{count}</#A78BFA> <#F1F5F9>votes from the Season profile paid out on this profile:</#F1F5F9><newline>{rewards}'
     delivered-empty: '<#4ADE80>[OK]</#4ADE80> <#F1F5F9>Your</#F1F5F9> <#A78BFA>{count}</#A78BFA> <#F1F5F9>votes from the Season profile were counted on this profile.</#F1F5F9>'
   shop:
     players_only: '<#F87171>[X]</#F87171> <#F1F5F9>Only players can open the vote shop.</#F1F5F9>'
