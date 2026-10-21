@@ -9,12 +9,12 @@
 dependencies:
 
   # Hibernate ORM
-  - "org.hibernate.orm:hibernate-core:7.1.4.Final"
-  - "org.hibernate.models:hibernate-models:1.0.1"
-  - "com.zaxxer:HikariCP:6.2.1"
+  - "org.hibernate.orm:hibernate-core:7.4.13.Final"
+  - "org.hibernate.models:hibernate-models:1.1.2"
+  - "com.zaxxer:HikariCP:6.3.0"
   - "org.javassist:javassist:3.29.2-GA"
-  - "net.bytebuddy:byte-buddy:1.17.6"
-  - "org.jboss.logging:jboss-logging:3.6.1.Final"
+  - "net.bytebuddy:byte-buddy:1.18.14"
+  - "org.jboss.logging:jboss-logging:3.6.3.Final"
   - "com.fasterxml:classmate:1.7.0"
   - "io.smallrye:jandex:3.3.1"
   - "org.antlr:antlr4-runtime:4.13.2"
@@ -26,7 +26,7 @@ dependencies:
   # Jakarta APIs
   - "jakarta.persistence:jakarta.persistence-api:3.2.0"
   - "jakarta.transaction:jakarta.transaction-api:2.0.1"
-  - "jakarta.xml.bind:jakarta.xml.bind-api:4.0.0"
+  - "jakarta.xml.bind:jakarta.xml.bind-api:4.0.4"
   - "jakarta.activation:jakarta.activation-api:2.1.0"
   - "jakarta.inject:jakarta.inject-api:2.0.1"
 
@@ -49,7 +49,7 @@ dependencies:
   - "org.slf4j:slf4j-jdk14:2.0.17"
 
   # Utilities
-  - "com.github.ben-manes.caffeine:caffeine:3.2.2"
+  - "com.github.ben-manes.caffeine:caffeine:3.3.1"
   - "org.jetbrains:annotations:23.0.0"
 
   # Adventure API
