@@ -5,14 +5,16 @@ plugins {
 }
 
 group = "de.jexcellence.vote"
-version = "3.2.10"
+version = libs.versions.jexvote.get()
 description = "JExVote - All-in-one vote listener, reward & leaderboard system"
 
 ext["vendor"] = "JExcellence"
 
+val moduleVersion = version
+
 subprojects {
     group = rootProject.group
-    version = rootProject.version
+    version = moduleVersion
 }
 
 tasks.register("buildAll") {
