@@ -144,7 +144,7 @@ lucky prizes, top voters (all time / this month), shop with a confirmation step 
 
 ```
 /vote                    Open the vote menu
-/vote sites              List every vote site with a clickable link
+/vote links              Every vote site with its cooldown and a clickable link (alias list; /vote sites shows the same)
 /vote stats [player]     Vote stats; without a player it opens the menu
 /vote top [count]        Top voters (menu, or a chat list when the menu is off)
 /vote rewards            What a vote pays and what vote points do

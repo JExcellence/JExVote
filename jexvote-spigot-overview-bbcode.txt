@@ -95,7 +95,7 @@ That's it. Full setup guide in the [COLOR=#38BDF8][B][URL='']Description tab[/UR
 
 [CODE]
 /vote                - Open the vote GUI
-/vote sites          - List all vote sites with clickable links
+/vote links          - List all vote sites with cooldowns and clickable links
 /vote stats [player] - View vote statistics
 /vote top [count]    - Leaderboard
 /vote rewards        - Rewards & economy menu

@@ -116,9 +116,17 @@ vote:
     failed: '<#F87171>[X]</#F87171> <#F1F5F9>Der Test-Vote wurde nicht verarbeitet. Sieh in die Konsole.</#F1F5F9>'
   sites:
     title: '<gradient:#5EEAD4:#A78BFA>Vote-Seiten</gradient> <dark_gray>|</dark_gray> <#F1F5F9>{count}</#F1F5F9>'
-    entry: "<#A78BFA>▸</#A78BFA> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <click:open_url:'{url}'><hover:show_text:'<#94A3B8>Öffnet die Vote-Seite im Browser</#94A3B8><newline><#F1F5F9>{url}</#F1F5F9>'><#A78BFA><u>Klicke zum Voten</u></#A78BFA></hover></click>"
-    entry_plain: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>{service}</#94A3B8>'
     no_sites: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>Es sind noch keine Vote-Seiten eingerichtet.</#F1F5F9>'
+    title-v2: '<gradient:#5EEAD4:#A78BFA>Vote-Links</gradient> <dark_gray>|</dark_gray> <#F1F5F9>{ready} von {total} bereit</#F1F5F9>'
+    entry-link-ready-v2: "<#4ADE80>●</#4ADE80> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#4ADE80>Bereit</#4ADE80> <dark_gray>|</dark_gray> <click:open_url:'{url}'><hover:show_text:'<#94A3B8>Öffnet die Vote-Seite im Browser</#94A3B8><newline><#F1F5F9>{url}</#F1F5F9>'><#A78BFA>></#A78BFA> <#A78BFA><u>Voten</u></#A78BFA></hover></click>"
+    entry-link-cooldown-v2: "<#94A3B8>○</#94A3B8> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>Wieder in {time}</#94A3B8> <dark_gray>|</dark_gray> <click:open_url:'{url}'><hover:show_text:'<#94A3B8>Öffnet die Vote-Seite im Browser</#94A3B8><newline><#F1F5F9>{url}</#F1F5F9>'><#A78BFA>></#A78BFA> <#A78BFA><u>Öffnen</u></#A78BFA></hover></click>"
+    entry-bedrock-ready-v2: '<#4ADE80>●</#4ADE80> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#4ADE80>Bereit</#4ADE80> <dark_gray>|</dark_gray> <#A78BFA>{url}</#A78BFA>'
+    entry-bedrock-cooldown-v2: '<#94A3B8>○</#94A3B8> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>Wieder in {time}</#94A3B8> <dark_gray>|</dark_gray> <#A78BFA>{url}</#A78BFA>'
+    entry-no-link-ready-v2: '<#4ADE80>●</#4ADE80> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#4ADE80>Bereit</#4ADE80>'
+    entry-no-link-cooldown-v2: '<#94A3B8>○</#94A3B8> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>Wieder in {time}</#94A3B8>'
+    entry-console-v2: '<#A78BFA>▸</#A78BFA> <#F1F5F9>{name}</#F1F5F9> <dark_gray>|</dark_gray> <#94A3B8>{url}</#94A3B8>'
+    footer-v2: "<#94A3B8>Klicke auf einen Link zum Voten. Jeder Vote bringt Belohnungen und Vote-Punkte.</#94A3B8> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Öffnet das Vote-Menü</#94A3B8>'><#A78BFA>></#A78BFA> <#A78BFA><u>Menü</u></#A78BFA></hover></click>"
+    footer-bedrock-v2: '<#94A3B8>Gib die Adresse in deinem Browser ein oder öffne mit</#94A3B8> <#A78BFA>/vote</#A78BFA> <#94A3B8>das Vote-Menü.</#94A3B8>'
 
   reminder:
     chat: "<#A78BFA>▸</#A78BFA> <#F1F5F9>Eine Vote-Seite ist wieder bereit:</#F1F5F9> <#A78BFA>{ready} / {total}</#A78BFA><#F1F5F9>.</#F1F5F9> <click:run_command:'/vote'><hover:show_text:'<#94A3B8>Öffnet das Vote-Menü</#94A3B8>'><#A78BFA><u>Jetzt voten</u></#A78BFA></hover></click> <#94A3B8>Abschalten unter /vote settings</#94A3B8>"
@@ -611,6 +619,7 @@ vote_help:
   desc:
     vote: 'Öffnet das Vote-Menü'
     sites: 'Listet alle Vote-Seiten mit Link'
+    links: 'Alle Vote-Links mit Wartezeit im Chat'
     stats: 'Zeigt Vote-Statistiken; für dich selbst öffnet sich das Menü'
     top: 'Zeigt die Top-Voter'
     rewards-menu: 'Was ein Vote bringt und wofür Vote-Punkte gut sind'

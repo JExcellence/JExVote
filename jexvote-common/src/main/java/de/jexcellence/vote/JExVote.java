@@ -1,7 +1,6 @@
 package de.jexcellence.vote;
 
 import de.jexcellence.vote.config.TranslationFileMerger;
-import de.jexcellence.vote.command.CommandTreeMerger;
 import com.raindropcentral.commands.CommandFactory;
 import com.raindropcentral.commands.v2.argument.ArgumentType;
 import com.raindropcentral.commands.v2.argument.ArgumentTypeRegistry;
@@ -602,13 +601,6 @@ public abstract class JExVote {
                     return suggestions;
                 }));
 
-        // Save command YAMLs to data folder on first run so users can edit
-        // names, aliases, permissions, and descriptions.
-        saveDefaultResource("commands/vote.yml");
-        saveDefaultResource("commands/jexvote.yml");
-        CommandTreeMerger.addMissingSubcommands(plugin, "commands/vote.yml");
-        CommandTreeMerger.addMissingSubcommands(plugin, "commands/jexvote.yml");
-
         var voteCommandHandler = new VoteCommandHandler(voteService, leaderboardService, features, overviewView,
                 rewardsView, leaderboardView, streakFreezeService, voteGiftService);
         voteCommandHandler.setShopView(shopView);
@@ -627,7 +619,7 @@ public abstract class JExVote {
             voteCommandHandler.setBedrockForms(bedrockForms);
             bedrockFormsHooked = true;
         }
-        factory.registerTree(new File(plugin.getDataFolder(), "commands/vote.yml"),
+        factory.registerTree("commands/vote.yml",
                 voteCommandHandler.handlerMap(),
                 messages, registry);
         var adminHandler = new VoteAdminHandler(plugin, voteService, voteConfig, features, adminStatus());
@@ -635,7 +627,7 @@ public abstract class JExVote {
             reminderService.forget(uuid);
             return settingsService.delete(uuid);
         });
-        factory.registerTree(new File(plugin.getDataFolder(), "commands/jexvote.yml"),
+        factory.registerTree("commands/jexvote.yml",
                 adminHandler.handlerMap(), messages, registry);
 
         factory.registerAllCommandsAndListeners();

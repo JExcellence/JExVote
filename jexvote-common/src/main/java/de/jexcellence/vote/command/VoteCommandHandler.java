@@ -9,7 +9,6 @@ import de.jexcellence.vote.api.model.VoteSnapshot;
 import de.jexcellence.vote.command.help.HelpRenderer;
 import de.jexcellence.vote.config.VoteFeatures;
 import de.jexcellence.vote.gui.style.VoteFormat;
-import de.jexcellence.vote.model.VoteSite;
 import de.jexcellence.vote.service.StreakFreezeService;
 import de.jexcellence.vote.bedrock.VoteBedrockForms;
 import de.jexcellence.vote.service.VoteGiftService;
@@ -46,6 +45,7 @@ public final class VoteCommandHandler {
     private final VoteLeaderboardView leaderboardView;
     private final StreakFreezeService streakFreezeService;
     private final VoteGiftService voteGiftService;
+    private final VoteLinksPanel linksPanel;
     private VoteShopView shopView;
     private @Nullable VoteStreakView streakView;
     private @Nullable VotePartyView partyView;
@@ -69,6 +69,7 @@ public final class VoteCommandHandler {
         this.leaderboardView = leaderboardView;
         this.streakFreezeService = streakFreezeService;
         this.voteGiftService = voteGiftService;
+        this.linksPanel = new VoteLinksPanel(voteService, this::isBedrock);
     }
 
     public @NotNull Map<String, CommandHandler> handlerMap() {
@@ -76,6 +77,7 @@ public final class VoteCommandHandler {
                 Map.entry("vote", this::onVote),
                 Map.entry("vote.help", this::onHelp),
                 Map.entry("vote.sites", this::onSites),
+                Map.entry("vote.links", this::onSites),
                 Map.entry("vote.stats", this::onStats),
                 Map.entry("vote.top", this::onTop),
                 Map.entry("vote.rewards", this::onRewards),
@@ -273,7 +275,8 @@ public final class VoteCommandHandler {
     private void onHelp(@NotNull CommandContext ctx) {
         List<HelpRenderer.Entry> entries = new ArrayList<>();
         entries.add(HelpRenderer.Entry.of("/vote", "", "vote_help.desc.vote", List.of("v"), HelpRenderer.Action.RUN));
-        entries.add(HelpRenderer.Entry.of("/vote sites", "", "vote_help.desc.sites", HelpRenderer.Action.RUN));
+        entries.add(HelpRenderer.Entry.of("/vote links", "", "vote_help.desc.links",
+                List.of("list", "sites"), HelpRenderer.Action.RUN));
         entries.add(HelpRenderer.Entry.of("/vote stats", "[player]", "vote_help.desc.stats",
                 List.of("info"), HelpRenderer.Action.SUGGEST));
         entries.add(HelpRenderer.Entry.of("/vote top", "[count]", "vote_help.desc.top",
@@ -306,19 +309,7 @@ public final class VoteCommandHandler {
     }
 
     private void onSites(@NotNull CommandContext ctx) {
-        Map<String, VoteSite> sites = voteService.getVoteSites();
-        if (sites.isEmpty()) {
-            r18n().msg("vote.sites.no_sites").prefix().send(ctx.sender());
-            return;
-        }
-        r18n().msg("vote.sites.title").with(PARAM_COUNT, String.valueOf(sites.size())).send(ctx.sender());
-        for (VoteSite site : sites.values()) {
-            var entry = site.voteUrl() != null
-                    ? r18n().msg("vote.sites.entry").with("name", site.displayName()).with("url", site.voteUrl())
-                    : r18n().msg("vote.sites.entry_plain").with("name", site.displayName())
-                            .with("service", site.serviceName());
-            entry.send(ctx.sender());
-        }
+        linksPanel.send(ctx.sender());
     }
 
     private void onStats(@NotNull CommandContext ctx) {

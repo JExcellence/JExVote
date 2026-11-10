@@ -29,6 +29,7 @@
 #     api-key:                 Your server key for that API (fills {key}).
 #     api-voted-contains:      Text in the answer that means "voted" (default "1").
 #
+# Sites show in /vote, /vote links and the reminders in the order of this file.
 # The Free edition loads the first 5 sites; Premium has no limit.
 # Apply changes with /jexvote reload.
 #
@@ -39,6 +40,20 @@ sites:
     display-name: 'Minecraft-Serverliste'
     service-name: 'Minecraft-Serverliste.eu'
     vote-url: 'https://minecraft-server.eu/vote/index/239F1'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  findmcserver:
+    display-name: 'FindMCServer'
+    service-name: 'FindMCServer.com'
+    vote-url: 'https://findmcserver.com/server/ttQ1PVlRNY'
+    cooldown-minutes: 1440
+    points-per-vote: 1
+
+  mcstat:
+    display-name: 'MCStat'
+    service-name: 'MCStat'
+    vote-url: 'https://mcstat.org/de/servers/mythblockme'
     cooldown-minutes: 1440
     points-per-vote: 1
 
@@ -60,6 +75,14 @@ sites:
     # api-url: 'https://minecraft-server-list.com/server/520312/vote/json/?username={username}&key={key}'
     # api-key: 'YOUR_SERVER_KEY'
     # api-voted-contains: '1'
+
+  minecraft-servers-me:
+    display-name: 'Minecraft-Servers.me'
+    service-name: 'MinecraftServers.me'
+    vote-url: 'https://minecraftservers.me/server/mythblock.74264/vote'
+    daily-reset: '00:00'
+    timezone: 'UTC'
+    points-per-vote: 1
 
   minecraft-pocket-servers:
     display-name: 'MinecraftPocket Servers'
@@ -94,19 +117,5 @@ sites:
     display-name: 'Serverliste'
     service-name: 'Serverliste.net'
     vote-url: 'https://serverliste.net/vote/5621'
-    cooldown-minutes: 1440
-    points-per-vote: 1
-
-  findmcserver:
-    display-name: 'FindMCServer'
-    service-name: 'FindMCServer.com'
-    vote-url: 'https://findmcserver.com/server/ttQ1PVlRNY'
-    cooldown-minutes: 1440
-    points-per-vote: 1
-
-  mcstat:
-    display-name: 'MCStat'
-    service-name: 'MCStat'
-    vote-url: 'https://mcstat.org/de/servers/mythblockme'
     cooldown-minutes: 1440
     points-per-vote: 1

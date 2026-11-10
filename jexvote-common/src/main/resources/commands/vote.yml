@@ -15,6 +15,12 @@ subcommands:
     description: "List all vote sites"
     senders: [player, console]
 
+  - name: links
+    description: "Show every vote link with its cooldown in chat"
+    aliases:
+      - list
+    senders: [player, console]
+
   - name: stats
     description: "View your vote statistics"
     aliases:

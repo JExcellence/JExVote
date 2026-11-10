@@ -266,7 +266,7 @@ Votes trigger configurable rewards, feed into a streak system that keeps players
 [CODE]
 /vote                    - Opens the vote GUI
 /vote help               - Shows player command help
-/vote sites              - Lists all vote sites with clickable links
+/vote links              - Lists all vote sites with cooldowns and clickable links
 /vote stats [player]     - View vote statistics
 /vote top [count]        - View the all-time leaderboard (max 50)
 /vote rewards            - Opens the rewards/economy menu
