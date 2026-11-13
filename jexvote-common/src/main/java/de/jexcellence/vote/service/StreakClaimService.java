@@ -7,14 +7,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,6 +37,8 @@ public class StreakClaimService {
         NOT_REACHED,
         UNKNOWN_MILESTONE,
         GRANT_FAILED,
+        /** Claimed, but some rewards could not be paid; they are logged for the team. */
+        PARTIAL,
         /** The same milestone is already being claimed by this player; nothing was granted. */
         BUSY
     }
@@ -45,20 +49,89 @@ public class StreakClaimService {
     private final ClaimedStreakRewardRepository claimedRepository;
     private final VotePlayerRepository playerRepository;
     private final VoteRewardService rewardService;
-    private final PlatformScheduler scheduler;
+    private final PlayerRewardChain.PlayerThread playerTasks;
+    private final Executor asyncTasks;
     private final File dataFolder;
     private final Set<String> claimsInFlight = ConcurrentHashMap.newKeySet();
+    private final UnsavedClaimStore unsavedClaims;
+    private final Set<String> savesInFlight = ConcurrentHashMap.newKeySet();
 
     public StreakClaimService(@NotNull JavaPlugin plugin,
                               @NotNull ClaimedStreakRewardRepository claimedRepository,
                               @NotNull VotePlayerRepository playerRepository,
                               @NotNull VoteRewardService rewardService) {
-        this.logger = plugin.getLogger();
+        this(plugin.getLogger(), plugin.getDataFolder(), claimedRepository, playerRepository, rewardService,
+                PlatformScheduler.of(plugin));
+    }
+
+    private StreakClaimService(@NotNull Logger logger, @NotNull File dataFolder,
+                               @NotNull ClaimedStreakRewardRepository claimedRepository,
+                               @NotNull VotePlayerRepository playerRepository,
+                               @NotNull VoteRewardService rewardService, @NotNull PlatformScheduler scheduler) {
+        this(logger, dataFolder, claimedRepository, playerRepository, rewardService, scheduler::runAtEntity,
+                scheduler::runAsync);
+    }
+
+    StreakClaimService(@NotNull Logger logger, @NotNull File dataFolder,
+                       @NotNull ClaimedStreakRewardRepository claimedRepository,
+                       @NotNull VotePlayerRepository playerRepository, @NotNull VoteRewardService rewardService,
+                       @NotNull PlayerRewardChain.PlayerThread playerTasks, @NotNull Executor asyncTasks) {
+        this.logger = logger;
         this.claimedRepository = claimedRepository;
         this.playerRepository = playerRepository;
         this.rewardService = rewardService;
-        this.scheduler = PlatformScheduler.of(plugin);
-        this.dataFolder = plugin.getDataFolder();
+        this.playerTasks = playerTasks;
+        this.asyncTasks = asyncTasks;
+        this.dataFolder = dataFolder;
+        this.unsavedClaims = new UnsavedClaimStore(dataFolder, logger);
+    }
+
+    /**
+     * Saves the claim records of days that were paid but could not be recorded earlier, off the calling thread. Until
+     * a record is saved its day stays closed, so it cannot be paid twice.
+     */
+    public void retryUnsavedClaims() {
+        List<UnsavedClaimStore.UnsavedClaim> pending = unsavedClaims.all();
+        if (pending.isEmpty()) {
+            return;
+        }
+        asyncTasks.execute(() -> pending.forEach(this::saveUnsavedClaim));
+    }
+
+    private void retrySaveLater(@NotNull UUID uuid, int milestoneDay) {
+        String key = UnsavedClaimStore.key(uuid, milestoneDay);
+        if (!savesInFlight.add(key)) {
+            return;
+        }
+        try {
+            unsavedClaims.find(uuid, milestoneDay).ifPresentOrElse(
+                    claim -> asyncTasks.execute(() -> {
+                        try {
+                            saveUnsavedClaim(claim);
+                        } finally {
+                            savesInFlight.remove(key);
+                        }
+                    }),
+                    () -> savesInFlight.remove(key));
+        } catch (Exception ex) {
+            savesInFlight.remove(key);
+            logger.log(Level.WARNING, ex, () -> String.format(
+                    "Could not schedule the save of streak claim day %d of %s", milestoneDay, uuid));
+        }
+    }
+
+    private void saveUnsavedClaim(@NotNull UnsavedClaimStore.UnsavedClaim claim) {
+        UUID uuid = claim.player();
+        int milestoneDay = claim.day();
+        try {
+            claimedRepository.createClaim(uuid, milestoneDay, claim.auto());
+            unsavedClaims.remove(uuid, milestoneDay);
+            logger.log(Level.INFO, () -> String.format(
+                    "Saved the delayed streak claim day %d of %s", milestoneDay, uuid));
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, ex, () -> String.format(
+                    "Streak claim day %d of %s still could not be saved - the day stays closed", milestoneDay, uuid));
+        }
     }
 
     /**
@@ -71,17 +144,24 @@ public class StreakClaimService {
     /**
      * Attempts to claim a streak milestone reward for the given player.
      * Uses {@code highestStreak} so rewards remain claimable even after
-     * a streak resets.
+     * a streak resets. A day that was paid but whose claim could not be saved answers {@code ALREADY_CLAIMED} and
+     * retries the save.
      */
     public @NotNull CompletableFuture<ClaimResult> claimMilestone(@NotNull Player player, int milestoneDay) {
         if (!rewardService.getStreakRewards().containsKey(milestoneDay)) {
             return CompletableFuture.completedFuture(ClaimResult.UNKNOWN_MILESTONE);
         }
-        String claimKey = player.getUniqueId() + ":" + milestoneDay;
+        String claimKey = UnsavedClaimStore.key(player.getUniqueId(), milestoneDay);
         if (!claimsInFlight.add(claimKey)) {
             return CompletableFuture.completedFuture(ClaimResult.BUSY);
         }
-        return claimOnce(player, milestoneDay).whenComplete((result, ex) -> claimsInFlight.remove(claimKey));
+        CompletableFuture<ClaimResult> claim;
+        try {
+            claim = claimOnce(player, milestoneDay);
+        } catch (Exception ex) {
+            claim = CompletableFuture.failedFuture(ex);
+        }
+        return claim.whenComplete((result, ex) -> claimsInFlight.remove(claimKey));
     }
 
     /**
@@ -91,6 +171,10 @@ public class StreakClaimService {
     private @NotNull CompletableFuture<ClaimResult> claimOnce(@NotNull Player player, int milestoneDay) {
         UUID uuid = player.getUniqueId();
 
+        if (unsavedClaims.contains(uuid, milestoneDay)) {
+            retrySaveLater(uuid, milestoneDay);
+            return CompletableFuture.completedFuture(ClaimResult.ALREADY_CLAIMED);
+        }
         return claimedRepository.findClaimedDays(uuid).thenCompose(claimed -> {
             if (claimed.contains(milestoneDay)) {
                 return CompletableFuture.completedFuture(ClaimResult.ALREADY_CLAIMED);
@@ -101,36 +185,82 @@ public class StreakClaimService {
                     return CompletableFuture.completedFuture(ClaimResult.NOT_REACHED);
                 }
 
-                // Grant rewards on main thread via scheduler
                 CompletableFuture<ClaimResult> resultFuture = new CompletableFuture<>();
-                scheduler.runAtEntity(player, () ->
-                        rewardService.grantStreakReward(player, milestoneDay).thenAccept(success -> {
-                            if (Boolean.TRUE.equals(success)) {
-                                claimedRepository.createClaim(uuid, milestoneDay, false);
-                                resultFuture.complete(ClaimResult.SUCCESS);
-                            } else {
-                                resultFuture.complete(ClaimResult.GRANT_FAILED);
-                            }
-                        }).exceptionally(ex -> {
-                            logger.log(Level.WARNING, ex, () -> String.format(
-                                    "Failed to claim streak reward (day %d) for %s",
-                                    milestoneDay, player.getName()));
-                            resultFuture.complete(ClaimResult.GRANT_FAILED);
-                            return null;
-                        }));
+                playerTasks.run(player,
+                        () -> grantMilestone(player, milestoneDay, resultFuture),
+                        () -> resultFuture.complete(ClaimResult.GRANT_FAILED));
                 return resultFuture;
             });
         });
     }
 
     /**
+     * Grants one milestone and records the claim as soon as anything arrived, so a later failed reward can never make
+     * the earlier ones claimable twice. Rewards the player left before receiving are kept for the next join and
+     * count as delivered.
+     */
+    private void grantMilestone(@NotNull Player player, int milestoneDay,
+                                @NotNull CompletableFuture<ClaimResult> resultFuture) {
+        CompletableFuture<VoteRewardService.GrantTally> grant;
+        try {
+            grant = rewardService.grantStreakReward(player, milestoneDay);
+        } catch (Exception ex) {
+            grant = CompletableFuture.failedFuture(ex);
+        }
+        grant.whenComplete((tally, ex) -> {
+            if (ex != null || tally == null || tally.granted() == 0) {
+                if (ex != null) {
+                    logger.log(Level.WARNING, ex, () -> String.format(
+                            "Failed to claim streak reward (day %d) for %s", milestoneDay, player.getName()));
+                }
+                resultFuture.complete(ClaimResult.GRANT_FAILED);
+                return;
+            }
+            ClaimResult result = tally.failed() == 0 ? ClaimResult.SUCCESS : ClaimResult.PARTIAL;
+            recordClaimAsync(player.getUniqueId(), milestoneDay, result, resultFuture);
+        });
+    }
+
+    private void recordClaimAsync(@NotNull UUID uuid, int milestoneDay, @NotNull ClaimResult result,
+                                  @NotNull CompletableFuture<ClaimResult> resultFuture) {
+        try {
+            asyncTasks.execute(() -> recordClaim(uuid, milestoneDay, result, resultFuture));
+        } catch (Exception ex) {
+            reportUnrecorded(uuid, milestoneDay, false, ex);
+            resultFuture.complete(result);
+        }
+    }
+
+    /**
+     * Records the claim. The rewards already arrived, so the result stands even if recording failed; the day is then
+     * kept closed in {@code unsaved-streak-claims.txt} and the save is retried on the next start and the next click.
+     */
+    private void recordClaim(@NotNull UUID uuid, int milestoneDay, @NotNull ClaimResult result,
+                             @NotNull CompletableFuture<ClaimResult> resultFuture) {
+        try {
+            claimedRepository.createClaim(uuid, milestoneDay, false);
+        } catch (Exception ex) {
+            reportUnrecorded(uuid, milestoneDay, false, ex);
+        } finally {
+            resultFuture.complete(result);
+        }
+    }
+
+    private void reportUnrecorded(@NotNull UUID uuid, int milestoneDay, boolean autoClaimed,
+                                  @NotNull Exception failure) {
+        unsavedClaims.add(uuid, milestoneDay, autoClaimed);
+        logger.log(Level.SEVERE, failure, () -> String.format("Streak reward day %d of %s was paid but the claim "
+                + "could not be recorded - the day stays closed and the save is retried", milestoneDay, uuid));
+    }
+
+
+    /**
      * One-time migration: marks all milestones ≤ {@code highestStreak} as
-     * auto-claimed for every existing player. Idempotent - skips already-claimed rows.
+     * auto-claimed for every existing player. Idempotent - skips already-claimed rows. A marker file in the data
+     * folder makes it run once; a row that could not be saved is logged, the others still run, and the marker is
+     * withheld so the migration runs again next start.
      */
     public void runMigration() {
-        // Run-once guard: a marker file in the data folder. Without it the
-        // migration re-ran every startup and re-inserted existing rows, throwing
-        // unique-constraint (23505) warnings on jexvote_claimed_streaks.
         if (migrationMarker().exists()) {
             return;
         }
@@ -143,23 +273,21 @@ public class StreakClaimService {
 
         playerRepository.findAllAsync().thenAccept(players -> {
             int migrated = 0;
+            int failed = 0;
             for (var player : players) {
-                int highest = player.getHighestStreak();
-                if (highest <= 0) continue;
-
-                // Idempotent: only create claims for milestones the player hasn't
-                // already got - never blindly re-insert (avoids the 23505 violation).
-                Set<Integer> alreadyClaimed = claimedRepository.findClaimedDays(player.getPlayerUuid()).join();
-                for (int day : milestones.keySet()) {
-                    if (day <= highest && !alreadyClaimed.contains(day)) {
-                        claimedRepository.createClaim(player.getPlayerUuid(), day, true);
-                        migrated++;
-                    }
-                }
+                MigrationCount outcome = migratePlayer(player.getPlayerUuid(), player.getHighestStreak(),
+                        milestones.keySet());
+                migrated += outcome.saved();
+                failed += outcome.failed();
             }
-
-            writeMigrationMarker();
             final int count = migrated;
+            final int failures = failed;
+            if (failures > 0) {
+                logger.log(Level.SEVERE, () -> String.format("Streak claim migration saved %d claim record(s), "
+                        + "%d failed - it runs again on the next start", count, failures));
+                return;
+            }
+            writeMigrationMarker();
             logger.log(Level.INFO, () -> String.format(
                     "Streak claim migration complete - %d claim record(s) created", count));
         }).exceptionally(ex -> {
@@ -168,11 +296,40 @@ public class StreakClaimService {
         });
     }
 
+    /** How many auto-claims of one player the migration saved and how many failed. */
+    private record MigrationCount(int saved, int failed) {
+    }
+
+    /** Saves the missing auto-claims of one player. */
+    private @NotNull MigrationCount migratePlayer(@NotNull UUID uuid, int highest,
+                                                 @NotNull Set<Integer> milestoneDays) {
+        int saved = 0;
+        int failed = 0;
+        if (highest <= 0) {
+            return new MigrationCount(saved, failed);
+        }
+        Set<Integer> alreadyClaimed = claimedRepository.findClaimedDays(uuid).join();
+        for (int day : milestoneDays) {
+            if (day > highest || alreadyClaimed.contains(day)) {
+                continue;
+            }
+            try {
+                claimedRepository.createClaim(uuid, day, true);
+                saved++;
+            } catch (Exception ex) {
+                failed++;
+                logger.log(Level.WARNING, ex, () -> String.format(
+                        "Streak claim migration could not save day %d of %s", day, uuid));
+            }
+        }
+        return new MigrationCount(saved, failed);
+    }
+
     private @NotNull File migrationMarker() {
         return new File(dataFolder, MIGRATION_MARKER);
     }
 
-    /** Writes the run-once marker so the migration never repeats (idempotent commands aside). */
+    /** Writes the run-once marker after every claim row was saved. Delete the file to run the migration again. */
     private void writeMigrationMarker() {
         try {
             if (!dataFolder.exists() && !dataFolder.mkdirs()) {
@@ -192,6 +349,10 @@ public class StreakClaimService {
      * which milestones have been granted, even when auto-granting).
      */
     public void markAutoClaimed(@NotNull UUID uuid, int milestoneDay) {
-        claimedRepository.createClaim(uuid, milestoneDay, true);
+        try {
+            claimedRepository.createClaim(uuid, milestoneDay, true);
+        } catch (Exception ex) {
+            reportUnrecorded(uuid, milestoneDay, true, ex);
+        }
     }
 }

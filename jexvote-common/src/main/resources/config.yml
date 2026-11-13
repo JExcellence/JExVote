@@ -82,12 +82,16 @@ reminders:
 # ── Offline Vote Queue ──────────────────────────────────────────
 # A vote from a player who is offline is stored and paid out the next
 # time they join, with one summary of everything they got.
+# Streak bonus-commands earned while offline are queued too.
+# A player who leaves during a payout keeps what they did not get yet for
+# their next join.
 offline-vote-queue: true
 
 # ── Vote Streak ─────────────────────────────────────────────────
 streak:
   # Hours without a vote before a streak breaks. 36 leaves room for
   # players who vote at different times of the day.
+  # Streak days, vote days and the monthly reset follow Europe/Berlin time.
   timeout-hours: 36
 
   # How streak milestone rewards (streak-rewards in rewards.yml) are paid:

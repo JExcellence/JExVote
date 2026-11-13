@@ -89,6 +89,16 @@ A feature that is not part of the edition is hidden from `/vote`, `/vote help` a
 | `vote-party-rewards` / `vote-party-pool` | when a vote party completes (Premium) |
 | `vote-shop` | bought with vote points in `/vote shop` (Premium) |
 
+A reward that has not landed when a player leaves (online vote, next-join payout, vote party, streak claim) is kept
+and paid on their next join. A stored reward that cannot be read is never dropped: it stays for the next join and a
+SEVERE log line names the player. A streak claim counts as claimed once anything arrived; if some rewards fail, the
+player is told to open a ticket. If a paid streak claim cannot be saved, the day stays closed (kept in
+`unsaved-streak-claims.txt`) and the save is retried on the next start and the next click. Stored console commands run
+after the stored items, like an online vote's commands; if the player leaves before them, they stay queued for the
+next join. A paid row that could not be removed is listed in `paid-unremoved-vote-rows.txt` and never paid again,
+even after a restart, and its removal is retried on the player's next delivery. If the rewards a player missed cannot
+be stored again, they are kept in `unstored-vote-leftovers.txt` and stored on the player's next delivery.
+
 Reward types: `item`, `xp`, `currency`, `command`, `permission`, `sound`, `particle`, `title`, `teleport`,
 `composite`, `choice`, `custom`, plus JExVote's `chance` and `lucky` (weighted pool). The end of `rewards.yml`
 has an example of each. Command rewards run with `asConsole: true` and support `{player}`, `{uuid}`,
@@ -211,6 +221,8 @@ Player values are cached for a short time, so they can lag a vote by a few secon
   `vote-gift.daily-limit` (or `jexvote.gift.daily.<n>`); with `require-vote-today` the gifter must have voted
   that day.
 - Milestones count from the best streak, so reached milestones stay claimable after a streak breaks.
+- Vote days, streak days and the monthly reset use Europe/Berlin time. The vote-gift daily limit still uses
+  `vote-gift.timezone`.
 
 ---
 

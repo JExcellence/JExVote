@@ -139,17 +139,18 @@ public final class NormalProfileRewards {
      * @param player   the online player
      * @param pending  every pending row of the player
      * @param delivery the regular delivery
+     * @return completes once every delivered batch finished; never fails
      */
-    public void handOver(@NotNull Player player, @NotNull List<PendingVoteRewardEntity> pending,
-                         @NotNull BatchDelivery delivery) {
+    public @NotNull CompletableFuture<Void> handOver(@NotNull Player player,
+                                                     @NotNull List<PendingVoteRewardEntity> pending,
+                                                     @NotNull BatchDelivery delivery) {
         List<PendingVoteRewardEntity> held = pending.stream().filter(NormalProfileRewards::isHeld).toList();
         List<PendingVoteRewardEntity> plain = pending.stream().filter(row -> !isHeld(row)).toList();
         boolean season = routes(player.getUniqueId());
         if (held.isEmpty() && !season) {
-            delivery.deliver(plain, false);
-            return;
+            return delivery.deliver(plain, false);
         }
-        target(player.getUniqueId()).thenAccept(target -> dispatch(player, plain, held, target, delivery))
+        return target(player.getUniqueId()).thenCompose(target -> dispatch(player, plain, held, target, delivery))
                 .exceptionally(ex -> {
                     logger.log(Level.WARNING, ex, () -> "Failed to resolve the reward profile of " + player.getName());
                     return null;
@@ -175,9 +176,10 @@ public final class NormalProfileRewards {
         return gate.depositToIslandBank(island, COINS, Math.round(amount));
     }
 
-    private void dispatch(@NotNull Player player, @NotNull List<PendingVoteRewardEntity> plain,
-                          @NotNull List<PendingVoteRewardEntity> held, @NotNull Target target,
-                          @NotNull BatchDelivery delivery) {
+    private @NotNull CompletableFuture<Void> dispatch(@NotNull Player player,
+                                                      @NotNull List<PendingVoteRewardEntity> plain,
+                                                      @NotNull List<PendingVoteRewardEntity> held,
+                                                      @NotNull Target target, @NotNull BatchDelivery delivery) {
         boolean season = routes(player.getUniqueId());
         List<PendingVoteRewardEntity> waiting = new ArrayList<>();
         CompletableFuture<Void> chain = CompletableFuture.completedFuture(null);
@@ -187,7 +189,7 @@ public final class NormalProfileRewards {
             chain = delivery.deliver(plain, false);
         }
         if (target.active() && !season) {
-            chain.thenCompose(ignored -> deliverHeld(player, held, target, delivery));
+            chain = chain.thenCompose(ignored -> deliverHeld(player, held, target, delivery));
         } else {
             waiting.addAll(held);
         }
@@ -195,6 +197,7 @@ public final class NormalProfileRewards {
             int count = waiting.size();
             scheduler.runAtEntity(player, () -> tell(player, target.profile(), count));
         }
+        return chain;
     }
 
     private @NotNull CompletableFuture<Void> deliverHeld(@NotNull Player player,

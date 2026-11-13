@@ -33,6 +33,7 @@ import de.jexcellence.jexplatform.reward.impl.CurrencyReward;
 import de.jexcellence.vote.reward.RewardStats;
 import de.jexcellence.vote.service.RewardEconomy;
 import de.jexcellence.vote.database.repository.ClaimedStreakRewardRepository;
+import de.jexcellence.vote.database.entity.PendingVoteRewardEntity;
 import de.jexcellence.vote.database.repository.PendingVoteRewardRepository;
 import de.jexcellence.vote.database.repository.RewardGrantStatRepository;
 import de.jexcellence.vote.database.repository.VotePartyContributorRepository;
@@ -365,6 +366,7 @@ public abstract class JExVote {
 
         streakClaimService = new StreakClaimService(
                 plugin, claimedStreakRepository, playerRepository, rewardService);
+        streakClaimService.retryUnsavedClaims();
 
         if (manualClaim) {
             streakClaimService.runMigration();
@@ -396,6 +398,9 @@ public abstract class JExVote {
                 voteConfig.getDailyFlySettings(),
                 voteConfig.getDailyRewardCommands());
 
+        rewardService.setPlayerScheduler(platform.scheduler());
+        rewardService.setLeftoverQueue((player, source, data) ->
+                pendingRewardRepository.createAsync(new PendingVoteRewardEntity(player, source, data)));
         rewardService.setSiteIdResolver(service -> {
             VoteSite site = voteService.findSiteByServiceName(service);
             return site == null ? null : site.id();

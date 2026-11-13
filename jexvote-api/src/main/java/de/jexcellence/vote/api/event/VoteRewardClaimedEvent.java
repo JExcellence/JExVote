@@ -7,6 +7,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
+/**
+ * Fired after the reward items, commands and bonus rewards of an online vote have landed for the player. Not fired
+ * for rewards that wait for the next join.
+ */
 public class VoteRewardClaimedEvent extends Event {
 
     private static final HandlerList HANDLER_LIST = new HandlerList();

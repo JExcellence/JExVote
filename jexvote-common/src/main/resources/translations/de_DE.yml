@@ -456,6 +456,7 @@ vote_streak:
     already_claimed: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>Diesen Meilenstein hast du schon abgeholt.</#F1F5F9>'
     not_reached: '<#F87171>[X]</#F87171> <#F1F5F9>Deine Serie hat diesen Meilenstein noch nicht erreicht.</#F1F5F9>'
     failed: '<#F87171>[X]</#F87171> <#F1F5F9>Die Belohnungen konnten nicht abgeholt werden. Versuche es erneut.</#F1F5F9>'
+    partial: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>Tag {day} abgeholt, aber einige Belohnungen konnten nicht ausgezahlt werden.</#F1F5F9> <#94A3B8>Öffne ein /ticket, damit das Team es prüfen kann.</#94A3B8>'
 
 # ── Vote-Belohnungen ─────────────────────────────────────────────────────────
 vote_rewards:

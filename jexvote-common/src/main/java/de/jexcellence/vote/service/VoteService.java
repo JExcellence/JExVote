@@ -2,11 +2,9 @@ package de.jexcellence.vote.service;
 
 import de.jexcellence.jexplatform.reward.AbstractReward;
 import de.jexcellence.jexplatform.scheduler.PlatformScheduler;
-import de.jexcellence.jextranslate.R18nManager;
 import de.jexcellence.vote.api.event.StreakMilestoneEvent;
 import de.jexcellence.vote.api.event.VotePreRewardEvent;
 import de.jexcellence.vote.api.event.VoteReceivedEvent;
-import de.jexcellence.vote.api.event.VoteRewardClaimedEvent;
 import de.jexcellence.vote.api.model.VoteSnapshot;
 import de.jexcellence.vote.api.reward.VoteContext;
 import de.jexcellence.vote.api.reward.VoteRewardDescriptor;
@@ -26,13 +24,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -51,6 +50,8 @@ public class VoteService {
     private final VotePlayerRepository playerRepository;
     private final VoteRecordRepository recordRepository;
     private final PendingVoteRewardRepository pendingRewardRepository;
+    private final PendingRowSettler rowSettler;
+    private final Map<UUID, CompletableFuture<Void>> pendingDeliveries = new ConcurrentHashMap<>();
     private final VoteRewardService rewardService;
     private final VoteBroadcastService broadcastService;
     private final MultiplierService multiplierService;
@@ -58,27 +59,28 @@ public class VoteService {
     /** The read/query surface (snapshots, ranks, cooldowns, site lookups). */
     private final VoteStatsService stats;
 
-    // Reward SPI (V2) - injected after construction to avoid growing the constructor;
-    // both null until setRewardSpi is called, and the online path guards on them.
+    /** Reward SPI registry, set by {@link #setRewardSpi}; {@code null} until then. */
     private @Nullable VoteRewardProviderRegistry rewardSpi;
+    /** Bonus descriptor executor, set by {@link #setRewardSpi}; {@code null} until then. */
     private @Nullable VoteDescriptorExecutor descriptorExecutor;
 
     private final AtomicReference<Map<String, VoteSite>> voteSites;
-    // volatile is sufficient: single-write / multi-read
     private volatile Duration streakTimeout;
-    private final AtomicReference<Map<Integer, List<String>>> streakCommands;
-    // volatile is sufficient: single-write / multi-read
+    private final VoteCommandSet voteCommands;
+    private final OnlineVotePayout onlinePayout;
     private volatile int recordRetentionDays;
     private final AtomicReference<VoteConfig.FreezeSettings> freezeSettings;
     private final VoteConfig.BedrockSettings bedrockSettings;
     private final VoteConfig.DailyFlySettings dailyFly;
-    private final List<String> dailyRewardCommands;
 
     /** Duplicate-vote guard: same voter+service delivered again within this window is ignored. */
     private static final long DEDUP_WINDOW_MS = 5_000L;
+    /** Vote days, streak days and the monthly reset follow the server community time zone. */
+    private static final ZoneId VOTE_DAY_ZONE = ZoneId.of("Europe/Berlin");
     /** Pending-entry service-name prefix that marks a serialized SPI/pre-reward descriptor blob. */
     private static final String SPI_PENDING_MARKER = "spi::";
     private static final String SPI_OFFLINE_REASON = "vote reward SPI (offline)";
+    private static final VoteRewardService.StoredGrant EMPTY_GRANT = new VoteRewardService.StoredGrant(List.of(), null);
     private final Map<String, Long> recentVotes = new ConcurrentHashMap<>();
     /** Votes whose voter had no resolvable UUID yet - replayed on their first join. */
     private final UnresolvedVoteStore unresolvedVotes;
@@ -86,7 +88,11 @@ public class VoteService {
     /** Tracks server-down periods so vote streaks aren't broken by downtime the player couldn't avoid. */
     private final DowntimeTracker downtime;
 
-    // Configuration group - suppressed (S107)
+    /**
+     * Creates the vote service. The stats service shares the live {@code voteSites} reference, so a reload updates
+     * its reads too; the downtime heartbeat runs every minute so a crash leaves a fresh last-alive time for the next
+     * start's gap computation.
+     */
     @SuppressWarnings("java:S107")
     public VoteService(@NotNull JavaPlugin plugin,
                        @NotNull VotePlayerRepository playerRepository,
@@ -110,25 +116,26 @@ public class VoteService {
         this.playerRepository = playerRepository;
         this.recordRepository = recordRepository;
         this.pendingRewardRepository = pendingRewardRepository;
+        this.rowSettler = new PendingRowSettler(pendingRewardRepository, logger, plugin.getDataFolder());
         this.rewardService = rewardService;
         this.broadcastService = broadcastService;
         this.multiplierService = multiplierService;
         this.votePartyService = votePartyService;
         this.voteSites = new AtomicReference<>(voteSites);
-        // Shares the live voteSites reference, so a reload updates the reads too.
         this.stats = new VoteStatsService(playerRepository, recordRepository, this.voteSites);
         this.streakTimeout = Duration.ofHours(streakTimeoutHours);
-        this.streakCommands = new AtomicReference<>(streakCommands);
+        this.voteCommands = new VoteCommandSet(dailyRewardCommands, streakCommands);
         this.recordRetentionDays = recordRetentionDays;
         this.freezeSettings = new AtomicReference<>(freezeSettings);
         this.bedrockSettings = bedrockSettings;
         this.dailyFly = dailyFly;
-        this.dailyRewardCommands = dailyRewardCommands;
+        this.onlinePayout = new OnlineVotePayout(logger, rewardService, broadcastService, voteCommands,
+                new OnlineVotePayout.Hooks(scheduler::runAtEntity, this::storePending,
+                        (voter, service, bonus) -> queueBonusOffline(voter, service, bonus, null),
+                        () -> this.descriptorExecutor, event -> Bukkit.getPluginManager().callEvent(event)));
         this.downtime = new DowntimeTracker(plugin);
         this.unresolvedVotes = new UnresolvedVoteStore(plugin.getDataFolder(), this.logger);
         this.downtime.initialize(logger);
-        // Heartbeat every minute so a crash / kill -9 leaves a fresh-enough
-        // last-alive timestamp for the next boot's gap computation.
         this.scheduler.runRepeating(this.downtime::heartbeat, 20L * 60L, 20L * 60L);
     }
 
@@ -150,7 +157,7 @@ public class VoteService {
                        @NotNull List<String> commandsOnVote) {
         this.voteSites.set(voteSites);
         this.streakTimeout = Duration.ofHours(streakTimeoutHours);
-        this.streakCommands.set(streakCommands);
+        this.voteCommands.setStreakCommands(streakCommands);
         this.recordRetentionDays = recordRetentionDays;
         this.rewardService.setManualStreakClaim(manualStreakClaim);
         this.rewardService.reloadRewards(defaultRewards, guaranteedRewards, streakRewards, siteRewards, commandsOnVote);
@@ -175,12 +182,14 @@ public class VoteService {
         }
     }
 
+    /**
+     * Processes a vote without blocking: pre-resolves off the main thread, fires the sync event through a callback,
+     * then continues the database work off the main thread. No thread waits on the main thread, so a stalled main
+     * thread never pins a Votifier worker per vote.
+     *
+     * @return whether the vote was accepted (a queued vote of an unknown voter counts as accepted)
+     */
     public @NotNull CompletableFuture<Boolean> processVote(@NotNull Vote vote) {
-        // Non-blocking pipeline: pre-resolve async, fire the sync event via a callback, then
-        // continue the DB work off the main thread. Previously fireVoteReceivedEvent hopped to
-        // the main thread and BLOCKED the worker on a CompletableFuture.join() - a stalled main
-        // thread then pinned a bounded votifier/common-pool thread per in-flight vote. Now the
-        // event completion drives the chain via thenApplyAsync, so no thread waits.
         return CompletableFuture.supplyAsync(() -> preResolve(vote))
                 .thenCompose(pre -> {
                     if (pre.done()) {
@@ -205,13 +214,13 @@ public class VoteService {
     /**
      * Dedupe + UUID resolution (runs off the main thread). Returns a "stop" result for a
      * duplicate (false) or an unresolvable-and-queued voter (true), else "proceed" with the UUID.
+     * Some setups deliver a vote twice (a second vote plugin, a relay, a site that re-sends); the atomic
+     * {@code put} lets exactly one of two racing duplicates through. A voter who never joined is queued and replayed
+     * on their first join, so neither the reward nor the streak is lost.
      */
     private @NotNull PreResult preResolve(@NotNull Vote vote) {
         logger.info(String.format("Processing vote: %s / %s", vote.username(), vote.serviceName()));
 
-        // Duplicate-vote guard: some setups deliver the same vote twice (a second vote plugin
-        // also listening, a relay, or a site that re-sends). Without this every reward doubles.
-        // ConcurrentHashMap.put is atomic, so of two racing duplicates exactly one proceeds.
         String dedupeKey = vote.username().toLowerCase(Locale.ROOT) + '|'
                 + vote.serviceName().toLowerCase(Locale.ROOT);
         long nowMs = System.currentTimeMillis();
@@ -224,8 +233,6 @@ public class VoteService {
 
         UUID uuid = resolveUuid(vote.username());
         if (uuid == null) {
-            // Voter has never joined (or isn't cached) - queue the vote instead of dropping it,
-            // and replay it on their first join so the reward and streak are not lost.
             unresolvedVotes.add(vote);
             logger.info(String.format(
                     "Voter %s not resolvable yet - queued (%d pending) until first join",
@@ -291,7 +298,8 @@ public class VoteService {
     private @NotNull VotePlayerEntity findOrCreatePlayer(@NotNull Vote vote, @NotNull UUID uuid) {
         VotePlayerEntity player = playerRepository.findByUuid(uuid)
                 .orElseGet(() -> {
-                    logger.log(Level.INFO, () -> String.format("Creating new vote profile for %s (%s)", vote.username(), uuid));
+                    logger.log(Level.INFO, () -> String.format(
+                            "Creating new vote profile for %s (%s)", vote.username(), uuid));
                     VotePlayerEntity newPlayer = new VotePlayerEntity(uuid, vote.username());
                     initializeFreezes(newPlayer);
                     playerRepository.create(newPlayer);
@@ -307,34 +315,39 @@ public class VoteService {
         VoteSite site = findSiteByServiceName(serviceName);
         if (site == null) {
             logger.log(Level.WARNING, () -> String.format(
-                    "No vote site configured for service '%s' - using default 1 point. Check sites.yml service-name mappings.",
-                    serviceName));
+                    "No vote site configured for service '%s' - using default 1 point. "
+                            + "Check sites.yml service-name mappings.", serviceName));
             return 1;
         }
         return site.pointsPerVote();
     }
 
+    /**
+     * Adds the vote to the player. The stored vote time is the processing time, not the Votifier timestamp: relays
+     * and API votes can carry stale timestamps, and {@link #updateStreak} compares the stored time with now, so both
+     * must come from the same clock.
+     */
     private boolean applyVoteToPlayer(@NotNull VotePlayerEntity player, @NotNull Vote vote, int points) {
         int scaledPoints = (int) Math.round(points * multiplierService.current());
         player.setTotalVotes(player.getTotalVotes() + 1);
         player.setMonthlyVotes(player.getMonthlyVotes() + 1);
         player.setVotePoints(player.getVotePoints() + scaledPoints);
-        // Store PROCESSING time, not the vote's Votifier timestamp. NuVotifier
-        // relays and API-path votes can carry stale/wrong timestamps; storing
-        // `Instant.now()` keeps updateStreak's "same calendar day" and gap
-        // calculations honest - they compare stored lastVoteAt vs Instant.now(),
-        // so both sides must use the same clock (see updateStreak).
         player.setLastVoteAt(Instant.now());
         boolean firstDaily = applyDailyFlyDate(player);
         playerRepository.update(player);
         return firstDaily;
     }
 
+    /**
+     * Marks (once per Europe/Berlin day) and returns whether this is the player's first vote of the day and at
+     * least one daily bonus is configured: the fly coupon or the daily-reward commands. The date is only claimed
+     * when there is something to grant.
+     */
     private boolean applyDailyFlyDate(@NotNull VotePlayerEntity player) {
-        if (!dailyFly.enabled() && dailyRewardCommands.isEmpty()) {
+        if (!dailyFly.enabled() && voteCommands.daily().isEmpty()) {
             return false;
         }
-        String today = LocalDate.now(ZoneId.systemDefault()).toString();
+        String today = LocalDate.now(VOTE_DAY_ZONE).toString();
         if (today.equals(player.getDailyFlyDate())) {
             return false;
         }
@@ -385,12 +398,6 @@ public class VoteService {
     }
 
     /**
-     * Grants any reward-SPI (V2) rewards for an online voter. No-op when the SPI is
-     * disabled (Free edition) or no providers are registered. SPI rewards are
-     * additive to the configured rewards; offline SPI delivery is a later pass, so
-     * this fires only on the online path (config rewards still queue for offline).
-     */
-    /**
      * Collects the bonus reward descriptors for a vote: the registered SPI providers plus
      * the additions from the (async) {@link VotePreRewardEvent}. Must be called off the main
      * thread (the event is async) - i.e. from the vote-processing pipeline, before any
@@ -420,13 +427,20 @@ public class VoteService {
                                    @NotNull List<VoteRewardDescriptor> bonus,
                                    @Nullable NormalProfileRewards normalProfile) {
         VoteDescriptorExecutor executor = this.descriptorExecutor;
-        if (bonus.isEmpty() || executor == null) {
+        if (bonus.isEmpty()) {
+            return;
+        }
+        if (executor == null) {
+            OnlineVotePayout.logBonusDropped(logger, uuid, bonus.size());
             return;
         }
         List<VoteRewardDescriptor> queueable = new ArrayList<>();
         for (VoteRewardDescriptor descriptor : bonus) {
             if (descriptor instanceof VoteRewardDescriptor.Points p) {
-                grantVotePoints(uuid, p.amount(), SPI_OFFLINE_REASON);
+                grantVotePoints(uuid, p.amount(), SPI_OFFLINE_REASON).exceptionally(ex -> {
+                    logger.log(Level.WARNING, ex, () -> "Failed to grant offline vote-points to " + uuid);
+                    return false;
+                });
             } else {
                 queueable.add(descriptor);
             }
@@ -441,7 +455,7 @@ public class VoteService {
         if (normalProfile != null) {
             normalProfile.hold(uuid, SPI_PENDING_MARKER + service, blob);
         } else {
-            pendingRewardRepository.create(new PendingVoteRewardEntity(uuid, SPI_PENDING_MARKER + service, blob));
+            storePending(new PendingVoteRewardEntity(uuid, SPI_PENDING_MARKER + service, blob));
         }
     }
 
@@ -468,6 +482,12 @@ public class VoteService {
         });
     }
 
+    /**
+     * Pays a processed vote: right away for an online voter, kept for the Normal profile while the Season profile
+     * is active, otherwise queued for the next join. A streak-reward day fires {@link StreakMilestoneEvent} on the
+     * main thread. The bonus descriptors are collected here, on the async processing thread, because the
+     * pre-reward event is async and must not fire from the player's thread.
+     */
     private void deliverOrQueueRewards(@NotNull Vote vote, @NotNull UUID uuid,
                                        @NotNull VotePlayerEntity player, boolean firstDailyBonus) {
         Player onlinePlayer = Bukkit.getPlayer(uuid);
@@ -479,16 +499,11 @@ public class VoteService {
 
         boolean online = onlinePlayer != null && onlinePlayer.isOnline();
 
-        // Fire a milestone event when the streak lands on a configured streak-reward day,
-        // so integrators react without polling (online or offline). Fired on the main thread.
         if (rewardService.getStreakRewards().containsKey(streak)) {
             scheduler.runSync(() -> Bukkit.getPluginManager().callEvent(
                     new StreakMilestoneEvent(uuid, streak, streak)));
         }
 
-        // Bonus descriptors (SPI providers + the async pre-reward event) - collected HERE on the
-        // async processing thread, because the pre-reward event is async and must not fire from
-        // the main/region thread that deliverOnlineRewards runs on.
         List<VoteRewardDescriptor> bonus = collectBonusRewards(vote, uuid, snapshot, online);
 
         NormalProfileRewards normalProfile = NormalProfileRewards.current();
@@ -497,23 +512,15 @@ public class VoteService {
             logger.log(Level.INFO, () -> String.format("Vote processed for %s (Season profile) - rewards kept for "
                     + "the Normal profile, streak: %d, total: %d", vote.username(), streak, player.getTotalVotes()));
         } else if (online) {
-            scheduler.runAtEntity(onlinePlayer, () ->
-                    deliverOnlineRewards(onlinePlayer, vote, uuid, snapshot, streak,
-                            firstDailyBonus, consumedFreezes, remainingFreezes, freshFreezeGrant, bonus));
+            onlinePayout.pay(new PaidVote(onlinePlayer, vote, uuid, snapshot, streak, firstDailyBonus,
+                    new PaidVote.FreezeNotice(consumedFreezes, remainingFreezes, freshFreezeGrant), bonus));
             logger.log(Level.INFO, () -> String.format("Vote processed for %s (online) - streak: %d, total: %d",
                     vote.username(), streak, player.getTotalVotes()));
         } else {
-            List<String> offlineDailyCommands = firstDailyBonus
-                    ? dailyRewardCommands
-                    : List.of();
-            String rewardData = rewardService.serializeRewards(
-                    vote.serviceName(), streak, offlineDailyCommands);
-            if (rewardData != null) {
-                pendingRewardRepository.create(
-                        new PendingVoteRewardEntity(uuid, vote.serviceName(), rewardData));
-            }
-            queueBonusOffline(uuid, vote.serviceName(), bonus, null);
-            logger.log(Level.INFO, () -> String.format("Vote processed for %s (offline) - rewards queued, streak: %d, total: %d",
+            onlinePayout.queueOffline(new PaidVote(null, vote, uuid, snapshot, streak, firstDailyBonus,
+                    PaidVote.FreezeNotice.NONE, bonus));
+            logger.log(Level.INFO, () -> String.format(
+                    "Vote processed for %s (offline) - rewards queued, streak: %d, total: %d",
                     vote.username(), streak, player.getTotalVotes()));
         }
     }
@@ -527,9 +534,8 @@ public class VoteService {
                                       @NotNull UUID uuid, int streak, boolean firstDailyBonus,
                                       @NotNull List<VoteRewardDescriptor> bonus) {
         String service = vote.serviceName();
-        List<String> commands = new ArrayList<>(firstDailyBonus ? dailyRewardCommands : List.of());
-        commands.addAll(resolveStreakCommands(service, streak));
-        normalProfile.hold(uuid, service, rewardService.serializeRewards(service, streak, commands));
+        normalProfile.hold(uuid, service, rewardService.serializeRewards(
+                service, streak, voteCommands.queuedFor(service, streak, firstDailyBonus)));
         queueBonusOffline(uuid, service, bonus, normalProfile);
         Player onlinePlayer = Bukkit.getPlayer(uuid);
         if (onlinePlayer == null || !onlinePlayer.isOnline()) {
@@ -543,58 +549,14 @@ public class VoteService {
         });
     }
 
-    @SuppressWarnings("java:S107") // cohesive per-vote delivery context; grouping would obscure it
-    private void deliverOnlineRewards(@NotNull Player onlinePlayer, @NotNull Vote vote,
-                                         @NotNull UUID uuid, @NotNull VoteSnapshot snapshot,
-                                         int streak, boolean firstDailyBonus,
-                                         int consumedFreezes, int remainingFreezes,
-                                         int freshFreezeGrant,
-                                         @NotNull List<VoteRewardDescriptor> bonus) {
-        rewardService.grantRewards(onlinePlayer, vote.serviceName(), streak);
-        VoteDescriptorExecutor executor = this.descriptorExecutor;
-        if (executor != null && !bonus.isEmpty()) {
-            executor.grant(onlinePlayer, bonus);
-        }
-        executeStreakCommands(onlinePlayer, vote.serviceName(), streak);
-        broadcastService.notifyPlayer(onlinePlayer, vote.serviceName(), streak);
-        broadcastService.playVoteEffects(onlinePlayer, streak, rewardService.getStreakRewards().containsKey(streak));
-        if (firstDailyBonus) {
-            for (String command : dailyRewardCommands) {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                        command.replace("{player}", onlinePlayer.getName()));
-            }
-        }
-        if (rewardService.hasGuaranteedRewards()) {
-            broadcastService.notifyGuaranteedReward(onlinePlayer, rewardService.getGuaranteedRewards());
-        }
-        if (freshFreezeGrant > 0) {
-            R18nManager.getInstance().msg("vote.freeze.granted").prefix()
-                    .with("amount", String.valueOf(freshFreezeGrant))
-                    .send(onlinePlayer);
-        }
-        if (consumedFreezes > 0) {
-            R18nManager.getInstance().msg("vote.freeze.saved").prefix()
-                    .with("consumed", String.valueOf(consumedFreezes))
-                    .with("remaining", String.valueOf(remainingFreezes))
-                    .with("streak", String.valueOf(streak))
-                    .send(onlinePlayer);
-        }
-        Bukkit.getPluginManager().callEvent(
-                new VoteRewardClaimedEvent(uuid, vote.serviceName(), snapshot));
+    /** Stores a pending row off the calling thread, which may be a player's or the main thread. */
+    private void storePending(@NotNull PendingVoteRewardEntity row) {
+        pendingRewardRepository.createAsync(row).exceptionally(ex -> {
+            logger.log(Level.SEVERE, ex, () -> "Failed to store a pending vote reward of " + row.getPlayerUuid());
+            return null;
+        });
     }
 
-    /**
-     * Delivers everything that arrived while the player was offline, then tells them
-     * what they got.
-     *
-     * <p>The order matters and used to be wrong in effect if not in code: the player
-     * was told "you have N pending rewards, delivering now..." - future tense, after
-     * the fact, and naming none of them. What someone returning from three votes wants
-     * is one list of what is now in their inventory, so the announcement is built from
-     * the actual grants and sent once, after they have all completed.
-     *
-     * @param player the returning player
-     */
     /**
      * Replays any votes that were queued while this player's name was unresolvable
      * (see {@link UnresolvedVoteStore}). Matching is done against ONLINE players only
@@ -626,23 +588,43 @@ public class VoteService {
     /**
      * Delivers the pending rewards the active profile may receive. Without JExOneblock profiles that is every
      * pending row; otherwise {@link NormalProfileRewards} keeps Season-profile rewards for the Normal profile.
-     * Called on join and after every JExOneblock profile switch.
+     * Called on join and after every JExOneblock profile switch. Deliveries of one player run one after another, so
+     * a profile switch right after a join never reads rows the join is still paying and settling.
      *
      * @param player the online player
      */
     public void deliverPendingRewards(@NotNull Player player) {
         replayUnresolvedVotes(player);
-        pendingRewardRepository.findByPlayer(player.getUniqueId()).thenAccept(pending -> {
-            if (pending.isEmpty()) {
-                return;
-            }
-            NormalProfileRewards normalProfile = NormalProfileRewards.current();
-            if (normalProfile == null) {
-                deliverBatch(player, pending, false);
-            } else {
-                normalProfile.handOver(player, pending, (rows, held) -> deliverBatch(player, rows, held));
-            }
-        });
+        UUID uuid = player.getUniqueId();
+        CompletableFuture<Void> delivery = pendingDeliveries.compute(uuid, (key, previous) -> afterSettled(previous)
+                .thenComposeAsync(ignored -> loadAndDeliver(player), scheduler::runAsync));
+        delivery.whenComplete((ignored, error) -> pendingDeliveries.remove(uuid, delivery));
+    }
+
+    private static @NotNull CompletableFuture<Void> afterSettled(@Nullable CompletableFuture<Void> previous) {
+        return previous == null ? CompletableFuture.completedFuture(null) : previous.handle((done, error) -> null);
+    }
+
+    private @NotNull CompletableFuture<Void> loadAndDeliver(@NotNull Player player) {
+        return pendingRewardRepository.findByPlayer(player.getUniqueId())
+                .thenCompose(rows -> rowSettler.payable(player.getUniqueId(), rows))
+                .thenCompose(pending -> deliverPayable(player, pending))
+                .exceptionally(ex -> {
+                    final String playerName = player.getName();
+                    logger.log(Level.WARNING, ex, () -> "Pending vote reward delivery failed for " + playerName);
+                    return null;
+                });
+    }
+
+    private @NotNull CompletableFuture<Void> deliverPayable(@NotNull Player player,
+                                                            @NotNull List<PendingVoteRewardEntity> pending) {
+        if (pending.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+        NormalProfileRewards normalProfile = NormalProfileRewards.current();
+        return normalProfile == null
+                ? deliverBatch(player, pending, false)
+                : normalProfile.handOver(player, pending, (batch, held) -> deliverBatch(player, batch, held));
     }
 
     /**
@@ -660,71 +642,112 @@ public class VoteService {
             return done;
         }
         scheduler.runAtEntity(player, () -> {
-            List<CompletableFuture<List<String>>> grants = new ArrayList<>(pending.size());
-            for (PendingVoteRewardEntity reward : pending) {
-                grantPending(player, reward, grants);
+            if (!player.isOnline()) {
+                done.complete(null);
+                return;
             }
-            CompletableFuture
-                    .allOf(grants.toArray(CompletableFuture[]::new))
-                    .whenComplete((ignored, err) -> {
-                        if (err != null) {
-                            final String pName = player.getName();
-                            logger.log(Level.WARNING, err,
-                                    () -> "Unexpected error in pending reward delivery for " + pName);
-                        }
-                        deletePending(player, pending);
-                        List<String> received = grants.stream()
-                                .map(f -> f.getNow(List.of()))
-                                .flatMap(List::stream)
-                                .toList();
-                        scheduler.runAtEntity(player, () ->
-                                broadcastService.notifyRewardsDelivered(player, pending.size(), received, held));
-                        final int deliveredCount = pending.size();
-                        final String deliveredTo = player.getName();
-                        logger.log(Level.INFO, () -> "Delivered " + deliveredCount
-                                + " pending vote reward(s) to " + deliveredTo);
-                        done.complete(null);
-                    });
-        });
+            List<CompletableFuture<VoteRewardService.StoredGrant>> grants = new ArrayList<>(pending.size());
+            CompletableFuture<Void> previous = CompletableFuture.completedFuture(null);
+            for (PendingVoteRewardEntity reward : pending) {
+                CompletableFuture<VoteRewardService.StoredGrant> grant =
+                        previous.thenCompose(ignored -> grantOnPlayerThread(player, reward));
+                grants.add(grant);
+                previous = grant.thenApply(ignored -> null);
+            }
+            CompletableFuture.allOf(grants.toArray(CompletableFuture[]::new)).whenComplete((ignored, err) -> {
+                try {
+                    finishBatch(player, pending, grants, held).whenComplete((settled, error) -> done.complete(null));
+                } catch (Exception ex) {
+                    logger.log(Level.SEVERE, ex, () -> "Finishing a pending vote reward batch failed");
+                    done.complete(null);
+                }
+            });
+        }, () -> done.complete(null));
         return done;
+    }
+
+    /** Settles a granted batch, tells the player what arrived and completes once every row is settled. */
+    private @NotNull CompletableFuture<Void> finishBatch(
+            @NotNull Player player, @NotNull List<PendingVoteRewardEntity> pending,
+            @NotNull List<CompletableFuture<VoteRewardService.StoredGrant>> grants, boolean held) {
+        CompletableFuture<Void> settled = settleRows(pending, grants);
+        List<String> received = grants.stream()
+                .map(grant -> grant.getNow(EMPTY_GRANT).received())
+                .flatMap(List::stream)
+                .toList();
+        scheduler.runAtEntity(player, () ->
+                broadcastService.notifyRewardsDelivered(player, pending.size(), received, held));
+        final int deliveredCount = pending.size();
+        final String deliveredTo = player.getName();
+        logger.log(Level.INFO,
+                () -> "Delivered " + deliveredCount + " pending vote reward(s) to " + deliveredTo);
+        return settled;
+    }
+
+    /**
+     * Grants one pending row on the player's thread after the previous row finished, so the coin deposits of
+     * different rows never overlap. A player who left before it started keeps the whole row.
+     */
+    private @NotNull CompletableFuture<VoteRewardService.StoredGrant> grantOnPlayerThread(
+            @NotNull Player player, @NotNull PendingVoteRewardEntity row) {
+        CompletableFuture<VoteRewardService.StoredGrant> result = new CompletableFuture<>();
+        VoteRewardService.StoredGrant keepWholeRow = new VoteRewardService.StoredGrant(List.of(), row.getRewardData());
+        scheduler.runAtEntity(player, () -> {
+            if (!player.isOnline()) {
+                result.complete(keepWholeRow);
+                return;
+            }
+            grantPending(player, row)
+                    .whenComplete((grant, error) -> result.complete(grant == null ? keepWholeRow : grant));
+        }, () -> result.complete(keepWholeRow));
+        return result;
     }
 
     /**
      * Grants one pending row. SPI/pre-reward descriptor blobs are marked in the service name and replayed through
-     * the descriptor executor; everything else is a config-reward blob.
+     * the descriptor executor; everything else is a config-reward blob. Never fails: a row that could not be granted
+     * is kept whole for the next join, so nothing is lost to a broken or unreadable row.
      */
-    private void grantPending(@NotNull Player player, @NotNull PendingVoteRewardEntity reward,
-                              @NotNull List<CompletableFuture<List<String>>> grants) {
+    private @NotNull CompletableFuture<VoteRewardService.StoredGrant> grantPending(
+            @NotNull Player player, @NotNull PendingVoteRewardEntity reward) {
         VoteDescriptorExecutor executor = this.descriptorExecutor;
         try {
             boolean isBonusBlob = executor != null
                     && NormalProfileRewards.sourceOf(reward.getServiceName()).startsWith(SPI_PENDING_MARKER);
-            CompletableFuture<List<String>> grant = isBonusBlob
+            CompletableFuture<VoteRewardService.StoredGrant> grant = isBonusBlob
                     ? executor.grantSerialized(player, reward.getRewardData())
+                            .thenApply(received -> new VoteRewardService.StoredGrant(received, null))
                     : rewardService.grantSerializedRewards(player, reward.getRewardData());
-            grants.add(grant.exceptionally(ex -> {
-                final String playerName = player.getName();
-                logger.log(Level.WARNING, ex, () -> "Async reward grant failed for " + playerName);
-                return List.of();
-            }));
+            return grant.exceptionally(ex -> keepAfterFailure(player, reward, ex));
         } catch (Exception e) {
-            final String playerName = player.getName();
-            logger.log(Level.WARNING, e, () -> "Failed to deliver pending reward to " + playerName);
+            return CompletableFuture.completedFuture(keepAfterFailure(player, reward, e));
         }
     }
 
-    /** Removes the delivered rows, so rows queued meanwhile or held for another profile stay. */
-    private void deletePending(@NotNull Player player, @NotNull List<PendingVoteRewardEntity> delivered) {
-        for (PendingVoteRewardEntity row : delivered) {
-            pendingRewardRepository.deleteAsync(row.getId()).exceptionally(ex -> {
-                final String pName = player.getName();
-                logger.log(Level.SEVERE, ex, () -> "Failed to delete a pending reward of " + pName);
-                return null;
-            });
-        }
+    private @NotNull VoteRewardService.StoredGrant keepAfterFailure(@NotNull Player player,
+                                                                    @NotNull PendingVoteRewardEntity row,
+                                                                    @NotNull Throwable failure) {
+        final String playerName = player.getName();
+        logger.log(Level.SEVERE, failure, () -> "Pending vote reward of " + playerName
+                + " could not be granted - kept for the next join");
+        return new VoteRewardService.StoredGrant(List.of(), row.getRewardData());
     }
 
-    // ── Read surface - delegated to VoteStatsService (see that class) ────────────────
+    /**
+     * Settles the delivered rows (see {@link PendingRowSettler}), so rows queued meanwhile or held for another profile
+     * stay. A row nothing was taken from (unreadable, or the player left first) stays as it is.
+     *
+     * @return completes once every row is settled
+     */
+    private @NotNull CompletableFuture<Void> settleRows(
+            @NotNull List<PendingVoteRewardEntity> rows,
+            @NotNull List<CompletableFuture<VoteRewardService.StoredGrant>> grants) {
+        List<CompletableFuture<Void>> settles = new ArrayList<>(rows.size());
+        for (int index = 0; index < rows.size(); index++) {
+            settles.add(rowSettler.settle(rows.get(index), grants.get(index).getNow(EMPTY_GRANT).remaining()));
+        }
+        return CompletableFuture.allOf(settles.toArray(CompletableFuture[]::new));
+    }
 
     public @NotNull VoteStatsService stats() {
         return stats;
@@ -810,7 +833,7 @@ public class VoteService {
 
     public void resetAllMonthlyVotes() {
         playerRepository.findAllAsync().thenAccept(players -> {
-            String currentMonth = YearMonth.now(ZoneId.systemDefault()).toString();
+            String currentMonth = YearMonth.now(VOTE_DAY_ZONE).toString();
             for (VotePlayerEntity player : players) {
                 player.setMonthlyVotes(0);
                 player.setMonthlyResetMonth(currentMonth);
@@ -842,6 +865,11 @@ public class VoteService {
         });
     }
 
+    /**
+     * Advances the streak at most once per Europe/Berlin day: a second vote on the same day still pays, but leaves the
+     * streak number alone. Server downtime is taken off the gap, because nobody can vote while the Votifier port is
+     * unreachable, so a maintenance window never breaks a streak.
+     */
     private void updateStreak(@NotNull VotePlayerEntity player) {
         player.setConsumedFreezesThisVote(0);
         Instant lastVote = player.getLastVoteAt();
@@ -852,21 +880,12 @@ public class VoteService {
             return;
         }
 
-        // The streak advances at most once per calendar day: if the previous
-        // processed vote already fell on today, the day is counted, so leave
-        // currentStreak untouched (keys/rewards still process - only the streak
-        // number is capped). No per-config vote timezone exists, so the server's
-        // local zone is used, consistent with the monthly-reset logic.
         Instant now = Instant.now();
-        ZoneId zone = ZoneId.systemDefault();
-        if (lastVote.atZone(zone).toLocalDate().equals(now.atZone(zone).toLocalDate())) {
+        if (lastVote.atZone(VOTE_DAY_ZONE).toLocalDate().equals(now.atZone(VOTE_DAY_ZONE).toLocalDate())) {
             return;
         }
 
         Duration rawGap = Duration.between(lastVote, now);
-        // Subtract periods the server was down - a player can't vote while the
-        // Votifier port is unreachable. Without this the streak breaks whenever
-        // a maintenance window straddles the timeout, which is unfair.
         Duration serverDown = downtime.overlapping(lastVote, now);
         Duration gap = rawGap.minus(serverDown);
         if (gap.isNegative()) {
@@ -891,7 +910,8 @@ public class VoteService {
      * Streak Freezes. Each freeze absorbs one {@code duration-hours} window
      * beyond the normal timeout. Returns {@code true} (and decrements the
      * owned freezes) only when the player has enough to cover every missed
-     * window; otherwise the streak is allowed to break.
+     * window; otherwise the streak is allowed to break. The overflow is measured in exact fractional hours, because
+     * {@code Duration.toHours()} truncates and would under-count by a whole window right at a boundary.
      */
     private boolean tryConsumeFreezes(@NotNull VotePlayerEntity player, @NotNull Duration gap) {
         VoteConfig.FreezeSettings settings = freezeSettings.get();
@@ -899,11 +919,6 @@ public class VoteService {
             return false;
         }
 
-        // Use the exact fractional-hour overflow, not Duration.toHours() (which
-        // truncates the sub-hour remainder). Truncating here can under-count by
-        // a whole window right at a duration-hours boundary - e.g. an overflow
-        // of 24h00m01s with a 24h duration truncated to 24h needs ceil(24/24)=1
-        // window, when the true overflow already needs a 2nd one.
         double overflowHours = gap.minus(streakTimeout).toNanos() / 3_600_000_000_000.0;
         long windowsNeeded = Math.max(1L,
                 (long) Math.ceil(overflowHours / settings.durationHours()));
@@ -966,47 +981,19 @@ public class VoteService {
         });
     }
 
-    /**
-     * Marks (once per day) and returns whether this is the player's first vote of
-     * the day AND at least one daily bonus is configured - the fly coupon or the
-     * daily-reward commands. Shared gate for both: the date is only claimed when
-     * there's something to grant, so nothing fires when both are unset.
-     */
-
-    private void executeStreakCommands(@NotNull Player player, @NotNull String serviceName, int streak) {
-        for (String command : resolveStreakCommands(serviceName, streak)) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("{player}", player.getName()));
-        }
-    }
-
-    /** The streak commands of {@code streak} with service and streak filled in; {@code {player}} stays. */
-    private @NotNull List<String> resolveStreakCommands(@NotNull String serviceName, int streak) {
-        List<String> commands = streakCommands.get().get(streak);
-        if (commands == null || commands.isEmpty()) {
-            return List.of();
-        }
-        List<String> resolved = new ArrayList<>(commands.size());
-        for (String command : commands) {
-            resolved.add(command
-                    .replace("{service}", serviceName)
-                    .replace("{streak}", String.valueOf(streak)));
-        }
-        return resolved;
-    }
-
     private void resetMonthlyIfNeeded(@NotNull VotePlayerEntity player) {
-        String currentMonth = YearMonth.now(ZoneId.systemDefault()).toString();
+        String currentMonth = YearMonth.now(VOTE_DAY_ZONE).toString();
         if (!currentMonth.equals(player.getMonthlyResetMonth())) {
             player.setMonthlyVotes(0);
             player.setMonthlyResetMonth(currentMonth);
         }
     }
 
+    /**
+     * Resolves a vote name: the raw name first (Java accounts), then the Bedrock (Floodgate) variants, because a
+     * Bedrock voter types their gamertag while their in-game name carries the Floodgate prefix.
+     */
     private @Nullable UUID resolveUuid(@NotNull String username) {
-        // Try the raw name first (Java accounts), then the Bedrock (Geyser/
-        // Floodgate) name variants - a voter types their gamertag on the list,
-        // but their in-game name carries the Floodgate prefix (and spaces may
-        // be replaced), so an exact match on the raw name misses Bedrock voters.
         for (String candidate : nameCandidates(username)) {
             UUID resolved = resolveExact(candidate);
             if (resolved != null) {
@@ -1045,7 +1032,6 @@ public class VoteService {
         return candidates.stream().distinct().toList();
     }
 
-
     /**
      * Persists a heartbeat timestamp to disk while the server is running so the
      * next boot can compute how long the server was actually down. Downtime
@@ -1063,16 +1049,16 @@ public class VoteService {
         private static final int MAX_ENTRIES = 100;
 
         private final JavaPlugin plugin;
-        private final java.io.File heartbeatFile;
-        private final java.io.File windowsFile;
-        private final java.util.List<long[]> windows = new java.util.ArrayList<>();
+        private final File heartbeatFile;
+        private final File windowsFile;
+        private final List<long[]> windows = new ArrayList<>();
 
         DowntimeTracker(@NotNull JavaPlugin plugin) {
             this.plugin = plugin;
-            java.io.File dir = plugin.getDataFolder();
+            File dir = plugin.getDataFolder();
             if (!dir.exists()) dir.mkdirs();
-            this.heartbeatFile = new java.io.File(dir, "uptime-heartbeat.txt");
-            this.windowsFile = new java.io.File(dir, "downtime-windows.txt");
+            this.heartbeatFile = new File(dir, "uptime-heartbeat.txt");
+            this.windowsFile = new File(dir, "downtime-windows.txt");
         }
 
         /**
@@ -1122,7 +1108,7 @@ public class VoteService {
         private long readHeartbeat() {
             if (!heartbeatFile.exists()) return 0L;
             try {
-                String content = java.nio.file.Files.readString(heartbeatFile.toPath()).trim();
+                String content = Files.readString(heartbeatFile.toPath()).trim();
                 return content.isEmpty() ? 0L : Long.parseLong(content);
             } catch (Exception ex) {
                 return 0L;
@@ -1131,7 +1117,7 @@ public class VoteService {
 
         private void writeHeartbeat(long epochSecond) {
             try {
-                java.nio.file.Files.writeString(heartbeatFile.toPath(), Long.toString(epochSecond));
+                Files.writeString(heartbeatFile.toPath(), Long.toString(epochSecond));
             } catch (Exception ex) {
                 plugin.getLogger().log(Level.FINE,
                         () -> "[vote-uptime] failed to write heartbeat: " + ex.getMessage());
@@ -1141,7 +1127,7 @@ public class VoteService {
         private void loadWindows() {
             if (!windowsFile.exists()) return;
             try {
-                for (String line : java.nio.file.Files.readAllLines(windowsFile.toPath())) {
+                for (String line : Files.readAllLines(windowsFile.toPath())) {
                     String trimmed = line.trim();
                     if (trimmed.isEmpty()) continue;
                     String[] parts = trimmed.split(",");
@@ -1152,8 +1138,8 @@ public class VoteService {
                         if (end > start) {
                             windows.add(new long[]{start, end});
                         }
-                    } catch (NumberFormatException ignored) {
-                        // Skip malformed line - don't fail startup on a corrupt file.
+                    } catch (NumberFormatException malformedLine) {
+                        plugin.getLogger().log(Level.FINE, () -> "[vote-uptime] skipped a malformed line: " + trimmed);
                     }
                 }
             } catch (Exception ex) {
@@ -1175,7 +1161,7 @@ public class VoteService {
                     for (long[] w : windows) {
                         sb.append(w[0]).append(',').append(w[1]).append('\n');
                     }
-                    java.nio.file.Files.writeString(windowsFile.toPath(), sb.toString());
+                    Files.writeString(windowsFile.toPath(), sb.toString());
                 } catch (Exception ex) {
                     plugin.getLogger().log(Level.FINE,
                             () -> "[vote-uptime] failed to save downtime windows: " + ex.getMessage());

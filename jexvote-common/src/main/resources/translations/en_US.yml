@@ -456,6 +456,7 @@ vote_streak:
     already_claimed: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>You already claimed this milestone.</#F1F5F9>'
     not_reached: '<#F87171>[X]</#F87171> <#F1F5F9>Your streak has not reached this milestone yet.</#F1F5F9>'
     failed: '<#F87171>[X]</#F87171> <#F1F5F9>The rewards could not be claimed. Try again.</#F1F5F9>'
+    partial: '<#FBBF24>[!]</#FBBF24> <#F1F5F9>Day {day} claimed, but some rewards could not be paid.</#F1F5F9> <#94A3B8>Open a /ticket so the team can check it.</#94A3B8>'
 
 # ── Vote rewards ─────────────────────────────────────────────────────────────
 vote_rewards:

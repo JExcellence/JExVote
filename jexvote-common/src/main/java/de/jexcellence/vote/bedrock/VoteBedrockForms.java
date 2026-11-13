@@ -343,6 +343,8 @@ public final class VoteBedrockForms {
         claimService.claimMilestone(player, day).thenAccept(result -> {
             if (result == StreakClaimService.ClaimResult.SUCCESS) {
                 msg("vote_streak.claim.success").with(PARAM_DAY, day).prefix().send(player);
+            } else if (result == StreakClaimService.ClaimResult.PARTIAL) {
+                msg("vote_streak.claim.partial").with(PARAM_DAY, day).prefix().send(player);
             } else if (result != StreakClaimService.ClaimResult.BUSY) {
                 msg("vote_streak.claim.failed").prefix().send(player);
             }

@@ -40,6 +40,7 @@ class TranslationFilesTest {
             "vote_rewards.freeze.status-short",
             "vote_streak.milestone.status-claimable",
             "vote_streak.milestone.status-locked",
+            "vote_streak.claim.partial",
             "vote_shop.back-to-menu",
             "vote_party.back-to-menu",
             "vote_party.no-pool.name",
@@ -124,6 +125,16 @@ class TranslationFilesTest {
                 assertFalse(value.contains("[OK]") || value.contains("[X]") || value.contains("[!]"),
                         locale + " " + key);
             }
+        }
+    }
+
+    @Test
+    void partlyClaimedMessageNamesTheDayAndTheTicketCommand() throws IOException {
+        for (String locale : List.of("en_US", "de_DE")) {
+            String value = load(locale).getString("vote_streak.claim.partial", "");
+            assertTrue(value.contains("{day}"), locale + " partial claim lacks the day");
+            assertTrue(value.contains("/ticket"), locale + " partial claim lacks the ticket hint");
+            assertTrue(value.startsWith("<#FBBF24>[!]"), locale + " partial claim is not a warning");
         }
     }
 

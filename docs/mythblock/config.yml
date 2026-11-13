@@ -56,8 +56,12 @@ private-message:
   enabled: true
 
 # ── Offline Vote Queue ──────────────────────────────────────────
-# When a player votes while offline, queue their rewards
-# and deliver them on next login.
+# A vote from a player who is offline is stored and paid out the next
+# time they join. Streak bonus-commands earned while offline are queued too.
+# A player who leaves during a payout keeps what they did not get yet for
+# their next join. A stored reward that cannot be read is kept for the next
+# join, never deleted, and logged at SEVERE. Console commands that did not
+# run yet (the player left first) stay queued the same way.
 offline-vote-queue: true
 
 # ── Vote Streak ─────────────────────────────────────────────────

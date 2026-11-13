@@ -71,6 +71,10 @@ dependencies {
     testImplementation(libs.mockito.junit.jupiter)
     testImplementation(libs.mockbukkit)
     testImplementation(libs.jackson.databind)
+    testImplementation(libs.bundles.jexcellence) {
+        exclude(group = "de.jexcellence.hibernate")
+        isTransitive = false
+    }
     testImplementation(libs.adventure.api)
     testImplementation(libs.adventure.minimessage)
     testImplementation(libs.adventure.serializer.plain)

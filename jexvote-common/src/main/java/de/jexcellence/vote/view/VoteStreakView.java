@@ -443,6 +443,10 @@ public class VoteStreakView extends VoteBaseView {
                     state.claimedDays.add(day);
                     msg(KEY + "claim.already_claimed").prefix().send(viewer);
                 }
+                case PARTIAL -> {
+                    state.claimedDays.add(day);
+                    msg(KEY + "claim.partial").with(PARAM_DAY, day).prefix().send(viewer);
+                }
                 case NOT_REACHED -> msg(KEY + "claim.not_reached").prefix().send(viewer);
                 case BUSY -> {
                     // Intentionally silent: the first click is still being processed.
